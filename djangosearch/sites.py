@@ -1,3 +1,4 @@
+from django.db.models import signals
 from django.db.models.base import ModelBase
 from djangosearch.indexes import ModelIndex
 
@@ -48,6 +49,7 @@ class IndexSite(object):
             raise AlreadyRegistered('The model %s is already registered' % model.__name__)
         
         self._registry[model] = index_class(model, self)
+        self._setup_signals(model, self._registry[model])
     
     def unregister(self, model):
         """
@@ -55,7 +57,30 @@ class IndexSite(object):
         """
         if model not in self._registry:
             raise NotRegistered('The model %s is not registered' % model.__name__)
+        self._teardown_signals(model, self._registry[model])
         del(self._registry[model])
+    
+    def _setup_signals(self, model, index):
+        signals.post_save.connect(index.update_object, sender=model)
+        signals.post_delete.connect(index.remove_object, sender=model)
+    
+    def _teardown_signals(self, model, index):
+        signals.post_save.disconnect(index.update_object, sender=model)
+        signals.post_delete.disconnect(index.remove_object, sender=model)
+    
+    def get_index(self, model):
+        """Provide the index that're being used for a particular model."""
+        if model not in self._registry:
+            raise NotRegistered('The model %s is not registered' % model.__name__)
+        return self._registry[model]
+    
+    def get_indexes(self):
+        """Provide a dict of all indexes that're being used."""
+        return self._registry
+    
+    def get_indexed_models(self):
+        """Provide a list of all models being indexed."""
+        return self._registry.keys()
     
     def autodiscover(self):
         """
