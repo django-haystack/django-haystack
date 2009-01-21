@@ -81,10 +81,7 @@ class IndexSite(object):
     def get_indexed_models(self):
         """Provide a list of all models being indexed."""
         return self._registry.keys()
-    
-    def autodiscover(self):
-        """
-        Automatically build the site index.
-        """
-        # DRL_FIXME: Do we want to replicate NFA-like functionality on this?
-        pass
+
+
+# The common case. Feel free to override/replace/define your own in your URLconfs.
+site = IndexSite()
