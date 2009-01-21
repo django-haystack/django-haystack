@@ -7,7 +7,6 @@ from djangosearch.query import RELEVANCE
 from djangosearch.backends.base import SearchEngine as BaseSearchEngine
 
 class SearchEngine(BaseSearchEngine):
-
     def update(self, indexer, iterable):
         pass
 
@@ -22,4 +21,3 @@ class SearchEngine(BaseSearchEngine):
 
     def prep_value(self, db_field, value):
         return value
-

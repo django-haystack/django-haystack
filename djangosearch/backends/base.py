@@ -1,4 +1,3 @@
-from djangosearch.query import RELEVANCE
 from django.utils.encoding import force_unicode
 
 class SearchEngine(object):
@@ -23,6 +22,7 @@ class SearchEngine(object):
     def clear(self, models):
         raise NotImplementedError
 
+    # DRL_FIME: Relevance removed.
     def search(self, query, models=None, order_by=RELEVANCE, limit=None, offset=None):
         raise NotImplementedError
 

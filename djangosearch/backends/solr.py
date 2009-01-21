@@ -2,19 +2,21 @@ from datetime import datetime, date
 from pysolr import Solr
 from django.conf import settings
 from django.utils.encoding import force_unicode
-from djangosearch.query import RELEVANCE, QueryConverter, convert as convert_query
 from djangosearch.results import SearchResults
 from djangosearch.backends.base import SearchEngine as BaseSearchEngine
 
 
+# DRL_FIXME: Get clarification on the comment below.
 # TODO: Support for using Solr dynnamicField declarations, the magic fieldname
 # postfixes like _i for integers. Requires some sort of global field registry
 # though. Is it even worth it?
 
+
 class SearchEngine(BaseSearchEngine):
     def __init__(self):
-        args = [settings.SOLR_URL]
-        self.conn = Solr(*args)
+        # DRL_FIXME: Reasonable default? Raise ImproperlyConfigured?
+        args = getattr(settings, 'SOLR_URL', 'http://localhost:9000/solr/default')
+        self.conn = Solr(args)
 
     def _models_query(self, models):
         def qt(model):
@@ -54,7 +56,8 @@ class SearchEngine(BaseSearchEngine):
         if len(q) == 0:
             return SearchResults(q, [], 0, lambda x: x)
         original_query = q
-        q = convert_query(original_query, SolrQueryConverter)
+        # DRL_FIXME: QueryConverter no longer exists.
+        # q = convert_query(original_query, SolrQueryConverter)
 
         if models is not None:
             models_clause = self._models_query(models)
@@ -76,11 +79,3 @@ class SearchEngine(BaseSearchEngine):
 
         results = self.conn.search(final_q, **kwargs)
         return SearchResults(final_q, iter(results.docs), results.hits, self._result_callback)
-
-class SolrQueryConverter(QueryConverter):
-    QUOTES          = '""'
-    GROUPERS        = "()"
-    OR              = " "
-    NOT             = "NOT "
-    SEPARATOR       = ' AND '
-    FIELDSEP        = ':'
