@@ -12,8 +12,12 @@ class SearchPaginator(Paginator):
     def page(self, number):
         "Returns a Page object for the given 1-based page number."
         number = self.validate_number(number)
+        # DRL_FIXME: This should dispatch to the SearchQuery to pull the right
+        #            range, rather than forcing the app developer to manually
+        #            handle their own offsets.
         return Page(list(self.results), number, self)
-
+    
+    # DRL_FIXME: This should go away with the new SearchQuery supporting __len__()/count().
     def _get_count(self):
         "Returns the total number of objects, across all pages."
         if self._count is None:
