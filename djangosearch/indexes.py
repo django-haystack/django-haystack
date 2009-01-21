@@ -1,6 +1,6 @@
 from django.utils.encoding import smart_unicode
 from django.template import loader, Context, TemplateDoesNotExist
-from djangosearch.query import RELEVANCE
+
 
 class ModelIndex(object):
     """
@@ -111,7 +111,8 @@ class ModelIndex(object):
         """Completely clear the index for this model and rebuild it."""
         self.clear()
         self.update()
-
+    
+    # DRL_FIXME: Relevance removed. This really should just accept a SearchQuery.
     def search(self, q, order_by=RELEVANCE, limit=None, offset=None):
         """Search the index."""
         return self.engine.search(q, models=[self.model], order_by=order_by, limit=limit, offset=offset)
