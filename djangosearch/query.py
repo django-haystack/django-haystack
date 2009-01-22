@@ -10,6 +10,7 @@ except NameError:
 #               SearchQuery.exclude(pub_date__lte=datetime.date(2008, 1, 16)).filter(content='lawrence')
 #           
 #           Eventually support some sort of "or()" mechanism?
+#           Eventually support some sort of boost mechanism? (index time and search time)
 #           
 #           Ideally, when the query evaluates and performs a search, this should
 #           return results itself to be iterated over (a la QuerySet).

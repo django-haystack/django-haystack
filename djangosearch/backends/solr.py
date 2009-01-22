@@ -2,7 +2,7 @@ from datetime import datetime, date
 from pysolr import Solr
 from django.conf import settings
 from django.utils.encoding import force_unicode
-from djangosearch.results import SearchResults
+# from djangosearch.results import SearchResults
 from djangosearch.backends.base import SearchEngine as BaseSearchEngine
 
 
@@ -52,7 +52,8 @@ class SearchEngine(BaseSearchEngine):
         app_label, model_name = result['django_ct_s'].split('.')
         return (app_label, model_name, result['django_id_s'], None)
 
-    def search(self, q, models=None, order_by=RELEVANCE, limit=None, offset=None):
+    # DRL_FIXME: Relevance removed. Should probably be taking a SearchQuerySet.
+    def search(self, q, models=None, order_by=None, limit=None, offset=None):
         if len(q) == 0:
             return SearchResults(q, [], 0, lambda x: x)
         original_query = q

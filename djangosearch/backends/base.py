@@ -23,7 +23,7 @@ class SearchEngine(object):
         raise NotImplementedError
 
     # DRL_FIME: Relevance removed.
-    def search(self, query, models=None, order_by=RELEVANCE, limit=None, offset=None):
+    def search(self, query, models=None, order_by=None, limit=None, offset=None):
         raise NotImplementedError
 
     def prep_value(self, db_field, value):

@@ -9,7 +9,7 @@ class ModelIndex(object):
     
     def __init__(self, fields=[], model=None):
         # Avoid a circular import by putting this here
-        from djangosearch.backends import backend
+        from djangosearch import backend
         self.fields = fields
         self.model = model
         self.engine = backend.SearchEngine()
@@ -113,6 +113,6 @@ class ModelIndex(object):
         self.update()
     
     # DRL_FIXME: Relevance removed. This really should just accept a SearchQuery.
-    def search(self, q, order_by=RELEVANCE, limit=None, offset=None):
+    def search(self, q, order_by, limit=None, offset=None):
         """Search the index."""
         return self.engine.search(q, models=[self.model], order_by=order_by, limit=limit, offset=offset)
