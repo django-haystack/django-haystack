@@ -16,11 +16,3 @@ class SearchPaginator(Paginator):
         #            range, rather than forcing the app developer to manually
         #            handle their own offsets.
         return Page(list(self.results), number, self)
-    
-    # DRL_FIXME: This should go away with the new SearchQuery supporting __len__()/count().
-    def _get_count(self):
-        "Returns the total number of objects, across all pages."
-        if self._count is None:
-            self._count = self.results.hits
-        return self._count
-    count = property(_get_count)
