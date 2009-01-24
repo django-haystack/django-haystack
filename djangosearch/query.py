@@ -4,6 +4,11 @@ try:
 except NameError:
     from sets import Set as set
 
+
+# The maximum number of items to display in a SearchQuerySet.__repr__
+REPR_OUTPUT_SIZE = 20
+
+
 # DRL_TODO: Mimic QuerySet as much as it makes sense to do here.
 #           Allow for chaining, such as:
 #           
@@ -109,6 +114,7 @@ class BaseSearchQuerySet(object):
     def __init__(self, site=None, query=None):
         self.query = query or djangosearch.backend.SearchQuery()
         self._result_cache = None
+        self._result_count = 0
         self._iter = None
         
         if site is not None:
@@ -126,12 +132,16 @@ class BaseSearchQuerySet(object):
         return obj_dict
     
     def __repr__(self):
-        # DRL_FIXME: This should actually list out results, not print the query.
-        return self.query
+        data = list(self[:REPR_OUTPUT_SIZE + 1])
+        if len(data) > REPR_OUTPUT_SIZE:
+            data[-1] = "...(remaining elements truncated)..."
+        return repr(data)
     
     def __len__(self):
-        # DRL_TODO: This should track the full search hits instead of actual available results.
-        pass
+        # This needs to return the actual number of hits.
+        if self._result_cache is None:
+            self._result_count = self.query.get_count()
+        return self._result_count
     
     def __iter__(self):
         # DRL_TODO: This may have to perform multiple queries as it goes into results that may not
@@ -256,14 +266,8 @@ class BaseSearchQuerySet(object):
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__
-        clone = klass(site=self.site)
-        clone.and_keywords = self.and_keywords
-        clone.or_keywords = self.or_keywords
-        clone.not_keywords = self.not_keywords
-        clone.order_by = self.order_by
-        clone.models = self.models
-        clone.start_offset = self.start_offset
-        clone.end_offset = self.end_offset
+        query = self.query.clone()
+        clone = klass(site=self.site, query=query)
         return clone
 
 
