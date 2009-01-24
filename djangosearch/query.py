@@ -18,11 +18,11 @@ except NameError:
 #           Also, figure out how best to load the backend here. It would be
 #           useful for the query building as well as executing the query.
 
-class SearchQuerySet(object):
+class BaseSearchQuerySet(object):
     """
     Lazily generates the query to be sent to the backend.
     """
-    def __init__(self, site=None):
+    def __init__(self, site=None, backend=None):
         self._completed_query = None
         self.and_keywords = set()
         self.or_keywords = set()
@@ -32,10 +32,18 @@ class SearchQuerySet(object):
         self.start_offset = 0
         self.end_offset = None
         
-        if site:
+        if site is not None:
             self.site = site
         else:
             self.site = djangosearch.site
+        
+        # If no backend is specified, instantiate automatically.
+        if backend is not None:
+            self.backend = backend()
+        else:
+            # DRL_FIXME: import and instantiate.
+            # self.backend = djangosearch.backend
+            pass
     
     def __getstate__(self):
         """
@@ -160,4 +168,9 @@ class SearchQuerySet(object):
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         return clone
-    
+
+
+# Build an instance. This should be acceptable, as it will almost always get
+# cloned from and specialized in the clone.
+# DRL_FIXME: Ensure all methods that should start with a clone have one.
+SearchQuerySet = BaseSearchQuerySet()
