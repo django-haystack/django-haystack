@@ -1,10 +1,11 @@
 from django import forms
 from django.db import models
+import djangosearch
 
 
 def model_choices():
-    # DRL_FIXME: Change to work with the IndexSite-based setup.
-    return ((m._meta, unicode(m._meta.verbose_name_plural)) for m in get_indexed_models())
+    # DRL_TODO: Alphabetize?
+    return ((m._meta, unicode(m._meta.verbose_name_plural)) for m in djangosearch.site.get_indexed_models())
 
 
 class ModelSearchForm(forms.Form):
@@ -13,7 +14,7 @@ class ModelSearchForm(forms.Form):
         widget=forms.CheckboxSelectMultiple)
 
     def get_models(self):
-        """Return a list of model classes specified by the models field."""
+        """Return an alphabetical list of model classes in the index."""
         search_models = []
         for model in self.cleaned_data['models']:
             search_models.append(models.get_model(*model.split('.')))
