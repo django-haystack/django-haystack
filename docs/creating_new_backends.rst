@@ -30,5 +30,6 @@ SearchQuery
 Responsible for taking structured data about the query and converting it into a
 backend appropriate format.
 
-    * Method for build_query
-    * Method for get_count
+    * Method for creating the backend specific query - build_query
+    * Method for returning hits - get_count
+    * Method for sanitizing user queries - clean
