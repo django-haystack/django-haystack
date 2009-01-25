@@ -1,12 +1,10 @@
 """
 A fake backend for mocking during tests.
 """
+from djangosearch.backends.base import BaseSearchBackend, BaseSearchQuery
 
-from djangosearch.results import SearchResults
-from djangosearch.query import RELEVANCE
-from djangosearch.backends.base import SearchEngine as BaseSearchEngine
 
-class SearchEngine(BaseSearchEngine):
+class SearchEngine(BaseSearchBackend):
     def update(self, indexer, iterable):
         pass
 
@@ -16,8 +14,24 @@ class SearchEngine(BaseSearchEngine):
     def clear(self, models):
         pass
 
-    def search(self, q, models=None, order_by=RELEVANCE, limit=None, offset=None):
-        return SearchResults(q, [], 0, lambda r: r)
+    def search(self, q, models=None, order_by=None, limit=None, offset=None):
+        # return SearchResults(q, [], 0, lambda r: r)
+        return []
 
     def prep_value(self, db_field, value):
         return value
+
+
+class SearchQuery(BaseSearchQuery):
+    def get_count(self):
+        return 0
+    
+    def build_query(self):
+        ands = " AND ".join(self.and_keywords)
+        ors = " OR ".join(self.or_keywords)
+        nots = " NOT ".join(self.not_keywords)
+        order_by = " ".join(self.order_by)
+        return "%s %s %s %s" % (ands, ors, nots, order_by)
+    
+    def clean(self, query_fragment):
+        return query_fragment

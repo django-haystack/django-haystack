@@ -5,111 +5,13 @@ except NameError:
     from sets import Set as set
 
 
-# The maximum number of items to display in a SearchQuerySet.__repr__
-REPR_OUTPUT_SIZE = 20
-
-
-# DRL_TODO: Mimic QuerySet as much as it makes sense to do here.
-#           Allow for chaining, such as:
-#           
-#               SearchQuery.exclude(pub_date__lte=datetime.date(2008, 1, 16)).filter(content='lawrence')
-#           
-#           Eventually support some sort of "or()" mechanism?
-#           Eventually support some sort of boost mechanism? (index time and search time)
-#           
-#           Ideally, when the query evaluates and performs a search, this should
-#           return results itself to be iterated over (a la QuerySet).
-#           
-#           Also, figure out how best to load the backend here. It would be
-#           useful for the query building as well as executing the query.
-
-
-class BaseSearchQuery(object):
-    # DRL_TODO: Figure out how to maintain the original query order.
-    #           Also, can we use sets for the keywords?
-    self.and_keywords = []
-    self.or_keywords = []
-    self.not_keywords = []
-    self.order_by = []
-    self.models = set()
-    self.start_offset = 0
-    self.end_offset = None
-    self.backend = None
-    
-    def __init__(self, backend=None):
-        if backend is not None:
-            self.backend = backend()
-        else:
-            self.backend = djangosearch.backend.SearchBackend()
-    
-    def __str__(self):
-        return self._build_query()
-    
-    def __getstate__(self):
-        """
-        For pickling.
-        """
-        obj_dict = self.__dict__.copy()
-        del(obj_dict['backend'])
-        return obj_dict
-    
-    def __setstate__(self, obj_dict):
-        """
-        For unpickling.
-        """
-        self.__dict__.update(obj_dict)
-        # DRL_TODO: This may not unpickle properly if a different backend was supplied.
-        self.backend = djangosearch.backend.SearchBackend()
-    
-    def get_count(self):
-        raise NotImplementedError("Subclasses must provide a way to return the total hits via the get_count method.")
-    
-    def build_query(self):
-        raise NotImplementedError("Subclasses must provide a way to generate the query.")
-    
-    # DRL_FIXME: The following 3 methods could probably be done better, especially
-    #            given that all 3 will process expressions in the same way.
-    #               - the field we're searching
-    #               - what extension, if any, we're using
-    #               - what the value ought to be
-    #            Maybe we should have a Term/Filter object to encapsulate this?
-    def add_and_keyword(self, keyword):
-        self.and_keywords.append(keyword)
-    
-    def add_or_keyword(self, keyword):
-        self.or_keywords.append(keyword)
-    
-    def add_not_keyword(self, keyword):
-        self.not_keywords.append(keyword)
-    
-    def add_order_by(self, field):
-        # DRL_TODO: Is this possible with most engines (beyond date ranking)?
-        self.order_by.append(field)
-    
-    def clear_order_by(self):
-        self.order_by = []
-    
-    def add_model(self, model):
-        self.models.add(model)
-    
-    def _clone(self, klass=None):
-        if klass is None:
-            klass = self.__class__
-        clone = klass()
-        clone.and_keywords = self.and_keywords
-        clone.or_keywords = self.or_keywords
-        clone.not_keywords = self.not_keywords
-        clone.order_by = self.order_by
-        clone.models = self.models
-        clone.start_offset = self.start_offset
-        clone.end_offset = self.end_offset
-        clone.backend = self.backend
-        return clone
-
-
+# DRL_FIXME: Eventually support some sort of "or()" mechanism?
+# DRL_TODO: Eventually support some sort of boost mechanism? (index time and search time)
 class BaseSearchQuerySet(object):
     """
     Provides a way to specify search parameters and lazily load results.
+    
+    Supports chaining (a la QuerySet) to narrow the search.
     """
     def __init__(self, site=None, query=None):
         self.query = query or djangosearch.backend.SearchQuery()
@@ -231,25 +133,40 @@ class BaseSearchQuerySet(object):
                 clone.query.add_model(model)
         return clone
     
-    def auto_query(self):
-        """Performs a best guess constructing the search query."""
+    def auto_query(self, query_string):
+        """
+        Performs a best guess constructing the search query.
+        
+        This method is somewhat naive but works well enough for the simple,
+        common cases.
+        """
         clone = self._clone()
-        # DRL_FIXME: Defer to backend to construct this? NO. Build it with the
-        #            SearchQuerySet API, so there's only one path throught the
-        #            SearchQuery.
+        keywords = query_string.spilt()
+        
+        # Loop through keywords and add filters to the query.
+        # DRL_FIXME: This is still *really* naive. Have a look at Google and
+        #            see how their searches get expressed (because of
+        #            familiarty for most users).
+        #            Also, may need to support quotes on this.
+        for keyword in keywords:
+            cleaned_keyword = clone.query.clean(keyword)
+            
+            if cleaned_keyword.startswith('-'):
+                clone.query.add_filter(content=cleaned_keyword, negate=True)
+            else:
+                clone.query.add_filter(content=cleaned_keyword)
+        
         return clone
     
     # Methods that do not return a SearchQuerySet.
     
     def count(self):
-        # For now, defer to the __len__ method, since we aren't likely to have
-        # all results in memory.
+        """Returns the total number of matching results."""
         clone = self._clone()
         return len(clone)
     
     def best_match(self):
-        # Return the top result. Get the iterator and return the first thing
-        # we find.
+        """Returns the best/top search result that matches the query."""
         clone = self._clone()
         return clone[0]
     
@@ -273,5 +190,4 @@ class BaseSearchQuerySet(object):
 
 # Build an instance. This should be acceptable, as it will almost always get
 # cloned from and specialized in the clone.
-# DRL_FIXME: Ensure all methods that should start with a clone have one.
 SearchQuerySet = BaseSearchQuerySet()
