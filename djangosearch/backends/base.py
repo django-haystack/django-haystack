@@ -1,5 +1,4 @@
 from django.db.models.base import ModelBase
-from django.utils.datastructures import SortedDict
 from django.utils.encoding import force_unicode
 from djangosearch.constants import VALID_FILTERS, FILTER_SEPARATOR
 try:
@@ -41,9 +40,7 @@ class BaseSearchBackend(object):
         return force_unicode(value)
 
 
-# Alias for now.
-# DRL_FIXME: Do I really want to do this? It makes loading the backend in
-#            BaseSearchQuery clean but at what cost to clarity?
+# Alias for easy loading within SearchQuery objects.
 SearchBackend = BaseSearchBackend
 
 

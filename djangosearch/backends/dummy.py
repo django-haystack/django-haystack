@@ -1,7 +1,7 @@
 """
 A fake backend for mocking during tests.
 """
-from djangosearch.backends.base import BaseSearchBackend, BaseSearchQuery
+from djangosearch.backends.base import BaseSearchBackend, QueryFilter, BaseSearchQuery
 
 
 class SearchEngine(BaseSearchBackend):
@@ -14,8 +14,7 @@ class SearchEngine(BaseSearchBackend):
     def clear(self, models):
         pass
 
-    def search(self, q, models=None, order_by=None, limit=None, offset=None):
-        # return SearchResults(q, [], 0, lambda r: r)
+    def search(self, query):
         return []
 
     def prep_value(self, db_field, value):

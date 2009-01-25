@@ -1,8 +1,5 @@
 import djangosearch
-try:
-    set
-except NameError:
-    from sets import Set as set
+from djangosearch.constants import REPR_OUTPUT_SIZE
 
 
 # DRL_FIXME: Eventually support some sort of "or()" mechanism?
@@ -146,7 +143,7 @@ class BaseSearchQuerySet(object):
         # Loop through keywords and add filters to the query.
         # DRL_FIXME: This is still *really* naive. Have a look at Google and
         #            see how their searches get expressed (because of
-        #            familiarty for most users).
+        #            familiarity for most users).
         #            Also, may need to support quotes on this.
         for keyword in keywords:
             cleaned_keyword = clone.query.clean(keyword)

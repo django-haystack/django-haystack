@@ -96,8 +96,21 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(len(self.bsq.models), 1)
     
     def test_clone(self):
-        # DRL_FIXME: Make sure to test this well.
-        pass
+        self.bsq.add_filter('foo', 'bar')
+        self.bsq.add_filter('foo__lt', '10')
+        self.bsq.add_filter('claris', 'moof', use_not=True)
+        self.bsq.add_filter('claris', 'moof', use_or=True)
+        self.bsq.add_order_by('foo')
+        self.bsq.add_model(MockModel)
+        
+        clone = self.bsq._clone()
+        self.assert_(isinstance(clone, BaseSearchQuery))
+        self.assertEqual(len(clone.query_filters), 4)
+        self.assertEqual(len(clone.order_by), 1)
+        self.assertEqual(len(clone.models), 1)
+        self.assertEqual(clone.start_offset, self.bsq.start_offset)
+        self.assertEqual(clone.end_offset, self.bsq.end_offset)
+        self.assertEqual(clone.backend, self.bsq.backend)
 
 
 class BaseSearchQuerySetTestCase(TestCase):
