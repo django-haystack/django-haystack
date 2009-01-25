@@ -117,7 +117,7 @@ class BaseSearchQuerySet(object):
         """Narrows the search by ensuring certain attributes are not included."""
         clone = self._clone()
         for expression, value in kwargs.items():
-            clone.query.add_filter(expression, value, negate=True)
+            clone.query.add_filter(expression, value, use_not=True)
         return clone
     
     def order_by(self, field):
@@ -141,7 +141,7 @@ class BaseSearchQuerySet(object):
         common cases.
         """
         clone = self._clone()
-        keywords = query_string.spilt()
+        keywords = query_string.split()
         
         # Loop through keywords and add filters to the query.
         # DRL_FIXME: This is still *really* naive. Have a look at Google and
@@ -152,9 +152,9 @@ class BaseSearchQuerySet(object):
             cleaned_keyword = clone.query.clean(keyword)
             
             if cleaned_keyword.startswith('-'):
-                clone.query.add_filter(content=cleaned_keyword, negate=True)
+                clone.query.add_filter('content', cleaned_keyword, use_not=True)
             else:
-                clone.query.add_filter(content=cleaned_keyword)
+                clone.query.add_filter('content', cleaned_keyword)
         
         return clone
     
@@ -183,7 +183,7 @@ class BaseSearchQuerySet(object):
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__
-        query = self.query.clone()
+        query = self.query._clone()
         clone = klass(site=self.site, query=query)
         return clone
 

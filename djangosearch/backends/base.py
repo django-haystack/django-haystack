@@ -30,8 +30,7 @@ class BaseSearchBackend(object):
     def clear(self, models):
         raise NotImplementedError
 
-    # DRL_FIME: Relevance removed.
-    def search(self, query, models=None, order_by=None, limit=None, offset=None):
+    def search(self, query):
         raise NotImplementedError
 
     def prep_value(self, db_field, value):
@@ -48,6 +47,56 @@ class BaseSearchBackend(object):
 SearchBackend = BaseSearchBackend
 
 
+class QueryFilter(object):
+    """
+    Manages an individual condition within a query.
+    
+    Most often, this will be a lookup to ensure that a certain word or phrase
+    appears in the documents being indexed. However, it also supports filtering
+    types (such as 'lt', 'gt', 'in' and others) for more complex lookups.
+    """
+    def __init__(self, expression, value, use_not=False, use_or=False):
+        self.field, self.filter_type = self.split_expression(expression)
+        self.value = value
+        
+        if use_not and use_or:
+            raise AttributeError("Query filters can not accept both NOT and OR.")
+        
+        self.use_not = use_not
+        self.use_or = use_or
+    
+    def __repr__(self):
+        join = 'AND'
+        
+        if self.is_not():
+            join = 'NOT'
+        
+        if self.is_or():
+            join = 'OR'
+        
+        return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), self.value)
+    
+    def split_expression(self, expression):
+        parts = expression.split(FILTER_SEPARATOR)
+        field = parts[0]
+        
+        if len(parts) == 1 or parts[-1] not in VALID_FILTERS:
+            filter_type = 'exact'
+        else:
+            filter_type = parts.pop()
+        
+        return (field, filter_type)
+    
+    def is_and(self):
+        return not self.use_not and not self.use_or
+    
+    def is_not(self):
+        return self.use_not
+    
+    def is_or(self):
+        return self.use_or
+
+
 class BaseSearchQuery(object):
     """
     A base class for handling the query itself.
@@ -55,16 +104,19 @@ class BaseSearchQuery(object):
     This class acts as an intermediary between the SearchQuerySet and the
     search backend itself.
     
+    The SearchQuery object maintains a list of QueryFilter objects. Each filter
+    object supports what field it looks up against, what kind of lookup (i.e. 
+    the __'s), what value it's looking for and if it's a AND/OR/NOT. The
+    SearchQuery's "_build_query" method should then iterate over that list and 
+    convert that to a valid query for the search backend.
+    
     Backends should extend this class and provide implementations for
     ``get_count``, ``build_query`` and ``clean``. See the ``solr`` backend
     for an example implementation.
     """
     
     def __init__(self, backend=None):
-        self._query_keywords = []
-        self.and_keywords = SortedDict()
-        self.or_keywords = SortedDict()
-        self.not_keywords = SortedDict()
+        self.query_filters = []
         self.order_by = []
         self.models = set()
         self.start_offset = 0
@@ -111,28 +163,9 @@ class BaseSearchQuery(object):
     # Standard methods to alter the query.
     
     def add_filter(self, expression, value, use_not=False, use_or=False):
-        # DRL_FIXME: Argh. What to do about filters ('__') and how to internally store keywords.
-        if not FILTER_SEPARATOR in expression:
-            self._query_keywords.append(value)
-        
-        parts = expression.split(FILTER_SEPARATOR)
-        field = parts[0]
-        
-        if len(parts) == 1 or parts[-1] not in VALID_FILTERS:
-            lookup_type = 'exact'
-        else:
-            lookup_type = parts.pop()
-        
-        # DRL_FIXME: Using the dict/SortedDict sucks because the field can only appear once.
-        #            Using a set sucks due to a lack of pairing of information and field only appears once.
-        #            Using a list sucks due to a lack of pairing.
-        #            Maybe a tree of term objects would be a solution?
-        if not use_not and not use_or:
-            self.and_keywords[field]
-        elif use_not is True:
-            self.not_keywords[field]
-        elif use_or is True:
-            self.or_keywords[field]
+        """Narrows the search by requiring certain conditions."""
+        term = QueryFilter(expression, value, use_not, use_or)
+        self.query_filters.append(term)
     
     def add_order_by(self, field):
         # DRL_TODO: Is this possible with most engines (beyond date ranking)?
@@ -151,9 +184,7 @@ class BaseSearchQuery(object):
         if klass is None:
             klass = self.__class__
         clone = klass()
-        clone.and_keywords = self.and_keywords
-        clone.or_keywords = self.or_keywords
-        clone.not_keywords = self.not_keywords
+        clone.query_filters = self.query_filters
         clone.order_by = self.order_by
         clone.models = self.models
         clone.start_offset = self.start_offset
