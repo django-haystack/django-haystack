@@ -7,6 +7,7 @@ from djangosearch.sites import IndexSite
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from djangosearch.sites import IndexSite, site
 
 __all__ = ['backend']
 

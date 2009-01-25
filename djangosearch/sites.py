@@ -41,7 +41,7 @@ class IndexSite(object):
         if not index_class:
             index_class = ModelIndex
         
-        # FIXME: Too draconian? Is a class that quacks like a Model good enough?
+        # DRL_FIXME: Too draconian? Is a class that quacks like a Model good enough?
         if not isinstance(model, ModelBase):
             raise AttributeError('The model being registered must derive from Model.')
         
