@@ -4,7 +4,7 @@ A fake backend for mocking during tests.
 from djangosearch.backends.base import BaseSearchBackend, QueryFilter, BaseSearchQuery
 
 
-class SearchEngine(BaseSearchBackend):
+class SearchBackend(BaseSearchBackend):
     def update(self, indexer, iterable):
         pass
 
