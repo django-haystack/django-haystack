@@ -1,5 +1,5 @@
 import djangosearch
-from djangosearch.constants import REPR_OUTPUT_SIZE
+from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY
 
 
 # DRL_FIXME: Eventually support some sort of "or()" mechanism?
@@ -12,8 +12,8 @@ class BaseSearchQuerySet(object):
     """
     def __init__(self, site=None, query=None):
         self.query = query or djangosearch.backend.SearchQuery()
-        self._result_cache = None
-        self._result_count = 0
+        self._result_cache = []
+        self._result_count = None
         self._iter = None
         
         if site is not None:
@@ -37,15 +37,46 @@ class BaseSearchQuerySet(object):
         return repr(data)
     
     def __len__(self):
-        # This needs to return the actual number of hits.
-        if self._result_cache is None:
-            self._result_count = self.query.get_count()
-        return self._result_count
+        # This needs to return the actual number of hits, not what's in the cache.
+        return self.query.get_count()
     
     def __iter__(self):
-        # DRL_TODO: This may have to perform multiple queries as it goes into results that may not
-        #           have been returned.
-        pass
+        if len(self._result_cache) == len(self):
+            # We've got a fully populated cache. Let Python do the hard work.
+            return iter(self._result_cache)
+        
+        return self._manual_iter()
+    
+    def _manual_iter(self):
+        # If we're here, our cache isn't fully populated.
+        # For efficiency, fill the cache as we go if we run out of results.
+        # Also, this can't be part of the __iter__ method due to Python's rules
+        # about generator functions.
+        current_position = 0
+        
+        while True:
+            current_cache_max = len(self._result_cache)
+            
+            while current_position < current_cache_max:
+                yield self._result_cache[current_position]
+                current_position += 1
+            
+            if current_cache_max >= len(self):
+                raise StopIteration
+            
+            # We've run out of results and haven't hit our limit.
+            # Fill more of the cache.
+            self._fill_cache()
+    
+    def _fill_cache(self):
+        # Tell the query where to start from and how many we'd like.
+        # DRL_FIXME: This seems ripe for off-by-one errors. Test it well.
+        cache_length = len(self._result_cache)
+        self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
+        
+        for result in self.query.run():
+            self._result_cache.append(result)
+                
     
     # DRL_FIXME: This is cargo-culted from QuerySet. Adapt please.
     #            Once complete, SearchPaginator can go away as the only things

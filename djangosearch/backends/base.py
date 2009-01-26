@@ -30,6 +30,11 @@ class BaseSearchBackend(object):
         raise NotImplementedError
 
     def search(self, query):
+        """
+        Takes a query to search on and returns populated SearchResult objects.
+        
+        The query should be a string that is appropriate syntax for the backend.
+        """
         raise NotImplementedError
 
     def prep_value(self, db_field, value):
@@ -144,6 +149,11 @@ class BaseSearchQuery(object):
         # DRL_TODO: This may not unpickle properly if a different backend was supplied.
         self.backend = SearchBackend()
     
+    def run(self):
+        """Builds and executes the query. Returns a list of search results."""
+        final_query = self.build_query()
+        return self.backend.search(final_query)
+    
     
     # Methods for backends to implement.
     
@@ -176,6 +186,19 @@ class BaseSearchQuery(object):
         if not isinstance(model, ModelBase):
             raise AttributeError('The model being added to the query must derive from Model.')
         self.models.add(model)
+    
+    def set_limits(self, low=None, high=None):
+        if low is not None:
+            self.start_offset = int(low)
+        
+        if high is not None:
+            self.end_offset = int(high)
+    
+    def clear_limits(self):
+        """
+        Clears any existing limits.
+        """
+        self.start_offset, self.end_offset = 0, None
     
     def _clone(self, klass=None):
         if klass is None:

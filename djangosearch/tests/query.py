@@ -1,6 +1,8 @@
 from django.db import models
 from django.test import TestCase
 from djangosearch.backends.base import QueryFilter, BaseSearchQuery
+from djangosearch.backends.dummy import SearchBackend as DummySearchBackend
+from djangosearch.backends.dummy import SearchQuery as DummySearchQuery
 from djangosearch.models import SearchResult
 from djangosearch.query import BaseSearchQuerySet
 from djangosearch.sites import IndexSite
@@ -46,7 +48,7 @@ class QueryFilterTestCase(TestCase):
 class BaseSearchQueryTestCase(TestCase):
     def setUp(self):
         super(BaseSearchQueryTestCase, self).setUp()
-        self.bsq = BaseSearchQuery()
+        self.bsq = BaseSearchQuery(backend=DummySearchBackend)
     
     def test_get_count(self):
         self.assertRaises(NotImplementedError, self.bsq.get_count)
@@ -116,10 +118,11 @@ class BaseSearchQueryTestCase(TestCase):
 class BaseSearchQuerySetTestCase(TestCase):
     def setUp(self):
         super(BaseSearchQuerySetTestCase, self).setUp()
-        self.bsqs = BaseSearchQuerySet()
+        self.bsqs = BaseSearchQuerySet(query=DummySearchQuery())
     
     def test_len(self):
-        pass
+        # Dummy always returns 0.
+        self.assertEqual(len(self.bsqs), 0)
     
     def test_iter(self):
         pass
