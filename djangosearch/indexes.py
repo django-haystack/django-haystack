@@ -12,7 +12,7 @@ class ModelIndex(object):
         from djangosearch import backend
         self.fields = fields
         self.model = model
-        self.engine = backend.SearchEngine()
+        self.backend = backend.SearchBackend()
 
     def get_query_set(self):
         """
@@ -85,34 +85,29 @@ class ModelIndex(object):
                 # see http://code.djangoproject.com/ticket/5390 for a possible fix.
                 value = ','.join([smart_unicode(o) for o in value.get_query_set()])
             db_field = obj._meta.get_field(field)
-            fields.append((field, self.engine.prep_value(db_field, value)))
+            fields.append((field, self.backend.prep_value(db_field, value)))
         return fields
 
     def update(self):
         """Update the entire index"""
-        self.engine.update(self, self.get_query_set())
+        self.backend.update(self, self.get_query_set())
 
     def update_object(self, instance, **kwargs):
         """
         Update the index for a single object. Attached to the class's
         post-save hook.
         """
-        self.engine.update(self, [instance])
+        self.backend.update(self, [instance])
 
     def remove_object(self, instance, **kwargs):
         """Remove an object from the index. Attached to the class's delete hook."""
-        self.engine.remove(instance)
+        self.backend.remove(instance)
 
     def clear(self):
         """Clear the entire index"""
-        self.engine.clear(models=[self.model])
+        self.backend.clear(models=[self.model])
 
     def reindex(self):
         """Completely clear the index for this model and rebuild it."""
         self.clear()
         self.update()
-    
-    # DRL_FIXME: Relevance removed. This really should just accept a SearchQuery.
-    def search(self, q, order_by, limit=None, offset=None):
-        """Search the index."""
-        return self.engine.search(q, models=[self.model], order_by=order_by, limit=limit, offset=offset)
