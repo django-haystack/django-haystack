@@ -131,7 +131,7 @@ class BaseSearchQuery(object):
             self.backend = SearchBackend()
     
     def __str__(self):
-        return self._build_query()
+        return self.build_query()
     
     def __getstate__(self):
         """

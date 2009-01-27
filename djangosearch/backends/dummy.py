@@ -26,11 +26,24 @@ class SearchQuery(BaseSearchQuery):
         return 0
     
     def build_query(self):
-        ands = " AND ".join(self.and_keywords)
-        ors = " OR ".join(self.or_keywords)
-        nots = " NOT ".join(self.not_keywords)
-        order_by = " ".join(self.order_by)
-        return "%s %s %s %s" % (ands, ors, nots, order_by)
+        filters = []
+        
+        for the_filter in self.query_filters:
+            filter_list = []
+            
+            if the_filter.is_and():
+                filter_list.append("AND")
+            elif the_filter.is_not():
+                filter_list.append("NOT")
+            elif the_filter.is_or():
+                filter_list.append("OR")
+            
+            filter_list.append(FILTER_SEPARATOR.join((the_filter.field, the_filter.filter_type)))
+            filter_list.append(the_filter.value)
+            
+            filters.append(" ".join(filter_list))
+            
+        return "%s ORDER BY %s" % (" ".join(filters), ", ".join(self.order_by))
     
     def clean(self, query_fragment):
         return query_fragment

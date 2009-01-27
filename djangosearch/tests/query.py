@@ -1,6 +1,6 @@
 from django.db import models
 from django.test import TestCase
-from djangosearch.backends.base import QueryFilter, BaseSearchQuery
+from djangosearch.backends.base import SearchBackend, QueryFilter, BaseSearchQuery
 from djangosearch.backends.dummy import SearchBackend as DummySearchBackend
 from djangosearch.backends.dummy import SearchQuery as DummySearchQuery
 from djangosearch.models import SearchResult
@@ -10,6 +10,40 @@ from djangosearch.sites import IndexSite
 
 class MockModel(models.Model):
     pass
+
+
+class MockSearchResult(SearchResult):
+    def __init__(self, app_label, model_name, pk, score):
+        self.model = MockModel
+        self.pk = pk
+        self.score = score
+        self._object = None
+
+
+MOCK_SEARCH_RESULTS = [MockSearchResult('djangosearch', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(100)]
+
+
+class MockSearchBackend(SearchBackend):
+    """Simulates results coming out of the backend."""
+    def search(self, query):
+        return MOCK_SEARCH_RESULTS
+
+
+class MockSearchQuery(BaseSearchQuery):
+    def get_count(self):
+        return len(self.run())
+    
+    def build_query(self):
+        return ''
+    
+    def clean(self, query_fragment):
+        return query_fragment
+    
+    def run(self):
+        # To simulate the chunking behavior of a regular search, return a slice
+        # of our results using start/end offset.
+        final_query = self.build_query()
+        return self.backend.search(final_query)[self.start_offset:self.end_offset]
 
 
 class QueryFilterTestCase(TestCase):
@@ -97,6 +131,11 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_model(MockModel)
         self.assertEqual(len(self.bsq.models), 1)
     
+    def test_run(self):
+        msq = MockSearchQuery(backend=MockSearchBackend)
+        self.assertEqual(len(msq.run()), 100)
+        self.assertEqual(msq.run()[0], MOCK_SEARCH_RESULTS[0])
+    
     def test_clone(self):
         self.bsq.add_filter('foo', 'bar')
         self.bsq.add_filter('foo__lt', '10')
@@ -119,17 +158,45 @@ class BaseSearchQuerySetTestCase(TestCase):
     def setUp(self):
         super(BaseSearchQuerySetTestCase, self).setUp()
         self.bsqs = BaseSearchQuerySet(query=DummySearchQuery())
+        self.msqs = BaseSearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend))
     
     def test_len(self):
         # Dummy always returns 0.
         self.assertEqual(len(self.bsqs), 0)
+        
+        self.assertEqual(len(self.msqs), 100)
     
     def test_iter(self):
-        pass
+        # Dummy always returns [].
+        self.assertEqual([result for result in self.bsqs.all()], [])
+        
+        results = self.msqs.all()
+        self.assertEqual([result for result in results], MOCK_SEARCH_RESULTS)
     
     def test_slice(self):
-        # DRL_FIXME: Will fail until the __getitem__ method works.
-        pass
+        self.assertEqual(self.msqs.all()[1:11], MOCK_SEARCH_RESULTS[1:11])
+        self.assertEqual(self.msqs.all()[50], MOCK_SEARCH_RESULTS[50])
+    
+    def test_manual_iter(self):
+        results = self.msqs.all()
+        
+        for offset, result in enumerate(results._manual_iter()):
+            self.assertEqual(result, MOCK_SEARCH_RESULTS[offset])
+    
+    def test_fill_cache(self):
+        results = self.msqs.all()
+        self.assertEqual(len(results._result_cache), 0)
+        results._fill_cache()
+        self.assertEqual(len(results._result_cache), 20)
+    
+    def test_cache_is_full(self):
+        # Dummy always has a count of 0 and an empty _result_cache, hence True.
+        self.assertEqual(self.bsqs._cache_is_full(), True)
+        
+        self.assertEqual(self.msqs._cache_is_full(), False)
+        results = self.msqs.all()
+        fire_the_iterator_and_fill_cache = [result for result in results]
+        self.assertEqual(results._cache_is_full(), True)
     
     def test_all(self):
         sqs = self.bsqs.all()
@@ -168,15 +235,18 @@ class BaseSearchQuerySetTestCase(TestCase):
         self.assertEqual(self.bsqs.count(), 0)
     
     def test_best_match(self):
-        # DRL_FIXME: Will fail until the __getitem__ method works.
-        # self.assert_(isinstance(self.bsqs.best_match(), SearchResult))
-        pass
+        self.assert_(isinstance(self.msqs.best_match(), SearchResult))
     
     def test_latest(self):
-        # DRL_FIXME: Will fail until the __getitem__ method works.
-        # self.assert_(isinstance(self.bsqs.best_match(), SearchResult))
-        pass
+        self.assert_(isinstance(self.msqs.latest('pub_date'), SearchResult))
     
     def test_clone(self):
-        # DRL_FIXME: Make sure to test this well.
-        pass
+        results = self.msqs.filter(foo='bar', foo__lt='10')
+        
+        clone = results._clone()
+        self.assert_(isinstance(clone, BaseSearchQuerySet))
+        self.assertEqual(clone.site, results.site)
+        self.assertEqual(str(clone.query), str(results.query))
+        self.assertEqual(clone._result_cache, [])
+        self.assertEqual(clone._result_count, None)
+        self.assertEqual(clone._cache_full, False)

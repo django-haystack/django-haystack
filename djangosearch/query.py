@@ -2,8 +2,10 @@ import djangosearch
 from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY
 
 
-# DRL_FIXME: Eventually support some sort of "or()" mechanism?
-# DRL_TODO: Eventually support some sort of boost mechanism? (index time and search time)
+# DRL_FIXME: Support some sort of "or()" method?
+# DRL_FIXME: Support some sort of "more-like-this" method?
+# DRL_TODO: Support some sort of "boost" method? (index time and search time)
+# DRL_TODO: Add an "in_bulk" method (something along the lines of load_all from old djangosearch).
 class BaseSearchQuerySet(object):
     """
     Provides a way to specify search parameters and lazily load results.
@@ -14,7 +16,7 @@ class BaseSearchQuerySet(object):
         self.query = query or djangosearch.backend.SearchQuery()
         self._result_cache = []
         self._result_count = None
-        self._iter = None
+        self._cache_full = False
         
         if site is not None:
             self.site = site
@@ -41,11 +43,15 @@ class BaseSearchQuerySet(object):
         return self.query.get_count()
     
     def __iter__(self):
-        if len(self._result_cache) == len(self):
+        if self._cache_is_full():
             # We've got a fully populated cache. Let Python do the hard work.
             return iter(self._result_cache)
         
         return self._manual_iter()
+    
+    def _cache_is_full(self):
+        # Use ">=" because it's possible that search results have disappeared.
+        return len(self._result_cache) >= len(self)
     
     def _manual_iter(self):
         # If we're here, our cache isn't fully populated.
@@ -71,16 +77,15 @@ class BaseSearchQuerySet(object):
     def _fill_cache(self):
         # Tell the query where to start from and how many we'd like.
         # DRL_FIXME: This seems ripe for off-by-one errors. Test it well.
+        if self._result_cache is None:
+            self._result_cache = []
+        
         cache_length = len(self._result_cache)
         self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
         
         for result in self.query.run():
             self._result_cache.append(result)
-                
     
-    # DRL_FIXME: This is cargo-culted from QuerySet. Adapt please.
-    #            Once complete, SearchPaginator can go away as the only things
-    #            it overrode will now be supported here.
     def __getitem__(self, k):
         """
         Retrieves an item or slice from the set of results.
@@ -93,39 +98,44 @@ class BaseSearchQuerySet(object):
                 "Negative indexing is not supported."
 
         if self._result_cache is not None:
-            if self._iter is not None:
-                # The result cache has only been partially populated, so we may
-                # need to fill it out a bit more.
+            if not self._cache_is_full():
+                # We need check to see if we need to populate more of the cache.
                 if isinstance(k, slice):
                     if k.stop is not None:
-                        # Some people insist on passing in strings here.
                         bound = int(k.stop)
                     else:
                         bound = None
                 else:
                     bound = k + 1
-                if len(self._result_cache) < bound:
-                    self._fill_cache(bound - len(self._result_cache))
+                
+                try:
+                    while len(self._result_cache) < bound:
+                        self._fill_cache()
+                except StopIteration:
+                    # There's nothing left, even though the bound is higher.
+                    pass
+            
             return self._result_cache[k]
 
         if isinstance(k, slice):
             qs = self._clone()
+            
             if k.start is not None:
                 start = int(k.start)
             else:
                 start = None
+            
             if k.stop is not None:
                 stop = int(k.stop)
             else:
                 stop = None
+            
             qs.query.set_limits(start, stop)
             return k.step and list(qs)[::k.step] or qs
-        try:
-            qs = self._clone()
-            qs.query.set_limits(k, k + 1)
-            return list(qs)[0]
-        except self.model.DoesNotExist, e:
-            raise IndexError, e.args
+        
+        qs = self._clone()
+        qs.query.set_limits(k, k + 1)
+        return list(qs)[0]
     
     
     # Methods that return a SearchQuerySet.
