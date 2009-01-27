@@ -35,10 +35,13 @@ class ModelIndex(object):
         subclasses which want to influence indexing behavior probably want to
         start here.
         """
-        # DRL_FIXME: Check with Ben S. about template paths. Thought we came up
-        #            with a pony we wanted.
+        # DRL_FIXME: Should we support the old path as well as Ben S.'s desired path?
         try:
-            t = loader.get_template('%s/%s_index.txt' % (obj._meta.app_label, obj._meta.module_name))
+            valid_paths = (
+                'search/indexes/%s/%s.txt' % (obj._meta.app_label, obj._meta.module_name),
+                '%s/%s_index.txt' % (obj._meta.app_label, obj._meta.module_name),
+            )
+            t = loader.select_template(valid_paths)
             return t.render(Context({'object': obj}))
         except TemplateDoesNotExist:
             return "\n".join([smart_unicode(getattr(obj, f.attname)) for f in obj._meta.fields])
