@@ -10,7 +10,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
    
-   division_of_labor
+   architecture_overview
    backend_support
    creating_new_backends
 
