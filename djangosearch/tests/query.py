@@ -31,7 +31,7 @@ class MockSearchBackend(SearchBackend):
 
 class MockSearchQuery(BaseSearchQuery):
     def get_count(self):
-        return len(self.run())
+        return len(MOCK_SEARCH_RESULTS)
     
     def build_query(self):
         return ''
@@ -131,6 +131,29 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_model(MockModel)
         self.assertEqual(len(self.bsq.models), 1)
     
+    def test_set_limits(self):
+        self.assertEqual(self.bsq.start_offset, 0)
+        self.assertEqual(self.bsq.end_offset, None)
+        
+        self.bsq.set_limits(10, 50)
+        self.assertEqual(self.bsq.start_offset, 10)
+        self.assertEqual(self.bsq.end_offset, 50)
+    
+    def test_clear_limits(self):
+        self.bsq.set_limits(10, 50)
+        self.assertEqual(self.bsq.start_offset, 10)
+        self.assertEqual(self.bsq.end_offset, 50)
+        
+        self.bsq.clear_limits()
+        self.assertEqual(self.bsq.start_offset, 0)
+        self.assertEqual(self.bsq.end_offset, None)
+    
+    def test_add_boost(self):
+        self.assertEqual(self.bsq.boost, {})
+        
+        self.bsq.add_boost('foo', 10)
+        self.assertEqual(self.bsq.boost, {'foo': 10})
+    
     def test_run(self):
         msq = MockSearchQuery(backend=MockSearchBackend)
         self.assertEqual(len(msq.run()), 100)
@@ -170,8 +193,9 @@ class BaseSearchQuerySetTestCase(TestCase):
         # Dummy always returns [].
         self.assertEqual([result for result in self.bsqs.all()], [])
         
-        results = self.msqs.all()
-        self.assertEqual([result for result in results], MOCK_SEARCH_RESULTS)
+        msqs = self.msqs.all()
+        results = [result for result in msqs]
+        self.assertEqual(results, MOCK_SEARCH_RESULTS)
     
     def test_slice(self):
         self.assertEqual(self.msqs.all()[1:11], MOCK_SEARCH_RESULTS[1:11])
@@ -225,6 +249,14 @@ class BaseSearchQuerySetTestCase(TestCase):
         sqs = bsqs.models(MockModel)
         self.assert_(isinstance(sqs, BaseSearchQuerySet))
         self.assertEqual(len(sqs.query.models), 1)
+    
+    def test_boost(self):
+        sqs = self.bsqs.boost(foo=10)
+        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assertEqual(len(sqs.query.boost.keys()), 1)
+    
+    def test_raw_search(self):
+        self.assertRaises(NotImplementedError, self.bsqs.raw_search, 'foo')
     
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')

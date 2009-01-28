@@ -2,7 +2,6 @@ import djangosearch
 from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY
 
 
-# DRL_TODO: Add a "raw_search" method for talking directly to the backend.
 class BaseSearchQuerySet(object):
     """
     Provides a way to specify search parameters and lazily load results.
@@ -73,7 +72,6 @@ class BaseSearchQuerySet(object):
     
     def _fill_cache(self):
         # Tell the query where to start from and how many we'd like.
-        # DRL_FIXME: This seems ripe for off-by-one errors. Test it well.
         if self._result_cache is None:
             self._result_cache = []
         
