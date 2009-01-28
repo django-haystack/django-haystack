@@ -2,10 +2,7 @@ import djangosearch
 from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY
 
 
-# DRL_FIXME: Support some sort of "or()" method?
-# DRL_FIXME: Support some sort of "more-like-this" method?
-# DRL_TODO: Support some sort of "boost" method? (index time and search time)
-# DRL_TODO: Add an "in_bulk" method (something along the lines of load_all from old djangosearch).
+# DRL_TODO: Add a "raw_search" method for talking directly to the backend.
 class BaseSearchQuerySet(object):
     """
     Provides a way to specify search parameters and lazily load results.
@@ -147,15 +144,29 @@ class BaseSearchQuerySet(object):
     def filter(self, **kwargs):
         """Narrows the search by looking for (and including) certain attributes."""
         clone = self._clone()
+        
         for expression, value in kwargs.items():
             clone.query.add_filter(expression, value)
+        
         return clone
     
     def exclude(self, **kwargs):
         """Narrows the search by ensuring certain attributes are not included."""
         clone = self._clone()
+        
         for expression, value in kwargs.items():
             clone.query.add_filter(expression, value, use_not=True)
+        
+        return clone
+    
+    # DRL_FIXME: Rename.
+    def filter_or(self, **kwargs):
+        """Narrows the search by ensuring certain attributes are not included."""
+        clone = self._clone()
+        
+        for expression, value in kwargs.items():
+            clone.query.add_filter(expression, value, use_or=True)
+        
         return clone
     
     def order_by(self, field):
@@ -166,9 +177,27 @@ class BaseSearchQuerySet(object):
     def models(self, *models):
         """Accepts an arbitrary number of Model classes to include in the search."""
         clone = self._clone()
+        
         for model in models:
             if model in self.site.get_indexed_models():
                 clone.query.add_model(model)
+        
+        return clone
+    
+    def boost(self, **kwargs):
+        """Boosts a certain aspect of the query."""
+        clone = self._clone()
+        
+        for field, boost_value in kwargs.items():
+            clone.query.add_boost(field, boost_value)
+        
+        return clone
+    
+    # DRL_TODO: Should this prevent other methods (filter/exclude/etc) from working?
+    def raw_search(self, query_string):
+        """Passes a raw query directly to the backend."""
+        clone = self._clone()
+        clone.query.raw_search(query_string)
         return clone
     
     def auto_query(self, query_string):
@@ -214,6 +243,16 @@ class BaseSearchQuerySet(object):
         clone.query.clear_order_by()
         clone.query.add_order_by("-%s" % date_field)
         return clone.best_match()
+    
+    # DRL_FIXME: Implement.
+    def in_bulk(self):
+        """Efficiently populates the objects in the search results."""
+        raise NotImplementedError
+    
+    # DRL_FIXME: Implement.
+    def more_like_this(self, model_instance):
+        """Finds similar results to the object passed in."""
+        raise NotImplementedError
     
     
     # Utility methods.

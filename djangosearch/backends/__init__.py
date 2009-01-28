@@ -121,6 +121,7 @@ class BaseSearchQuery(object):
         self.query_filters = []
         self.order_by = []
         self.models = set()
+        self.boost = {}
         self.start_offset = 0
         self.end_offset = None
         self.backend = None
@@ -194,10 +195,16 @@ class BaseSearchQuery(object):
             self.end_offset = int(high)
     
     def clear_limits(self):
-        """
-        Clears any existing limits.
-        """
+        """Clears any existing limits."""
         self.start_offset, self.end_offset = 0, None
+    
+    def add_boost(self, field, boost_value):
+        """Adds a boosted field and the amount to boost it to the query."""
+        self.boost[field] = boost_value
+    
+    def raw_search(self, query_string):
+        """Runs a raw query (no parsing) against the backend."""
+        return self.backend.search(query_string)
     
     def _clone(self, klass=None):
         if klass is None:
