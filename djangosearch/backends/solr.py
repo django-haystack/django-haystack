@@ -2,8 +2,7 @@ from datetime import datetime, date
 from pysolr import Solr
 from django.conf import settings
 from django.utils.encoding import force_unicode
-# from djangosearch.results import SearchResults
-from djangosearch.backends.base import SearchEngine as BaseSearchEngine
+from djangosearch.backends import SearchEngine as BaseSearchEngine
 
 
 # DRL_FIXME: Get clarification on the comment below.

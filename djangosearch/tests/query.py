@@ -1,6 +1,6 @@
 from django.db import models
 from django.test import TestCase
-from djangosearch.backends.base import SearchBackend, QueryFilter, BaseSearchQuery
+from djangosearch.backends import SearchBackend, QueryFilter, BaseSearchQuery
 from djangosearch.backends.dummy import SearchBackend as DummySearchBackend
 from djangosearch.backends.dummy import SearchQuery as DummySearchQuery
 from djangosearch.models import SearchResult

@@ -1,7 +1,7 @@
 """
 A fake backend for mocking during tests.
 """
-from djangosearch.backends.base import BaseSearchBackend, QueryFilter, BaseSearchQuery
+from djangosearch.backends import BaseSearchBackend, QueryFilter, BaseSearchQuery
 
 
 class SearchBackend(BaseSearchBackend):
