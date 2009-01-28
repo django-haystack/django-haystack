@@ -31,9 +31,14 @@ class BaseSearchBackend(object):
 
     def search(self, query):
         """
-        Takes a query to search on and returns populated SearchResult objects.
+        Takes a query to search on and returns dictionary.
         
         The query should be a string that is appropriate syntax for the backend.
+        
+        The returned dictionary should contain the keys 'results' and 'hits'.
+        The 'results' value should be an iterable of populated SearchResult
+        objects. The 'hits' should be an integer count of the number of matched
+        results the search backend found.
         """
         raise NotImplementedError
 
@@ -124,6 +129,8 @@ class BaseSearchQuery(object):
         self.boost = {}
         self.start_offset = 0
         self.end_offset = None
+        self._results = None
+        self._hit_count = None
         self.backend = None
         
         if backend is not None:
@@ -153,13 +160,18 @@ class BaseSearchQuery(object):
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        return self.backend.search(final_query)
+        results = self.backend.search(final_query)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
+    
+    def get_count(self):
+        if self._hit_count is None:
+            self.run()
+        
+        return self._hit_count
     
     
     # Methods for backends to implement.
-    
-    def get_count(self):
-        raise NotImplementedError("Subclasses must provide a way to return the total hits via the 'get_count' method.")
     
     def build_query(self):
         raise NotImplementedError("Subclasses must provide a way to generate the query via the 'build_query' method.")

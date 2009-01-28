@@ -1,8 +1,9 @@
-from datetime import datetime, date
 from pysolr import Solr
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_unicode
 from djangosearch.backends import SearchEngine as BaseSearchEngine
+from djangosearch.backends import BaseSearchQuery
 
 
 # DRL_FIXME: Get clarification on the comment below.
@@ -13,9 +14,12 @@ from djangosearch.backends import SearchEngine as BaseSearchEngine
 
 class SearchEngine(BaseSearchEngine):
     def __init__(self):
-        # DRL_FIXME: Reasonable default? Raise ImproperlyConfigured?
-        args = getattr(settings, 'SOLR_URL', 'http://localhost:9000/solr/default')
-        self.conn = Solr(args)
+        if not hasattr(settings, 'SOLR_URL'):
+            raise ImproperlyConfigured('You must specify a SOLR_URL in your settings.')
+        
+        # DRL_TODO: This should handle the connection more graceful, especially
+        #           if the backend is down.
+        self.conn = Solr(settings.SOLR_URL)
 
     def _models_query(self, models):
         def qt(model):
@@ -46,36 +50,51 @@ class SearchEngine(BaseSearchEngine):
     def clear(self, models, commit=True):
         # *:* matches all docs in Solr
         self.conn.delete(q='*:*', commit=commit)
-
+    
+    # DRL_FIXME: Remove?
     def _result_callback(self, result):
         app_label, model_name = result['django_ct_s'].split('.')
         return (app_label, model_name, result['django_id_s'], None)
 
-    # DRL_FIXME: Relevance removed. Should probably be taking a SearchQuerySet.
-    def search(self, q, models=None, order_by=None, limit=None, offset=None):
-        if len(q) == 0:
-            return SearchResults(q, [], 0, lambda x: x)
-        original_query = q
-        # DRL_FIXME: QueryConverter no longer exists.
-        # q = convert_query(original_query, SolrQueryConverter)
+    def search(self, query_string):
+        if len(query_string) == 0:
+            return []
+        
+        results = self.conn.search(query_string)
+        # DRL_TODO: Do we want a class here instead? I don't think so (as
+        #           there's no behavior to go with it).
+        return {
+            'results': iter(results.docs),
+            'hits': results.hits,
+        }
 
-        if models is not None:
-            models_clause = self._models_query(models)
-            final_q = '(%s) AND (%s)' % (q, models_clause)
-        else:
-            final_q = q
 
-        kwargs = {}
-        if order_by != RELEVANCE:
-            if order_by[0] == '-':
-                kwargs['sort'] = '%s desc' % order_by[1:]
-            else:
-                kwargs['sort'] = '%s asc' % order_by
-
-        if limit is not None:
-            kwargs['rows'] = limit
-        if offset is not None:
-            kwargs['start'] = offset
-
-        results = self.conn.search(final_q, **kwargs)
-        return SearchResults(final_q, iter(results.docs), results.hits, self._result_callback)
+class SearchQuery(BaseSearchQuery):
+    def get_count(self):
+        pass
+    
+    def build_query(self):
+        # Old Implementation.
+        # original_query = q
+        # 
+        # if models is not None:
+        #     models_clause = self._models_query(models)
+        #     final_q = '(%s) AND (%s)' % (q, models_clause)
+        # else:
+        #     final_q = q
+        # 
+        # kwargs = {}
+        # if order_by != RELEVANCE:
+        #     if order_by[0] == '-':
+        #         kwargs['sort'] = '%s desc' % order_by[1:]
+        #     else:
+        #         kwargs['sort'] = '%s asc' % order_by
+        # 
+        # if limit is not None:
+        #     kwargs['rows'] = limit
+        # if offset is not None:
+        #     kwargs['start'] = offset
+        pass
+    
+    def clean(self, query_fragment):
+        pass
