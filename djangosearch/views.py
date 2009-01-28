@@ -1,16 +1,16 @@
 from django.conf import settings
+from django.core.paginator import Paginator
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext as Context
 from djangosearch import search
 from djangosearch.forms import ModelSearchForm
-from djangosearch.paginator import SearchPaginator
 
 
 RESULTS_PER_PAGE = getattr(settings, 'SEARCH_RESULTS_PER_PAGE', 20)
 
 
-# DRL_FIXME: Kinda wondering why this is class-based. Extension by others?
+# DRL_FIXME: Split into lots of calls for easy extension.
 class SearchView(object):
     def __init__(self, template=None, load_all=True):
         self.load_all = load_all
@@ -41,7 +41,7 @@ class SearchView(object):
         # DRL_FIXME: What does the following comment even mean?
         # XXX: implement load_all
 
-        paginator = SearchPaginator(results, RESULTS_PER_PAGE)
+        paginator = Paginator(results, RESULTS_PER_PAGE)
         context = Context(request, {
             'query': query,
             'form': form,
