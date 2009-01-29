@@ -11,6 +11,7 @@ Contents:
    :maxdepth: 2
    
    tutorial
+   searchqueryset_api
    architecture_overview
    backend_support
    creating_new_backends
