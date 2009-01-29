@@ -55,7 +55,7 @@ class SearchBackend(BaseSearchBackend):
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct_s'].split('.')
-            result = SearchResult(app_label, model_name, result['django_id_s'], result['score'])
+            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'])
             results.append(result)
         
         # DRL_TODO: Do we want a class here instead? I don't think so (as
