@@ -86,11 +86,16 @@ class SearchQuery(BaseSearchQuery):
                 
                 if the_filter.is_or():
                     query_chunks.append('OR')
-                    
+                
+                value = the_filter.value
+                
+                if ' ' in value:
+                    value = "'%s'" % value
+                
                 if the_filter.field == 'content':
-                    query_chunks.append(the_filter.value)
+                    query_chunks.append(value)
                 else:
-                    query_chunks.append("%s:%s" % (the_filter.field, the_filter.value))
+                    query_chunks.append("%s:%s" % (the_filter.field, value))
             
             if query_chunks[0] in ('AND', 'OR'):
                 # Pull off an undesirable leading "AND" or "OR".

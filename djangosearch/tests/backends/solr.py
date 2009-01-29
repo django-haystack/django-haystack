@@ -47,4 +47,4 @@ class SolrSearchQueryTestCase(TestCase):
     
     def test_build_query_phrase(self):
         self.sq.add_filter('content', 'hello world')
-        self.assertEqual(self.sq.build_query(), 'hello world')
+        self.assertEqual(self.sq.build_query(), "'hello world'")
