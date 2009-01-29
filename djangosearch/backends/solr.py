@@ -2,8 +2,8 @@ from pysolr import Solr
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_unicode
-from djangosearch.backends import SearchEngine as BaseSearchEngine
-from djangosearch.backends import BaseSearchQuery
+from djangosearch.backends import BaseSearchBackend, BaseSearchQuery
+from djangosearch.models import SearchResult
 
 
 # DRL_FIXME: Get clarification on the comment below.
@@ -12,7 +12,7 @@ from djangosearch.backends import BaseSearchQuery
 # though. Is it even worth it?
 
 
-class SearchEngine(BaseSearchEngine):
+class SearchBackend(BaseSearchBackend):
     def __init__(self):
         if not hasattr(settings, 'SOLR_URL'):
             raise ImproperlyConfigured('You must specify a SOLR_URL in your settings.')
@@ -20,11 +20,6 @@ class SearchEngine(BaseSearchEngine):
         # DRL_TODO: This should handle the connection more graceful, especially
         #           if the backend is down.
         self.conn = Solr(settings.SOLR_URL)
-
-    def _models_query(self, models):
-        def qt(model):
-            return 'django_ct_s:"%s.%s"' % (model._meta.app_label, model._meta.module_name)
-        return ' OR '.join([qt(model) for model in models])
 
     def update(self, indexer, iterable, commit=True):
         docs = []
@@ -50,51 +45,95 @@ class SearchEngine(BaseSearchEngine):
     def clear(self, models, commit=True):
         # *:* matches all docs in Solr
         self.conn.delete(q='*:*', commit=commit)
-    
-    # DRL_FIXME: Remove?
-    def _result_callback(self, result):
-        app_label, model_name = result['django_ct_s'].split('.')
-        return (app_label, model_name, result['django_id_s'], None)
 
     def search(self, query_string):
         if len(query_string) == 0:
             return []
         
-        results = self.conn.search(query_string)
+        raw_results = self.conn.search(query_string)
+        results = []
+        
+        for raw_result in raw_results.docs:
+            app_label, model_name = raw_result['django_ct_s'].split('.')
+            result = SearchResult(app_label, model_name, result['django_id_s'], result['score'])
+            results.append(result)
+        
         # DRL_TODO: Do we want a class here instead? I don't think so (as
         #           there's no behavior to go with it).
         return {
-            'results': iter(results.docs),
-            'hits': results.hits,
+            'results': results,
+            'hits': raw_results.hits,
         }
 
 
 class SearchQuery(BaseSearchQuery):
-    def get_count(self):
-        pass
-    
     def build_query(self):
-        # Old Implementation.
-        # original_query = q
-        # 
-        # if models is not None:
-        #     models_clause = self._models_query(models)
-        #     final_q = '(%s) AND (%s)' % (q, models_clause)
-        # else:
-        #     final_q = q
-        # 
-        # kwargs = {}
-        # if order_by != RELEVANCE:
-        #     if order_by[0] == '-':
-        #         kwargs['sort'] = '%s desc' % order_by[1:]
-        #     else:
-        #         kwargs['sort'] = '%s asc' % order_by
-        # 
-        # if limit is not None:
-        #     kwargs['rows'] = limit
-        # if offset is not None:
-        #     kwargs['start'] = offset
-        pass
+        query = ''
+        
+        # DRL_FIXME: Handle the filters.
+        if not self.query_filters:
+            # Match all.
+            query = '*:*'
+        else:
+            query_chunks = []
+            
+            for the_filter in self.query_filters:
+                if the_filter.is_and():
+                    query_chunks.append('AND')
+                
+                if the_filter.is_not():
+                    query_chunks.append('NOT')
+                
+                if the_filter.is_or():
+                    query_chunks.append('OR')
+                    
+                if the_filter.field == 'content':
+                    query_chunks.append(the_filter.value)
+                else:
+                    query_chunks.append("%s:%s" % (the_filter.field, the_filter.value))
+            
+            if query_chunks[0] in ('AND', 'OR'):
+                # Pull off an undesirable leading "AND" or "OR".
+                del(query_chunks[0])
+            
+            query = " ".join(query_chunks)
+        
+        if len(self.models):
+            models = ['django_ct_s:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
+            models_clause = ' OR '.join(models)
+            final_query = '(%s) AND (%s)' % (query, models_clause)
+        else:
+            final_query = query
+        
+        # DRL_FIXME: Handle boost.
+        
+        return final_query
     
     def clean(self, query_fragment):
+        # DRL_FIXME: Not sure what characters are invalid/reserved.
         pass
+    
+    def run(self):
+        """Builds and executes the query. Returns a list of search results."""
+        final_query = self.build_query()
+        kwargs = {
+            'fl': '*,score',
+        }
+        
+        if self.order_by:
+            order_by = self.order_by[0]
+            
+            if order_by.startswith('-'):
+                kwargs['sort'] = '%s desc' % order_by[1:]
+            else:
+                kwargs['sort'] = '%s asc' % order_by
+        
+        if self.start_offset:
+            kwargs['start'] = self.start_offset
+        
+        if self.end_offset is not None:
+            kwargs['rows'] = self.end_offset - self.start_offset
+        
+        results = self.backend.search(final_query, **kwargs)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
