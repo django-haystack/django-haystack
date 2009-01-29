@@ -30,9 +30,6 @@ class MockSearchBackend(SearchBackend):
 
 
 class MockSearchQuery(BaseSearchQuery):
-    def get_count(self):
-        return len(MOCK_SEARCH_RESULTS)
-    
     def build_query(self):
         return ''
     
@@ -43,7 +40,8 @@ class MockSearchQuery(BaseSearchQuery):
         # To simulate the chunking behavior of a regular search, return a slice
         # of our results using start/end offset.
         final_query = self.build_query()
-        return self.backend.search(final_query)[self.start_offset:self.end_offset]
+        self._results = self.backend.search(final_query)[self.start_offset:self.end_offset]
+        self._hit_count = len(MOCK_SEARCH_RESULTS)
 
 
 class QueryFilterTestCase(TestCase):
@@ -156,8 +154,8 @@ class BaseSearchQueryTestCase(TestCase):
     
     def test_run(self):
         msq = MockSearchQuery(backend=MockSearchBackend)
-        self.assertEqual(len(msq.run()), 100)
-        self.assertEqual(msq.run()[0], MOCK_SEARCH_RESULTS[0])
+        self.assertEqual(len(msq.get_results()), 100)
+        self.assertEqual(msq.get_results()[0], MOCK_SEARCH_RESULTS[0])
     
     def test_clone(self):
         self.bsq.add_filter('foo', 'bar')

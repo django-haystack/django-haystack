@@ -170,6 +170,12 @@ class BaseSearchQuery(object):
         
         return self._hit_count
     
+    def get_results(self):
+        if self._results is None:
+            self.run()
+        
+        return self._results
+    
     
     # Methods for backends to implement.
     

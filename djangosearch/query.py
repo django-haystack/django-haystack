@@ -77,8 +77,9 @@ class BaseSearchQuerySet(object):
         
         cache_length = len(self._result_cache)
         self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
+        self.query.run()
         
-        for result in self.query.run():
+        for result in self.query.get_results():
             self._result_cache.append(result)
     
     def __getitem__(self, k):
