@@ -126,6 +126,8 @@ class SearchQuery(BaseSearchQuery):
         }
         
         if self.order_by:
+            # DRL_FIXME: From the looks of the docs, maybe we can have multiple
+            #            order_by's (like our API supports).
             order_by = self.order_by[0]
             
             if order_by.startswith('-'):
