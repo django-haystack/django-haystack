@@ -10,6 +10,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
    
+   tutorial
    architecture_overview
    backend_support
    creating_new_backends
