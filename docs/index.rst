@@ -5,8 +5,6 @@
 Welcome to Djangosearch's documentation!
 ========================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 2
    
