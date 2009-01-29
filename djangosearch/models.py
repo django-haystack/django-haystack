@@ -26,7 +26,11 @@ class SearchResult(object):
         if self._object is None:
             self._object = self.model._default_manager.get(pk=self.pk)
         return self._object
-    object = property(_get_object)
+    
+    def _set_object(self, obj):
+        self._object = obj
+    
+    object = property(_get_object, _set_object)
 
     def content_type(self):
         return unicode(self.model._meta)

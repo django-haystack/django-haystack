@@ -13,6 +13,7 @@ class BaseSearchQuerySet(object):
         self._result_cache = []
         self._result_count = None
         self._cache_full = False
+        self._load_all = False
         
         if site is not None:
             self.site = site
@@ -78,9 +79,39 @@ class BaseSearchQuerySet(object):
         cache_length = len(self._result_cache)
         self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
         self.query.run()
+        results = self.query.get_results()
         
-        for result in self.query.get_results():
+        # Check if we wish to load all objects.
+        if self._load_all:
+            original_results = []
+            models_pks = {}
+            loaded_objects = {}
+
+            # Remember the search position for each result so we don't have to resort later.
+            for result in results:
+                original_results.append(result)
+                models_pks.setdefault(result.model, []).append(result.pk)
+            
+            # Load the objects for each model in turn
+            for model in models_pks:
+                loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
+            
+        for result in results:
+            if self._load_all:
+                # We have to deal with integer keys being cast from strings; if this
+                # fails we've got a character pk.
+                try:
+                    result.pk = int(result.pk)
+                except ValueError:
+                    pass
+                try:
+                    result._object = loaded_objects[result.model][result.pk]
+                except KeyError:
+                    # The object must have been deleted since we indexed; fail silently.
+                    continue
+            
             self._result_cache.append(result)
+    
     
     def __getitem__(self, k):
         """
@@ -199,6 +230,12 @@ class BaseSearchQuerySet(object):
         clone.query.raw_search(query_string)
         return clone
     
+    def load_all(self):
+        """Efficiently populates the objects in the search results."""
+        clone = self._clone()
+        clone._load_all = True
+        return clone
+    
     def auto_query(self, query_string):
         """
         Performs a best guess constructing the search query.
@@ -242,11 +279,6 @@ class BaseSearchQuerySet(object):
         clone.query.clear_order_by()
         clone.query.add_order_by("-%s" % date_field)
         return clone.best_match()
-    
-    # DRL_FIXME: Implement.
-    def in_bulk(self):
-        """Efficiently populates the objects in the search results."""
-        raise NotImplementedError
     
     # DRL_FIXME: Implement.
     def more_like_this(self, model_instance):

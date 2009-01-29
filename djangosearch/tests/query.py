@@ -8,8 +8,20 @@ from djangosearch.query import BaseSearchQuerySet
 from djangosearch.sites import IndexSite
 
 
+class MockDefaultManager(object):
+    def in_bulk(self, pk_array):
+        results = {}
+        
+        for pk in pk_array:
+            mock = MockModel()
+            mock.foo = 'bar'
+            results[pk] = mock
+        
+        return results
+            
+
 class MockModel(models.Model):
-    pass
+    _default_manager = MockDefaultManager()
 
 
 class MockSearchResult(SearchResult):
@@ -255,6 +267,11 @@ class BaseSearchQuerySetTestCase(TestCase):
     
     def test_raw_search(self):
         self.assertRaises(NotImplementedError, self.bsqs.raw_search, 'foo')
+    
+    def test_load_all(self):
+        sqs = self.msqs.load_all()
+        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assertEqual(sqs[0].object.foo, 'bar')
     
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
