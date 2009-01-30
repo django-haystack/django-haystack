@@ -131,12 +131,7 @@ class BaseSearchQuery(object):
         self.end_offset = None
         self._results = None
         self._hit_count = None
-        self.backend = None
-        
-        if backend is not None:
-            self.backend = backend()
-        else:
-            self.backend = SearchBackend()
+        self.backend = backend or SearchBackend()
     
     def __str__(self):
         return self.build_query()

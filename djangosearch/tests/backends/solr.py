@@ -11,7 +11,7 @@ class SolrSearchQueryTestCase(TestCase):
         self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9000/solr/default')
         settings.SOLR_URL = 'http://localhost:9000/solr/default'
         
-        self.sq = SearchQuery(backend=SearchBackend)
+        self.sq = SearchQuery(backend=SearchBackend())
     
     def tearDown(self):
         settings.SOLR_URL = self.old_solr_url

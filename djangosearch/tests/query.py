@@ -92,7 +92,7 @@ class QueryFilterTestCase(TestCase):
 class BaseSearchQueryTestCase(TestCase):
     def setUp(self):
         super(BaseSearchQueryTestCase, self).setUp()
-        self.bsq = BaseSearchQuery(backend=DummySearchBackend)
+        self.bsq = BaseSearchQuery(backend=DummySearchBackend())
     
     def test_get_count(self):
         self.assertRaises(NotImplementedError, self.bsq.get_count)
@@ -165,7 +165,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(self.bsq.boost, {'foo': 10})
     
     def test_run(self):
-        msq = MockSearchQuery(backend=MockSearchBackend)
+        msq = MockSearchQuery(backend=MockSearchBackend())
         self.assertEqual(len(msq.get_results()), 100)
         self.assertEqual(msq.get_results()[0], MOCK_SEARCH_RESULTS[0])
     
@@ -190,8 +190,8 @@ class BaseSearchQueryTestCase(TestCase):
 class BaseSearchQuerySetTestCase(TestCase):
     def setUp(self):
         super(BaseSearchQuerySetTestCase, self).setUp()
-        self.bsqs = BaseSearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend))
-        self.msqs = BaseSearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend))
+        self.bsqs = BaseSearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
+        self.msqs = BaseSearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
     
     def test_len(self):
         # Dummy always returns 0.
