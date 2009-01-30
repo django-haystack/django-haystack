@@ -4,16 +4,33 @@ import djangosearch
 from djangosearch.query import SearchQuerySet
 
 
-def model_choices():
-    choices = [(m._meta, unicode(m._meta.verbose_name_plural)) for m in djangosearch.site.get_indexed_models()]
-    return sorted(choices, key=lambda x: unicode(x._meta.verbose_name_plural))
+def model_choices(site=None):
+    if site is None:
+        site = djangosearch.site
+    
+    choices = [(m._meta, unicode(m._meta.verbose_name_plural)) for m in site.get_indexed_models()]
+    return sorted(choices, key=lambda x: x[1])
 
 
 class SearchForm(forms.Form):
     query = forms.CharField(required=False)
     
+    def __init__(self, *args, **kwargs):
+        self.searchqueryset = kwargs.get('searchqueryset', None)
+        
+        if self.searchqueryset is None:
+            self.searchqueryset = SearchQuerySet
+        
+        try:
+            del(kwargs['searchqueryset'])
+        except KeyError:
+            pass
+        
+        super(SearchForm, self).__init__(*args, **kwargs)
+    
     def search(self):
-        return SearchQuerySet.auto_query(self.cleaned_data['query'])
+        self.clean()
+        return self.searchqueryset.auto_query(self.cleaned_data['query'])
 
 
 class ModelSearchForm(SearchForm):
@@ -29,4 +46,5 @@ class ModelSearchForm(SearchForm):
         return search_models
     
     def search(self):
-        return super(ModelSearchForm, self).search().models(self.get_models())
+        sqs = super(ModelSearchForm, self).search()
+        return sqs.models(self.get_models())

@@ -10,17 +10,18 @@ RESULTS_PER_PAGE = getattr(settings, 'SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):
-    def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, context_class=RequestContext):
+    def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext):
         self.load_all = load_all
         self.template = template or 'search/search.html'
         self.form_class = form_class
         self.context_class = context_class
+        self.searchqueryset = searchqueryset
 
     def __name__(self):
         return "SearchView"
 
     def __call__(self, request):
-        form = self.form_class(request.GET)
+        form = self.form_class(request.GET, searchqueryset=self.searchqueryset)
         query = ''
         results = []
         
