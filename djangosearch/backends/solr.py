@@ -122,7 +122,8 @@ class SearchQuery(BaseSearchQuery):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         kwargs = {
-            'fl': '*,score',
+            # pysolr doesn't accept this but should.
+            # 'fl': '*,score',
         }
         
         if self.order_by:
