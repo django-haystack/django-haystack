@@ -3,5 +3,5 @@ from djangosearch.views import SearchView
 
 
 urlpatterns = patterns('djangosearch.views',
-    url(r'^$', SearchView, name='djangosearch_search'),
+    url(r'^$', SearchView(), name='djangosearch_search'),
 )

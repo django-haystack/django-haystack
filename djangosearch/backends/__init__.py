@@ -118,7 +118,7 @@ class BaseSearchQuery(object):
     convert that to a valid query for the search backend.
     
     Backends should extend this class and provide implementations for
-    ``get_count``, ``build_query`` and ``clean``. See the ``solr`` backend
+    ``build_query`` and ``clean``. See the ``solr`` backend
     for an example implementation.
     """
     
@@ -222,7 +222,9 @@ class BaseSearchQuery(object):
     
     def raw_search(self, query_string):
         """Runs a raw query (no parsing) against the backend."""
-        return self.backend.search(query_string)
+        results = self.backend.search(query_string)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
     
     def _clone(self, klass=None):
         if klass is None:

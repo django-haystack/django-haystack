@@ -190,7 +190,7 @@ class BaseSearchQueryTestCase(TestCase):
 class BaseSearchQuerySetTestCase(TestCase):
     def setUp(self):
         super(BaseSearchQuerySetTestCase, self).setUp()
-        self.bsqs = BaseSearchQuerySet(query=DummySearchQuery())
+        self.bsqs = BaseSearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend))
         self.msqs = BaseSearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend))
     
     def test_len(self):
@@ -266,7 +266,8 @@ class BaseSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs.query.boost.keys()), 1)
     
     def test_raw_search(self):
-        self.assertRaises(NotImplementedError, self.bsqs.raw_search, 'foo')
+        self.assertEqual(len(self.bsqs.raw_search('foo')), 0)
+        self.assertEqual(len(self.bsqs.raw_search('content__exact hello AND content__exact world')), 1)
     
     def test_load_all(self):
         sqs = self.msqs.load_all()
