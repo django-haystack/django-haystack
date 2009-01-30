@@ -10,12 +10,25 @@ One main implementation.
 * Standard API that loosely follows QuerySet
 * Handles most queries
 * Allows for custom "parsing"/building through API
-* Dispatches to backend for actual query
+* Dispatches to SearchQuery for actual query
 * Handles automatically creating a query
+* Allows for raw queries to be passed straight to backend.
 
 
 SearchQuery
 ===========
+
+Implemented per-backend.
+
+* Method for building the query out of the structured data.
+* Method for cleaning a string of reserved characters used by the backend.
+
+Main class provides:
+
+* Methods to add filters/models/order-by/boost/limits to the search.
+* Method to perform a raw search.
+* Method to get the number of hits.
+* Method to return the results provided by the backend (likely not a full list).
 
 
 SearchBackend
@@ -31,4 +44,11 @@ Implemented per-backend.
 
 IndexSite
 =========
+
+One main implementation.
+
+* Standard API that loosely follows django.contrib.admin.sites.AdminSite
+* Handles registering/unregistering models to search on a per-site basis.
+* Provides a means of adding custom indexes to a model, like ModelAdmins.
+
 

@@ -56,33 +56,33 @@ SearchQuerySet Methods
 Methods That Return A SearchQuerySet
 ------------------------------------
 
-```all(self):```
+``all(self):``
 Returns all results for the query.
 
-```filter(self, **kwargs):```
+``filter(self, **kwargs)``
 Narrows the search by looking for (and including) certain attributes.
 
-```exclude(self, **kwargs):```
+``exclude(self, **kwargs)``
 Narrows the search by ensuring certain attributes are not included.
 
-```filter_or(self, **kwargs):```
+``filter_or(self, **kwargs)``
 Narrows the search by ensuring certain attributes are not included.
 
-```order_by(self, field):```
+``order_by(self, field)``
 
-```models(self, *models):```
+``models(self, *models)``
 Accepts an arbitrary number of Model classes to include in the search.
 
-```boost(self, **kwargs):```
+``boost(self, **kwargs)``
 Boosts a certain aspect of the query.
 
-```raw_search(self, query_string):```
+``raw_search(self, query_string)``
 Passes a raw query directly to the backend.
 
-```load_all(self):```
+``load_all(self)``
 Efficiently populates the objects in the search results.
 
-```auto_query(self, query_string):```
+``auto_query(self, query_string)``
 
 Performs a best guess constructing the search query.
 
@@ -93,14 +93,14 @@ common cases.
 Methods That Do Not Return A SearchQuerySet
 -------------------------------------------
 
-```count(self):```
+``count(self)``
 Returns the total number of matching results.
 
-```best_match(self):```
+``best_match(self)``
 Returns the best/top search result that matches the query.
 
-```latest(self, date_field):```
+``latest(self, date_field)``
 Returns the most recent search result that matches the query.
 
-```more_like_this(self, model_instance):```
+``more_like_this(self, model_instance)``
 Finds similar results to the object passed in.

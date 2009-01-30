@@ -70,7 +70,7 @@ class SearchQuery(BaseSearchQuery):
     def build_query(self):
         query = ''
         
-        # DRL_FIXME: Handle the filters.
+        # DRL_FIXME: Handle the other filter types.
         if not self.query_filters:
             # Match all.
             query = '*:*'

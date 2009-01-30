@@ -7,8 +7,8 @@ The process should be fairly simple.
 #. Create new backend file. Name is important.
 #. Two classes inside.
 
-   #. SearchBackend
-   #. SearchQuery
+   #. SearchBackend (inherit from djangosearch.backends.BaseSearchBackend)
+   #. SearchQuery (inherit from djangosearch.backends.BaseSearchQuery)
 
 
 SearchBackend
@@ -29,5 +29,5 @@ SearchQuery
 Responsible for taking structured data about the query and converting it into a
 backend appropriate format.
 
-* Method for creating the backend specific query - build_query
-* Method for sanitizing user queries - clean
+* Method for creating the backend specific query - ``build_query``.
+* Method for sanitizing user queries - ``clean``.
