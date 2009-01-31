@@ -1,18 +1,49 @@
-from django.utils.encoding import smart_unicode
-from django.template import loader, Context, TemplateDoesNotExist
+from django.template import loader, Context
+import djangosearch
+
+
+class SearchFieldError(Exception):
+    pass
+
+
+class DeclarativeMetaclass(type):
+    def __new__(cls, name, bases, attrs):
+        attrs['fields'] = [(field_name, attrs.pop(field_name)) for field_name, obj in attrs.items() if isinstance(obj, SearchField)]
+        return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
 class ModelIndex(object):
     """
-    Provides the search functionality for a model.
-    """
+    Base class for building indexes.
     
-    def __init__(self, fields=[], model=None):
-        # Avoid a circular import by putting this here
-        from djangosearch import backend
-        self.fields = fields
+    An example might look like this::
+    
+        import datetime
+        from djangosearch import indexes
+        from myapp.models import Note
+        
+        class NoteIndex(indexes.ModelIndex):
+            text = indexes.ContentField()
+            author = indexes.CharField('user')
+            pub_date = indexes.DateTimeField('pub_date')
+            
+            def get_query_set(self):
+                return super(NoteIndex, self).get_query_set().filter(pub_date__lte=datetime.datetime.now())
+    
+    """
+    __metaclass__ = DeclarativeMetaclass
+    
+    def __init__(self, model, backend=None):
         self.model = model
-        self.backend = backend.SearchBackend()
+        self.backend = backend or djangosearch.backend()
+        content_fields = []
+        
+        for field_name, field in self.fields:
+            if isinstance(field, ContentField):
+                content_fields.append(field)
+        
+        if len(content_fields) <= 0 or len(content_fields) > 1:
+            raise SearchFieldError("An index must have one ContentField.")
 
     def get_query_set(self):
         """
@@ -21,75 +52,14 @@ class ModelIndex(object):
         Subclasses can override this method to avoid indexing certain objects.
         """
         return self.model._default_manager.all()
-
-    def flatten(self, obj):
+    
+    def get_fields(self, obj):
         """
-        Flatten an object for indexing.
+        Gets the indexed fields for this object and returns a list of tuples.
         
-        First, we try to load a template, '{app_name}/{model_name}_index.txt'
-        and if found, returns the result of rendering that template. 'object'
-        will be in its context.
-        
-        If the template isn't found, defaults to a newline-joined list of each
-        of the object's fields, which may or may not be what you want;
-        subclasses which want to influence indexing behavior probably want to
-        start here.
+        The tuple format looks like (fieldname, value).
         """
-        # DRL_FIXME: Should we support the old path as well as Ben S.'s desired path?
-        try:
-            valid_paths = (
-                'search/indexes/%s/%s.txt' % (obj._meta.app_label, obj._meta.module_name),
-                '%s/%s_index.txt' % (obj._meta.app_label, obj._meta.module_name),
-            )
-            t = loader.select_template(valid_paths)
-            return t.render(Context({'object': obj}))
-        except TemplateDoesNotExist:
-            return "\n".join([smart_unicode(getattr(obj, f.attname)) for f in obj._meta.fields])
-
-    def should_index(self, obj):
-        """
-        Returns True if the given object should be indexed.
-        
-        Subclasses that limit indexing using get_query_set() should also
-        define this method to prevent incremental indexing of excluded
-        objects.
-        """
-        return True
-
-    def get_indexed_fields(self, obj):
-        """
-        Get the individually indexed fields for this object; returns a list of
-        (fieldname, value) tuples.
-        
-        Indexed fields can be searched individually (i,e, "name:jacob"). Most
-        subclasses won't need to override the default behavior, which uses the
-        ``fields`` initializer argument.
-        
-        Duplicate field names are allowed. For instance you could return
-        
-            [('f', 'value 1'), ('f', 'value 2')]
-        
-        The engine itself is responsible for collapsing that to the proper
-        representation if needed.
-        
-        """
-        fields = []
-        for field in self.fields:
-            try:
-                value = getattr(obj, field)
-            except AttributeError:
-                continue
-            if callable(value):
-                value = value()
-            elif hasattr(value, 'get_query_set'):
-                # default handling for ManyToManyField
-                # XXX: note that this is kinda damaged right now because the
-                # post_save signal is sent *before* m2m fields are updated.
-                # see http://code.djangoproject.com/ticket/5390 for a possible fix.
-                value = ','.join([smart_unicode(o) for o in value.get_query_set()])
-            db_field = obj._meta.get_field(field)
-            fields.append((field, self.backend.prep_value(db_field, value)))
-        return fields
+        return [(field_name, self.backend.prep_value(field.get_value(obj))) for field_name, field in self.fields]
 
     def update(self):
         """Update the entire index"""
@@ -103,7 +73,10 @@ class ModelIndex(object):
         self.backend.update(self, [instance])
 
     def remove_object(self, instance, **kwargs):
-        """Remove an object from the index. Attached to the class's delete hook."""
+        """
+        Remove an object from the index. Attached to the class's 
+        post-delete hook.
+        """
         self.backend.remove(instance)
 
     def clear(self):
@@ -114,3 +87,65 @@ class ModelIndex(object):
         """Completely clear the index for this model and rebuild it."""
         self.clear()
         self.update()
+
+
+# All the SearchFields variants.
+
+class SearchField(object):
+    def __init__(self, db_field_name):
+        self.db_field_name = db_field_name
+    
+    def get_value(self, obj):
+        return getattr(obj, self.db_field_name, '')
+
+
+class ContentField(SearchField):
+    def __init__(self):
+        self.db_field_name = None
+    
+    def get_value(self, obj):
+        """
+        Flatten an object for indexing.
+        
+        This loads a template, ``search/indexes/{app_label}/{model_name}.txt``
+        and returns the result of rendering that template. ``object``
+        will be in its context.
+        """
+        t = loader.get_template('search/indexes/%s/%s.txt' % (obj._meta.app_label, obj._meta.module_name))
+        return t.render(Context({'object': obj}))
+
+
+class CharField(SearchField):
+    pass
+
+
+class NumberField(SearchField):
+    pass
+
+
+class DateField(SearchField):
+    pass
+
+
+class TimeField(SearchField):
+    pass
+
+
+class DateTimeField(SearchField):
+    pass
+
+
+class MultiValueField(SearchField):
+    pass
+
+
+class StoredField(SearchField):
+    def get_value(self, obj):
+        """
+        Flatten an object for storage (non-indexed).
+        
+        This is useful if you know in advance what you want to display in the
+        search results and want to save on hits to the DB.
+        """
+        t = loader.get_template('search/indexes/%s/%s_stored.txt' % (obj._meta.app_label, obj._meta.module_name))
+        return t.render(Context({'object': obj}))

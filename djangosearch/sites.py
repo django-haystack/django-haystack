@@ -47,7 +47,7 @@ class IndexSite(object):
         if model in self._registry:
             raise AlreadyRegistered('The model %s is already registered' % model.__name__)
         
-        self._registry[model] = index_class(model, self)
+        self._registry[model] = index_class(model)
         self._setup_signals(model, self._registry[model])
     
     def unregister(self, model):

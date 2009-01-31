@@ -42,7 +42,7 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def prep_value(self, db_field, value):
+    def prep_value(self, value):
         """
         Hook to give the backend a chance to prep an attribute value before
         sending it to the search engine. By default, just force it to unicode.

@@ -36,21 +36,24 @@ class SearchBackend(BaseSearchBackend):
         #           if the backend is down.
         self.conn = Solr(settings.SOLR_URL)
 
-    def update(self, indexer, iterable, commit=True):
+    def update(self, index, iterable, commit=True):
         docs = []
+        
         try:
             for obj in iterable:
                 doc = {}
                 doc['id'] = self.get_identifier(obj)
                 doc['django_ct_s'] = "%s.%s" % (obj._meta.app_label, obj._meta.module_name)
                 doc['django_id_s'] = force_unicode(obj.pk)
-                doc['text'] = indexer.flatten(obj)
-                for name, value in indexer.get_indexed_fields(obj):
+                
+                for name, value in index.get_fields(obj):
                     doc[name] = value
+                
                 docs.append(doc)
         except UnicodeDecodeError:
             print "Chunk failed."
             pass
+        
         self.conn.add(docs, commit=commit)
 
     def remove(self, obj, commit=True):
