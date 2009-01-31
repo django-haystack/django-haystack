@@ -1,16 +1,16 @@
-from djangosearch.indexes import ModelIndex
-from djangosearch.sites import IndexSite
-
-# Find and load the search backend.  This code shold look pretty familier if
-# you've examined django.db.backends recently...
-
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from djangosearch.indexes import ModelIndex
 from djangosearch.sites import IndexSite, site
 
+
+__author__ = 'Daniel Lindsley'
+__version__ = (2, 0, 0, 'alpha')
 __all__ = ['backend']
 
+
+# Load the search backend.
 if not hasattr(settings, "SEARCH_ENGINE"):
     raise ImproperlyConfigured("You must define the SEARCH_ENGINE setting before using the search framework.")
 
