@@ -47,4 +47,14 @@ class SolrSearchQueryTestCase(TestCase):
     
     def test_build_query_phrase(self):
         self.sq.add_filter('content', 'hello world')
-        self.assertEqual(self.sq.build_query(), "'hello world'")
+        self.assertEqual(self.sq.build_query(), '"hello world"')
+    
+    def test_build_query_boost(self):
+        self.sq.add_filter('content', 'hello')
+        self.sq.add_boost('world', 5)
+        self.assertEqual(self.sq.build_query(), "hello world^5")
+    
+    def test_clean(self):
+        self.assertEqual(self.sq.clean('hello world'), 'hello world')
+        self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')
+        self.assertEqual(self.sq.clean('hello AND OR NOT TO + - && || ! ( ) { } [ ] ^ " ~ * ? : \ world'), 'hello and or not to \\+ \\- \\&& \\|| \\! \\( \\) \\{ \\} \\[ \\] \\^ \\" \\~ \\* \\? \\: \\\\ world')

@@ -6,7 +6,22 @@ from djangosearch.backends import BaseSearchBackend, BaseSearchQuery
 from djangosearch.models import SearchResult
 
 
-# DRL_FIXME: Get clarification on the comment below.
+# Word reserved by Solr for special use.
+RESERVED_WORDS = (
+    'AND',
+    'NOT',
+    'OR',
+    'TO',
+)
+
+# Characters reserved by Solr for special use.
+# The '\\' must come first, so as not to overwrite the other slash replacements.
+RESERVED_CHARACTERS = (
+    '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}', 
+    '[', ']', '^', '"', '~', '*', '?', ':',
+)
+
+
 # TODO: Support for using Solr dynnamicField declarations, the magic fieldname
 # postfixes like _i for integers. Requires some sort of global field registry
 # though. Is it even worth it?
@@ -89,9 +104,12 @@ class SearchQuery(BaseSearchQuery):
                 
                 value = the_filter.value
                 
+                # Check to see if it's a phrase for an exact match.
                 if ' ' in value:
-                    value = "'%s'" % value
+                    value = '"%s"' % value
                 
+                # 'content' is a special reserved word, much like 'pk' in
+                # Django's ORM layer. It indicates 'no special field'.
                 if the_filter.field == 'content':
                     query_chunks.append(value)
                 else:
@@ -110,31 +128,45 @@ class SearchQuery(BaseSearchQuery):
         else:
             final_query = query
         
-        # DRL_FIXME: Handle boost.
+        if self.boost:
+            boost_list = []
+            
+            for boost_word, boost_value in self.boost.items():
+                boost_list.append("%s^%s" % (boost_word, boost_value))
+            
+            final_query = "%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
     
     def clean(self, query_fragment):
-        # DRL_FIXME: Not sure what characters are invalid/reserved.
-        pass
+        """Sanitizes a fragment from using reserved character/words."""
+        cleaned = query_fragment
+        
+        for word in RESERVED_WORDS:
+            cleaned = cleaned.replace(word, word.lower())
+        
+        for char in RESERVED_CHARACTERS:
+            cleaned = cleaned.replace(char, '\\%s' % char)
+        
+        return cleaned
     
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         kwargs = {
-            # pysolr doesn't accept this but should.
-            # 'fl': '*,score',
+            'fl': '* score',
         }
         
         if self.order_by:
-            # DRL_FIXME: From the looks of the docs, maybe we can have multiple
-            #            order_by's (like our API supports).
-            order_by = self.order_by[0]
+            order_by_list = []
             
-            if order_by.startswith('-'):
-                kwargs['sort'] = '%s desc' % order_by[1:]
-            else:
-                kwargs['sort'] = '%s asc' % order_by
+            for ob in self.order_by:
+                if order_by.startswith('-'):
+                    order_by_list.append('%s asc' % '%s desc' % order_by[1:])
+                else:
+                    order_by_list.append('%s asc' % order_by)
+            
+            kwargs['sort'] = ", ".join(order_by_list)
         
         if self.start_offset:
             kwargs['start'] = self.start_offset
