@@ -1,6 +1,6 @@
 from django.db import models
 from django.test import TestCase
-from djangosearch.indexes import ModelIndex
+from djangosearch.indexes import BasicModelIndex
 from djangosearch.sites import IndexSite, AlreadyRegistered, NotRegistered
 
 
@@ -39,7 +39,7 @@ class IndexSiteTestCase(TestCase):
         self.assertRaises(NotRegistered, self.site.get_index, MockModel)
         
         self.site.register(MockModel)
-        self.assert_(isinstance(self.site.get_index(MockModel), ModelIndex))
+        self.assert_(isinstance(self.site.get_index(MockModel), BasicModelIndex))
     
     def test_get_indexes(self):
         self.assertEqual(self.site.get_indexes(), {})

@@ -1,6 +1,6 @@
 from django.db.models import signals
 from django.db.models.base import ModelBase
-from djangosearch.indexes import ModelIndex
+from djangosearch.indexes import BasicModelIndex
 
 
 class AlreadyRegistered(Exception):
@@ -39,7 +39,7 @@ class IndexSite(object):
         to the model.
         """
         if not index_class:
-            index_class = ModelIndex
+            index_class = BasicModelIndex
         
         if not isinstance(model, ModelBase):
             raise AttributeError('The model being registered must derive from Model.')
