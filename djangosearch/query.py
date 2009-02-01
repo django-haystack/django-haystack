@@ -199,9 +199,13 @@ class BaseSearchQuerySet(object):
         
         return clone
     
-    def order_by(self, field):
+    def order_by(self, *args):
+        """Alters the order in which the results should appear."""
         clone = self._clone()
-        clone.query.add_order_by(field)
+        
+        for field in args:
+            clone.query.add_order_by(field)
+        
         return clone
     
     def models(self, *models):

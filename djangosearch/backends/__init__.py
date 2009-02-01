@@ -20,13 +20,32 @@ class BaseSearchBackend(object):
         """
         return "%s.%s.%s" % (obj._meta.app_label, obj._meta.module_name, obj._get_pk_val())
 
-    def update(self, indexer, iterable):
+    def update(self, index, iterable):
+        """
+        Updates the backend when given a ModelIndex and a collection of
+        documents.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
         raise NotImplementedError
 
     def remove(self, obj):
+        """
+        Removes a document/object from the backend.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
         raise NotImplementedError
 
     def clear(self, models):
+        """
+        Clears the backend of all documents/objects for a collection of models.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
         raise NotImplementedError
 
     def search(self, query):
@@ -39,6 +58,9 @@ class BaseSearchBackend(object):
         The 'results' value should be an iterable of populated SearchResult
         objects. The 'hits' should be an integer count of the number of matched
         results the search backend found.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
         """
         raise NotImplementedError
 
@@ -84,6 +106,7 @@ class QueryFilter(object):
         return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), self.value)
     
     def split_expression(self, expression):
+        """Parses an expression and determines the field and filter type."""
         parts = expression.split(FILTER_SEPARATOR)
         field = parts[0]
         
@@ -95,12 +118,24 @@ class QueryFilter(object):
         return (field, filter_type)
     
     def is_and(self):
+        """
+        A shortcut to determine if the filter is to be attached to the rest
+        of the query using 'AND'.
+        """
         return not self.use_not and not self.use_or
     
     def is_not(self):
+        """
+        A shortcut to determine if the filter is to be attached to the rest
+        of the query using 'NOT'.
+        """
         return self.use_not
     
     def is_or(self):
+        """
+        A shortcut to determine if the filter is to be attached to the rest
+        of the query using 'OR'.
+        """
         return self.use_or
 
 
@@ -137,17 +172,13 @@ class BaseSearchQuery(object):
         return self.build_query()
     
     def __getstate__(self):
-        """
-        For pickling.
-        """
+        """For pickling."""
         obj_dict = self.__dict__.copy()
         del(obj_dict['backend'])
         return obj_dict
     
     def __setstate__(self, obj_dict):
-        """
-        For unpickling.
-        """
+        """For unpickling."""
         self.__dict__.update(obj_dict)
         # DRL_TODO: This may not unpickle properly if a different backend was supplied.
         self.backend = SearchBackend()
@@ -160,12 +191,24 @@ class BaseSearchQuery(object):
         self._hit_count = results.get('hits', 0)
     
     def get_count(self):
+        """
+        Returns the number of results the backend found for the query.
+        
+        If the query has not been run, this will execute the query and store
+        the results.
+        """
         if self._hit_count is None:
             self.run()
         
         return self._hit_count
     
     def get_results(self):
+        """
+        Returns the results received from the backend.
+        
+        If the query has not been run, this will execute the query and store
+        the results.
+        """
         if self._results is None:
             self.run()
         
@@ -175,9 +218,23 @@ class BaseSearchQuery(object):
     # Methods for backends to implement.
     
     def build_query(self):
+        """
+        Interprets the collected query metadata and builds the final query to
+        be sent to the backend.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
         raise NotImplementedError("Subclasses must provide a way to generate the query via the 'build_query' method.")
     
     def clean(self, query_fragment):
+        """
+        Provides a mechanism for sanitizing user input before presenting the
+        value to the backend.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
         raise NotImplementedError("Subclasses must provide a way to sanitize a portion of the query via the 'clean' method.")
     
     
@@ -189,18 +246,29 @@ class BaseSearchQuery(object):
         self.query_filters.append(term)
     
     def add_order_by(self, field):
-        # DRL_TODO: Is this possible with most engines (beyond date ranking)?
+        """Orders the search result by a field."""
         self.order_by.append(field)
     
     def clear_order_by(self):
+        """
+        Clears out all ordering that has been already added, reverting the
+        query to relevancy.
+        """
         self.order_by = []
     
     def add_model(self, model):
+        """
+        Restricts the query requiring matches in the given model.
+        
+        This builds upon previous additions, so you can limit to multiple models
+        by chaining this method several times.
+        """
         if not isinstance(model, ModelBase):
             raise AttributeError('The model being added to the query must derive from Model.')
         self.models.add(model)
     
     def set_limits(self, low=None, high=None):
+        """Restricts the query by altering either the start, end or both offsets."""
         if low is not None:
             self.start_offset = int(low)
         

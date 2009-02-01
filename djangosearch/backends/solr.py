@@ -76,8 +76,6 @@ class SearchBackend(BaseSearchBackend):
             result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'])
             results.append(result)
         
-        # DRL_TODO: Do we want a class here instead? I don't think so (as
-        #           there's no behavior to go with it).
         return {
             'results': results,
             'hits': raw_results.hits,

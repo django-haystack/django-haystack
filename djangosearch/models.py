@@ -12,7 +12,6 @@ class SearchResult(object):
     Note that iterating over SearchResults and getting the object for each
     result will do O(N) database queries -- not such a great idea.
     """
-    # DRL_TODO: Implement a class method for bulk load to reduce DB queries.
     def __init__(self, app_label, model_name, pk, score):
         self.model = models.get_model(app_label, model_name)
         self.pk = pk
