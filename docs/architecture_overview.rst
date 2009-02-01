@@ -52,3 +52,15 @@ One main implementation.
 * Provides a means of adding custom indexes to a model, like ModelAdmins.
 
 
+ModelIndex
+==========
+
+Implemented per-model you wish to index.
+
+* Handles generating the document to be indexed.
+* Populates additional fields to accompany the document.
+* Provides a way to limit what types of objects get indexed.
+* Provides a way to index the document(s).
+* Provides a way to remove the document(s).
+
+

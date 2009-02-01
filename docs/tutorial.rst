@@ -56,12 +56,12 @@ own indexes like::
 
 You can also explicitly setup an ``IndexSite`` as follows::
 
-    from blog.indexes import EntryIndex
-    from blog.models import Entry
+    from myapp.indexes import NoteIndex
+    from myapp.models import Note
     from djangosearch.sites import IndexSite
     
     mysite = IndexSite()
-    mysite.register(Entry, EntryIndex)
+    mysite.register(Note, NoteIndex)
 
 
 3. Creating ModelIndexes
@@ -76,22 +76,46 @@ or non-live content is not indexed and searchable.
 Our ``Note`` model has a ``pub_date`` field, so let's update our code to
 include our own ``ModelIndex`` to exclude indexing future-dated notes::
 
-    from djangosearch.sites import site
-    from djangosearch.indexes import ModelIndex
     import datetime
+    from djangosearch import indexes
+    from djangosearch.sites import site
+    from myapp.models import Note
     
     
-    class NoteIndex(ModelIndex):
+    class NoteIndex(indexes.ModelIndex):
+        text = indexes.ContentField()
+        author = indexes.CharField('user')
+        pub_date = indexes.DateTimeField('pub_date')
+        
         def get_query_set(self):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     
-        def should_index(self, obj):
-            "Used to determine if incremental indexing of a model should occur."
-            return obj.pub_date <= datetime.datetime.now()
-
-
+    
     site.register(Note, NoteIndex)
+
+Every custom ``ModelIndex`` requires there be one and only one ContentField.
+This is the primary field that will get passed to the backend for indexing. For
+this field, you'll then need to create a template at 
+``search/indexes/myapp/note.txt``. This allows you to customize the document 
+that will be passed to the search backend for indexing. A sample template
+might look like::
+
+    {{ object.title }}
+    Written by {{ object.user.full_name }}
+    
+    {{ object.body }}
+
+In addition, you may specify other fields to be populated along with the
+document. In this case, we also index the user who authored the document as
+well as the date the document was published. The variable you assign the
+SearchField to should directly map to the field your search backend is 
+expecting. You instantiate most search fields with a parameter that points to
+the attribute of the object to populate that field with.
+
+The exception to this are the ``ContentField`` and ``StoredField`` classes.
+These take no arguments as they both use templates to populate their contents.
+You can find more information about them in the ``ModelIndex`` API reference.
 
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/
 
