@@ -9,10 +9,16 @@ Welcome to Djangosearch's documentation!
    :maxdepth: 2
    
    tutorial
-   searchqueryset_api
    architecture_overview
    backend_support
    creating_new_backends
+   
+   searchqueryset_api
+   modelindex_api
+   indexsite_api
+   searchquery_api
+   searchbackend_api
+
 
 Indices and tables
 ==================

@@ -2,21 +2,21 @@
 SearchQuerySet API
 ==================
 
-The SearchQuerySet class is designed to make performing a search and iterating
+The ``SearchQuerySet`` class is designed to make performing a search and iterating
 over its results easy and consistent. For those familiar with Django's ORM
-QuerySet, much of the SearchQuerySet API should feel familiar.
+``QuerySet``, much of the ``SearchQuerySet`` API should feel familiar.
 
 
 Why Follow QuerySet?
 ====================
 
-A couple reasons to follow (at least in part) the QuerySet API:
+A couple reasons to follow (at least in part) the ``QuerySet`` API:
 
 #. Consistency with Django
 #. Most Django programmers have experience with the ORM and can use this
-   knowledge with SearchQuerySet.
+   knowledge with ``SearchQuerySet``.
 
-And from a high-level perspective, QuerySet and SearchQuerySet do very similar
+And from a high-level perspective, ``QuerySet`` and ``SearchQuerySet`` do very similar
 things: given certain criteria, provide a set of results. Both are powered by
 multiple backends, both are abstractions on top of the way a query is performed.
 
@@ -37,24 +37,24 @@ For the impatient::
 SearchQuerySet
 ==============
 
-By default, a standard BaseSearchQuerySet is automatically instantiated and
-assigned to SearchQuerySet for convenience. You can extend with your own
-behavior by simply subclassing from BaseSearchQuerySet and adding what you need,
-then using your subclass in place of SearchQuerySet.
+By default, a standard ``BaseSearchQuerySet`` is automatically instantiated and
+assigned to ``SearchQuerySet`` for convenience. You can extend with your own
+behavior by simply subclassing from ``BaseSearchQuerySet`` and adding what you need,
+then using your subclass in place of ``SearchQuerySet``.
 
-Most methods in SearchQuerySet "chain" in a similar fashion to QuerySet.
-Additionally, like QuerySet, SearchQuerySet is lazy (meaning it evaluates the
+Most methods in ``SearchQuerySet`` "chain" in a similar fashion to ``QuerySet``.
+Additionally, like ``QuerySet``, ``SearchQuerySet`` is lazy (meaning it evaluates the
 query as late as possible). So the following is valid::
 
     from djangosearch.query import SearchQuerySet
     results = SearchQuerySet.exclude(content='hello').filter(content='world').order_by('-pub_date').boost('title', 0.5)[10:20]
 
 
-SearchQuerySet Methods
-======================
+``SearchQuerySet`` Methods
+==========================
 
-Methods That Return A SearchQuerySet
-------------------------------------
+Methods That Return A ``SearchQuerySet``
+----------------------------------------
 
 ``all(self):``
 Returns all results for the query.
@@ -90,8 +90,8 @@ This method is somewhat naive but works well enough for the simple,
 common cases.
 
 
-Methods That Do Not Return A SearchQuerySet
--------------------------------------------
+Methods That Do Not Return A ``SearchQuerySet``
+-----------------------------------------------
 
 ``count(self)``
 Returns the total number of matching results.
