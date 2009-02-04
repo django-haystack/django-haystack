@@ -75,6 +75,6 @@ def autodiscover():
         except ImportError:
             continue
 
-        # Step 3: import the app's admin file. If this has errors we want them
+        # Step 3: import the app's index file. If this has errors we want them
         # to bubble up.
         __import__("%s.indexes" % app)
