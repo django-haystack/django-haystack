@@ -12,7 +12,9 @@ class DeclarativeMetaclass(type):
         
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
-                attrs['fields'][field_name] = attrs.pop(field_name)
+                field = attrs.pop(field_name)
+                field.instance_name = field_name
+                attrs['fields'][field_name] = field
         
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
