@@ -7,11 +7,15 @@ except NameError:
     from sets import Set as set
 
 
+class SearchBackendError(Exception):
+    pass
+
+
 class BaseSearchBackend(object):
     """
     Abstract search engine base class.
     """
-
+    
     def get_identifier(self, obj):
         """
         Get an unique identifier for the object.
@@ -175,13 +179,21 @@ class BaseSearchQuery(object):
         """For pickling."""
         obj_dict = self.__dict__.copy()
         del(obj_dict['backend'])
+        # Rip off the class bits as we'll be using this path when we go to .
+        obj_dict['backend_used'] = ".".join(str(self.backend).replace("<class '", "").replace("'>", "").split(".")[0:-1])
         return obj_dict
     
     def __setstate__(self, obj_dict):
         """For unpickling."""
+        backend_used = obj_dict.pop('backend_used')
         self.__dict__.update(obj_dict)
-        # DRL_TODO: This may not unpickle properly if a different backend was supplied.
-        self.backend = SearchBackend()
+        
+        try:
+            loaded_backend = __import__(backend_used)
+        except ImportError:
+            raise SearchBackendError("The backend this query was pickled with '%s.SearchBackend' could not be loaded." % backend_used)
+        
+        self.backend = loaded_backend.SearchBackend()
     
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
