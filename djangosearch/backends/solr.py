@@ -63,12 +63,14 @@ class SearchBackend(BaseSearchBackend):
     def clear(self, models, commit=True):
         # *:* matches all docs in Solr
         self.conn.delete(q='*:*', commit=commit)
+        # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
+        self.conn.optimize()
 
-    def search(self, query_string):
+    def search(self, query_string, **kwargs):
         if len(query_string) == 0:
             return []
         
-        raw_results = self.conn.search(query_string)
+        raw_results = self.conn.search(query_string, **kwargs)
         results = []
         
         for raw_result in raw_results.docs:

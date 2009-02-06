@@ -52,7 +52,7 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def search(self, query):
+    def search(self, query, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
