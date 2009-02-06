@@ -66,7 +66,7 @@ class ModelIndex(object):
         
         The tuple format looks like (fieldname, value).
         """
-        return [(field_name, self.backend.prep_value(field.get_value(obj))) for field_name, field in self.fields.items()]
+        return [(field_name, field.get_value(obj)) for field_name, field in self.fields.items()]
 
     def update(self):
         """Update the entire index"""
