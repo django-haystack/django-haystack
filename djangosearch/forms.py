@@ -1,7 +1,7 @@
 from django import forms
 from django.db import models
 import djangosearch
-from djangosearch.query import SearchQuerySet
+from djangosearch.query import BaseSearchQuerySet
 
 
 def model_choices(site=None):
@@ -19,7 +19,8 @@ class SearchForm(forms.Form):
         self.searchqueryset = kwargs.get('searchqueryset', None)
         
         if self.searchqueryset is None:
-            self.searchqueryset = SearchQuerySet
+            # DRL_FIXME: Was SearchQuerySet but that doesn't seem safe anymore.
+            self.searchqueryset = BaseSearchQuerySet()
         
         try:
             del(kwargs['searchqueryset'])

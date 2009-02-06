@@ -85,6 +85,11 @@ class SearchBackend(BaseSearchBackend):
 
 
 class SearchQuery(BaseSearchQuery):
+    # DRL_FIXME: This bites. Determine how to load the above defined backend better.
+    def __init__(self, backend=None):
+        super(SearchQuery, self).__init__(backend=backend)
+        self.backend = backend or SearchBackend()
+    
     def build_query(self):
         query = ''
         
