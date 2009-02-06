@@ -33,3 +33,22 @@ class SearchResult(object):
 
     def content_type(self):
         return unicode(self.model._meta)
+
+
+# DRL_FIME: Not sure this works, but need something along these lines to make
+#           sure the IndexSite(s) are loaded all the time (like the shell), not
+#           just when hitting the website.
+# Make sure the index gets loaded.
+def load_indexsite(sender, **kwargs):
+    print "Checking the app cache..."
+    
+    if models.loading.app_cache_ready():
+        import sys
+        from django.conf import settings
+        
+        # Check to make sure it's not already loaded.
+        if not settings.ROOT_URLCONF in sys.modules:
+            print "Loading URLconf to initialize IndexSite..."
+            __import__(settings.ROOT_URLCONF)
+
+models.signals.class_prepared.connect(load_indexsite)
