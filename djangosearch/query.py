@@ -14,11 +14,7 @@ class BaseSearchQuerySet(object):
         self._result_count = None
         self._cache_full = False
         self._load_all = False
-        
-        if site is not None:
-            self.site = site
-        else:
-            self.site = djangosearch.site
+        self.site = site or djangosearch.site
     
     def __getstate__(self):
         """
