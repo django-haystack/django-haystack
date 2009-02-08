@@ -25,8 +25,8 @@ We'll be adding search functionality to a simple application.  Here is
 In ``settings.py``, add ``djangosearch`` to INSTALLED_APPS.
 
 
-2. Create An IndexSite
-----------------------
+2. Create An SearchIndex
+------------------------
 
 Within your URLconf, add the following code::
 
@@ -34,9 +34,9 @@ Within your URLconf, add the following code::
     
     djangosearch.autodiscover()
 
-This will create a default ``IndexSite`` instance, search through all of your
+This will create a default ``SearchIndex`` instance, search through all of your
 INSTALLED_APPS for ``indexes.py`` and register all ``ModelIndexes`` with the
-default ``IndexSite``.
+default ``SearchIndex``.
 
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
 register models in the following manner::
@@ -54,13 +54,13 @@ own indexes like::
     
     site.register(Note, NoteIndex)
 
-You can also explicitly setup an ``IndexSite`` as follows::
+You can also explicitly setup an ``SearchIndex`` as follows::
 
     from myapp.indexes import NoteIndex
     from myapp.models import Note
-    from djangosearch.sites import IndexSite
+    from djangosearch.sites import SearchIndex
     
-    mysite = IndexSite()
+    mysite = SearchIndex()
     mysite.register(Note, NoteIndex)
 
 

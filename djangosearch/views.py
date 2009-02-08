@@ -21,7 +21,11 @@ class SearchView(object):
         return "SearchView"
 
     def __call__(self, request):
-        form = self.form_class(request.GET, searchqueryset=self.searchqueryset)
+        if self.searchqueryset is None:
+            form = self.form_class(request.GET)
+        else:
+            form = self.form_class(request.GET, searchqueryset=self.searchqueryset)
+        
         query = ''
         results = []
         

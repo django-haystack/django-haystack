@@ -19,7 +19,6 @@ class SearchForm(forms.Form):
         self.searchqueryset = kwargs.get('searchqueryset', None)
         
         if self.searchqueryset is None:
-            # DRL_FIXME: Was SearchQuerySet but that doesn't seem safe anymore.
             self.searchqueryset = SearchQuerySet()
         
         try:

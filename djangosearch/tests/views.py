@@ -1,33 +1,9 @@
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.db import models
 from django.test import TestCase
 from djangosearch.backends.dummy import DummyModel
 from djangosearch.forms import model_choices
-from djangosearch.sites import IndexSite
-
-
-class MockOptions(object):
-    def __init__(self, ct, verbose_name_plural):
-        self.ct = ct
-        self.verbose_name_plural = verbose_name_plural
-    
-    def __str__(self):
-        return self.ct
-
-
-class MockModel(models.Model):
-    def __init__(self):
-        self._meta = MockOptions('djangosearch.mockmodel', 'MockModels')
-
-
-class AnotherMockModel(models.Model):
-    def __init__(self, verbose_name_plural):
-        self._meta = MockOptions('djangosearch.anothermockmodel', 'AnotherMockModel')
-
-
-class MockIndexSite(IndexSite):
-    pass
+from djangosearch.tests.mocks import MockSearchIndex, MockModel, AnotherMockModel
 
 
 class SearchViewTestCase(TestCase):
@@ -51,12 +27,12 @@ class SearchViewTestCase(TestCase):
     def test_search_query(self):
         response = self.client.get(reverse('djangosearch_search'), {'query': 'hello world'})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['page'].object_list), 1)
-        self.assertEqual(response.context['page'].object_list[0].model, DummyModel)
-        self.assertEqual(response.context['page'].object_list[0].pk, 1)
+        self.assertEqual(len(response.context[-1]['page'].object_list), 1)
+        self.assertEqual(response.context[-1]['page'].object_list[0].model, DummyModel)
+        self.assertEqual(response.context[-1]['page'].object_list[0].pk, 1)
     
     def test_model_choices(self):
-        mis = MockIndexSite()
+        mis = MockSearchIndex()
         mis.register(MockModel)
         mis.register(AnotherMockModel)
         self.assertEqual(len(model_choices(site=mis)), 2)

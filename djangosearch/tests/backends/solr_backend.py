@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.test import TestCase
 from djangosearch.backends.solr import SearchBackend
-from djangosearch.sites import IndexSite
+from djangosearch.sites import SearchIndex
 
 
-class SolrIndexSite(IndexSite):
+class SolrSearchIndex(SearchIndex):
     pass
 
 

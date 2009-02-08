@@ -1,14 +1,46 @@
 """
-A fake backend for mocking during tests.
+A fake backend for dummying during tests.
 """
+import datetime
 from django.db import models
-from djangosearch.backends import BaseSearchBackend, QueryFilter, BaseSearchQuery
+from djangosearch.backends import BaseSearchBackend, BaseSearchQuery
 from djangosearch.constants import FILTER_SEPARATOR
 from djangosearch.models import SearchResult
 
 
+class DummyDefaultManager(object):
+    def all(self):
+        results = []
+        
+        for pk in xrange(3):
+            dummy = DummyModel()
+            dummy.id = pk
+            dummy.user = 'daniel%s' % pk
+            dummy.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+            results.append(dummy)
+        
+        return results
+    
+    def in_bulk(self, pk_array):
+        results = {}
+        
+        for pk in pk_array:
+            dummy = DummyModel()
+            dummy.foo = 'bar'
+            results[pk] = dummy
+        
+        return results
+    
+    def get(self, pk):
+        dummy = DummyModel()
+        dummy.id = pk
+        dummy.user = 'daniel%s' % pk
+        dummy.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        return dummy
+
+
 class DummyModel(models.Model):
-    pass
+    _default_manager = DummyDefaultManager()
 
 
 class DummySearchResult(SearchResult):
@@ -32,7 +64,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query):
         if query == 'content__exact hello AND content__exact world':
             return {
-                'results': [DummySearchResult('djangosearch', 'mockmodel', 1, 1.5)],
+                'results': [DummySearchResult('djangosearch', 'dummymodel', 1, 1.5)],
                 'hits': 1,
             }
         

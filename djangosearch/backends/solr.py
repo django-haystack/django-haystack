@@ -60,7 +60,8 @@ class SearchBackend(BaseSearchBackend):
         solr_id = self.get_identifier(obj)
         self.conn.delete(id=solr_id, commit=commit)
 
-    def clear(self, models, commit=True):
+    def clear(self, models=[], commit=True):
+        # DRL_FIXME: Limit by models.
         # *:* matches all docs in Solr
         self.conn.delete(q='*:*', commit=commit)
         # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99

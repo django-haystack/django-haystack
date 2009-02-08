@@ -1,59 +1,11 @@
-from django.db import models
 from django.test import TestCase
-from djangosearch.backends import SearchBackend, QueryFilter, BaseSearchQuery
+from djangosearch.backends import QueryFilter, BaseSearchQuery
 from djangosearch.backends.dummy import SearchBackend as DummySearchBackend
 from djangosearch.backends.dummy import SearchQuery as DummySearchQuery
 from djangosearch.models import SearchResult
 from djangosearch.query import SearchQuerySet
-from djangosearch.sites import IndexSite
-
-
-class MockDefaultManager(object):
-    def in_bulk(self, pk_array):
-        results = {}
-        
-        for pk in pk_array:
-            mock = MockModel()
-            mock.foo = 'bar'
-            results[pk] = mock
-        
-        return results
-            
-
-class MockModel(models.Model):
-    _default_manager = MockDefaultManager()
-
-
-class MockSearchResult(SearchResult):
-    def __init__(self, app_label, model_name, pk, score):
-        self.model = MockModel
-        self.pk = pk
-        self.score = score
-        self._object = None
-
-
-MOCK_SEARCH_RESULTS = [MockSearchResult('djangosearch', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(100)]
-
-
-class MockSearchBackend(SearchBackend):
-    """Simulates results coming out of the backend."""
-    def search(self, query):
-        return MOCK_SEARCH_RESULTS
-
-
-class MockSearchQuery(BaseSearchQuery):
-    def build_query(self):
-        return ''
-    
-    def clean(self, query_fragment):
-        return query_fragment
-    
-    def run(self):
-        # To simulate the chunking behavior of a regular search, return a slice
-        # of our results using start/end offset.
-        final_query = self.build_query()
-        self._results = self.backend.search(final_query)[self.start_offset:self.end_offset]
-        self._hit_count = len(MOCK_SEARCH_RESULTS)
+from djangosearch.sites import SearchIndex
+from djangosearch.tests.mocks import MockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
 
 
 class QueryFilterTestCase(TestCase):
@@ -252,7 +204,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assert_('foo' in sqs.query.order_by)
     
     def test_models(self):
-        mock_index_site = IndexSite()
+        mock_index_site = SearchIndex()
         mock_index_site.register(MockModel)
         
         bsqs = SearchQuerySet(site=mock_index_site)

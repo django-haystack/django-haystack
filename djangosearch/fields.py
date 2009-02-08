@@ -19,7 +19,8 @@ class SearchField(object):
 
 
 class CharField(SearchField):
-    pass
+    def get_value(self, obj):
+        return unicode(getattr(obj, self.db_field_name, ''))
 
 
 class NumberField(SearchField):

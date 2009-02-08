@@ -1,21 +1,18 @@
 from django.db import models
 from django.test import TestCase
 from djangosearch.indexes import BasicModelIndex
-from djangosearch.sites import IndexSite, AlreadyRegistered, NotRegistered
+from djangosearch.sites import SearchIndex, AlreadyRegistered, NotRegistered
+from djangosearch.tests.mocks import MockModel
 
 
 class MockNotAModel(object):
     pass
 
 
-class MockModel(models.Model):
-    pass
-
-
-class IndexSiteTestCase(TestCase):
+class SearchIndexTestCase(TestCase):
     def setUp(self):
-        super(IndexSiteTestCase, self).setUp()
-        self.site = IndexSite()
+        super(SearchIndexTestCase, self).setUp()
+        self.site = SearchIndex()
     
     def test_register(self):
         self.assertRaises(AttributeError, self.site.register, MockNotAModel)

@@ -2,7 +2,7 @@ import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from djangosearch.indexes import ModelIndex
-from djangosearch.sites import IndexSite, site
+from djangosearch.sites import SearchIndex, site
 
 
 __author__ = 'Daniel Lindsley'

@@ -36,7 +36,7 @@ class SearchResult(object):
 
 
 # DRL_FIME: Not sure this works, but need something along these lines to make
-#           sure the IndexSite(s) are loaded all the time (like the shell), not
+#           sure the SearchIndex(s) are loaded all the time (like the shell), not
 #           just when hitting the website.
 # Make sure the index gets loaded.
 def load_indexsite(sender, **kwargs):
@@ -48,7 +48,7 @@ def load_indexsite(sender, **kwargs):
         
         # Check to make sure it's not already loaded.
         if not settings.ROOT_URLCONF in sys.modules:
-            print "Loading URLconf to initialize IndexSite..."
+            print "Loading URLconf to initialize SearchIndex..."
             __import__(settings.ROOT_URLCONF)
 
 models.signals.class_prepared.connect(load_indexsite)

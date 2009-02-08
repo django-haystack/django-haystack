@@ -15,7 +15,7 @@ Welcome to Djangosearch's documentation!
    
    searchqueryset_api
    modelindex_api
-   indexsite_api
+   searchindex_api
    searchquery_api
    searchbackend_api
 

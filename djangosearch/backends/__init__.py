@@ -43,7 +43,7 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def clear(self, models):
+    def clear(self, models=[]):
         """
         Clears the backend of all documents/objects for a collection of models.
         
