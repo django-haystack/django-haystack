@@ -4,7 +4,7 @@ from djangosearch.backends import SearchBackend, QueryFilter, BaseSearchQuery
 from djangosearch.backends.dummy import SearchBackend as DummySearchBackend
 from djangosearch.backends.dummy import SearchQuery as DummySearchQuery
 from djangosearch.models import SearchResult
-from djangosearch.query import BaseSearchQuerySet
+from djangosearch.query import SearchQuerySet
 from djangosearch.sites import IndexSite
 
 
@@ -187,11 +187,11 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(clone.backend, self.bsq.backend)
 
 
-class BaseSearchQuerySetTestCase(TestCase):
+class SearchQuerySetTestCase(TestCase):
     def setUp(self):
-        super(BaseSearchQuerySetTestCase, self).setUp()
-        self.bsqs = BaseSearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
-        self.msqs = BaseSearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
+        super(SearchQuerySetTestCase, self).setUp()
+        self.bsqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
+        self.msqs = SearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
     
     def test_len(self):
         # Dummy always returns 0.
@@ -234,35 +234,35 @@ class BaseSearchQuerySetTestCase(TestCase):
     
     def test_all(self):
         sqs = self.bsqs.all()
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
     
     def test_filter(self):
         sqs = self.bsqs.filter(content='foo')
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filters), 1)
     
     def test_exclude(self):
         sqs = self.bsqs.exclude(content='foo')
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filters), 1)
     
     def test_order_by(self):
         sqs = self.bsqs.order_by('foo')
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assert_('foo' in sqs.query.order_by)
     
     def test_models(self):
         mock_index_site = IndexSite()
         mock_index_site.register(MockModel)
         
-        bsqs = BaseSearchQuerySet(site=mock_index_site)
+        bsqs = SearchQuerySet(site=mock_index_site)
         sqs = bsqs.models(MockModel)
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.models), 1)
     
     def test_boost(self):
         sqs = self.bsqs.boost(foo=10)
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.boost.keys()), 1)
     
     def test_raw_search(self):
@@ -271,12 +271,12 @@ class BaseSearchQuerySetTestCase(TestCase):
     
     def test_load_all(self):
         sqs = self.msqs.load_all()
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(sqs[0].object.foo, 'bar')
     
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
-        self.assert_(isinstance(sqs, BaseSearchQuerySet))
+        self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: NOT content__exact=-stuff>'])
     
     def test_count(self):
@@ -292,7 +292,7 @@ class BaseSearchQuerySetTestCase(TestCase):
         results = self.msqs.filter(foo='bar', foo__lt='10')
         
         clone = results._clone()
-        self.assert_(isinstance(clone, BaseSearchQuerySet))
+        self.assert_(isinstance(clone, SearchQuerySet))
         self.assertEqual(clone.site, results.site)
         self.assertEqual(str(clone.query), str(results.query))
         self.assertEqual(clone._result_cache, [])

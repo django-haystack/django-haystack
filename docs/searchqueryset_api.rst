@@ -27,27 +27,26 @@ Quick Start
 For the impatient::
 
     from djangosearch.query import SearchQuerySet
-    all_results = SearchQuerySet.all()
-    hello_results = SearchQuerySet.filter(content='hello')
-    hello_world_results = SearchQuerySet.filter(content='hello world')
-    unfriendly_results = SearchQuerySet.exclude(content='hello').filter(content='world')
-    recent_results = SearchQuerySet.order_by('-pub_date')[:5]
+    all_results = SearchQuerySet().all()
+    hello_results = SearchQuerySet().filter(content='hello')
+    hello_world_results = SearchQuerySet().filter(content='hello world')
+    unfriendly_results = SearchQuerySet().exclude(content='hello').filter(content='world')
+    recent_results = SearchQuerySet().order_by('-pub_date')[:5]
 
 
 SearchQuerySet
 ==============
 
-By default, a standard ``BaseSearchQuerySet`` is automatically instantiated and
-assigned to ``SearchQuerySet`` for convenience. You can extend with your own
-behavior by simply subclassing from ``BaseSearchQuerySet`` and adding what you need,
-then using your subclass in place of ``SearchQuerySet``.
+By default, ``SearchQuerySet`` provide the documented functionality. You can
+extend with your own behavior by simply subclassing from ``SearchQuerySet`` and
+adding what you need, then using your subclass in place of ``SearchQuerySet``.
 
 Most methods in ``SearchQuerySet`` "chain" in a similar fashion to ``QuerySet``.
 Additionally, like ``QuerySet``, ``SearchQuerySet`` is lazy (meaning it evaluates the
 query as late as possible). So the following is valid::
 
     from djangosearch.query import SearchQuerySet
-    results = SearchQuerySet.exclude(content='hello').filter(content='world').order_by('-pub_date').boost('title', 0.5)[10:20]
+    results = SearchQuerySet().exclude(content='hello').filter(content='world').order_by('-pub_date').boost('title', 0.5)[10:20]
 
 
 ``SearchQuerySet`` Methods

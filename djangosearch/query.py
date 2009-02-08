@@ -2,7 +2,7 @@ import djangosearch
 from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY
 
 
-class BaseSearchQuerySet(object):
+class SearchQuerySet(object):
     """
     Provides a way to specify search parameters and lazily load results.
     
@@ -294,8 +294,3 @@ class BaseSearchQuerySet(object):
         query = self.query._clone()
         clone = klass(site=self.site, query=query)
         return clone
-
-
-# Build an instance. This should be acceptable, as it will almost always get
-# cloned from and specialized in the clone.
-SearchQuerySet = BaseSearchQuerySet()
