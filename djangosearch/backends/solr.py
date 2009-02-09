@@ -71,6 +71,9 @@ class SearchBackend(BaseSearchBackend):
         if len(query_string) == 0:
             return []
         
+        if not 'fl' in kwargs:
+            kwargs['fl'] = '* score'
+        
         raw_results = self.conn.search(query_string, **kwargs)
         results = []
         

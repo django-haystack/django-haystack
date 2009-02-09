@@ -13,13 +13,14 @@ class SearchResult(object):
     result will do O(N) database queries -- not such a great idea.
     """
     def __init__(self, app_label, model_name, pk, score):
+        self.app_label, self.module_name = app_label, model_name
         self.model = models.get_model(app_label, model_name)
         self.pk = pk
         self.score = score
         self._object = None
 
     def __repr__(self):
-        return "<SearchResult: %s(pk=%r)>" % (self.model.__name__, self.pk)
+        return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.module_name, self.pk)
 
     def _get_object(self):
         if self._object is None:
