@@ -36,9 +36,12 @@ class SearchResult(object):
         return unicode(self.model._meta)
 
 
-# DRL_FIME: Not sure this works, but need something along these lines to make
-#           sure the SearchIndex(s) are loaded all the time (like the shell), not
-#           just when hitting the website.
+# DRL_FIXME: Not sure this works, but need something along these lines to make
+#            sure the SearchIndex(s) are loaded all the time (like the shell), not
+#            just when hitting the website.
+#            * This DOES work when running tests.
+#            * This doesn't matter during web hits (loaded by URLconf).
+#            * The only remaining bit to test is the shell and scripts.
 # Make sure the index gets loaded.
 def load_indexsite(sender, **kwargs):
     print "Checking the app cache..."
