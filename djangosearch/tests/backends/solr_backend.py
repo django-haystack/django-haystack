@@ -5,7 +5,7 @@ from django.test import TestCase
 from djangosearch import indexes
 from djangosearch.backends.solr import SearchBackend
 from djangosearch.sites import SearchIndex
-from djangosearch.tests.mocks import MockModel, MockContentField
+from djangosearch.tests.mocks import MockModel, AnotherMockModel, MockContentField
 
 
 class SolrMockModelIndex(indexes.ModelIndex):
@@ -28,10 +28,15 @@ class SolrSearchBackendTestCase(TestCase):
         self.smmi = SolrMockModelIndex(MockModel, backend=self.sb)
         self.sample_objs = []
         
+        # Need to fix the app label, as this sometimes gets confused between
+        # 'djangosearch' and 'tests'. Strange but true.
+        MockModel._meta.app_label = 'djangosearch'
+        
         for i in xrange(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
+            mock._meta.app_label = 'djangosearch'
             self.sample_objs.append(mock)
     
     def tearDown(self):
@@ -58,6 +63,21 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
         
         self.sb.clear()
+        self.assertEqual(self.raw_solr.search('*:*').hits, 0)
+        
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assertEqual(self.raw_solr.search('*:*').hits, 3)
+        
+        self.sb.clear([AnotherMockModel])
+        self.assertEqual(self.raw_solr.search('*:*').hits, 3)
+        
+        self.sb.clear([MockModel])
+        self.assertEqual(self.raw_solr.search('*:*').hits, 0)
+        
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assertEqual(self.raw_solr.search('*:*').hits, 3)
+        
+        self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_solr.search('*:*').hits, 0)
     
     def test_search(self):
