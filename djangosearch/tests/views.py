@@ -7,6 +7,8 @@ from djangosearch.tests.mocks import MockSearchIndex, MockModel, AnotherMockMode
 
 
 class SearchViewTestCase(TestCase):
+    # Note that we alter the behavior of the SearchView with mocks within these
+    # urls.
     urls = 'djangosearch.tests.urls'
     
     def setUp(self):

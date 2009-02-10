@@ -62,7 +62,7 @@ class SearchBackend(BaseSearchBackend):
         pass
 
     def search(self, query):
-        if query == 'content__exact hello AND content__exact world':
+        if query == 'content__exact hello OR content__exact world':
             return {
                 'results': [DummySearchResult('djangosearch', 'dummymodel', 1, 1.5)],
                 'hits': 1,

@@ -228,7 +228,7 @@ class SearchQuerySetTestCase(TestCase):
     
     def test_raw_search(self):
         self.assertEqual(len(self.bsqs.raw_search('foo')), 0)
-        self.assertEqual(len(self.bsqs.raw_search('content__exact hello AND content__exact world')), 1)
+        self.assertEqual(len(self.bsqs.raw_search('content__exact hello OR content__exact world')), 1)
     
     def test_load_all(self):
         sqs = self.msqs.load_all()
@@ -238,7 +238,7 @@ class SearchQuerySetTestCase(TestCase):
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: NOT content__exact=-stuff>'])
+        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: OR content__exact=test>', '<QueryFilter: OR content__exact=search>', '<QueryFilter: NOT content__exact=stuff>'])
     
     def test_count(self):
         self.assertEqual(self.bsqs.count(), 0)
