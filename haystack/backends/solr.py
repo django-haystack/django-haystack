@@ -150,12 +150,11 @@ class SearchQuery(BaseSearchQuery):
                 if the_filter.field == 'content':
                     query_chunks.append(value)
                 else:
-                    # DRL_FIXME: Test all the various types.
                     filter_types = {
                         'exact': "%s:%s",
-                        'gt': "%s:{* TO %s}",
+                        'gt': "%s:{%s TO *}",
                         'gte': "%s:[%s TO *]",
-                        'lt': "%s:{%s TO *}",
+                        'lt': "%s:{* TO %s}",
                         'lte': "%s:[* TO %s]",
                     }
                     
