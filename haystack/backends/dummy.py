@@ -3,9 +3,9 @@ A fake backend for dummying during tests.
 """
 import datetime
 from django.db import models
-from djangosearch.backends import BaseSearchBackend, BaseSearchQuery
-from djangosearch.constants import FILTER_SEPARATOR
-from djangosearch.models import SearchResult
+from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.constants import FILTER_SEPARATOR
+from haystack.models import SearchResult
 
 
 class DummyDefaultManager(object):
@@ -64,7 +64,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query):
         if query == 'content__exact hello OR content__exact world':
             return {
-                'results': [DummySearchResult('djangosearch', 'dummymodel', 1, 1.5)],
+                'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],
                 'hits': 1,
             }
         

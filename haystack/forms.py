@@ -1,12 +1,12 @@
 from django import forms
 from django.db import models
-import djangosearch
-from djangosearch.query import SearchQuerySet
+import haystack
+from haystack.query import SearchQuerySet
 
 
 def model_choices(site=None):
     if site is None:
-        site = djangosearch.site
+        site = haystack.site
     
     choices = [(m._meta, unicode(m._meta.verbose_name_plural)) for m in site.get_indexed_models()]
     return sorted(choices, key=lambda x: x[1])

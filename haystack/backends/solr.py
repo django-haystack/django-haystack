@@ -2,8 +2,8 @@ from pysolr import Solr
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_unicode
-from djangosearch.backends import BaseSearchBackend, BaseSearchQuery
-from djangosearch.models import SearchResult
+from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.models import SearchResult
 
 
 # Word reserved by Solr for special use.
@@ -97,7 +97,7 @@ class SearchBackend(BaseSearchBackend):
         }
     
     def more_like_this(self, model_instance):
-        from djangosearch.sites import site, NotRegistered        
+        from haystack.sites import site, NotRegistered
         index = site.get_index(model_instance.__class__)
         field_name = index.get_content_field()    
         raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')

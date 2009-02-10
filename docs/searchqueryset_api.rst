@@ -26,7 +26,7 @@ Quick Start
 
 For the impatient::
 
-    from djangosearch.query import SearchQuerySet
+    from haystack.query import SearchQuerySet
     all_results = SearchQuerySet().all()
     hello_results = SearchQuerySet().filter(content='hello')
     hello_world_results = SearchQuerySet().filter(content='hello world')
@@ -45,7 +45,7 @@ Most methods in ``SearchQuerySet`` "chain" in a similar fashion to ``QuerySet``.
 Additionally, like ``QuerySet``, ``SearchQuerySet`` is lazy (meaning it evaluates the
 query as late as possible). So the following is valid::
 
-    from djangosearch.query import SearchQuerySet
+    from haystack.query import SearchQuerySet
     results = SearchQuerySet().exclude(content='hello').filter(content='world').order_by('-pub_date').boost('title', 0.5)[10:20]
 
 

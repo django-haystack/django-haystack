@@ -7,8 +7,8 @@ The process should be fairly simple.
 #. Create new backend file. Name is important.
 #. Two classes inside.
 
-   #. SearchBackend (inherit from djangosearch.backends.BaseSearchBackend)
-   #. SearchQuery (inherit from djangosearch.backends.BaseSearchQuery)
+   #. SearchBackend (inherit from haystack.backends.BaseSearchBackend)
+   #. SearchQuery (inherit from haystack.backends.BaseSearchQuery)
 
 
 SearchBackend

@@ -1,10 +1,10 @@
 import pysolr
 from django.conf import settings
 from django.test import TestCase
-from djangosearch import indexes
-from djangosearch.backends.solr import SearchBackend
-from djangosearch import sites
-from djangosearch.tests.mocks import MockModel, AnotherMockModel, MockContentField
+from haystack import indexes
+from haystack.backends.solr import SearchBackend
+from haystack import sites
+from haystack.tests.mocks import MockModel, AnotherMockModel, MockContentField
 
 
 class SolrMockModelIndex(indexes.ModelIndex):
@@ -39,14 +39,14 @@ class SolrSearchBackendTestCase(TestCase):
         self.sample_objs = []
         
         # Need to fix the app label, as this sometimes gets confused between
-        # 'djangosearch' and 'tests'. Strange but true.
-        MockModel._meta.app_label = 'djangosearch'
+        # 'haystack' and 'tests'. Strange but true.
+        MockModel._meta.app_label = 'haystack'
         
         for i in xrange(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
-            mock._meta.app_label = 'djangosearch'
+            mock._meta.app_label = 'haystack'
             self.sample_objs.append(mock)
     
     def tearDown(self):
@@ -59,7 +59,7 @@ class SolrSearchBackendTestCase(TestCase):
         
         # Check what Solr thinks is there.
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
-        self.assertEqual(self.raw_solr.search('*:*').docs, [{'text': 'Indexed!\n1', 'django_id_s': '1', 'django_ct_s': 'djangosearch.mockmodel', 'id': 'djangosearch.mockmodel.1', 'name': 'daniel1'}, {'text': 'Indexed!\n2', 'django_id_s': '2', 'django_ct_s': 'djangosearch.mockmodel', 'id': 'djangosearch.mockmodel.2', 'name': 'daniel2'}, {'text': 'Indexed!\n3', 'django_id_s': '3', 'django_ct_s': 'djangosearch.mockmodel', 'id': 'djangosearch.mockmodel.3', 'name': 'daniel3'}])
+        self.assertEqual(self.raw_solr.search('*:*').docs, [{'text': 'Indexed!\n1', 'django_id_s': '1', 'django_ct_s': 'haystack.mockmodel', 'id': 'haystack.mockmodel.1', 'name': 'daniel1'}, {'text': 'Indexed!\n2', 'django_id_s': '2', 'django_ct_s': 'haystack.mockmodel', 'id': 'haystack.mockmodel.2', 'name': 'daniel2'}, {'text': 'Indexed!\n3', 'django_id_s': '3', 'django_ct_s': 'haystack.mockmodel', 'id': 'haystack.mockmodel.3', 'name': 'daniel3'}])
     
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -67,7 +67,7 @@ class SolrSearchBackendTestCase(TestCase):
         
         self.sb.remove(self.sample_objs[0])
         self.assertEqual(self.raw_solr.search('*:*').hits, 2)
-        self.assertEqual(self.raw_solr.search('*:*').docs, [{'text': 'Indexed!\n2', 'django_id_s': '2', 'django_ct_s': 'djangosearch.mockmodel', 'id': 'djangosearch.mockmodel.2', 'name': 'daniel2'}, {'text': 'Indexed!\n3', 'django_id_s': '3', 'django_ct_s': 'djangosearch.mockmodel', 'id': 'djangosearch.mockmodel.3', 'name': 'daniel3'}])
+        self.assertEqual(self.raw_solr.search('*:*').docs, [{'text': 'Indexed!\n2', 'django_id_s': '2', 'django_ct_s': 'haystack.mockmodel', 'id': 'haystack.mockmodel.2', 'name': 'daniel2'}, {'text': 'Indexed!\n3', 'django_id_s': '3', 'django_ct_s': 'haystack.mockmodel', 'id': 'haystack.mockmodel.3', 'name': 'daniel3'}])
     
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)

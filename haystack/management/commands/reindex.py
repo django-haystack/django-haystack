@@ -31,7 +31,7 @@ class Command(AppCommand):
         __import__(settings.ROOT_URLCONF)
         
         from django.db.models import get_models
-        from djangosearch.sites import site, NotRegistered
+        from haystack.sites import site, NotRegistered
 
         for model in get_models(app):
             try:

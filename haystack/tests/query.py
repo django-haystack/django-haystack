@@ -1,11 +1,11 @@
 from django.test import TestCase
-from djangosearch.backends import QueryFilter, BaseSearchQuery
-from djangosearch.backends.dummy import SearchBackend as DummySearchBackend
-from djangosearch.backends.dummy import SearchQuery as DummySearchQuery
-from djangosearch.models import SearchResult
-from djangosearch.query import SearchQuerySet
-from djangosearch.sites import SearchIndex
-from djangosearch.tests.mocks import MockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
+from haystack.backends import QueryFilter, BaseSearchQuery
+from haystack.backends.dummy import SearchBackend as DummySearchBackend
+from haystack.backends.dummy import SearchQuery as DummySearchQuery
+from haystack.models import SearchResult
+from haystack.query import SearchQuerySet
+from haystack.sites import SearchIndex
+from haystack.tests.mocks import MockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
 
 
 class QueryFilterTestCase(TestCase):

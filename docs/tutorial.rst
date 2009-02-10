@@ -1,5 +1,5 @@
 =====================
-Djangosearch Tutorial
+Haystack Tutorial
 =====================
 
 May need to include some bits about setting up Solr.
@@ -19,10 +19,10 @@ We'll be adding search functionality to a simple application.  Here is
         def __unicode__(self):
             return self.title
 
-1. Add Djangosearch To INSTALLED_APPS
+1. Add Haystack To INSTALLED_APPS
 -------------------------------------
 
-In ``settings.py``, add ``djangosearch`` to INSTALLED_APPS.
+In ``settings.py``, add ``haystack`` to INSTALLED_APPS.
 
 
 2. Create An SearchIndex
@@ -30,9 +30,9 @@ In ``settings.py``, add ``djangosearch`` to INSTALLED_APPS.
 
 Within your URLconf, add the following code::
 
-    import djangosearch
+    import haystack
     
-    djangosearch.autodiscover()
+    haystack.autodiscover()
 
 This will create a default ``SearchIndex`` instance, search through all of your
 INSTALLED_APPS for ``indexes.py`` and register all ``ModelIndexes`` with the
@@ -41,16 +41,16 @@ default ``SearchIndex``.
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
 register models in the following manner::
 
-    from djangosearch.sites import site
+    from haystack.sites import site
     
     site.register(Note)
 
-This registers the model with the default site built into ``djangosearch``. The
+This registers the model with the default site built into ``haystack``. The
 model gets registered with a standard ``ModelIndex`` class. If you need to override
 this class and provide additional functionality, you can manually register your
 own indexes like::
 
-    from djangosearch.sites import site
+    from haystack.sites import site
     
     site.register(Note, NoteIndex)
 
@@ -58,7 +58,7 @@ You can also explicitly setup an ``SearchIndex`` as follows::
 
     from myapp.indexes import NoteIndex
     from myapp.models import Note
-    from djangosearch.sites import SearchIndex
+    from haystack.sites import SearchIndex
     
     mysite = SearchIndex()
     mysite.register(Note, NoteIndex)
@@ -67,7 +67,7 @@ You can also explicitly setup an ``SearchIndex`` as follows::
 3. Creating ModelIndexes
 ------------------------
 
-Registering indexes in Djangosearch is very similar to registering models
+Registering indexes in Haystack is very similar to registering models
 and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to
 override the default indexing behavior for your model you can specify your
 own ``ModelIndex`` class.  This is useful for ensuring that future-dated
@@ -77,8 +77,8 @@ Our ``Note`` model has a ``pub_date`` field, so let's update our code to
 include our own ``ModelIndex`` to exclude indexing future-dated notes::
 
     import datetime
-    from djangosearch import indexes
-    from djangosearch.sites import site
+    from haystack import indexes
+    from haystack.sites import site
     from myapp.models import Note
     
     
@@ -125,9 +125,9 @@ You can find more information about them in the ``ModelIndex`` API reference.
 
 Within your URLconf, add the following line::
 
-    (r'^search/', include('djangosearch.urls')),
+    (r'^search/', include('haystack.urls')),
 
-This will pull in the default URLconf for djangosearch. It consists of a single
+This will pull in the default URLconf for haystack. It consists of a single
 URLconf that points to a SearchView instance. You can change this class's
 behavior by passing it any of several keyword arguments or override it entirely
 with your own view.

@@ -1,6 +1,6 @@
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
-from djangosearch.constants import VALID_FILTERS, FILTER_SEPARATOR
+from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
 try:
     set
 except NameError:

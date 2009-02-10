@@ -1,15 +1,10 @@
 Primary Authors:
 
-    * Daniel Lindsley
+    * Daniel Lindsley (most of the code, much of the documentation)
+    * Matt Croydon (documentation, sanity checks and the sweet name)
 
 
-Documentation:
-
-    * Daniel Lindsley
-    * Matt Croydon
-
-
-Portions of the original implementation that remain written by:
+Portions of the original implementation of djangosearch that remain written by:
 
     * Joseph Kocherhans
     * Jacob Kaplan-Moss

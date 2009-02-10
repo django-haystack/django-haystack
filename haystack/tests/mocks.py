@@ -1,10 +1,10 @@
 import datetime
 from django.db import models
 from django.utils.encoding import force_unicode
-from djangosearch import indexes
-from djangosearch.backends import BaseSearchBackend, BaseSearchQuery
-from djangosearch.models import SearchResult
-from djangosearch.sites import SearchIndex
+from haystack import indexes
+from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.models import SearchResult
+from haystack.sites import SearchIndex
 
 
 class MockDefaultManager(object):
@@ -53,14 +53,14 @@ class MockModel(models.Model):
     _default_manager = MockDefaultManager()
     
     def __init__(self):
-        self._meta = MockOptions('djangosearch.mockmodel', 'MockModels')
+        self._meta = MockOptions('haystack.mockmodel', 'MockModels')
 
 
 class AnotherMockModel(models.Model):
     _default_manager = MockDefaultManager()
     
     def __init__(self, verbose_name_plural):
-        self._meta = MockOptions('djangosearch.anothermockmodel', 'AnotherMockModel')
+        self._meta = MockOptions('haystack.anothermockmodel', 'AnotherMockModel')
 
 
 class MockSearchIndex(SearchIndex):
@@ -76,7 +76,7 @@ class MockSearchResult(SearchResult):
         self._object = None
 
 
-MOCK_SEARCH_RESULTS = [MockSearchResult('djangosearch', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(100)]
+MOCK_SEARCH_RESULTS = [MockSearchResult('haystack', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(100)]
 
 
 class MockSearchBackend(BaseSearchBackend):

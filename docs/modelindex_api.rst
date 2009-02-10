@@ -13,8 +13,8 @@ Quick Start
 For the impatient::
 
     import datetime
-    from djangosearch import indexes
-    from djangosearch.sites import site
+    from haystack import indexes
+    from haystack.sites import site
     from myapp.models import Note
     
     

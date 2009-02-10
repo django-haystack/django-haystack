@@ -1,6 +1,6 @@
 from django.db.models import signals
 from django.db.models.base import ModelBase
-from djangosearch.indexes import BasicModelIndex
+from haystack.indexes import BasicModelIndex
 
 
 class AlreadyRegistered(Exception):

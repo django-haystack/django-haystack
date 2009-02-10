@@ -1,7 +1,7 @@
 import datetime
 from django.test import TestCase
-from djangosearch import indexes
-from djangosearch.tests.mocks import MockContentField, MockStoredField, MockModel, MockSearchBackend
+from haystack import indexes
+from haystack.tests.mocks import MockContentField, MockStoredField, MockModel, MockSearchBackend
 
 
 class BadModelIndex1(indexes.ModelIndex):
@@ -29,32 +29,32 @@ class ModelIndexTestCase(TestCase):
         self.msb = MockSearchBackend()
         self.mi = GoodMockModelIndex(MockModel, backend=self.msb)
         self.sample_docs = {
-            'djangosearch.mockmodel.2': {
-                'django_id_s': u'2', 
-                'django_ct_s': u'djangosearch.mockmodel', 
+            'haystack.mockmodel.2': {
+                'django_id_s': u'2',
+                'django_ct_s': u'haystack.mockmodel', 
                 'extra': u'Stored!\n2', 
                 'author': u'daniel2', 
                 'content': u'Indexed!\n2', 
                 'pub_date': datetime.datetime(2009, 1, 31, 4, 19, 0), 
-                'id': u'djangosearch.mockmodel.2'
+                'id': u'haystack.mockmodel.2'
             }, 
-            'djangosearch.mockmodel.0': {
-                'django_id_s': u'0', 
-                'django_ct_s': u'djangosearch.mockmodel', 
+            'haystack.mockmodel.0': {
+                'django_id_s': u'0',
+                'django_ct_s': u'haystack.mockmodel', 
                 'extra': u'Stored!\n0', 
                 'author': u'daniel0', 
                 'content': u'Indexed!\n0', 
                 'pub_date': datetime.datetime(2009, 1, 31, 4, 19, 0), 
-                'id': u'djangosearch.mockmodel.0'
+                'id': u'haystack.mockmodel.0'
             }, 
-            'djangosearch.mockmodel.1': {
-                'django_id_s': u'1', 
-                'django_ct_s': u'djangosearch.mockmodel', 
+            'haystack.mockmodel.1': {
+                'django_id_s': u'1',
+                'django_ct_s': u'haystack.mockmodel', 
                 'extra': u'Stored!\n1', 
                 'author': u'daniel1', 
                 'content': u'Indexed!\n1', 
                 'pub_date': datetime.datetime(2009, 1, 31, 4, 19, 0), 
-                'id': u'djangosearch.mockmodel.1'
+                'id': u'haystack.mockmodel.1'
             },
         }
     
@@ -110,11 +110,11 @@ class ModelIndexTestCase(TestCase):
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
         self.mi.update_object(mock)
-        self.assertEqual(self.msb.docs, {'djangosearch.mockmodel.20': {'django_id_s': u'20', 'django_ct_s': u'djangosearch.mockmodel', 'author': u'daniel20', 'extra': u'Stored!\n20', 'content': u'Indexed!\n20', 'pub_date': datetime.datetime(2009, 1, 31, 4, 19), 'id': 'djangosearch.mockmodel.20'}})
+        self.assertEqual(self.msb.docs, {'haystack.mockmodel.20': {'django_id_s': u'20', 'django_ct_s': u'haystack.mockmodel', 'author': u'daniel20', 'extra': u'Stored!\n20', 'content': u'Indexed!\n20', 'pub_date': datetime.datetime(2009, 1, 31, 4, 19), 'id': 'haystack.mockmodel.20'}})
         self.msb.clear()
     
     def test_remove_object(self):
-        self.msb.docs = {'djangosearch.mockmodel.20': 'Indexed!\n20'}
+        self.msb.docs = {'haystack.mockmodel.20': 'Indexed!\n20'}
         
         mock = MockModel()
         mock.pk = 20
@@ -125,9 +125,9 @@ class ModelIndexTestCase(TestCase):
     
     def test_clear(self):
         self.msb.docs = {
-            'djangosearch.mockmodel.1': 'Indexed!\n1',
-            'djangosearch.mockmodel.2': 'Indexed!\n2',
-            'djangosearch.mockmodel.20': 'Indexed!\n20',
+            'haystack.mockmodel.1': 'Indexed!\n1',
+            'haystack.mockmodel.2': 'Indexed!\n2',
+            'haystack.mockmodel.20': 'Indexed!\n20',
         }
         
         self.mi.clear()
@@ -136,9 +136,9 @@ class ModelIndexTestCase(TestCase):
     
     def test_reindex(self):
         self.msb.docs = {
-            'djangosearch.mockmodel.1': 'Indexed!\n1',
-            'djangosearch.mockmodel.2': 'Indexed!\n2',
-            'djangosearch.mockmodel.20': 'Indexed!\n20',
+            'haystack.mockmodel.1': 'Indexed!\n1',
+            'haystack.mockmodel.2': 'Indexed!\n2',
+            'haystack.mockmodel.20': 'Indexed!\n20',
         }
         
         self.mi.reindex()

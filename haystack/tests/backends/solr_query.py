@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
-from djangosearch.backends.solr import SearchBackend, SearchQuery
+from haystack.backends.solr import SearchBackend, SearchQuery
 
 
 class SolrSearchQueryTestCase(TestCase):
@@ -53,6 +53,15 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter('content', 'hello')
         self.sq.add_boost('world', 5)
         self.assertEqual(self.sq.build_query(), "hello world^5")
+    
+    def test_build_query_multiple_filter_types(self):
+        self.sq.add_filter('content', 'why')
+        self.sq.add_filter('pub_date__lte', '2009-02-10 01:59:00')
+        self.sq.add_filter('author__gt', 'daniel')
+        self.sq.add_filter('created__lt', '2009-02-12 12:13:00')
+        self.sq.add_filter('title__gte', 'B')
+        self.sq.add_filter('id__in', [1, 2, 3])
+        self.assertEqual(self.sq.build_query(), '')
     
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')

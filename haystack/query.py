@@ -1,6 +1,6 @@
 from django.conf import settings
-import djangosearch
-from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
+import haystack
+from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 
 
 class SearchQuerySet(object):
@@ -10,12 +10,12 @@ class SearchQuerySet(object):
     Supports chaining (a la QuerySet) to narrow the search.
     """
     def __init__(self, site=None, query=None):
-        self.query = query or djangosearch.backend.SearchQuery()
+        self.query = query or haystack.backend.SearchQuery()
         self._result_cache = []
         self._result_count = None
         self._cache_full = False
         self._load_all = False
-        self.site = site or djangosearch.site
+        self.site = site or haystack.site
     
     def __getstate__(self):
         """
@@ -170,7 +170,7 @@ class SearchQuerySet(object):
     
     def filter(self, **kwargs):
         """Narrows the search based on certain attributes and the default operator."""
-        if getattr(settings, 'DJANGOSEARCH_DEFAULT_OPERATOR', DEFAULT_OPERATOR) == 'OR':
+        if getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR) == 'OR':
             return self.filter_or(**kwargs)
         else:
             return self.filter_and(**kwargs)

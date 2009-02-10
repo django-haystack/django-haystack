@@ -1,5 +1,5 @@
-import djangosearch
-from djangosearch.fields import *
+import haystack
+from haystack.fields import *
 
 
 class SearchFieldError(Exception):
@@ -26,7 +26,7 @@ class ModelIndex(object):
     An example might look like this::
     
         import datetime
-        from djangosearch import indexes
+        from haystack import indexes
         from myapp.models import Note
         
         class NoteIndex(indexes.ModelIndex):
@@ -42,7 +42,7 @@ class ModelIndex(object):
     
     def __init__(self, model, backend=None):
         self.model = model
-        self.backend = backend or djangosearch.backend.SearchBackend()
+        self.backend = backend or haystack.backend.SearchBackend()
         content_fields = []
         
         for field_name, field in self.fields.items():

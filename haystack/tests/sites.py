@@ -1,8 +1,8 @@
 from django.db import models
 from django.test import TestCase
-from djangosearch.indexes import BasicModelIndex
-from djangosearch.sites import SearchIndex, AlreadyRegistered, NotRegistered
-from djangosearch.tests.mocks import MockModel
+from haystack.indexes import BasicModelIndex
+from haystack.sites import SearchIndex, AlreadyRegistered, NotRegistered
+from haystack.tests.mocks import MockModel
 
 
 class MockNotAModel(object):
