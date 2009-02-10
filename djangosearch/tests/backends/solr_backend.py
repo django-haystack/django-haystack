@@ -1,16 +1,19 @@
-import httplib2
 import pysolr
 from django.conf import settings
 from django.test import TestCase
 from djangosearch import indexes
 from djangosearch.backends.solr import SearchBackend
-from djangosearch.sites import SearchIndex
+from djangosearch import sites
 from djangosearch.tests.mocks import MockModel, AnotherMockModel, MockContentField
 
 
 class SolrMockModelIndex(indexes.ModelIndex):
     text = MockContentField()
     name = indexes.CharField('author')
+
+
+class SolrSearchIndex(sites.SearchIndex):
+    pass
 
 
 class SolrSearchBackendTestCase(TestCase):
@@ -26,6 +29,13 @@ class SolrSearchBackendTestCase(TestCase):
         
         self.sb = SearchBackend()
         self.smmi = SolrMockModelIndex(MockModel, backend=self.sb)
+        self.site = SolrSearchIndex()
+        self.site.register(MockModel, SolrMockModelIndex)
+        
+        # Stow.
+        self.old_site = sites.site
+        sites.site = self.site
+        
         self.sample_objs = []
         
         # Need to fix the app label, as this sometimes gets confused between
@@ -41,6 +51,7 @@ class SolrSearchBackendTestCase(TestCase):
     
     def tearDown(self):
         settings.SOLR_URL = self.old_solr_url
+        sites.site = self.old_site
         super(SolrSearchBackendTestCase, self).tearDown()
     
     def test_update(self):
@@ -87,3 +98,12 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search(''), [])
         self.assertEqual(self.sb.search('*:*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], ['1', '2', '3'])
+    
+    def test_more_like_this(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assertEqual(self.raw_solr.search('*:*').hits, 3)
+        
+        # DRL_TODO: Even though I've confirmed MLT works correctly, it doesn't
+        #           seem to find any similar documents. Need better sample data?
+        self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
+        self.assertEqual([result.pk for result in self.sb.more_like_this(self.sample_objs[0])['results']], [])

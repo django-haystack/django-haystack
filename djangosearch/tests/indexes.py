@@ -93,6 +93,9 @@ class ModelIndexTestCase(TestCase):
         self.assertEqual(len(self.mi.get_fields(mock)), 4)
         self.assertEqual(sorted([field[0] for field in self.mi.get_fields(mock)]), ['author', 'content', 'extra', 'pub_date'])
     
+    def test_get_content_field(self):
+        self.assertEqual(self.mi.get_content_field(), 'content')
+    
     def test_update(self):
         self.mi.update()
         self.assertEqual(self.msb.docs, self.sample_docs)

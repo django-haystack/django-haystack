@@ -69,6 +69,7 @@ class MockSearchIndex(SearchIndex):
 
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score):
+        self.app_label, self.module_name = app_label, model_name
         self.model = MockModel
         self.pk = pk
         self.score = score
@@ -102,6 +103,12 @@ class MockSearchBackend(BaseSearchBackend):
     
     def search(self, query):
         return MOCK_SEARCH_RESULTS
+    
+    def more_like_this(self, model_instance):
+        return {
+            'results': MOCK_SEARCH_RESULTS,
+            'hits': len(MOCK_SEARCH_RESULTS),
+        }
 
 
 class MockContentField(indexes.ContentField):

@@ -87,6 +87,25 @@ class SearchBackend(BaseSearchBackend):
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct_s'].split('.')
+            # DRL_FIXME: This needs to accomodate all fields, not just the limited subset.
+            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'])
+            results.append(result)
+        
+        return {
+            'results': results,
+            'hits': raw_results.hits,
+        }
+    
+    def more_like_this(self, model_instance):
+        from djangosearch.sites import site, NotRegistered        
+        index = site.get_index(model_instance.__class__)
+        field_name = index.get_content_field()    
+        raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')
+        results = []
+        
+        for raw_result in raw_results.docs:
+            app_label, model_name = raw_result['django_ct_s'].split('.')
+            # DRL_FIXME: This needs to accomodate all fields, not just the limited subset.
             result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'])
             results.append(result)
         
@@ -97,7 +116,6 @@ class SearchBackend(BaseSearchBackend):
 
 
 class SearchQuery(BaseSearchQuery):
-    # DRL_FIXME: This bites. Determine how to load the above defined backend better.
     def __init__(self, backend=None):
         super(SearchQuery, self).__init__(backend=backend)
         self.backend = backend or SearchBackend()
@@ -105,7 +123,6 @@ class SearchQuery(BaseSearchQuery):
     def build_query(self):
         query = ''
         
-        # DRL_FIXME: Handle the other filter types.
         if not self.query_filters:
             # Match all.
             query = '*:*'
@@ -133,6 +150,7 @@ class SearchQuery(BaseSearchQuery):
                 if the_filter.field == 'content':
                     query_chunks.append(value)
                 else:
+                    # DRL_FIXME: Handle the other filter types.
                     query_chunks.append("%s:%s" % (the_filter.field, value))
             
             if query_chunks[0] in ('AND', 'OR'):

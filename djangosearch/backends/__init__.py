@@ -74,6 +74,15 @@ class BaseSearchBackend(object):
         sending it to the search engine. By default, just force it to unicode.
         """
         return force_unicode(value)
+    
+    def more_like_this(self, model_instance):
+        """
+        Takes a model object and returns results the backend thinks are similar.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
+        raise NotImplementedError("Subclasses must provide a way to fetch similar record via the 'more_like_this' method if supported by the backend.")
 
 
 # Alias for easy loading within SearchQuery objects.
@@ -296,8 +305,24 @@ class BaseSearchQuery(object):
         self.boost[field] = boost_value
     
     def raw_search(self, query_string):
-        """Runs a raw query (no parsing) against the backend."""
+        """
+        Runs a raw query (no parsing) against the backend.
+        
+        This method does not affect the internal state of the SearchQuery used
+        to build queries. It does however populate the results/hit_count.
+        """
         results = self.backend.search(query_string)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
+    
+    def more_like_this(self, model_instance):
+        """
+        Returns the "More Like This" results received from the backend.
+        
+        This method does not affect the internal state of the SearchQuery used
+        to build queries. It does however populate the results/hit_count.
+        """
+        results = self.backend.more_like_this(model_instance)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     

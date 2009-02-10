@@ -280,10 +280,11 @@ class SearchQuerySet(object):
         clone.query.add_order_by("-%s" % date_field)
         return clone.best_match()
     
-    # DRL_FIXME: Implement.
     def more_like_this(self, model_instance):
         """Finds similar results to the object passed in."""
-        raise NotImplementedError
+        clone = self._clone()
+        clone.query.more_like_this(model_instance)
+        return clone
     
     
     # Utility methods.

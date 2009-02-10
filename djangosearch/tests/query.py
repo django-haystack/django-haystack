@@ -116,6 +116,15 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_boost('foo', 10)
         self.assertEqual(self.bsq.boost, {'foo': 10})
     
+    def test_more_like_this(self):
+        mock = MockModel()
+        mock.id = 1
+        msq = MockSearchQuery(backend=MockSearchBackend())
+        msq.more_like_this(mock)
+        
+        self.assertEqual(msq.get_count(), 100)
+        self.assertEqual(msq.get_results()[0], MOCK_SEARCH_RESULTS[0])
+    
     def test_run(self):
         msq = MockSearchQuery(backend=MockSearchBackend())
         self.assertEqual(len(msq.get_results()), 100)
@@ -239,6 +248,12 @@ class SearchQuerySetTestCase(TestCase):
     
     def test_latest(self):
         self.assert_(isinstance(self.msqs.latest('pub_date'), SearchResult))
+    
+    def test_more_like_this(self):
+        mock = MockModel()
+        mock.id = 1
+        
+        self.assertEqual(len(self.msqs.more_like_this(mock)), 100)
     
     def test_clone(self):
         results = self.msqs.filter(foo='bar', foo__lt='10')
