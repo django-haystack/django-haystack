@@ -193,17 +193,19 @@ class SearchQuery(BaseSearchQuery):
     
     def clean(self, query_fragment):
         """Sanitizes a fragment from using reserved character/words."""
-        cleaned = query_fragment
+        words = query_fragment.split()
+        cleaned_words = []
         
-        for word in RESERVED_WORDS:
-            # DRL_FIXME: This won't work right when the word is contained within
-            #            another word. Time to bust out the regexes!
-            cleaned = cleaned.replace(word, word.lower())
+        for word in words:
+            if word in RESERVED_WORDS:
+                word = word.replace(word, word.lower())
         
-        for char in RESERVED_CHARACTERS:
-            cleaned = cleaned.replace(char, '\\%s' % char)
+            for char in RESERVED_CHARACTERS:
+                word = word.replace(char, '\\%s' % char)
+            
+            cleaned_words.append(word)
         
-        return cleaned
+        return " ".join(cleaned_words)
     
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
