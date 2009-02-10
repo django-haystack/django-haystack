@@ -1,3 +1,6 @@
+# Default operator. Valid options are AND/OR.
+DEFAULT_OPERATOR = 'OR'
+
 # Valid expression extensions.
 VALID_FILTERS = set(['exact', 'gt', 'gte', 'lt', 'lte', 'in'])
 FILTER_SEPARATOR = '__'

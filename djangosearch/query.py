@@ -1,5 +1,6 @@
+from django.conf import settings
 import djangosearch
-from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY
+from djangosearch.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 
 
 class SearchQuerySet(object):
@@ -168,13 +169,11 @@ class SearchQuerySet(object):
         return self._clone()
     
     def filter(self, **kwargs):
-        """Narrows the search by looking for (and including) certain attributes."""
-        clone = self._clone()
-        
-        for expression, value in kwargs.items():
-            clone.query.add_filter(expression, value)
-        
-        return clone
+        """Narrows the search based on certain attributes and the default operator."""
+        if getattr(settings, 'DJANGOSEARCH_DEFAULT_OPERATOR', DEFAULT_OPERATOR) == 'OR':
+            return self.filter_or(**kwargs)
+        else:
+            return self.filter_and(**kwargs)
     
     def exclude(self, **kwargs):
         """Narrows the search by ensuring certain attributes are not included."""
@@ -185,7 +184,15 @@ class SearchQuerySet(object):
         
         return clone
     
-    # DRL_FIXME: Rename.
+    def filter_and(self, **kwargs):
+        """Narrows the search by looking for (and including) certain attributes."""
+        clone = self._clone()
+        
+        for expression, value in kwargs.items():
+            clone.query.add_filter(expression, value)
+        
+        return clone
+    
     def filter_or(self, **kwargs):
         """Narrows the search by ensuring certain attributes are not included."""
         clone = self._clone()
@@ -251,13 +258,20 @@ class SearchQuerySet(object):
         #            see how their searches get expressed (because of
         #            familiarity for most users).
         #            Also, may need to support quotes on this.
+        import pdb; pdb.set_trace()
         for keyword in keywords:
+            exclude = False
+            
+            if keyword.startswith('-'):
+                keyword = keyword[1:]
+                exclude = True
+            
             cleaned_keyword = clone.query.clean(keyword)
             
-            if cleaned_keyword.startswith('-'):
-                clone.query.add_filter('content', cleaned_keyword, use_not=True)
+            if exclude:
+                clone.exclude(content=cleaned_keyword)
             else:
-                clone.query.add_filter('content', cleaned_keyword)
+                clone.filter(content=cleaned_keyword)
         
         return clone
     
