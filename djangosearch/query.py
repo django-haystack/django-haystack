@@ -258,7 +258,6 @@ class SearchQuerySet(object):
         #            see how their searches get expressed (because of
         #            familiarity for most users).
         #            Also, may need to support quotes on this.
-        import pdb; pdb.set_trace()
         for keyword in keywords:
             exclude = False
             
