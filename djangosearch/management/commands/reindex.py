@@ -41,11 +41,9 @@ class Command(AppCommand):
                     print "Skipping '%s' - no index" % model
                 continue
 
-            # DRL_FIXME: Had .select_related() on the end but it broke my queryset. Strange.
-            qs = index.get_query_set().order_by(model._meta.pk.attname)
+            qs = index.get_query_set().select_related().order_by(model._meta.pk.attname)
             total = qs.count()
 
-            # import pdb; pdb.set_trace()
             if self.verbosity >= 1:
                 print "Indexing %d %s" % (total, smart_str(model._meta.verbose_name_plural))
 
