@@ -150,8 +150,24 @@ class SearchQuery(BaseSearchQuery):
                 if the_filter.field == 'content':
                     query_chunks.append(value)
                 else:
-                    # DRL_FIXME: Handle the other filter types.
-                    query_chunks.append("%s:%s" % (the_filter.field, value))
+                    # DRL_FIXME: Test all the various types.
+                    filter_types = {
+                        'exact': "%s:%s",
+                        'gt': "%s:{* TO %s}",
+                        'gte': "%s:[%s TO *]",
+                        'lt': "%s:{%s TO *}",
+                        'lte': "%s:[* TO %s]",
+                    }
+                    
+                    if the_filter.filter_type != 'in':
+                        query_chunks.append(filter_types[the_filter.filter_type] % (the_filter.field, value))
+                    else:
+                        in_options = []
+                        
+                        for possible_value in value:
+                            in_options.append("%s:%s" % (the_filter.field, possible_value))
+                        
+                        query_chunks.append("(%s)" % " OR ".join(in_options))
             
             if query_chunks[0] in ('AND', 'OR'):
                 # Pull off an undesirable leading "AND" or "OR".
@@ -181,6 +197,8 @@ class SearchQuery(BaseSearchQuery):
         cleaned = query_fragment
         
         for word in RESERVED_WORDS:
+            # DRL_FIXME: This won't work right when the word is contained within
+            #            another word. Time to bust out the regexes!
             cleaned = cleaned.replace(word, word.lower())
         
         for char in RESERVED_CHARACTERS:
