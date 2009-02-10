@@ -45,7 +45,7 @@ class SearchIndex(object):
             raise AttributeError('The model being registered must derive from Model.')
         
         if model in self._registry:
-            raise AlreadyRegistered('The model %s is already registered' % model.__name__)
+            raise AlreadyRegistered('The model %s is already registered' % model.__class__)
         
         self._registry[model] = index_class(model)
         self._setup_signals(model, self._registry[model])
@@ -55,7 +55,7 @@ class SearchIndex(object):
         Unregisters a model from the site.
         """
         if model not in self._registry:
-            raise NotRegistered('The model %s is not registered' % model.__name__)
+            raise NotRegistered('The model %s is not registered' % model.__class__)
         self._teardown_signals(model, self._registry[model])
         del(self._registry[model])
     
@@ -70,7 +70,7 @@ class SearchIndex(object):
     def get_index(self, model):
         """Provide the index that're being used for a particular model."""
         if model not in self._registry:
-            raise NotRegistered('The model %s is not registered' % model.__name__)
+            raise NotRegistered('The model %s is not registered' % model.__class__)
         return self._registry[model]
     
     def get_indexes(self):

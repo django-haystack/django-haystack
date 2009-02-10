@@ -38,7 +38,7 @@ class Command(AppCommand):
                 index = site.get_index(model)
             except NotRegistered:
                 if self.verbosity >= 2:
-                    print "Skipping '%s' - no index" % model.__name__
+                    print "Skipping '%s' - no index" % model
                 continue
 
             # DRL_FIXME: Had .select_related() on the end but it broke my queryset. Strange.
