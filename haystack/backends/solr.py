@@ -83,30 +83,27 @@ class SearchBackend(BaseSearchBackend):
             kwargs['fl'] = '* score'
         
         raw_results = self.conn.search(query_string, **kwargs)
-        results = []
-        
-        for raw_result in raw_results.docs:
-            app_label, model_name = raw_result['django_ct_s'].split('.')
-            # DRL_FIXME: This needs to accomodate all fields, not just the limited subset.
-            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'])
-            results.append(result)
-        
-        return {
-            'results': results,
-            'hits': raw_results.hits,
-        }
+        return self._process_results(raw_results)
     
     def more_like_this(self, model_instance):
         from haystack.sites import site, NotRegistered
         index = site.get_index(model_instance.__class__)
         field_name = index.get_content_field()    
         raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')
+        return self._process_results(raw_results)
+    
+    def _process_results(self, raw_results):
         results = []
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct_s'].split('.')
-            # DRL_FIXME: This needs to accomodate all fields, not just the limited subset.
-            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'])
+            
+            additional_fields = raw_result.copy()
+            del(additional_fields['django_ct_s'])
+            del(additional_fields['django_id_s'])
+            del(additional_fields['score'])
+            
+            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'], **additional_fields)
             results.append(result)
         
         return {

@@ -68,12 +68,9 @@ class MockSearchIndex(SearchIndex):
 
 
 class MockSearchResult(SearchResult):
-    def __init__(self, app_label, model_name, pk, score):
-        self.app_label, self.module_name = app_label, model_name
-        self.model = MockModel
-        self.pk = pk
-        self.score = score
-        self._object = None
+    def __init__(self, app_label, model_name, pk, score, **kwargs):
+        super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
+        self._model = MockModel
 
 
 MOCK_SEARCH_RESULTS = [MockSearchResult('haystack', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(100)]

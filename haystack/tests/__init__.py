@@ -1,5 +1,6 @@
 from haystack.tests.backends.solr_query import *
 from haystack.tests.indexes import *
+from haystack.tests.models import *
 from haystack.tests.query import *
 from haystack.tests.sites import *
 from haystack.tests.views import *
