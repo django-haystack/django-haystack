@@ -41,7 +41,9 @@ class Command(AppCommand):
                     print "Skipping '%s' - no index" % model
                 continue
 
-            qs = index.get_query_set().select_related().order_by(model._meta.pk.attname)
+            # DRL_TODO: .select_related() seems like a good idea here but
+            #           can cause empty QuerySets. Why?
+            qs = index.get_query_set().order_by(model._meta.pk.attname)
             total = qs.count()
 
             if self.verbosity >= 1:
