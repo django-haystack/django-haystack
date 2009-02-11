@@ -23,15 +23,19 @@ class CharField(SearchField):
         return unicode(getattr(obj, self.db_field_name, ''))
 
 
-class NumberField(SearchField):
+class IntegerField(SearchField):
+    pass
+
+
+class FloatField(SearchField):
+    pass
+
+
+class BooleanField(SearchField):
     pass
 
 
 class DateField(SearchField):
-    pass
-
-
-class TimeField(SearchField):
     pass
 
 
