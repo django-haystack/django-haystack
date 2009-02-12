@@ -84,6 +84,11 @@ class SearchBackend(BaseSearchBackend):
         
         if highlight is True:
             kwargs['hl'] = 'true'
+            # DRL_FIXME: The documented '*' syntax doesn't work. So do we accept
+            #            a field list or do you only get the main content field?
+            #            Investigate other backends.
+            # kwargs['hl.fl'] = 'text,title'
+            kwargs['hl.fragsize'] = '200'
         
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)

@@ -116,6 +116,12 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_boost('foo', 10)
         self.assertEqual(self.bsq.boost, {'foo': 10})
     
+    def test_add_highlight(self):
+        self.assertEqual(self.bsq.highlight, False)
+        
+        self.bsq.add_highlight()
+        self.assertEqual(self.bsq.highlight, True)
+    
     def test_more_like_this(self):
         mock = MockModel()
         mock.id = 1
@@ -225,6 +231,11 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.boost(foo=10)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.boost.keys()), 1)
+    
+    def test_highlight(self):
+        sqs = self.bsqs.highlight()
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assert_(sqs.query.highlight, True)
     
     def test_raw_search(self):
         self.assertEqual(len(self.bsqs.raw_search('foo')), 0)
