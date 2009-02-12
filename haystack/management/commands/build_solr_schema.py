@@ -2,6 +2,10 @@ from django.core.management.base import NoArgsCommand
 from django.template import loader, Context
 from haystack.constants import DEFAULT_OPERATOR
 from haystack.fields import *
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 class Command(NoArgsCommand):
@@ -16,10 +20,17 @@ class Command(NoArgsCommand):
         
         content_field_name = ''
         fields = []
+        field_names = set()
         default_operator = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR)
         
         for model, index in site.get_indexes().items():
             for field_name, field_object in index.fields.items():
+                if field_name in field_names:
+                    # We've already got this field in the list. Skip.
+                    continue
+                
+                field_names.add(field_name)
+                
                 field_data = {
                     'field_name': field_name,
                     'type': 'text',
