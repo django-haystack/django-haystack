@@ -75,19 +75,28 @@ class SearchBackend(BaseSearchBackend):
         # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
         self.conn.optimize()
 
-    def search(self, query_string, highlight=False, **kwargs):
+    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields='', highlight=False):
         if len(query_string) == 0:
             return []
         
-        if not 'fl' in kwargs:
-            kwargs['fl'] = '* score'
+        kwargs = {
+            'fl': '* score',
+        }
+        
+        if fields:
+            kwargs['fl'] = fields
+        
+        if sort_by is not None:
+            kwargs['sort'] = sort_by
+        
+        if start_offset is not None:
+            kwargs['start'] = start_offset
+        
+        if end_offset is not None:
+            kwargs['rows'] = end_offset
         
         if highlight is True:
             kwargs['hl'] = 'true'
-            # DRL_FIXME: The documented '*' syntax doesn't work. So do we accept
-            #            a field list or do you only get the main content field?
-            #            Investigate other backends.
-            # kwargs['hl.fl'] = 'text,title'
             kwargs['hl.fragsize'] = '200'
         
         raw_results = self.conn.search(query_string, **kwargs)
@@ -218,9 +227,9 @@ class SearchQuery(BaseSearchQuery):
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        kwargs = {
-            'fl': '* score',
-        }
+        sort_by = None
+        start_offset = self.start_offset
+        end_offset = None
         
         if self.order_by:
             order_by_list = []
@@ -231,14 +240,11 @@ class SearchQuery(BaseSearchQuery):
                 else:
                     order_by_list.append('%s asc' % order_by)
             
-            kwargs['sort'] = ", ".join(order_by_list)
-        
-        if self.start_offset:
-            kwargs['start'] = self.start_offset
+            sort_by = ", ".join(order_by_list)
         
         if self.end_offset is not None:
-            kwargs['rows'] = self.end_offset - self.start_offset
+            end_offset = self.end_offset - self.start_offset
         
-        results = self.backend.search(final_query, highlight=self.highlight, **kwargs)
+        results = self.backend.search(final_query, sort_by=sort_by, start_offset=start_offset, end_offset=end_offset, highlight=self.highlight)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)

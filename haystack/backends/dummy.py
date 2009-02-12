@@ -61,8 +61,8 @@ class SearchBackend(BaseSearchBackend):
     def clear(self, models):
         pass
 
-    def search(self, query, highlight=False):
-        if query == 'content__exact hello OR content__exact world':
+    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields=[], highlight=False):
+        if query_string == 'content__exact hello OR content__exact world':
             return {
                 'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],
                 'hits': 1,
