@@ -52,7 +52,7 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def search(self, query, **kwargs):
+    def search(self, query, highlight=False, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -177,6 +177,7 @@ class BaseSearchQuery(object):
         self.boost = {}
         self.start_offset = 0
         self.end_offset = None
+        self.highlight = False
         self._results = None
         self._hit_count = None
         self.backend = backend or SearchBackend()
@@ -207,7 +208,7 @@ class BaseSearchQuery(object):
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        results = self.backend.search(final_query)
+        results = self.backend.search(final_query, highlight=self.highlight)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     
@@ -326,6 +327,10 @@ class BaseSearchQuery(object):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     
+    def add_highlight(self):
+        """Adds highlighting to the search results."""
+        self.highlight = True
+    
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__
@@ -333,6 +338,8 @@ class BaseSearchQuery(object):
         clone.query_filters = self.query_filters
         clone.order_by = self.order_by
         clone.models = self.models
+        clone.boost = self.boost
+        clone.highlight = self.highlight
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         clone.backend = self.backend

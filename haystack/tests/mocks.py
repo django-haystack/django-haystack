@@ -98,7 +98,7 @@ class MockSearchBackend(BaseSearchBackend):
     def clear(self, models=[], commit=True):
         self.docs = {}
     
-    def search(self, query):
+    def search(self, query, highlight=False):
         return MOCK_SEARCH_RESULTS
     
     def more_like_this(self, model_instance):

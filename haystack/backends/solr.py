@@ -75,15 +75,18 @@ class SearchBackend(BaseSearchBackend):
         # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
         self.conn.optimize()
 
-    def search(self, query_string, **kwargs):
+    def search(self, query_string, highlight=False, **kwargs):
         if len(query_string) == 0:
             return []
         
         if not 'fl' in kwargs:
             kwargs['fl'] = '* score'
         
+        if highlight is True:
+            kwargs['hl'] = 'true'
+        
         raw_results = self.conn.search(query_string, **kwargs)
-        return self._process_results(raw_results)
+        return self._process_results(raw_results, highlight=highlight)
     
     def more_like_this(self, model_instance):
         from haystack.sites import site, NotRegistered
@@ -92,7 +95,7 @@ class SearchBackend(BaseSearchBackend):
         raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')
         return self._process_results(raw_results)
     
-    def _process_results(self, raw_results):
+    def _process_results(self, raw_results, highlight=False):
         results = []
         
         for raw_result in raw_results.docs:
@@ -102,6 +105,9 @@ class SearchBackend(BaseSearchBackend):
             del(additional_fields['django_ct_s'])
             del(additional_fields['django_id_s'])
             del(additional_fields['score'])
+            
+            if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
+                additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
             
             result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'], **additional_fields)
             results.append(result)
@@ -228,6 +234,6 @@ class SearchQuery(BaseSearchQuery):
         if self.end_offset is not None:
             kwargs['rows'] = self.end_offset - self.start_offset
         
-        results = self.backend.search(final_query, **kwargs)
+        results = self.backend.search(final_query, highlight=self.highlight, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)

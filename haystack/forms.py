@@ -33,6 +33,11 @@ class SearchForm(forms.Form):
         return self.searchqueryset.auto_query(self.cleaned_data['query'])
 
 
+class HighlightedSearchForm(SearchForm):
+    def search(self):
+        return super(HighlightedSearchForm, self).search().highlight()
+
+
 class ModelSearchForm(SearchForm):
     models = forms.MultipleChoiceField(choices=model_choices(), required=False, widget=forms.CheckboxSelectMultiple)
 
@@ -48,3 +53,8 @@ class ModelSearchForm(SearchForm):
     def search(self):
         sqs = super(ModelSearchForm, self).search()
         return sqs.models(self.get_models())
+
+
+class HighlightedModelSearchForm(ModelSearchForm):
+    def search(self):
+        return super(HighlightedModelSearchForm, self).search().highlight()

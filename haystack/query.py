@@ -211,6 +211,12 @@ class SearchQuerySet(object):
         
         return clone
     
+    def highlight(self):
+        """Alters the order in which the results should appear."""
+        clone = self._clone()
+        clone.query.add_highlight()
+        return clone
+    
     def models(self, *models):
         """Accepts an arbitrary number of Model classes to include in the search."""
         clone = self._clone()
