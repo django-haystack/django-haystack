@@ -8,50 +8,66 @@ class SearchFieldError(Exception):
 # All the SearchFields variants.
 
 class SearchField(object):
-    def __init__(self, db_field_name):
+    """The base implementation of a search field."""
+    def __init__(self, document=False, indexed=True, stored=True):
         # Track what the index thinks this field is called.
         self.instance_name = None
-        # Track what part of the Model object we want.
-        self.db_field_name = db_field_name
+        self.document = document
+        self.indexed = indexed
+        self.stored = stored
     
     def get_value(self, obj):
-        return getattr(obj, self.db_field_name, '')
+        raise NotImplementedError('Please use a subclass of SearchField.')
 
 
-class CharField(SearchField):
+class ModelField(SearchField):
+    def __init__(self, model_field=None, **kwargs):
+        if model_field is None:
+            raise SearchFieldError('You must specify the field of the model to attach the search field to.')
+        
+        self.model_field = model_field
+        super(ModelField, self).__init__(**kwargs)
+
+
+class CharField(ModelField):
     def get_value(self, obj):
-        return unicode(getattr(obj, self.db_field_name, ''))
+        return unicode(getattr(obj, self.model_field, ''))
 
 
-class IntegerField(SearchField):
-    pass
+class IntegerField(ModelField):
+    def get_value(self, obj):
+        return getattr(obj, self.model_field, 0)
 
 
-class FloatField(SearchField):
-    pass
+class FloatField(ModelField):
+    def get_value(self, obj):
+        return getattr(obj, self.model_field, 0.0)
 
 
-class BooleanField(SearchField):
-    pass
+class BooleanField(ModelField):
+    def get_value(self, obj):
+        return getattr(obj, self.model_field, False)
 
 
-class DateField(SearchField):
-    pass
+class DateField(ModelField):
+    def get_value(self, obj):
+        return getattr(obj, self.model_field, '')
 
 
-class DateTimeField(SearchField):
-    pass
+class DateTimeField(ModelField):
+    def get_value(self, obj):
+        return getattr(obj, self.model_field, '')
 
 
-class MultiValueField(SearchField):
-    pass
+class MultiValueField(ModelField):
+    def get_value(self, obj):
+        return getattr(obj, self.model_field, [])
 
 
 class TemplateField(SearchField):
-    def __init__(self, template_name=None):
-        self.instance_name = None
-        self.db_field_name = None
+    def __init__(self, template_name=None, **kwargs):
         self.template_name = template_name
+        super(TemplateField, self).__init__(**kwargs)
     
     def get_value(self, obj):
         """
@@ -61,40 +77,13 @@ class TemplateField(SearchField):
         and returns the result of rendering that template. ``object``
         will be in its context.
         """
-        if self.template_name is not None:
-            template_name = self.template_name
-        else:
-            template_name = 'search/indexes/%s/%s.txt' % (obj._meta.app_label, obj._meta.module_name)
-        
-        t = loader.get_template(template_name)
-        return t.render(Context({'object': obj}))
-
-
-class ContentField(TemplateField):
-    pass
-
-
-class StoredField(TemplateField):
-    def get_value(self, obj):
-        """
-        Flatten an object for storage (non-indexed).
-        
-        This is useful if you know in advance what you want to display in the
-        search results and want to save on hits to the DB.
-        
-        This loads a template, by default 
-        ``search/indexes/{app_label}/{model_name}_{instance_name}_stored.txt``,
-        and returns the result of rendering that template. ``object``
-        will be in its context. You can override this by passing the field a
-        ``template_name`` parameter.
-        """
         if self.instance_name is None and self.template_name is None:
-            raise SearchFieldError("This field requires its instance_name variable to be populated to load the correct template.")
+            raise SearchFieldError("This field requires either its instance_name variable to be populated or an explicit template_name in order to load the correct template.")
         
         if self.template_name is not None:
             template_name = self.template_name
         else:
-            template_name = 'search/indexes/%s/%s_%s_stored.txt' % (obj._meta.app_label, obj._meta.module_name, self.instance_name)
+            template_name = 'search/indexes/%s/%s_%s.txt' % (obj._meta.app_label, obj._meta.module_name, self.instance_name)
         
         t = loader.get_template(template_name)
         return t.render(Context({'object': obj}))

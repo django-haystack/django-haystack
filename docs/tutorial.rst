@@ -83,9 +83,9 @@ include our own ``ModelIndex`` to exclude indexing future-dated notes::
     
     
     class NoteIndex(indexes.ModelIndex):
-        text = indexes.ContentField()
-        author = indexes.CharField('user')
-        pub_date = indexes.DateTimeField('pub_date')
+        text = indexes.TemplateField(document=True)
+        author = indexes.CharField(model_field='user')
+        pub_date = indexes.DateTimeField(model_field='pub_date')
         
         def get_query_set(self):
             "Used when the entire index for model is updated."
@@ -94,10 +94,10 @@ include our own ``ModelIndex`` to exclude indexing future-dated notes::
     
     site.register(Note, NoteIndex)
 
-Every custom ``ModelIndex`` requires there be one and only one ContentField.
+Every custom ``ModelIndex`` requires there be one and only one field with ``document=True``.
 This is the primary field that will get passed to the backend for indexing. For
 this field, you'll then need to create a template at 
-``search/indexes/myapp/note.txt``. This allows you to customize the document 
+``search/indexes/myapp/note_text.txt``. This allows you to customize the document 
 that will be passed to the search backend for indexing. A sample template
 might look like::
 
@@ -113,8 +113,8 @@ SearchField to should directly map to the field your search backend is
 expecting. You instantiate most search fields with a parameter that points to
 the attribute of the object to populate that field with.
 
-The exception to this are the ``ContentField`` and ``StoredField`` classes.
-These take no arguments as they both use templates to populate their contents.
+The exception to this is the ``TemplateField`` class.
+This take either no arguments or an explicit template name to populate their contents.
 You can find more information about them in the ``ModelIndex`` API reference.
 
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/

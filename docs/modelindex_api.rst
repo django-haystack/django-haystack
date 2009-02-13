@@ -19,9 +19,9 @@ For the impatient::
     
     
     class NoteIndex(indexes.ModelIndex):
-        text = indexes.ContentField()
-        author = indexes.CharField('user')
-        pub_date = indexes.DateTimeField('pub_date')
+        text = indexes.TemplateField(document=True)
+        author = indexes.CharField(model_field='user')
+        pub_date = indexes.DateTimeField(model_field='pub_date')
         
         def get_query_set(self):
             "Used when the entire index for model is updated."

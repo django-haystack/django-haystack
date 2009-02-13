@@ -108,12 +108,12 @@ class MockSearchBackend(BaseSearchBackend):
         }
 
 
-class MockContentField(indexes.ContentField):
+class MockTemplateField(indexes.TemplateField):
     def get_value(self, obj):
         return u"Indexed!\n%s" % obj.pk
 
 
-class MockStoredField(indexes.StoredField):
+class MockStoredTemplateField(indexes.TemplateField):
     def get_value(self, obj):
         return u"Stored!\n%s" % obj.pk
 

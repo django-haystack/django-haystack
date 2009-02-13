@@ -1,26 +1,26 @@
 import datetime
 from django.test import TestCase
 from haystack import indexes
-from haystack.tests.mocks import MockContentField, MockStoredField, MockModel, MockSearchBackend
+from haystack.tests.mocks import MockTemplateField, MockStoredTemplateField, MockTemplateField, MockModel, MockSearchBackend
 
 
 class BadModelIndex1(indexes.ModelIndex):
-    author = indexes.CharField('user')
-    pub_date = indexes.DateTimeField('pub_date')
+    author = indexes.CharField(model_field='user')
+    pub_date = indexes.DateTimeField(model_field='pub_date')
 
 
 class BadModelIndex2(indexes.ModelIndex):
-    content = indexes.ContentField()
-    content2 = indexes.ContentField()
-    author = indexes.CharField('user')
-    pub_date = indexes.DateTimeField('pub_date')
+    content = indexes.TemplateField(document=True)
+    content2 = indexes.TemplateField(document=True)
+    author = indexes.CharField(model_field='user')
+    pub_date = indexes.DateTimeField(model_field='pub_date')
 
 
 class GoodMockModelIndex(indexes.ModelIndex):
-    content = MockContentField()
-    author = indexes.CharField('user')
-    pub_date = indexes.DateTimeField('pub_date')
-    extra = MockStoredField()
+    content = MockTemplateField(document=True)
+    author = indexes.CharField(model_field='user')
+    pub_date = indexes.DateTimeField(model_field='pub_date')
+    extra = MockStoredTemplateField(indexed=False)
 
 
 class ModelIndexTestCase(TestCase):
@@ -73,13 +73,13 @@ class ModelIndexTestCase(TestCase):
     def test_proper_fields(self):
         self.assertEqual(len(self.mi.fields), 4)
         self.assert_('content' in self.mi.fields)
-        self.assert_(isinstance(self.mi.fields['content'], indexes.ContentField))
+        self.assert_(isinstance(self.mi.fields['content'], indexes.TemplateField))
         self.assert_('author' in self.mi.fields)
         self.assert_(isinstance(self.mi.fields['author'], indexes.CharField))
         self.assert_('pub_date' in self.mi.fields)
         self.assert_(isinstance(self.mi.fields['pub_date'], indexes.DateTimeField))
         self.assert_('extra' in self.mi.fields)
-        self.assert_(isinstance(self.mi.fields['extra'], indexes.StoredField))
+        self.assert_(isinstance(self.mi.fields['extra'], indexes.TemplateField))
     
     def test_get_query_set(self):
         self.assertEqual(len(self.mi.get_query_set()), 3)

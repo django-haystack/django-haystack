@@ -2,10 +2,6 @@ import haystack
 from haystack.fields import *
 
 
-class SearchFieldError(Exception):
-    pass
-
-
 class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
         attrs['fields'] = {}
@@ -30,9 +26,9 @@ class ModelIndex(object):
         from myapp.models import Note
         
         class NoteIndex(indexes.ModelIndex):
-            text = indexes.ContentField()
-            author = indexes.CharField('user')
-            pub_date = indexes.DateTimeField('pub_date')
+            text = indexes.TemplateField(document=True)
+            author = indexes.CharField(model_field='user')
+            pub_date = indexes.DateTimeField(model_field='pub_date')
             
             def get_query_set(self):
                 return super(NoteIndex, self).get_query_set().filter(pub_date__lte=datetime.datetime.now())
@@ -46,11 +42,11 @@ class ModelIndex(object):
         content_fields = []
         
         for field_name, field in self.fields.items():
-            if isinstance(field, ContentField):
-                content_fields.append(field)
+            if field.document is True:
+                content_fields.append(field_name)
         
         if not len(content_fields) == 1:
-            raise SearchFieldError("An index must have one ContentField.")
+            raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
 
     def get_query_set(self):
         """
@@ -71,7 +67,7 @@ class ModelIndex(object):
     def get_content_field(self):
         """Returns the """
         for field_name, field in self.fields.items():
-            if isinstance(field, ContentField):
+            if field.document is True:
                 return field_name
 
     def update(self):
@@ -103,4 +99,4 @@ class ModelIndex(object):
 
 
 class BasicModelIndex(ModelIndex):
-    text = ContentField()
+    text = TemplateField(document=True)
