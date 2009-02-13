@@ -30,7 +30,6 @@ class Command(NoArgsCommand):
                     continue
                 
                 field_names.add(field_name)
-                
                 field_data = {
                     'field_name': field_name,
                     'type': 'text',
@@ -38,12 +37,13 @@ class Command(NoArgsCommand):
                     'multi_valued': 'false',
                 }
                 
-                # Nasty but...
-                if isinstance(field_object, ContentField):
+                if field_object.document is True:
                     content_field_name = field_name
-                elif isinstance(field_object, StoredField):
+                
+                if field_object.indexed is False:
                     field_data['indexed'] = 'false'
-                elif isinstance(field_object, DateField) or isinstance(field_object, DateTimeField):
+                
+                if isinstance(field_object, DateField) or isinstance(field_object, DateTimeField):
                     field_data['type'] = 'date'
                 elif isinstance(field_object, IntegerField):
                     field_data['type'] = 'slong'
