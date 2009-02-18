@@ -83,9 +83,9 @@ include our own ``ModelIndex`` to exclude indexing future-dated notes::
     
     
     class NoteIndex(indexes.ModelIndex):
-        text = indexes.TemplateField(document=True)
-        author = indexes.CharField(model_field='user')
-        pub_date = indexes.DateTimeField(model_field='pub_date')
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
         
         def get_query_set(self):
             "Used when the entire index for model is updated."

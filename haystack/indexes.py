@@ -26,9 +26,9 @@ class ModelIndex(object):
         from myapp.models import Note
         
         class NoteIndex(indexes.ModelIndex):
-            text = indexes.TemplateField(document=True)
-            author = indexes.CharField(model_field='user')
-            pub_date = indexes.DateTimeField(model_field='pub_date')
+            text = indexes.CharField(document=True, use_template=True)
+            author = indexes.CharField(model_attr='user')
+            pub_date = indexes.DateTimeField(model_attr='pub_date')
             
             def get_query_set(self):
                 return super(NoteIndex, self).get_query_set().filter(pub_date__lte=datetime.datetime.now())
@@ -39,6 +39,7 @@ class ModelIndex(object):
     def __init__(self, model, backend=None):
         self.model = model
         self.backend = backend or haystack.backend.SearchBackend()
+        self.prepared_data = None
         content_fields = []
         
         for field_name, field in self.fields.items():
@@ -47,7 +48,7 @@ class ModelIndex(object):
         
         if not len(content_fields) == 1:
             raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
-
+    
     def get_query_set(self):
         """
         Get the default QuerySet to index when doing a full update.
@@ -56,13 +57,21 @@ class ModelIndex(object):
         """
         return self.model._default_manager.all()
     
-    def get_fields(self, obj):
+    def prepare(self, obj):
         """
-        Gets the indexed fields for this object and returns a list of tuples.
+        Fetches and adds/alters data before indexing.
+        """
+        self.prepared_data = {}
         
-        The tuple format looks like (fieldname, value).
-        """
-        return [(field_name, field.get_value(obj)) for field_name, field in self.fields.items()]
+        for field_name, field in self.fields.items():
+            self.prepared_data[field_name] = field.prepare(obj)
+        
+        for field_name, field in self.fields.items():
+            if hasattr(self, "prepare_%s" % field_name):
+                value = getattr(self, "prepare_%s" % field_name)(obj)
+                self.prepared_data[field_name] = value
+        
+        return self.prepared_data
     
     def get_content_field(self):
         """Returns the """
@@ -99,4 +108,4 @@ class ModelIndex(object):
 
 
 class BasicModelIndex(ModelIndex):
-    text = TemplateField(document=True)
+    text = CharField(document=True, use_template=True)

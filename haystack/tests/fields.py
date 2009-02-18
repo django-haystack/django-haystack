@@ -2,152 +2,134 @@ import datetime
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
 from haystack.fields import *
-from haystack.tests.mocks import MockModel, MockTemplateField
+from haystack.tests.mocks import MockModel, MockCharFieldWithTemplate
 
 
 class CharFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, CharField)
-        
         try:
-            foo = CharField(model_field='foo')
+            foo = CharField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.user = 'daniel'
-        author = CharField(model_field='user')
+        author = CharField(model_attr='user')
         
-        self.assertEqual(author.get_value(mock), u'daniel')
+        self.assertEqual(author.prepare(mock), u'daniel')
 
 class IntegerFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, IntegerField)
-        
         try:
-            foo = IntegerField(model_field='foo')
+            foo = IntegerField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.pk = 1
-        pk = IntegerField(model_field='pk')
+        pk = IntegerField(model_attr='pk')
         
-        self.assertEqual(pk.get_value(mock), 1)
+        self.assertEqual(pk.prepare(mock), 1)
 
 class FloatFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, FloatField)
-        
         try:
-            foo = FloatField(model_field='foo')
+            foo = FloatField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.floaty = 12.5
-        floaty = FloatField(model_field='floaty')
+        floaty = FloatField(model_attr='floaty')
         
-        self.assertEqual(floaty.get_value(mock), 12.5)
+        self.assertEqual(floaty.prepare(mock), 12.5)
 
 class BooleanFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, BooleanField)
-        
         try:
-            foo = BooleanField(model_field='foo')
+            foo = BooleanField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.active = True
-        is_active = BooleanField(model_field='active')
+        is_active = BooleanField(model_attr='active')
         
-        self.assertEqual(is_active.get_value(mock), True)
+        self.assertEqual(is_active.prepare(mock), True)
 
 class DateFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, DateField)
-        
         try:
-            foo = DateField(model_field='foo')
+            foo = DateField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.pub_date = datetime.date(2009, 2, 13)
-        pub_date = DateField(model_field='pub_date')
+        pub_date = DateField(model_attr='pub_date')
         
-        self.assertEqual(pub_date.get_value(mock), datetime.date(2009, 2, 13))
+        self.assertEqual(pub_date.prepare(mock), datetime.date(2009, 2, 13))
 
 class DateTimeFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, DateTimeField)
-        
         try:
-            foo = DateTimeField(model_field='foo')
+            foo = DateTimeField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.pub_date = datetime.datetime(2009, 2, 13, 10, 01, 00)
-        pub_date = DateTimeField(model_field='pub_date')
+        pub_date = DateTimeField(model_attr='pub_date')
         
-        self.assertEqual(pub_date.get_value(mock), datetime.datetime(2009, 2, 13, 10, 01, 00))
+        self.assertEqual(pub_date.prepare(mock), datetime.datetime(2009, 2, 13, 10, 01, 00))
 
 class MultiValueFieldTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(SearchFieldError, MultiValueField)
-        
         try:
-            foo = MultiValueField(model_field='foo')
+            foo = MultiValueField(model_attr='foo')
         except:
             self.fail()
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.sites = ['3', '4', '5']
-        sites = MultiValueField(model_field='sites')
+        sites = MultiValueField(model_attr='sites')
         
-        self.assertEqual(sites.get_value(mock), ['3', '4', '5'])
+        self.assertEqual(sites.prepare(mock), ['3', '4', '5'])
 
-class TemplateFieldTestCase(TestCase):
+class CharFieldWithTemplateTestCase(TestCase):
     def test_init(self):
-        self.assertRaises(TypeError, TemplateField, model_field='foo')
-        
         try:
-            foo = TemplateField()
+            foo = CharField(use_template=True)
         except:
             self.fail()
         
         try:
-            foo = TemplateField(template_name='foo.txt')
+            foo = CharField(use_template=True, template_name='foo.txt')
         except:
             self.fail()
         
-        foo = TemplateField(template_name='foo.txt')
+        foo = CharField(use_template=True, template_name='foo.txt')
         self.assertEqual(foo.template_name, 'foo.txt')
     
-    def test_get_value(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.pk = 1
         mock.user = 'daniel'
-        template1 = TemplateField()
+        template1 = CharField(use_template=True)
         
-        self.assertRaises(SearchFieldError, template1.get_value, mock)
+        self.assertRaises(SearchFieldError, template1.prepare, mock)
         
-        template2 = TemplateField()
+        template2 = CharField(use_template=True)
         template2.instance_name = 'template'
-        self.assertRaises(TemplateDoesNotExist, template2.get_value, mock)
+        self.assertRaises(TemplateDoesNotExist, template2.prepare, mock)
         
-        template3 = MockTemplateField()
+        template3 = MockCharFieldWithTemplate()
         template3.instance_name = 'template'
-        self.assertEqual(template3.get_value(mock), u'Indexed!\n1')
-
-
+        self.assertEqual(template3.prepare(mock), u'Indexed!\n1')

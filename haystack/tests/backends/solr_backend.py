@@ -4,12 +4,12 @@ from django.test import TestCase
 from haystack import indexes
 from haystack.backends.solr import SearchBackend
 from haystack import sites
-from haystack.tests.mocks import MockModel, AnotherMockModel, MockTemplateField
+from haystack.tests.mocks import MockModel, AnotherMockModel, MockCharFieldWithTemplate
 
 
 class SolrMockModelIndex(indexes.ModelIndex):
-    text = MockTemplateField(document=True)
-    name = indexes.CharField(model_field='author')
+    text = MockCharFieldWithTemplate(document=True, use_template=True)
+    name = indexes.CharField(model_attr='author')
 
 
 class SolrSearchIndex(sites.SearchIndex):

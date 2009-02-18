@@ -45,10 +45,7 @@ class SearchBackend(BaseSearchBackend):
                 doc['id'] = self.get_identifier(obj)
                 doc['django_ct_s'] = "%s.%s" % (obj._meta.app_label, obj._meta.module_name)
                 doc['django_id_s'] = force_unicode(obj.pk)
-                
-                for name, value in index.get_fields(obj):
-                    doc[name] = value
-                
+                doc.update(index.prepare(obj))
                 docs.append(doc)
         except UnicodeDecodeError:
             print "Chunk failed."

@@ -1,26 +1,41 @@
 import datetime
 from django.test import TestCase
 from haystack import indexes
-from haystack.tests.mocks import MockTemplateField, MockStoredTemplateField, MockTemplateField, MockModel, MockSearchBackend
+from haystack.tests.mocks import MockCharFieldWithTemplate, MockCharFieldWithStored, MockModel, MockSearchBackend
 
 
 class BadModelIndex1(indexes.ModelIndex):
-    author = indexes.CharField(model_field='user')
-    pub_date = indexes.DateTimeField(model_field='pub_date')
+    author = indexes.CharField(model_attr='user')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
 
 class BadModelIndex2(indexes.ModelIndex):
-    content = indexes.TemplateField(document=True)
-    content2 = indexes.TemplateField(document=True)
-    author = indexes.CharField(model_field='user')
-    pub_date = indexes.DateTimeField(model_field='pub_date')
+    content = indexes.CharField(document=True, use_template=True)
+    content2 = indexes.CharField(document=True, use_template=True)
+    author = indexes.CharField(model_attr='user')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
 
 class GoodMockModelIndex(indexes.ModelIndex):
-    content = MockTemplateField(document=True)
-    author = indexes.CharField(model_field='user')
-    pub_date = indexes.DateTimeField(model_field='pub_date')
-    extra = MockStoredTemplateField(indexed=False)
+    content = MockCharFieldWithTemplate(document=True, use_template=True)
+    author = indexes.CharField(model_attr='user')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
+    extra = MockCharFieldWithStored(indexed=False)
+
+
+class GoodCustomMockModelIndex(indexes.ModelIndex):
+    content = MockCharFieldWithTemplate(document=True, use_template=True)
+    author = indexes.CharField(model_attr='user')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
+    extra = MockCharFieldWithStored(indexed=False)
+    
+    def prepare(self, obj):
+        super(GoodCustomMockModelIndex, self).prepare(obj)
+        self.prepared_data['whee'] = 'Custom preparation.'
+        return self.prepared_data
+    
+    def prepare_author(self, obj):
+        return "Hi, I'm %s" % self.prepared_data['author']
 
 
 class ModelIndexTestCase(TestCase):
@@ -28,6 +43,7 @@ class ModelIndexTestCase(TestCase):
         super(ModelIndexTestCase, self).setUp()
         self.msb = MockSearchBackend()
         self.mi = GoodMockModelIndex(MockModel, backend=self.msb)
+        self.cmi = GoodCustomMockModelIndex(MockModel, backend=self.msb)
         self.sample_docs = {
             'haystack.mockmodel.2': {
                 'django_id_s': u'2',
@@ -73,25 +89,44 @@ class ModelIndexTestCase(TestCase):
     def test_proper_fields(self):
         self.assertEqual(len(self.mi.fields), 4)
         self.assert_('content' in self.mi.fields)
-        self.assert_(isinstance(self.mi.fields['content'], indexes.TemplateField))
+        self.assert_(isinstance(self.mi.fields['content'], indexes.CharField))
         self.assert_('author' in self.mi.fields)
         self.assert_(isinstance(self.mi.fields['author'], indexes.CharField))
         self.assert_('pub_date' in self.mi.fields)
         self.assert_(isinstance(self.mi.fields['pub_date'], indexes.DateTimeField))
         self.assert_('extra' in self.mi.fields)
-        self.assert_(isinstance(self.mi.fields['extra'], indexes.TemplateField))
+        self.assert_(isinstance(self.mi.fields['extra'], indexes.CharField))
     
     def test_get_query_set(self):
         self.assertEqual(len(self.mi.get_query_set()), 3)
     
-    def test_get_fields(self):
+    def test_prepare(self):
         mock = MockModel()
         mock.pk = 20
         mock.user = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.mi.get_fields(mock)), 4)
-        self.assertEqual(sorted([field[0] for field in self.mi.get_fields(mock)]), ['author', 'content', 'extra', 'pub_date'])
+        self.assertEqual(len(self.mi.prepare(mock)), 4)
+        self.assertEqual(sorted(self.mi.prepare(mock).keys()), ['author', 'content', 'extra', 'pub_date'])
+    
+    def test_custom_prepare(self):
+        mock = MockModel()
+        mock.pk = 20
+        mock.user = 'daniel%s' % mock.id
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        
+        self.assertEqual(len(self.cmi.prepare(mock)), 5)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'extra', 'pub_date', 'whee'])
+    
+    def test_custom_prepare_author(self):
+        mock = MockModel()
+        mock.pk = 20
+        mock.user = 'daniel%s' % mock.id
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        
+        self.assertEqual(len(self.cmi.prepare(mock)), 5)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'extra', 'pub_date', 'whee'])
+        self.assertEqual(self.cmi.prepared_data['author'], "Hi, I'm daniel20")
     
     def test_get_content_field(self):
         self.assertEqual(self.mi.get_content_field(), 'content')

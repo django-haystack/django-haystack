@@ -86,10 +86,7 @@ class MockSearchBackend(BaseSearchBackend):
             doc['id'] = self.get_identifier(obj)
             doc['django_ct_s'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
             doc['django_id_s'] = force_unicode(obj.pk)
-            
-            for name, value in index.get_fields(obj):
-                doc[name] = value
-            
+            doc.update(index.prepare(obj))
             self.docs[doc['id']] = doc
 
     def remove(self, obj, commit=True):
@@ -108,13 +105,13 @@ class MockSearchBackend(BaseSearchBackend):
         }
 
 
-class MockTemplateField(indexes.TemplateField):
-    def get_value(self, obj):
+class MockCharFieldWithTemplate(indexes.CharField):
+    def prepare(self, obj):
         return u"Indexed!\n%s" % obj.pk
 
 
-class MockStoredTemplateField(indexes.TemplateField):
-    def get_value(self, obj):
+class MockCharFieldWithStored(indexes.CharField):
+    def prepare(self, obj):
         return u"Stored!\n%s" % obj.pk
 
 
