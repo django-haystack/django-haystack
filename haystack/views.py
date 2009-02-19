@@ -31,7 +31,11 @@ class SearchView(object):
         
         if form.is_valid():
             query = form.cleaned_data['query']
-            results = form.search()
+            
+            if query:
+                results = form.search()
+            else:
+                results = []
         
         paginator = Paginator(results, RESULTS_PER_PAGE)
         

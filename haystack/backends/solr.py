@@ -111,8 +111,11 @@ class SearchBackend(BaseSearchBackend):
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct_s'].split('.')
+            additional_fields = {}
             
-            additional_fields = raw_result.copy()
+            for key, value in raw_result.items():
+                additional_fields[str(key)] = value
+            
             del(additional_fields['django_ct_s'])
             del(additional_fields['django_id_s'])
             del(additional_fields['score'])
@@ -153,7 +156,7 @@ class SearchQuery(BaseSearchQuery):
                 if the_filter.is_or():
                     query_chunks.append('OR')
                 
-                value = the_filter.value
+                value = str(the_filter.value)
                 
                 # Check to see if it's a phrase for an exact match.
                 if ' ' in value:
