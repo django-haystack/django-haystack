@@ -234,9 +234,9 @@ class SearchQuery(BaseSearchQuery):
         if self.order_by:
             order_by_list = []
             
-            for ob in self.order_by:
+            for order_by in self.order_by:
                 if order_by.startswith('-'):
-                    order_by_list.append('%s asc' % '%s desc' % order_by[1:])
+                    order_by_list.append('%s desc' % order_by[1:])
                 else:
                     order_by_list.append('%s asc' % order_by)
             
