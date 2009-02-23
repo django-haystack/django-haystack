@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
@@ -116,7 +117,7 @@ class QueryFilter(object):
         if self.is_or():
             join = 'OR'
         
-        return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), self.value)
+        return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), self.value.encode('utf8'))
     
     def split_expression(self, expression):
         """Parses an expression and determines the field and filter type."""

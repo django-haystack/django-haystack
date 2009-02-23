@@ -1,4 +1,5 @@
 # "Hey, Django! Look at me, I'm an app! For Serious!"
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 
@@ -31,7 +32,10 @@ class SearchResult(object):
 
     def _get_object(self):
         if self._object is None:
-            self._object = self.model._default_manager.get(pk=self.pk)
+            try:
+                self._object = self.model._default_manager.get(pk=self.pk)
+            except ObjectDoesNotExist:
+                self._object = None
         return self._object
     
     def _set_object(self, obj):

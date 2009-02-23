@@ -156,7 +156,10 @@ class SearchQuery(BaseSearchQuery):
                 if the_filter.is_or():
                     query_chunks.append('OR')
                 
-                value = str(the_filter.value)
+                value = the_filter.value
+                
+                if not isinstance(the_filter.value, basestring):
+                    value = str(value)
                 
                 # Check to see if it's a phrase for an exact match.
                 if ' ' in value:
