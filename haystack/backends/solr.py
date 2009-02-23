@@ -158,7 +158,7 @@ class SearchQuery(BaseSearchQuery):
                 
                 value = the_filter.value
                 
-                if not isinstance(the_filter.value, basestring):
+                if isinstance(value, (int, long, float, complex)):
                     value = str(value)
                 
                 # Check to see if it's a phrase for an exact match.
