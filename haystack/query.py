@@ -236,6 +236,42 @@ class SearchQuerySet(object):
         
         return clone
     
+    def facets(self, *args):
+        """Adds faceting to a query for the provided fields."""
+        clone = self._clone()
+        
+        for field in args:
+            clone.query.add_field_facet(field)
+        
+        return clone
+    
+    def date_facets(self, *args):
+        """Adds faceting to a query for the provided fields by date."""
+        clone = self._clone()
+        
+        for field in args:
+            clone.query.add_date_facet(field)
+        
+        return clone
+    
+    def query_facets(self, **kwargs):
+        """Adds faceting to a query for the provided fields with a custom query."""
+        clone = self._clone()
+        
+        for field, query in kwargs.items():
+            clone.query.add_query_facet(field, query)
+        
+        return clone
+    
+    def existing_facets(self, **kwargs):
+        """Pushes existing facet choices into the search."""
+        clone = self._clone()
+        
+        for field, query in kwargs.items():
+            clone.query.add_existing_facet(field, query)
+        
+        return clone
+    
     # DRL_TODO: Should this prevent other methods (filter/exclude/etc) from working?
     def raw_search(self, query_string):
         """Passes a raw query directly to the backend."""

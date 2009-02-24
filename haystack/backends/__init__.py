@@ -163,7 +163,7 @@ class BaseSearchQuery(object):
     The SearchQuery object maintains a list of QueryFilter objects. Each filter
     object supports what field it looks up against, what kind of lookup (i.e. 
     the __'s), what value it's looking for and if it's a AND/OR/NOT. The
-    SearchQuery's "_build_query" method should then iterate over that list and 
+    SearchQuery's "build_query" method should then iterate over that list and 
     convert that to a valid query for the search backend.
     
     Backends should extend this class and provide implementations for
@@ -179,6 +179,11 @@ class BaseSearchQuery(object):
         self.start_offset = 0
         self.end_offset = None
         self.highlight = False
+        self.facets = set()
+        self.date_facets = set()
+        self.range_facets = {}
+        self.query_facets = {}
+        self.existing_facets = {}
         self._results = None
         self._hit_count = None
         self.backend = backend or SearchBackend()
@@ -190,7 +195,8 @@ class BaseSearchQuery(object):
         """For pickling."""
         obj_dict = self.__dict__.copy()
         del(obj_dict['backend'])
-        # Rip off the class bits as we'll be using this path when we go to .
+        # Rip off the class bits as we'll be using this path when we go to load
+        # the backend.
         obj_dict['backend_used'] = ".".join(str(self.backend).replace("<class '", "").replace("'>", "").split(".")[0:-1])
         return obj_dict
     
@@ -332,6 +338,22 @@ class BaseSearchQuery(object):
         """Adds highlighting to the search results."""
         self.highlight = True
     
+    def add_field_facet(self, field):
+        """Adds a regular facet on a field."""
+        self.facets.add(field)
+    
+    def add_date_facet(self, field):
+        """Adds a date-based facet on a field."""
+        self.date_facets.add(field)
+    
+    def add_query_facet(self, field, query):
+        """Adds a query facet on a field."""
+        self.query_facets[field] = query
+    
+    def add_existing_facet(self, field, facet_selection):
+        """Adds a existing facet on a field."""
+        self.existing_facets[field] = facet_selection
+    
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__
@@ -341,6 +363,10 @@ class BaseSearchQuery(object):
         clone.models = self.models
         clone.boost = self.boost
         clone.highlight = self.highlight
+        clone.facets = self.facets
+        clone.date_facets = self.date_facets
+        clone.query_facets = self.query_facets
+        clone.existing_facets = self.existing_facets
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         clone.backend = self.backend

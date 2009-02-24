@@ -131,6 +131,34 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(msq.get_count(), 100)
         self.assertEqual(msq.get_results()[0], MOCK_SEARCH_RESULTS[0])
     
+    def test_add_field_facet(self):
+        self.bsq.add_field_facet('foo')
+        self.assertEqual(self.bsq.facets, set(['foo']))
+        
+        self.bsq.add_field_facet('bar')
+        self.assertEqual(self.bsq.facets, set(['foo', 'bar']))
+    
+    def test_add_date_facet(self):
+        self.bsq.add_date_facet('foo')
+        self.assertEqual(self.bsq.date_facets, set(['foo']))
+        
+        self.bsq.add_date_facet('bar')
+        self.assertEqual(self.bsq.date_facets, set(['foo', 'bar']))
+    
+    def test_add_query_facet(self):
+        self.bsq.add_query_facet('foo', 'bar')
+        self.assertEqual(self.bsq.query_facets, {'foo': 'bar'})
+        
+        self.bsq.add_query_facet('moof', 'baz')
+        self.assertEqual(self.bsq.query_facets, {'foo': 'bar', 'moof': 'baz'})
+    
+    def test_add_existing_facet(self):
+        self.bsq.add_existing_facet('foo', 'bar')
+        self.assertEqual(self.bsq.existing_facets, {'foo': 'bar'})
+        
+        self.bsq.add_existing_facet('moof', 'baz')
+        self.assertEqual(self.bsq.existing_facets, {'foo': 'bar', 'moof': 'baz'})
+    
     def test_run(self):
         msq = MockSearchQuery(backend=MockSearchBackend())
         self.assertEqual(len(msq.get_results()), 100)
@@ -143,12 +171,24 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_filter('claris', 'moof', use_or=True)
         self.bsq.add_order_by('foo')
         self.bsq.add_model(MockModel)
+        self.bsq.add_boost('foo', 2)
+        self.bsq.add_highlight()
+        self.bsq.add_field_facet('foo')
+        self.bsq.add_date_facet('foo')
+        self.bsq.add_query_facet('foo', 'bar')
+        self.bsq.add_existing_facet('foo', 'bar')
         
         clone = self.bsq._clone()
         self.assert_(isinstance(clone, BaseSearchQuery))
         self.assertEqual(len(clone.query_filters), 4)
         self.assertEqual(len(clone.order_by), 1)
         self.assertEqual(len(clone.models), 1)
+        self.assertEqual(len(clone.boost), 1)
+        self.assertEqual(clone.highlight, True)
+        self.assertEqual(len(clone.facets), 1)
+        self.assertEqual(len(clone.date_facets), 1)
+        self.assertEqual(len(clone.query_facets), 1)
+        self.assertEqual(len(clone.existing_facets), 1)
         self.assertEqual(clone.start_offset, self.bsq.start_offset)
         self.assertEqual(clone.end_offset, self.bsq.end_offset)
         self.assertEqual(clone.backend, self.bsq.backend)
@@ -265,6 +305,26 @@ class SearchQuerySetTestCase(TestCase):
         mock.id = 1
         
         self.assertEqual(len(self.msqs.more_like_this(mock)), 100)
+    
+    def test_facets(self):
+        sqs = self.bsqs.facets('foo')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.facets), 1)
+    
+    def test_date_facets(self):
+        sqs = self.bsqs.date_facets('foo')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.date_facets), 1)
+    
+    def test_query_facets(self):
+        sqs = self.bsqs.query_facets(foo='bar')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_facets), 1)
+    
+    def test_existing_facets(self):
+        sqs = self.bsqs.existing_facets(foo='moof')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.existing_facets), 1)
     
     def test_clone(self):
         results = self.msqs.filter(foo='bar', foo__lt='10')
