@@ -72,7 +72,9 @@ class SearchBackend(BaseSearchBackend):
         # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
         self.conn.optimize()
 
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields='', highlight=False):
+    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
+               existing_facets=None):
         if len(query_string) == 0:
             return []
         
@@ -96,6 +98,22 @@ class SearchBackend(BaseSearchBackend):
             kwargs['hl'] = 'true'
             kwargs['hl.fragsize'] = '200'
         
+        if facets is not None:
+            kwargs['facet'] = 'on'
+            kwargs['facet.field'] = facets
+        
+        if date_facets is not None:
+            kwargs['facet'] = 'on'
+            kwargs['facet.date'] = date_facets
+        
+        if query_facets is not None:
+            kwargs['facet'] = 'on'
+            kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets.items()]
+        
+        if existing_facets is not None:
+            kwargs['facet'] = 'on'
+            kwargs['fq'] = ["%s:%s" % (field, value) for field, value in existing_facets.items()]
+        
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)
     
@@ -108,6 +126,20 @@ class SearchBackend(BaseSearchBackend):
     
     def _process_results(self, raw_results, highlight=False):
         results = []
+        facets = {}
+        
+        if hasattr(raw_results, 'facets'):
+            facets = {
+                'fields': raw_results.facets.get('facet_fields', {}),
+                'dates': raw_results.facets.get('facet_dates', {}),
+                'queries': raw_results.facets.get('facet_queries', {}),
+            }
+            
+            for key in facets.keys():
+                for facet_field in facets[key]:
+                    # Convert to a dict, as Solr's json format returns a list of
+                    # pairs.
+                    facets[key][facet_field] = dict(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct_s'].split('.')
@@ -129,6 +161,7 @@ class SearchBackend(BaseSearchBackend):
         return {
             'results': results,
             'hits': raw_results.hits,
+            'facets': facets,
         }
 
 
@@ -230,9 +263,9 @@ class SearchQuery(BaseSearchQuery):
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        sort_by = None
-        start_offset = self.start_offset
-        end_offset = None
+        kwargs = {
+            'start_offset': self.start_offset,
+        }
         
         if self.order_by:
             order_by_list = []
@@ -243,11 +276,26 @@ class SearchQuery(BaseSearchQuery):
                 else:
                     order_by_list.append('%s asc' % order_by)
             
-            sort_by = ", ".join(order_by_list)
+            kwargs['sort_by'] = ", ".join(order_by_list)
         
         if self.end_offset is not None:
-            end_offset = self.end_offset - self.start_offset
+            kwargs['end_offset'] = self.end_offset - self.start_offset
         
-        results = self.backend.search(final_query, sort_by=sort_by, start_offset=start_offset, end_offset=end_offset, highlight=self.highlight)
+        if self.highlight:
+            kwargs['highlight'] = self.highlight
+        
+        if self.facets:
+            kwargs['facets'] = list(self.facets)
+        
+        if self.date_facets:
+            kwargs['date_facets'] = list(self.date_facets)
+        
+        if self.query_facets:
+            kwargs['query_facets'] = self.query_facets
+        
+        if self.existing_facets:
+            kwargs['existing_facets'] = self.existing_facets
+        
+        results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)

@@ -102,6 +102,12 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('', highlight=True), [])
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']], ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
+        
+        self.assertEqual(self.sb.search('', facets=['name']), [])
+        self.assertEqual(self.sb.search('Index', facets=['name'])['hits'], 3)
+        results = self.sb.search('Index', facets=['name'])
+        fields = results['facets']['fields']
+        self.assertEqual(fields['name'], {'daniel1': 1, 'daniel2': 1, 'daniel3': 1})
     
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
