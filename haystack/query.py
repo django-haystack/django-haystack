@@ -236,31 +236,22 @@ class SearchQuerySet(object):
         
         return clone
     
-    def facets(self, *args):
+    def facet(self, field):
         """Adds faceting to a query for the provided fields."""
         clone = self._clone()
-        
-        for field in args:
-            clone.query.add_field_facet(field)
-        
+        clone.query.add_field_facet(field)
         return clone
     
-    def date_facets(self, *args):
+    def date_facet(self, field, **kwargs):
         """Adds faceting to a query for the provided fields by date."""
         clone = self._clone()
-        
-        for field in args:
-            clone.query.add_date_facet(field)
-        
+        clone.query.add_date_facet(field, **kwargs)
         return clone
     
-    def query_facets(self, **kwargs):
+    def query_facet(self, field, query):
         """Adds faceting to a query for the provided fields with a custom query."""
         clone = self._clone()
-        
-        for field, query in kwargs.items():
-            clone.query.add_query_facet(field, query)
-        
+        clone.query.add_query_facet(field, query)
         return clone
     
     def existing_facets(self, **kwargs):

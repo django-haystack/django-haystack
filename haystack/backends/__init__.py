@@ -180,7 +180,7 @@ class BaseSearchQuery(object):
         self.end_offset = None
         self.highlight = False
         self.facets = set()
-        self.date_facets = set()
+        self.date_facets = {}
         self.range_facets = {}
         self.query_facets = {}
         self.existing_facets = {}
@@ -342,9 +342,9 @@ class BaseSearchQuery(object):
         """Adds a regular facet on a field."""
         self.facets.add(field)
     
-    def add_date_facet(self, field):
+    def add_date_facet(self, field, **kwargs):
         """Adds a date-based facet on a field."""
-        self.date_facets.add(field)
+        self.date_facets[field] = kwargs
     
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""

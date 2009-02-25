@@ -104,7 +104,13 @@ class SearchBackend(BaseSearchBackend):
         
         if date_facets is not None:
             kwargs['facet'] = 'on'
-            kwargs['facet.date'] = date_facets
+            kwargs['facet.date'] = date_facets.keys()
+            
+            for key, value in date_facets.items():
+                # Date-based facets in Solr kinda suck.
+                kwargs["f.%s.facet.date.start" % key] = self.conn._from_python(value.get('start_date'))
+                kwargs["f.%s.facet.date.end" % key] = self.conn._from_python(value.get('end_date'))
+                kwargs["f.%s.facet.date.gap" % key] = value.get('gap')
         
         if query_facets is not None:
             kwargs['facet'] = 'on'
@@ -135,7 +141,7 @@ class SearchBackend(BaseSearchBackend):
                 'queries': raw_results.facets.get('facet_queries', {}),
             }
             
-            for key in facets.keys():
+            for key in ['fields']:
                 for facet_field in facets[key]:
                     # Convert to a dict, as Solr's json format returns a list of
                     # pairs.
@@ -288,7 +294,7 @@ class SearchQuery(BaseSearchQuery):
             kwargs['facets'] = list(self.facets)
         
         if self.date_facets:
-            kwargs['date_facets'] = list(self.date_facets)
+            kwargs['date_facets'] = self.date_facets
         
         if self.query_facets:
             kwargs['query_facets'] = self.query_facets

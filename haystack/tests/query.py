@@ -1,3 +1,4 @@
+import datetime
 from django.test import TestCase
 from haystack.backends import QueryFilter, BaseSearchQuery
 from haystack.backends.dummy import SearchBackend as DummySearchBackend
@@ -139,11 +140,11 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(self.bsq.facets, set(['foo', 'bar']))
     
     def test_add_date_facet(self):
-        self.bsq.add_date_facet('foo')
-        self.assertEqual(self.bsq.date_facets, set(['foo']))
+        self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 2, 25))
+        self.assertEqual(self.bsq.date_facets, {'foo': {'start_date': datetime.date(2009, 2, 25)}})
         
         self.bsq.add_date_facet('bar')
-        self.assertEqual(self.bsq.date_facets, set(['foo', 'bar']))
+        self.assertEqual(self.bsq.date_facets, {'foo': {'start_date': datetime.date(2009, 2, 25)}, 'bar': {}})
     
     def test_add_query_facet(self):
         self.bsq.add_query_facet('foo', 'bar')
@@ -307,19 +308,31 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(self.msqs.more_like_this(mock)), 100)
     
     def test_facets(self):
-        sqs = self.bsqs.facets('foo')
+        sqs = self.bsqs.facet('foo')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.facets), 1)
+        
+        sqs2 = self.bsqs.facet('foo').facet('bar')
+        self.assert_(isinstance(sqs2, SearchQuerySet))
+        self.assertEqual(len(sqs2.query.facets), 2)
     
     def test_date_facets(self):
-        sqs = self.bsqs.date_facets('foo')
+        sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap='/MONTH')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.date_facets), 1)
+        
+        sqs2 = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap='/MONTH').date_facet('bar', start_date=datetime.date(2007, 2, 25), end_date=datetime.date(2009, 2, 25), gap='/YEAR')
+        self.assert_(isinstance(sqs2, SearchQuerySet))
+        self.assertEqual(len(sqs2.query.date_facets), 2)
     
     def test_query_facets(self):
-        sqs = self.bsqs.query_facets(foo='bar')
+        sqs = self.bsqs.query_facet('foo', '[bar TO *]')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_facets), 1)
+        
+        sqs2 = self.bsqs.query_facet('foo', '[bar TO *]').query_facet('bar', '[100 TO 499]')
+        self.assert_(isinstance(sqs2, SearchQuerySet))
+        self.assertEqual(len(sqs2.query.query_facets), 2)
     
     def test_existing_facets(self):
         sqs = self.bsqs.existing_facets(foo='moof')
