@@ -109,7 +109,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('', facets=['name']), [])
         results = self.sb.search('Index', facets=['name'])
         self.assertEqual(results['hits'], 3)
-        self.assertEqual(results['facets']['fields']['name'], {'daniel1': 1, 'daniel2': 1, 'daniel3': 1})
+        self.assertEqual(results['facets']['fields']['name'], [('daniel1', 1), ('daniel2', 1), ('daniel3', 1)])
         
         self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}}), [])
         results = self.sb.search('Index', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}})

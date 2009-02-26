@@ -143,9 +143,9 @@ class SearchBackend(BaseSearchBackend):
             
             for key in ['fields']:
                 for facet_field in facets[key]:
-                    # Convert to a dict, as Solr's json format returns a list of
+                    # Convert to a two-tuple, as Solr's json format returns a list of
                     # pairs.
-                    facets[key][facet_field] = dict(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
+                    facets[key][facet_field] = zip(facets[key][facet_field][::2], facets[key][facet_field][1::2])
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct_s'].split('.')
