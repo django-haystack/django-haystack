@@ -254,13 +254,10 @@ class SearchQuerySet(object):
         clone.query.add_query_facet(field, query)
         return clone
     
-    def existing_facets(self, **kwargs):
+    def narrow(self, query):
         """Pushes existing facet choices into the search."""
         clone = self._clone()
-        
-        for field, query in kwargs.items():
-            clone.query.add_existing_facet(field, query)
-        
+        clone.query.add_narrow_query(query)
         return clone
     
     # DRL_TODO: Should this prevent other methods (filter/exclude/etc) from working?

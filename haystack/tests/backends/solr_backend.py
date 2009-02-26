@@ -121,6 +121,10 @@ class SolrSearchBackendTestCase(TestCase):
         results = self.sb.search('Index', query_facets={'name': '[* TO e]'})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {'name:[* TO e]': 3})
+        
+        self.assertEqual(self.sb.search('', narrow_queries=['name:daniel1']), [])
+        results = self.sb.search('Index', narrow_queries=['name:daniel1'])
+        self.assertEqual(results['hits'], 1)
     
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)

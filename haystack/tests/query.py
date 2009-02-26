@@ -153,12 +153,12 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_query_facet('moof', 'baz')
         self.assertEqual(self.bsq.query_facets, {'foo': 'bar', 'moof': 'baz'})
     
-    def test_add_existing_facet(self):
-        self.bsq.add_existing_facet('foo', 'bar')
-        self.assertEqual(self.bsq.existing_facets, {'foo': 'bar'})
+    def test_add_narrow_query(self):
+        self.bsq.add_narrow_query('foo:bar')
+        self.assertEqual(self.bsq.narrow_queries, set(['foo:bar']))
         
-        self.bsq.add_existing_facet('moof', 'baz')
-        self.assertEqual(self.bsq.existing_facets, {'foo': 'bar', 'moof': 'baz'})
+        self.bsq.add_narrow_query('moof:baz')
+        self.assertEqual(self.bsq.narrow_queries, set(['foo:bar', 'moof:baz']))
     
     def test_run(self):
         msq = MockSearchQuery(backend=MockSearchBackend())
@@ -177,7 +177,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_field_facet('foo')
         self.bsq.add_date_facet('foo')
         self.bsq.add_query_facet('foo', 'bar')
-        self.bsq.add_existing_facet('foo', 'bar')
+        self.bsq.add_narrow_query('foo:bar')
         
         clone = self.bsq._clone()
         self.assert_(isinstance(clone, BaseSearchQuery))
@@ -189,7 +189,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(len(clone.facets), 1)
         self.assertEqual(len(clone.date_facets), 1)
         self.assertEqual(len(clone.query_facets), 1)
-        self.assertEqual(len(clone.existing_facets), 1)
+        self.assertEqual(len(clone.narrow_queries), 1)
         self.assertEqual(clone.start_offset, self.bsq.start_offset)
         self.assertEqual(clone.end_offset, self.bsq.end_offset)
         self.assertEqual(clone.backend, self.bsq.backend)
@@ -334,10 +334,10 @@ class SearchQuerySetTestCase(TestCase):
         self.assert_(isinstance(sqs2, SearchQuerySet))
         self.assertEqual(len(sqs2.query.query_facets), 2)
     
-    def test_existing_facets(self):
-        sqs = self.bsqs.existing_facets(foo='moof')
+    def test_narrow(self):
+        sqs = self.bsqs.narrow('foo:moof')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs.query.existing_facets), 1)
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
     
     def test_clone(self):
         results = self.msqs.filter(foo='bar', foo__lt='10')

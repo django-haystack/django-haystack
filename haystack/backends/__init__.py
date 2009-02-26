@@ -181,9 +181,8 @@ class BaseSearchQuery(object):
         self.highlight = False
         self.facets = set()
         self.date_facets = {}
-        self.range_facets = {}
         self.query_facets = {}
-        self.existing_facets = {}
+        self.narrow_queries = set()
         self._results = None
         self._hit_count = None
         self.backend = backend or SearchBackend()
@@ -350,9 +349,9 @@ class BaseSearchQuery(object):
         """Adds a query facet on a field."""
         self.query_facets[field] = query
     
-    def add_existing_facet(self, field, facet_selection):
+    def add_narrow_query(self, query):
         """Adds a existing facet on a field."""
-        self.existing_facets[field] = facet_selection
+        self.narrow_queries.add(query)
     
     def _clone(self, klass=None):
         if klass is None:
@@ -366,7 +365,7 @@ class BaseSearchQuery(object):
         clone.facets = self.facets
         clone.date_facets = self.date_facets
         clone.query_facets = self.query_facets
-        clone.existing_facets = self.existing_facets
+        clone.narrow_queries = self.narrow_queries
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         clone.backend = self.backend

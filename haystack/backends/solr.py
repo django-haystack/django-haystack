@@ -74,7 +74,7 @@ class SearchBackend(BaseSearchBackend):
 
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               existing_facets=None):
+               narrow_queries=None):
         if len(query_string) == 0:
             return []
         
@@ -116,9 +116,8 @@ class SearchBackend(BaseSearchBackend):
             kwargs['facet'] = 'on'
             kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets.items()]
         
-        if existing_facets is not None:
-            kwargs['facet'] = 'on'
-            kwargs['fq'] = ["%s:%s" % (field, value) for field, value in existing_facets.items()]
+        if narrow_queries is not None:
+            kwargs['fq'] = list(narrow_queries)
         
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)
@@ -299,8 +298,8 @@ class SearchQuery(BaseSearchQuery):
         if self.query_facets:
             kwargs['query_facets'] = self.query_facets
         
-        if self.existing_facets:
-            kwargs['existing_facets'] = self.existing_facets
+        if self.narrow_queries:
+            kwargs['narrow_queries'] = self.narrow_queries
         
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
