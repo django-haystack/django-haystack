@@ -39,7 +39,9 @@ class HighlightedSearchForm(SearchForm):
 
 
 class ModelSearchForm(SearchForm):
-    models = forms.MultipleChoiceField(choices=model_choices(), required=False, widget=forms.CheckboxSelectMultiple)
+    def __init__(self, *args, **kwargs):
+        super(ModelSearchForm, self).__init__(*args, **kwargs)
+        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, widget=forms.CheckboxSelectMultiple)
 
     def get_models(self):
         """Return an alphabetical list of model classes in the index."""
