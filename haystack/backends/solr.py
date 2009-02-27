@@ -304,3 +304,4 @@ class SearchQuery(BaseSearchQuery):
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
+        self._facet_counts = results.get('facets', {})

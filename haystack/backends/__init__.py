@@ -185,6 +185,7 @@ class BaseSearchQuery(object):
         self.narrow_queries = set()
         self._results = None
         self._hit_count = None
+        self._facet_counts = None
         self.backend = backend or SearchBackend()
     
     def __str__(self):
@@ -217,6 +218,7 @@ class BaseSearchQuery(object):
         results = self.backend.search(final_query, highlight=self.highlight)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
+        self._facet_counts = results.get('facets', {})
     
     def get_count(self):
         """
@@ -241,6 +243,18 @@ class BaseSearchQuery(object):
             self.run()
         
         return self._results
+    
+    def get_facet_counts(self):
+        """
+        Returns the results received from the backend.
+        
+        If the query has not been run, this will execute the query and store
+        the results.
+        """
+        if self._facet_counts is None:
+            self.run()
+        
+        return self._facet_counts
     
     
     # Methods for backends to implement.

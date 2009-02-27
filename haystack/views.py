@@ -28,12 +28,14 @@ class SearchView(object):
         
         query = ''
         results = []
+        facets = {}
         
         if form.is_valid():
             query = form.cleaned_data['query']
             
             if query:
                 results = form.search()
+                facets = results.facet_counts()
             else:
                 results = []
         
@@ -47,6 +49,7 @@ class SearchView(object):
         return render_to_response(self.template, {
             'query': query,
             'form': form,
+            'facets': facets,
             'page': page,
             'paginator': paginator,
         }, context_instance=self.context_class(request))

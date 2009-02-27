@@ -295,6 +295,9 @@ class SearchQuerySetTestCase(TestCase):
     def test_count(self):
         self.assertEqual(self.bsqs.count(), 0)
     
+    def test_facet_counts(self):
+        self.assertEqual(self.bsqs.facet_counts(), {})
+    
     def test_best_match(self):
         self.assert_(isinstance(self.msqs.best_match(), SearchResult))
     

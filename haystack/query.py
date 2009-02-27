@@ -329,6 +329,16 @@ class SearchQuerySet(object):
         clone.query.more_like_this(model_instance)
         return clone
     
+    def facet_counts(self):
+        """
+        Returns the facet counts found by the query.
+        
+        This will cause the query to execute and should generally be used when
+        presenting the data.
+        """
+        clone = self._clone()
+        return clone.query.get_facet_counts()
+    
     
     # Utility methods.
     
