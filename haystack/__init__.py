@@ -6,7 +6,7 @@ from haystack.sites import SearchIndex, site
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 0, 0, 'alpha')
+__version__ = (2, 0, 0, 'beta')
 __all__ = ['backend']
 
 
