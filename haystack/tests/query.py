@@ -352,3 +352,13 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(clone._result_cache, [])
         self.assertEqual(clone._result_count, None)
         self.assertEqual(clone._cache_full, False)
+    
+    def test_chaining(self):
+        sqs = self.bsqs.filter(content='foo')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filters), 1)
+        
+        # A second instance should inherit none of the changes from above.
+        sqs = self.bsqs.filter(content='bar')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filters), 1)

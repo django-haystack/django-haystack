@@ -370,16 +370,17 @@ class BaseSearchQuery(object):
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__
+        
         clone = klass()
-        clone.query_filters = self.query_filters
-        clone.order_by = self.order_by
-        clone.models = self.models
-        clone.boost = self.boost
+        clone.query_filters = self.query_filters[:]
+        clone.order_by = self.order_by[:]
+        clone.models = self.models.copy()
+        clone.boost = self.boost.copy()
         clone.highlight = self.highlight
-        clone.facets = self.facets
-        clone.date_facets = self.date_facets
-        clone.query_facets = self.query_facets
-        clone.narrow_queries = self.narrow_queries
+        clone.facets = self.facets.copy()
+        clone.date_facets = self.date_facets.copy()
+        clone.query_facets = self.query_facets.copy()
+        clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         clone.backend = self.backend
