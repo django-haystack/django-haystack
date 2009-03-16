@@ -1,3 +1,4 @@
+import re
 from django.conf import settings
 import haystack
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
@@ -281,13 +282,28 @@ class SearchQuerySet(object):
         common cases.
         """
         clone = self._clone()
+        
+        # Pull out anything wrapped in quotes and do an exact match on it.
+        quote_regex = re.compile(r'([\'"])(.*?)\1')
+        result = quote_regex.search(query_string)
+        
+        while result is not None:
+            full_match = result.group()
+            query_string = query_string.replace(full_match, '', 1)
+            
+            exact_match = result.groups()[1]
+            clone = clone.filter(content=exact_match)
+            
+            # Re-search the string for other exact matches.
+            result = quote_regex.search(query_string)
+        
+        # Pseudo-tokenize the rest of the query.
         keywords = query_string.split()
         
         # Loop through keywords and add filters to the query.
         # DRL_FIXME: This is still *really* naive. Have a look at Google and
         #            see how their searches get expressed (because of
         #            familiarity for most users).
-        #            Also, may need to support quotes on this.
         for keyword in keywords:
             exclude = False
             
@@ -298,9 +314,9 @@ class SearchQuerySet(object):
             cleaned_keyword = clone.query.clean(keyword)
             
             if exclude:
-                clone.exclude(content=cleaned_keyword)
+                clone = clone.exclude(content=cleaned_keyword)
             else:
-                clone.filter(content=cleaned_keyword)
+                clone = clone.filter(content=cleaned_keyword)
         
         return clone
     
@@ -345,6 +361,7 @@ class SearchQuerySet(object):
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__
+        
         query = self.query._clone()
         clone = klass(site=self.site, query=query)
         return clone
