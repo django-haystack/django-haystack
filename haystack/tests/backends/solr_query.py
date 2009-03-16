@@ -8,8 +8,8 @@ class SolrSearchQueryTestCase(TestCase):
         super(SolrSearchQueryTestCase, self).setUp()
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9000/solr/test_default')
-        settings.SOLR_URL = 'http://localhost:9000/solr/test_default'
+        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9001/solr/test_default')
+        settings.SOLR_URL = 'http://localhost:9001/solr/test_default'
         
         self.sq = SearchQuery(backend=SearchBackend())
     

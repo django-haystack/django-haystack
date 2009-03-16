@@ -15,8 +15,8 @@ class SearchViewTestCase(TestCase):
         super(SearchViewTestCase, self).setUp()
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9000/solr/default')
-        settings.SOLR_URL = 'http://localhost:9000/solr/default'
+        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9001/solr/default')
+        settings.SOLR_URL = 'http://localhost:9001/solr/default'
     
     def tearDown(self):
         settings.SOLR_URL = self.old_solr_url

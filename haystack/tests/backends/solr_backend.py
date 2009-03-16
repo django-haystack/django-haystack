@@ -23,8 +23,8 @@ class SolrSearchBackendTestCase(TestCase):
         super(SolrSearchBackendTestCase, self).setUp()
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9000/solr/test_default')
-        settings.SOLR_URL = 'http://localhost:9000/solr/test_default'
+        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9001/solr/test_default')
+        settings.SOLR_URL = 'http://localhost:9001/solr/test_default'
         
         self.raw_solr = pysolr.Solr(settings.SOLR_URL)
         self.raw_solr.delete(q='*:*')
