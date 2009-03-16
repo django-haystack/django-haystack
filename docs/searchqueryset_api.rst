@@ -52,54 +52,219 @@ query as late as possible). So the following is valid::
 ``SearchQuerySet`` Methods
 ==========================
 
+The primary interface to search in Haystack is through the ``SearchQuerySet``
+object. It provides a clean, programmatic, portable API to the search backend.
+Many aspects are also "chainable", meaning you can call methods one after another, each
+applying their changes to the previous ``SearchQuerySet`` and further narrowing
+the search.
+
+
 Methods That Return A ``SearchQuerySet``
 ----------------------------------------
 
 ``all(self):``
-Returns all results for the query.
+~~~~~~~~~~~~~~
+
+Returns all results for the query. This is largely a no-op (returns an identical
+copy) but useful for denoting exactly what behavior is going on.
 
 ``filter(self, **kwargs)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Narrows the search by looking for (and including) certain attributes.
 
+The lookup parameters (``**kwargs``) should follow the `Field lookups`_ below.
+If you specify more than one pair, they will be joined in the query according to
+the ``HAYSTACK_DEFAULT_OPERATOR`` setting (defaults to ``OR``).
+
+If a string with one or more spaces in it is specified as the value, an exact
+match will be performed on that phrase.
+
+Example::
+
+    SearchQuerySet().filter(content='foo')
+    
+    SearchQuerySet().filter(content='foo', pub_date__lte=datetime.date(2008, 1, 1))
+    
+    # Identical to the previous example.
+    SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
+
 ``exclude(self, **kwargs)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Narrows the search by ensuring certain attributes are not included.
+
+Example::
+
+    SearchQuerySet().exclude(content='foo')
+
+``filter_and(self, **kwargs)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Narrows the search by looking for (and including) certain attributes. Join
+behavior in the query is forced to be ``AND``. Used primarily by the ``filter``
+method.
 
 ``filter_or(self, **kwargs)``
-Narrows the search by ensuring certain attributes are not included.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``order_by(self, field)``
+Narrows the search by looking for (and including) certain attributes. Join
+behavior in the query is forced to be ``OR``. Used primarily by the ``filter``
+method.
+
+``order_by(self, *args)``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Alters the order in which the results should appear. Arguments should be strings
+that map to the attributes/fields within the index. You may specify multiple
+fields by comma separating them::
+
+    SearchQuerySet().filter(content='foo').order_by('author', 'pub_date')
+
+Default behavior is ascending order. To specify descending order, prepend the
+string with a ``-``::
+
+    SearchQuerySet().filter(content='foo').order_by('-pub_date')
+
+``highlight(self)``
+~~~~~~~~~~~~~~~~~~~
+
+If supported by the backend, the ``SearchResult`` objects returned will include
+a highlighted version of the result::
+
+    SearchQuerySet().filter(content='foo').highlight()
 
 ``models(self, *models)``
-Accepts an arbitrary number of Model classes to include in the search.
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Accepts an arbitrary number of Model classes to include in the search. This will
+narrow the search results to only include results from the models specified.
+
+Example::
+
+    SearchQuerySet().filter(content='foo').models(BlogEntry, Comment)
 
 ``boost(self, **kwargs)``
-Boosts a certain aspect of the query.
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Boosts a certain term of the query. You should provide pairs, where the
+parameter is the term to be boosted and the value is the amount to boost it by.
+Boost amounts may be either an integer or a float.
+
+Example::
+
+    SearchQuerySet().filter(content='foo').boost(bar=1.5)
+
+``facet(self, field)``
+~~~~~~~~~~~~~~~~~~~~~~
+
+Implemented. Documentation coming soon.
+
+``date_facet(self, field, **kwargs)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Implemented. Documentation coming soon.
+
+``query_facet(self, field, query)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Implemented. Documentation coming soon.
+
+``narrow(self, query)``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Implemented. Documentation coming soon.
 
 ``raw_search(self, query_string)``
-Passes a raw query directly to the backend.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Passes a raw query directly to the backend. This is for advanced usage, where
+the desired query can not be expressed via ``SearchQuerySet``.
+
+Example::
+
+    # In the case of Solr... (this example could be expressed with SearchQuerySet)
+    SearchQuerySet().raw_search('django_ct_s:blog.blogentry "However, it is"')
+
+Please note that this is **NOT** portable between backends. The syntax is entirely
+dependent on the backend. No validation/cleansing is performed and it is up to
+the developer to ensure the query's syntax is correct.
 
 ``load_all(self)``
-Efficiently populates the objects in the search results.
+~~~~~~~~~~~~~~~~~~
+
+Efficiently populates the objects in the search results. Without using this
+method, DB lookups are done on a per-object basis, resulting in many individual
+trips to the database. If ``load_all`` is used, the ``SearchQuerySet`` will
+group similar objects into a single query, resulting in only as many queries as
+there are different object types returned.
+
+Example::
+
+    SearchQuerySet().filter(content='foo').load_all()
 
 ``auto_query(self, query_string)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Performs a best guess constructing the search query.
 
-This method is somewhat naive but works well enough for the simple,
-common cases.
+This method is intended for common use directly with a user's query. It is a
+shortcut to the other API methods that follows generally established search
+syntax without requiring each developer to implement their own parser.
+
+It handles exact matches (specified with single or double quotes), negation (
+using a ``-`` immediately before the term) and joining remaining terms with the
+operator specified in ``HAYSTACK_DEFAULT_OPERATOR``.
+
+Example::
+
+    SearchQuerySet().auto_query('goldfish "old one eye" -tank')
+    
+    # ... is identical to...
+    SearchQuerySet().filter(content='old one eye').filter(content='goldfish').exclude(content='tank')
+
+This method is somewhat naive but works well enough for simple, common cases.
 
 
 Methods That Do Not Return A ``SearchQuerySet``
 -----------------------------------------------
 
 ``count(self)``
+~~~~~~~~~~~~~~~
+
 Returns the total number of matching results.
 
 ``best_match(self)``
+~~~~~~~~~~~~~~~~~~~~
+
 Returns the best/top search result that matches the query.
 
 ``latest(self, date_field)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Returns the most recent search result that matches the query.
 
 ``more_like_this(self, model_instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Finds similar results to the object passed in.
+
+``facet_counts(self)``
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. _field-lookups:
+
+Field Lookups
+-------------
+
+The following lookup types are supported:
+
+* exact
+* gt
+* gte
+* lt
+* lte
+* in
+
+These options are similar in function to the way Django's lookup types work.
+The actual behavior of these lookups is backend-specific.
