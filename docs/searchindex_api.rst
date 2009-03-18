@@ -1,6 +1,31 @@
-===============
+==============
 SearchIndex API
-===============
+==============
 
-The ``SearchIndex`` class acts as a registry that pulls together the desired
-models and ``ModelIndex`` classes appropriate for your site.
+The SearchIndex class allows the application developer a way to provide data to
+the backend in a structured format. Developers familiar with Django's ``Form``
+or ``Model`` classes should find the syntax for indexes familiar.
+
+
+Quick Start
+===========
+
+For the impatient::
+
+    import datetime
+    from haystack import indexes
+    from haystack.sites import site
+    from myapp.models import Note
+    
+    
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+        
+        def get_query_set(self):
+            "Used when the entire index for model is updated."
+            return Note.objects.filter(pub_date__lte=datetime.datetime.now())
+    
+    
+    site.register(Note, NoteIndex)

@@ -15,7 +15,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class ModelIndex(object):
+class SearchIndex(object):
     """
     Base class for building indexes.
     
@@ -25,7 +25,7 @@ class ModelIndex(object):
         from haystack import indexes
         from myapp.models import Note
         
-        class NoteIndex(indexes.ModelIndex):
+        class NoteIndex(indexes.SearchIndex):
             text = indexes.CharField(document=True, use_template=True)
             author = indexes.CharField(model_attr='user')
             pub_date = indexes.DateTimeField(model_attr='pub_date')
@@ -107,5 +107,5 @@ class ModelIndex(object):
         self.update()
 
 
-class BasicModelIndex(ModelIndex):
+class BasicSearchIndex(SearchIndex):
     text = CharField(document=True, use_template=True)

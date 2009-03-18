@@ -1,6 +1,6 @@
 from django.db import models
 from django.test import TestCase
-from haystack.indexes import BasicModelIndex
+from haystack.indexes import BasicSearchIndex
 from haystack.sites import SearchIndex, AlreadyRegistered, NotRegistered
 from haystack.tests.mocks import MockModel
 
@@ -36,7 +36,7 @@ class SearchIndexTestCase(TestCase):
         self.assertRaises(NotRegistered, self.site.get_index, MockModel)
         
         self.site.register(MockModel)
-        self.assert_(isinstance(self.site.get_index(MockModel), BasicModelIndex))
+        self.assert_(isinstance(self.site.get_index(MockModel), BasicSearchIndex))
     
     def test_get_indexes(self):
         self.assertEqual(self.site.get_indexes(), {})

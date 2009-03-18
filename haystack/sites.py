@@ -1,6 +1,6 @@
 from django.db.models import signals
 from django.db.models.base import ModelBase
-from haystack.indexes import BasicModelIndex
+from haystack.indexes import BasicSearchIndex
 
 
 class AlreadyRegistered(Exception):
@@ -35,11 +35,11 @@ class SearchIndex(object):
         
         The model should be a Model class, not instances.
         
-        If no custom index is provided, a generic ModelIndex will be applied
+        If no custom index is provided, a generic SearchIndex will be applied
         to the model.
         """
         if not index_class:
-            index_class = BasicModelIndex
+            index_class = BasicSearchIndex
         
         if not isinstance(model, ModelBase):
             raise AttributeError('The model being registered must derive from Model.')

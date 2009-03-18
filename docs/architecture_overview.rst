@@ -52,7 +52,7 @@ One main implementation.
 * Provides a means of adding custom indexes to a model, like ModelAdmins.
 
 
-ModelIndex
+SearchIndex
 ==========
 
 Implemented per-model you wish to index.

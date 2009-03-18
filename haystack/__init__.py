@@ -1,7 +1,7 @@
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from haystack.indexes import ModelIndex
+from haystack.indexes import SearchIndex
 from haystack.sites import SearchIndex, site
 
 

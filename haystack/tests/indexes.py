@@ -4,33 +4,33 @@ from haystack import indexes
 from haystack.tests.mocks import MockCharFieldWithTemplate, MockCharFieldWithStored, MockModel, MockSearchBackend
 
 
-class BadModelIndex1(indexes.ModelIndex):
+class BadSearchIndex1(indexes.SearchIndex):
     author = indexes.CharField(model_attr='user')
     pub_date = indexes.DateTimeField(model_attr='pub_date')
 
 
-class BadModelIndex2(indexes.ModelIndex):
+class BadSearchIndex2(indexes.SearchIndex):
     content = indexes.CharField(document=True, use_template=True)
     content2 = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='user')
     pub_date = indexes.DateTimeField(model_attr='pub_date')
 
 
-class GoodMockModelIndex(indexes.ModelIndex):
+class GoodMockSearchIndex(indexes.SearchIndex):
     content = MockCharFieldWithTemplate(document=True, use_template=True)
     author = indexes.CharField(model_attr='user')
     pub_date = indexes.DateTimeField(model_attr='pub_date')
     extra = MockCharFieldWithStored(indexed=False)
 
 
-class GoodCustomMockModelIndex(indexes.ModelIndex):
+class GoodCustomMockSearchIndex(indexes.SearchIndex):
     content = MockCharFieldWithTemplate(document=True, use_template=True)
     author = indexes.CharField(model_attr='user')
     pub_date = indexes.DateTimeField(model_attr='pub_date')
     extra = MockCharFieldWithStored(indexed=False)
     
     def prepare(self, obj):
-        super(GoodCustomMockModelIndex, self).prepare(obj)
+        super(GoodCustomMockSearchIndex, self).prepare(obj)
         self.prepared_data['whee'] = 'Custom preparation.'
         return self.prepared_data
     
@@ -38,12 +38,12 @@ class GoodCustomMockModelIndex(indexes.ModelIndex):
         return "Hi, I'm %s" % self.prepared_data['author']
 
 
-class ModelIndexTestCase(TestCase):
+class SearchIndexTestCase(TestCase):
     def setUp(self):
-        super(ModelIndexTestCase, self).setUp()
+        super(SearchIndexTestCase, self).setUp()
         self.msb = MockSearchBackend()
-        self.mi = GoodMockModelIndex(MockModel, backend=self.msb)
-        self.cmi = GoodCustomMockModelIndex(MockModel, backend=self.msb)
+        self.mi = GoodMockSearchIndex(MockModel, backend=self.msb)
+        self.cmi = GoodCustomMockSearchIndex(MockModel, backend=self.msb)
         self.sample_docs = {
             'haystack.mockmodel.2': {
                 'django_id_s': u'2',
@@ -75,14 +75,14 @@ class ModelIndexTestCase(TestCase):
         }
     
     def test_no_contentfield_present(self):
-        self.assertRaises(indexes.SearchFieldError, BadModelIndex1, MockModel, MockSearchBackend())
+        self.assertRaises(indexes.SearchFieldError, BadSearchIndex1, MockModel, MockSearchBackend())
     
     def test_too_many_contentfields_present(self):
-        self.assertRaises(indexes.SearchFieldError, BadModelIndex2, MockModel, MockSearchBackend())
+        self.assertRaises(indexes.SearchFieldError, BadSearchIndex2, MockModel, MockSearchBackend())
     
     def test_contentfield_present(self):
         try:
-            mi = GoodMockModelIndex(GoodMockModelIndex, backend=MockSearchBackend())
+            mi = GoodMockSearchIndex(GoodMockSearchIndex, backend=MockSearchBackend())
         except:
             self.fail()
     

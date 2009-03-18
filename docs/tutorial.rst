@@ -35,7 +35,7 @@ Within your URLconf, add the following code::
     haystack.autodiscover()
 
 This will create a default ``SearchIndex`` instance, search through all of your
-INSTALLED_APPS for ``indexes.py`` and register all ``ModelIndexes`` with the
+INSTALLED_APPS for ``indexes.py`` and register all ``SearchIndexes`` with the
 default ``SearchIndex``.
 
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
@@ -46,7 +46,7 @@ register models in the following manner::
     site.register(Note)
 
 This registers the model with the default site built into ``haystack``. The
-model gets registered with a standard ``ModelIndex`` class. If you need to override
+model gets registered with a standard ``SearchIndex`` class. If you need to override
 this class and provide additional functionality, you can manually register your
 own indexes like::
 
@@ -64,17 +64,17 @@ You can also explicitly setup an ``SearchIndex`` as follows::
     mysite.register(Note, NoteIndex)
 
 
-3. Creating ModelIndexes
+3. Creating SearchIndexes
 ------------------------
 
 Registering indexes in Haystack is very similar to registering models
 and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to
 override the default indexing behavior for your model you can specify your
-own ``ModelIndex`` class.  This is useful for ensuring that future-dated
+own ``SearchIndex`` class.  This is useful for ensuring that future-dated
 or non-live content is not indexed and searchable.
 
 Our ``Note`` model has a ``pub_date`` field, so let's update our code to
-include our own ``ModelIndex`` to exclude indexing future-dated notes::
+include our own ``SearchIndex`` to exclude indexing future-dated notes::
 
     import datetime
     from haystack import indexes
@@ -82,7 +82,7 @@ include our own ``ModelIndex`` to exclude indexing future-dated notes::
     from myapp.models import Note
     
     
-    class NoteIndex(indexes.ModelIndex):
+    class NoteIndex(indexes.SearchIndex):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
@@ -94,7 +94,7 @@ include our own ``ModelIndex`` to exclude indexing future-dated notes::
     
     site.register(Note, NoteIndex)
 
-Every custom ``ModelIndex`` requires there be one and only one field with ``document=True``.
+Every custom ``SearchIndex`` requires there be one and only one field with ``document=True``.
 This is the primary field that will get passed to the backend for indexing. For
 this field, you'll then need to create a template at 
 ``search/indexes/myapp/note_text.txt``. This allows you to customize the document 
@@ -115,7 +115,7 @@ the attribute of the object to populate that field with.
 
 The exception to this is the ``TemplateField`` class.
 This take either no arguments or an explicit template name to populate their contents.
-You can find more information about them in the ``ModelIndex`` API reference.
+You can find more information about them in the ``SearchIndex`` API reference.
 
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/
 

@@ -8,7 +8,7 @@ from haystack import sites
 from haystack.tests.mocks import MockModel, AnotherMockModel, MockCharFieldWithTemplate
 
 
-class SolrMockModelIndex(indexes.ModelIndex):
+class SolrMockSearchIndex(indexes.SearchIndex):
     text = MockCharFieldWithTemplate(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -30,9 +30,9 @@ class SolrSearchBackendTestCase(TestCase):
         self.raw_solr.delete(q='*:*')
         
         self.sb = SearchBackend()
-        self.smmi = SolrMockModelIndex(MockModel, backend=self.sb)
+        self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
         self.site = SolrSearchIndex()
-        self.site.register(MockModel, SolrMockModelIndex)
+        self.site.register(MockModel, SolrMockSearchIndex)
         
         # Stow.
         self.old_site = sites.site

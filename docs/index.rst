@@ -14,7 +14,7 @@ Welcome to Haystack's documentation!
    creating_new_backends
    
    searchqueryset_api
-   modelindex_api
+   searchindex_api
    searchindex_api
    searchquery_api
    searchbackend_api

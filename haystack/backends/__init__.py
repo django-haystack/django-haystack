@@ -27,7 +27,7 @@ class BaseSearchBackend(object):
 
     def update(self, index, iterable):
         """
-        Updates the backend when given a ModelIndex and a collection of
+        Updates the backend when given a SearchIndex and a collection of
         documents.
         
         This method MUST be implemented by each backend, as it will be highly
