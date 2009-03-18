@@ -35,7 +35,7 @@ Within your URLconf, add the following code::
     haystack.autodiscover()
 
 This will create a default ``SearchIndex`` instance, search through all of your
-INSTALLED_APPS for ``indexes.py`` and register all ``SearchIndexes`` with the
+INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndexes`` with the
 default ``SearchIndex``.
 
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
