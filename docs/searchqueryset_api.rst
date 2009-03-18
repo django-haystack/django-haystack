@@ -58,6 +58,10 @@ Many aspects are also "chainable", meaning you can call methods one after anothe
 applying their changes to the previous ``SearchQuerySet`` and further narrowing
 the search.
 
+All ``SearchQuerySet`` objects implement a list-like interface, meaning you can
+perform actions like getting the length of the results, accessing a result at an
+offset or even slicing the result list.
+
 
 Methods That Return A ``SearchQuerySet``
 ----------------------------------------
@@ -234,23 +238,70 @@ Methods That Do Not Return A ``SearchQuerySet``
 
 Returns the total number of matching results.
 
+This returns an integer count of the total number of results the search backend
+found that matched. This method causes the query to evaluate and run the search.
+
+Example::
+
+    SearchQuerySet().filter(content='foo').count()
+
 ``best_match(self)``
 ~~~~~~~~~~~~~~~~~~~~
 
 Returns the best/top search result that matches the query.
+
+This method causes the query to evaluate and run the search. This method returns
+a ``SearchResult`` object that is the best match the search backend found::
+
+    foo = SearchQuerySet().filter(content='foo').best_match()
+    foo.id # Something like 5.
+    
+    # Identical to:
+    foo = SearchQuerySet().filter(content='foo')[0]
 
 ``latest(self, date_field)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Returns the most recent search result that matches the query.
 
+This method causes the query to evaluate and run the search. This method returns
+a ``SearchResult`` object that is the most recent match the search backend
+found::
+
+    foo = SearchQuerySet().filter(content='foo').latest('pub_date')
+    foo.id # Something like 3.
+    
+    # Identical to:
+    foo = SearchQuerySet().filter(content='foo').order_by('-pub_date')[0]
+
 ``more_like_this(self, model_instance)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Finds similar results to the object passed in.
 
+You should pass in an instance of a model (for example, one fetched via a
+``get`` in Django's ORM). This will execute a query on the backend that searches
+for similar results. The instance you pass in should be an indexed object.
+This method does not actually effect the existing ``SearchQuerySet`` but will
+ignore any existing constraints.
+
+It will evaluate its own backend-specific query and return a dictionary with two
+keys: ``results`` (which will be a list of ``SearchResult`` objects) and
+``hits`` (an integer count of the total number of similar results).
+
+The number of results returned will be backend/configuration specific.
+
+Example::
+
+    entry = Entry.objects.get(slug='haystack-one-oh-released')
+    mlt = SearchQuerySet().more_like_this(entry)
+    mlt['hits'] # 5
+    mlt['results'][0].object.title # "Haystack Beta 1 Released"
+
 ``facet_counts(self)``
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Implemented. Documentation coming soon.
 
 .. _field-lookups:
 
@@ -268,3 +319,14 @@ The following lookup types are supported:
 
 These options are similar in function to the way Django's lookup types work.
 The actual behavior of these lookups is backend-specific.
+
+Example::
+
+    SearchQuerySet().filter(content='foo')
+    
+    # Identical to:
+    SearchQuerySet().filter(content__exact='foo')
+    
+    # Other usages look like:
+    SearchQuerySet().filter(pub_date__gte=datetime.date(2008, 1, 1), pub_date__lt=datetime.date(2009, 1, 1))
+    SearchQuerySet().filter(author__in=['daniel', 'john', 'jane'])
