@@ -16,7 +16,7 @@ One main implementation.
 
 
 SearchQuery
-===========
+-----------
 
 Implemented per-backend.
 
@@ -42,8 +42,8 @@ Implemented per-backend.
 * Method for performing the actual query
 
 
-SearchIndex
-===========
+IndexSite
+---------
 
 One main implementation.
 
@@ -53,7 +53,7 @@ One main implementation.
 
 
 SearchIndex
-==========
+-----------
 
 Implemented per-model you wish to index.
 

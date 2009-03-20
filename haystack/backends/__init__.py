@@ -167,7 +167,7 @@ class BaseSearchQuery(object):
     convert that to a valid query for the search backend.
     
     Backends should extend this class and provide implementations for
-    ``build_query`` and ``clean``. See the ``solr`` backend
+    ``build_query``, ``clean`` and ``run``. See the ``solr`` backend
     for an example implementation.
     """
     
