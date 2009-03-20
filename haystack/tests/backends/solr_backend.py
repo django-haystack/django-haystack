@@ -14,7 +14,7 @@ class SolrMockSearchIndex(indexes.SearchIndex):
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
-class SolrSearchIndex(sites.SearchIndex):
+class SolrSearchSite(sites.SearchSite):
     pass
 
 
@@ -31,7 +31,7 @@ class SolrSearchBackendTestCase(TestCase):
         
         self.sb = SearchBackend()
         self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
-        self.site = SolrSearchIndex()
+        self.site = SolrSearchSite()
         self.site.register(MockModel, SolrMockSearchIndex)
         
         # Stow.

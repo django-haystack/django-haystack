@@ -10,7 +10,7 @@ class NotRegistered(Exception):
     pass
 
 
-class SearchIndex(object):
+class SearchSite(object):
     """
     Encapsulates all the indexes that should be available.
     
@@ -19,7 +19,7 @@ class SearchIndex(object):
     indexes should be available (different indexes for different sites, same
     codebase).
     
-    An SearchIndex instance should be instantiated in your URLconf, since all
+    An SearchSite instance should be instantiated in your URLconf, since all
     models will have been loaded by that point.
     
     The API intentionally follows that of django.contrib.admin's AdminSite as
@@ -83,4 +83,4 @@ class SearchIndex(object):
 
 
 # The common case. Feel free to override/replace/define your own in your URLconfs.
-site = SearchIndex()
+site = SearchSite()

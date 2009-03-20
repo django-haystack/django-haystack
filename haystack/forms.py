@@ -6,7 +6,7 @@ from haystack.query import SearchQuerySet
 
 def model_choices(site=None):
     if site is None:
-        site = haystack.site
+        site = haystack.sites.site
     
     choices = [(m._meta, unicode(m._meta.verbose_name_plural)) for m in site.get_indexed_models()]
     return sorted(choices, key=lambda x: x[1])

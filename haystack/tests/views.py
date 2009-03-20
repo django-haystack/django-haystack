@@ -3,7 +3,7 @@ from django.conf import settings
 from django.test import TestCase
 from haystack.backends.dummy import DummyModel
 from haystack.forms import model_choices
-from haystack.tests.mocks import MockSearchIndex, MockModel, AnotherMockModel
+from haystack.tests.mocks import MockSearchSite, MockModel, AnotherMockModel
 
 
 class SearchViewTestCase(TestCase):
@@ -34,7 +34,7 @@ class SearchViewTestCase(TestCase):
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, 1)
     
     def test_model_choices(self):
-        mis = MockSearchIndex()
+        mis = MockSearchSite()
         mis.register(MockModel)
         mis.register(AnotherMockModel)
         self.assertEqual(len(model_choices(site=mis)), 2)

@@ -16,7 +16,7 @@ class SearchQuerySet(object):
         self._result_count = None
         self._cache_full = False
         self._load_all = False
-        self.site = site or haystack.site
+        self.site = site or haystack.sites.site
     
     def __getstate__(self):
         """

@@ -1,6 +1,6 @@
-==============
+===============
 SearchIndex API
-==============
+===============
 
 The SearchIndex class allows the application developer a way to provide data to
 the backend in a structured format. Developers familiar with Django's ``Form``

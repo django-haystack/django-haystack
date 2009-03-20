@@ -4,7 +4,7 @@ from django.utils.encoding import force_unicode
 from haystack import indexes
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
 from haystack.models import SearchResult
-from haystack.sites import SearchIndex
+from haystack.sites import SearchSite
 
 
 class MockDefaultManager(object):
@@ -63,7 +63,7 @@ class AnotherMockModel(models.Model):
         self._meta = MockOptions('haystack.anothermockmodel', 'AnotherMockModel')
 
 
-class MockSearchIndex(SearchIndex):
+class MockSearchSite(SearchSite):
     pass
 
 

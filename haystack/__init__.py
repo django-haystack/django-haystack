@@ -1,8 +1,6 @@
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from haystack.indexes import SearchIndex
-from haystack.sites import SearchIndex, site
 
 
 __author__ = 'Daniel Lindsley'

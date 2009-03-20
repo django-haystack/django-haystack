@@ -58,13 +58,13 @@ class SearchResult(object):
 
 
 # DRL_FIXME: Not sure this works, but need something along these lines to make
-#            sure the SearchIndex(s) are loaded all the time (like the shell), not
+#            sure the SearchSite(s) are loaded all the time (like the shell), not
 #            just when hitting the website.
 #            * This DOES work when running tests.
 #            * This doesn't matter during web hits (loaded by URLconf).
 #            * The only remaining bit to test is the shell and scripts.
-# Make sure the index gets loaded.
-def load_indexsite(sender, **kwargs):
+# Make sure the site gets loaded.
+def load_searchsite(sender, **kwargs):
     print "Checking the app cache..."
     
     if models.loading.app_cache_ready():
@@ -73,7 +73,7 @@ def load_indexsite(sender, **kwargs):
         
         # Check to make sure it's not already loaded.
         if not settings.ROOT_URLCONF in sys.modules:
-            print "Loading URLconf to initialize SearchIndex..."
+            print "Loading URLconf to initialize SearchSite..."
             __import__(settings.ROOT_URLCONF)
 
-models.signals.class_prepared.connect(load_indexsite)
+models.signals.class_prepared.connect(load_searchsite)

@@ -65,7 +65,7 @@ You can also explicitly setup an ``SearchIndex`` as follows::
 
 
 3. Creating SearchIndexes
-------------------------
+-------------------------
 
 Registering indexes in Haystack is very similar to registering models
 and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to

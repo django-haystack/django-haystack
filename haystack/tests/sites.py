@@ -1,7 +1,7 @@
 from django.db import models
 from django.test import TestCase
 from haystack.indexes import BasicSearchIndex
-from haystack.sites import SearchIndex, AlreadyRegistered, NotRegistered
+from haystack.sites import SearchSite, AlreadyRegistered, NotRegistered
 from haystack.tests.mocks import MockModel
 
 
@@ -9,10 +9,10 @@ class MockNotAModel(object):
     pass
 
 
-class SearchIndexTestCase(TestCase):
+class SearchSiteTestCase(TestCase):
     def setUp(self):
-        super(SearchIndexTestCase, self).setUp()
-        self.site = SearchIndex()
+        super(SearchSiteTestCase, self).setUp()
+        self.site = SearchSite()
     
     def test_register(self):
         self.assertRaises(AttributeError, self.site.register, MockNotAModel)

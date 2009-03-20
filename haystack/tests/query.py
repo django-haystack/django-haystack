@@ -5,7 +5,7 @@ from haystack.backends.dummy import SearchBackend as DummySearchBackend
 from haystack.backends.dummy import SearchQuery as DummySearchQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet
-from haystack.sites import SearchIndex
+from haystack.sites import SearchSite
 from haystack.tests.mocks import MockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
 
 
@@ -260,7 +260,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assert_('foo' in sqs.query.order_by)
     
     def test_models(self):
-        mock_index_site = SearchIndex()
+        mock_index_site = SearchSite()
         mock_index_site.register(MockModel)
         
         bsqs = SearchQuerySet(site=mock_index_site)

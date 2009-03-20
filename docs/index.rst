@@ -15,7 +15,7 @@ Welcome to Haystack's documentation!
    
    searchqueryset_api
    searchindex_api
-   searchindex_api
+   searchsite_api
    searchquery_api
    searchbackend_api
 
