@@ -1,6 +1,6 @@
 import re
 from django.conf import settings
-import haystack
+from haystack import backend
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 
 
@@ -11,12 +11,21 @@ class SearchQuerySet(object):
     Supports chaining (a la QuerySet) to narrow the search.
     """
     def __init__(self, site=None, query=None):
-        self.query = query or haystack.backend.SearchQuery()
+        self.query = query or backend.SearchQuery()
         self._result_cache = []
         self._result_count = None
         self._cache_full = False
         self._load_all = False
-        self.site = site or haystack.sites.site
+        
+        if site:
+            self.site = site
+        else:
+            # Force the site to load if it hasn't already.
+            # This can sometimes occur in the shell.
+            from haystack.models import load_searchsite
+            from haystack.sites import site as main_site
+            load_searchsite(None)
+            self.site = main_site
     
     def __getstate__(self):
         """
@@ -28,9 +37,11 @@ class SearchQuerySet(object):
         return obj_dict
     
     def __repr__(self):
-        data = list(self[:REPR_OUTPUT_SIZE + 1])
+        data = list(self[:REPR_OUTPUT_SIZE])
+        
         if len(data) > REPR_OUTPUT_SIZE:
             data[-1] = "...(remaining elements truncated)..."
+        
         return repr(data)
     
     def __len__(self):
@@ -134,7 +145,7 @@ class SearchQuerySet(object):
                     bound = k + 1
                 
                 try:
-                    while len(self._result_cache) < bound:
+                    while len(self._result_cache) < bound and not self._cache_is_full():
                         self._fill_cache()
                 except StopIteration:
                     # There's nothing left, even though the bound is higher.
