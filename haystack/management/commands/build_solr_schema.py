@@ -1,11 +1,6 @@
 from django.core.management.base import NoArgsCommand
 from django.template import loader, Context
 from haystack.constants import DEFAULT_OPERATOR
-from haystack.fields import *
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 
 class Command(NoArgsCommand):
@@ -18,43 +13,8 @@ class Command(NoArgsCommand):
         __import__(settings.ROOT_URLCONF)
         from haystack.sites import site
         
-        content_field_name = ''
-        fields = []
-        field_names = set()
         default_operator = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR)
-        
-        for model, index in site.get_indexes().items():
-            for field_name, field_object in index.fields.items():
-                if field_name in field_names:
-                    # We've already got this field in the list. Skip.
-                    continue
-                
-                field_names.add(field_name)
-                field_data = {
-                    'field_name': field_name,
-                    'type': 'text',
-                    'indexed': 'true',
-                    'multi_valued': 'false',
-                }
-                
-                if field_object.document is True:
-                    content_field_name = field_name
-                
-                if field_object.indexed is False:
-                    field_data['indexed'] = 'false'
-                
-                if isinstance(field_object, DateField) or isinstance(field_object, DateTimeField):
-                    field_data['type'] = 'date'
-                elif isinstance(field_object, IntegerField):
-                    field_data['type'] = 'slong'
-                elif isinstance(field_object, FloatField):
-                    field_data['type'] = 'sfloat'
-                elif isinstance(field_object, BooleanField):
-                    field_data['type'] = 'boolean'
-                elif isinstance(field_object, MultiValueField):
-                    field_data['multi_valued'] = 'true'
-            
-                fields.append(field_data)
+        content_field_name, fields = site.build_unified_schema()
         
         t = loader.get_template('search_configuration/solr.xml')
         c = Context({

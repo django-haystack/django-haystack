@@ -1,6 +1,11 @@
 from django.db.models import signals
 from django.db.models.base import ModelBase
 from haystack.indexes import BasicSearchIndex
+from haystack.fields import *
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 class AlreadyRegistered(Exception):
@@ -80,6 +85,57 @@ class SearchSite(object):
     def get_indexed_models(self):
         """Provide a list of all models being indexed."""
         return self._registry.keys()
+    
+    def build_unified_schema(self):
+        """
+        Builds a list of all fields appearing in any of the SearchIndexes registered
+        with a site.
+    
+        This is useful when building a schema for an engine. A list of dictionaries
+        is returned, with each dictionary being a field and the attributes about the
+        field. Valid keys are 'field', 'type', 'indexed' and 'multi_valued'.
+    
+        With no arguments, it will pull in the main site to discover the available
+        SearchIndexes.
+        """
+        content_field_name = ''
+        fields = []
+        field_names = set()
+    
+        for model, index in self.get_indexes().items():
+            for field_name, field_object in index.fields.items():
+                if field_name in field_names:
+                    # We've already got this field in the list. Skip.
+                    continue
+            
+                field_names.add(field_name)
+                field_data = {
+                    'field_name': field_name,
+                    'type': 'text',
+                    'indexed': 'true',
+                    'multi_valued': 'false',
+                }
+            
+                if field_object.document is True:
+                    content_field_name = field_name
+            
+                if field_object.indexed is False:
+                    field_data['indexed'] = 'false'
+            
+                if isinstance(field_object, DateField) or isinstance(field_object, DateTimeField):
+                    field_data['type'] = 'date'
+                elif isinstance(field_object, IntegerField):
+                    field_data['type'] = 'slong'
+                elif isinstance(field_object, FloatField):
+                    field_data['type'] = 'sfloat'
+                elif isinstance(field_object, BooleanField):
+                    field_data['type'] = 'boolean'
+                elif isinstance(field_object, MultiValueField):
+                    field_data['multi_valued'] = 'true'
+        
+                fields.append(field_data)
+    
+        return (content_field_name, fields)
 
 
 # The common case. Feel free to override/replace/define your own in your URLconfs.

@@ -2,7 +2,7 @@ from django.db import models
 from django.test import TestCase
 from haystack.indexes import BasicSearchIndex
 from haystack.sites import SearchSite, AlreadyRegistered, NotRegistered
-from haystack.tests.mocks import MockModel
+from haystack.tests.mocks import MockModel, AnotherMockModel
 
 
 class MockNotAModel(object):
@@ -54,3 +54,14 @@ class SearchSiteTestCase(TestCase):
         indexed_models = self.site.get_indexed_models()
         self.assertEqual(len(indexed_models), 1)
         self.assert_(MockModel in indexed_models)
+    
+    def test_build_unified_schema(self):
+        self.site.register(MockModel)
+        content_field_name, fields = self.site.build_unified_schema()
+        self.assertEqual(content_field_name, 'text')
+        self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}])
+        
+        self.site.register(AnotherMockModel)
+        content_field_name, fields = self.site.build_unified_schema()
+        self.assertEqual(content_field_name, 'text')
+        self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}])
