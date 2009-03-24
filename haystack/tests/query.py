@@ -6,7 +6,7 @@ from haystack.backends.dummy import SearchQuery as DummySearchQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet
 from haystack.sites import SearchSite
-from haystack.tests.mocks import MockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
+from haystack.tests.mocks import MockModel, AnotherMockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
 
 
 class QueryFilterTestCase(TestCase):
@@ -93,6 +93,9 @@ class BaseSearchQueryTestCase(TestCase):
         
         self.bsq.add_model(MockModel)
         self.assertEqual(len(self.bsq.models), 1)
+        
+        self.bsq.add_model(AnotherMockModel)
+        self.assertEqual(len(self.bsq.models), 2)
     
     def test_set_limits(self):
         self.assertEqual(self.bsq.start_offset, 0)
@@ -262,11 +265,21 @@ class SearchQuerySetTestCase(TestCase):
     def test_models(self):
         mock_index_site = SearchSite()
         mock_index_site.register(MockModel)
+        mock_index_site.register(AnotherMockModel)
         
         bsqs = SearchQuerySet(site=mock_index_site)
+        
+        sqs = bsqs.all()
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.models), 0)
+        
         sqs = bsqs.models(MockModel)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.models), 1)
+        
+        sqs = bsqs.models(MockModel, AnotherMockModel)
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.models), 2)
     
     def test_boost(self):
         sqs = self.bsqs.boost(foo=10)

@@ -233,7 +233,7 @@ class SearchQuery(BaseSearchQuery):
             query = " ".join(query_chunks)
         
         if len(self.models):
-            models = ['django_ct_s:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
+            models = ['django_ct_s:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
             models_clause = ' OR '.join(models)
             final_query = '(%s) AND (%s)' % (query, models_clause)
         else:

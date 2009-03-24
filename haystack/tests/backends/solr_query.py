@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.test import TestCase
 from haystack.backends.solr import SearchBackend, SearchQuery
+from haystack.tests.mocks import MockModel, AnotherMockModel
 
 
 class SolrSearchQueryTestCase(TestCase):
@@ -68,3 +69,11 @@ class SolrSearchQueryTestCase(TestCase):
         self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')
         self.assertEqual(self.sq.clean('hello AND OR NOT TO + - && || ! ( ) { } [ ] ^ " ~ * ? : \ world'), 'hello and or not to \\+ \\- \\&& \\|| \\! \\( \\) \\{ \\} \\[ \\] \\^ \\" \\~ \\* \\? \\: \\\\ world')
         self.assertEqual(self.sq.clean('so please NOTe i am in a bAND and bORed'), 'so please NOTe i am in a bAND and bORed')
+    
+    def test_build_query_with_models(self):
+        self.sq.add_filter('content', 'hello')
+        self.sq.add_model(MockModel)
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:haystack.mockmodel)')
+        
+        self.sq.add_model(AnotherMockModel)
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:haystack.mockmodel OR django_ct_s:tests.anothermockmodel)')
