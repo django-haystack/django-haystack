@@ -40,7 +40,7 @@ class DummyDefaultManager(object):
 
 
 class DummyModel(models.Model):
-    _default_manager = DummyDefaultManager()
+    _base_manager = DummyDefaultManager()
 
 
 class DummySearchResult(SearchResult):

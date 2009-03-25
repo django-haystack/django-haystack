@@ -42,7 +42,7 @@ Lucene
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: pyluncene
+* Requires: pylucene
 
 Xapian
 ------

@@ -17,14 +17,10 @@ class SearchQuerySet(object):
         self._cache_full = False
         self._load_all = False
         
-        if site:
+        if site is not None:
             self.site = site
         else:
-            # Force the site to load if it hasn't already.
-            # This can sometimes occur in the shell.
-            from haystack.models import load_searchsite
             from haystack.sites import site as main_site
-            load_searchsite(None)
             self.site = main_site
     
     def __getstate__(self):

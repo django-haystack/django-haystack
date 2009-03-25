@@ -1,10 +1,13 @@
 Primary Authors:
 
-    * Daniel Lindsley (most of the code, much of the documentation)
-    * Matt Croydon (documentation, sanity checks and the sweet name)
+    * Daniel Lindsley
+    * Matt Croydon (some documentation, sanity checks and the sweet name)
 
 
-Portions of the original implementation of djangosearch that remain written by:
-
-    * Joseph Kocherhans
-    * Jacob Kaplan-Moss
+Thanks to
+    * Jacob Kaplan-Moss & Joseph Kocherhans for the original implementation of
+      djangosearch, of which portions were used, as well as basic API feedback.
+    * Christian Metts for designing the logo and building a better site.
+    * Nathan Borror for testing and advanced form usage.
+    * Malcolm Tredinnick for API feedback.
+    * Mediaphormedia for funding the development on More Like This and faceting.

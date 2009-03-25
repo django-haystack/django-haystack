@@ -65,15 +65,17 @@ class SearchResult(object):
 #            * The only remaining bit to test is the shell and scripts.
 # Make sure the site gets loaded.
 def load_searchsite(sender, **kwargs):
-    print "Checking the app cache..."
+    print "Checking the app cache... [%s]" % sender
     
-    if models.loading.app_cache_ready():
+    if models.loading.cache.app_cache_ready():
         import sys
         from django.conf import settings
         
         # Check to make sure it's not already loaded.
         if not settings.ROOT_URLCONF in sys.modules:
             print "Loading URLconf to initialize SearchSite..."
-            __import__(settings.ROOT_URLCONF)
+            urlconf = __import__(settings.ROOT_URLCONF)
+            from haystack.sites import site
+            print "Main site registered %s index(es)." % len(site.get_indexed_models())
 
 models.signals.class_prepared.connect(load_searchsite)
