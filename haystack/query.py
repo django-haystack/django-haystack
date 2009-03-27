@@ -312,9 +312,6 @@ class SearchQuerySet(object):
         keywords = query_string.split()
         
         # Loop through keywords and add filters to the query.
-        # DRL_FIXME: This is still *really* naive. Have a look at Google and
-        #            see how their searches get expressed (because of
-        #            familiarity for most users).
         for keyword in keywords:
             exclude = False
             
