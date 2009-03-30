@@ -1,0 +1,29 @@
+[
+  {
+    "pk": 1,
+    "model": "core.mockmodel",
+    "fields": {
+      "user": "daniel1",
+      "foo": "bar",
+      "pub_date": "2009-03-17 06:00:00"
+    }
+  },
+  {
+    "pk": 2,
+    "model": "core.mockmodel",
+    "fields": {
+      "user": "daniel2",
+      "foo": "bar",
+      "pub_date": "2009-03-17 06:00:00"
+    }
+  },
+  {
+    "pk": 3,
+    "model": "core.mockmodel",
+    "fields": {
+      "user": "daniel3",
+      "foo": "bar",
+      "pub_date": "2009-03-17 06:00:00"
+    }
+  }
+]

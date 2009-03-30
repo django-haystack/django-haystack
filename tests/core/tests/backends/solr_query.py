@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.test import TestCase
 from haystack.backends.solr import SearchBackend, SearchQuery
-from haystack.tests.mocks import MockModel, AnotherMockModel
+from core.models import MockModel, AnotherMockModel
 
 
 class SolrSearchQueryTestCase(TestCase):
@@ -73,7 +73,7 @@ class SolrSearchQueryTestCase(TestCase):
     def test_build_query_with_models(self):
         self.sq.add_filter('content', 'hello')
         self.sq.add_model(MockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:haystack.mockmodel)')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:core.mockmodel)')
         
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:haystack.mockmodel OR django_ct_s:tests.anothermockmodel)')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:core.mockmodel OR django_ct_s:core.anothermockmodel)')

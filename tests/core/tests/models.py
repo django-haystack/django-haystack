@@ -1,6 +1,7 @@
 from django.test import TestCase
 from haystack.models import SearchResult
-from haystack.tests.mocks import MockModel, MockSearchResult
+from core.models import MockModel
+from core.tests.mocks import MockSearchResult
 
 
 class SearchResultTestCase(TestCase):

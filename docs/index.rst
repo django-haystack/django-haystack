@@ -18,6 +18,8 @@ Welcome to Haystack's documentation!
    searchsite_api
    searchquery_api
    searchbackend_api
+   
+   running_tests
 
 
 Indices and tables

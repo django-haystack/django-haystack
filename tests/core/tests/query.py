@@ -6,7 +6,8 @@ from haystack.backends.dummy import SearchQuery as DummySearchQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet
 from haystack.sites import SearchSite
-from haystack.tests.mocks import MockModel, AnotherMockModel, MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
+from core.models import MockModel, AnotherMockModel
+from core.tests.mocks import MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
 
 
 class QueryFilterTestCase(TestCase):

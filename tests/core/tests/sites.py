@@ -2,7 +2,7 @@ from django.db import models
 from django.test import TestCase
 from haystack.indexes import BasicSearchIndex
 from haystack.sites import SearchSite, AlreadyRegistered, NotRegistered
-from haystack.tests.mocks import MockModel, AnotherMockModel
+from core.models import MockModel, AnotherMockModel
 
 
 class MockNotAModel(object):

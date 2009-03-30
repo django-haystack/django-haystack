@@ -2,7 +2,7 @@ import datetime
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
 from haystack.fields import *
-from haystack.tests.mocks import MockModel, MockCharFieldWithTemplate
+from core.models import MockModel
 
 
 class CharFieldTestCase(TestCase):
@@ -127,9 +127,9 @@ class CharFieldWithTemplateTestCase(TestCase):
         self.assertRaises(SearchFieldError, template1.prepare, mock)
         
         template2 = CharField(use_template=True)
-        template2.instance_name = 'template'
+        template2.instance_name = 'template_x'
         self.assertRaises(TemplateDoesNotExist, template2.prepare, mock)
         
-        template3 = MockCharFieldWithTemplate()
+        template3 = CharField(use_template=True)
         template3.instance_name = 'template'
         self.assertEqual(template3.prepare(mock), u'Indexed!\n1')
