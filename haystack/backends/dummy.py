@@ -84,6 +84,10 @@ class SearchBackend(BaseSearchBackend):
 
 
 class SearchQuery(BaseSearchQuery):
+    def __init__(self, backend=None):
+        super(SearchQuery, self).__init__(backend=backend)
+        self.backend = backend or SearchBackend()
+    
     def build_query(self):
         filters = []
         
