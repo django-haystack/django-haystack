@@ -1,13 +1,12 @@
 from django.conf.urls.defaults import *
 from haystack.backends.dummy import SearchBackend, SearchQuery
-from haystack.query import SearchQuerySet
 from haystack.views import SearchView
 
 
-sq = SearchQuery(backend=SearchBackend())
-sqs = SearchQuerySet(query=sq)
+import haystack
+haystack.autodiscover()
 
 
 urlpatterns = patterns('haystack.views',
-    url(r'^$', SearchView(searchqueryset=sqs), name='haystack_search'),
+    url(r'^$', SearchView(), name='haystack_search'),
 )
