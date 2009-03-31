@@ -35,6 +35,43 @@ class SearchView(object):
             
             if query:
                 results = form.search()
+            else:
+                results = []
+        
+        paginator = Paginator(results, RESULTS_PER_PAGE)
+        
+        try:
+            page = paginator.page(int(request.GET.get('page', 1)))
+        except ValueError:
+            raise Http404
+        
+        return render_to_response(self.template, {
+            'query': query,
+            'form': form,
+            'page': page,
+            'paginator': paginator,
+        }, context_instance=self.context_class(request))
+
+
+class FacetedSearchView(object):
+    def __name__(self):
+        return "FacetedSearchView"
+
+    def __call__(self, request):
+        if self.searchqueryset is None:
+            form = self.form_class(request.GET)
+        else:
+            form = self.form_class(request.GET, searchqueryset=self.searchqueryset)
+        
+        query = ''
+        results = []
+        facets = {}
+        
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            
+            if query:
+                results = form.search()
                 facets = results.facet_counts()
             else:
                 results = []
