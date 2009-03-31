@@ -8,47 +8,23 @@ from haystack.constants import FILTER_SEPARATOR
 from haystack.models import SearchResult
 
 
-class DummyDefaultManager(object):
-    def all(self):
-        results = []
-        
-        for pk in xrange(3):
-            dummy = DummyModel()
-            dummy.id = pk
-            dummy.user = 'daniel%s' % pk
-            dummy.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
-            results.append(dummy)
-        
-        return results
-    
-    def in_bulk(self, pk_array):
-        results = {}
-        
-        for pk in pk_array:
-            dummy = DummyModel()
-            dummy.foo = 'bar'
-            results[pk] = dummy
-        
-        return results
-    
-    def get(self, pk):
-        dummy = DummyModel()
-        dummy.id = pk
-        dummy.user = 'daniel%s' % pk
-        dummy.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
-        return dummy
-
-
-class DummyModel(models.Model):
-    _base_manager = DummyDefaultManager()
-
-
 class DummySearchResult(SearchResult):
-    def __init__(self, app_label, model_name, pk, score):
-        self.model = DummyModel
-        self.pk = pk
-        self.score = score
-        self._object = None
+    dm = type('DummyModel', (object,), {})
+    
+    def _get_object(self):
+        return self.dm()
+    
+    def _set_object(self, obj):
+        pass
+    
+    def _get_model(self):
+        return self.dm
+    
+    def _set_model(self, obj):
+        pass
+
+    def content_type(self):
+        return u"%s.%s" % (self.app_label, self.model_name)
 
 
 class SearchBackend(BaseSearchBackend):
