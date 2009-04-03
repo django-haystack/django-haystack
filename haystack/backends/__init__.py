@@ -16,6 +16,12 @@ class BaseSearchBackend(object):
     """
     Abstract search engine base class.
     """
+    def __init__(self, site=None):
+        if site is not None:
+            self.site = site
+        else:
+            from haystack.sites import site
+            self.site = site
     
     def get_identifier(self, obj):
         """
@@ -23,7 +29,7 @@ class BaseSearchBackend(object):
 
         If not overridden, uses <app_label>.<object_name>.<pk>.
         """
-        return "%s.%s.%s" % (obj._meta.app_label, obj._meta.module_name, obj._get_pk_val())
+        return u"%s.%s.%s" % (obj._meta.app_label, obj._meta.module_name, obj._get_pk_val())
 
     def update(self, index, iterable):
         """

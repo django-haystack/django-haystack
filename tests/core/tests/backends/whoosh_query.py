@@ -1,25 +1,35 @@
+import os
 from django.conf import settings
 from django.test import TestCase
-from haystack.backends.solr_backend import SearchBackend, SearchQuery
+from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
 from core.models import MockModel, AnotherMockModel
 
 
-class SolrSearchQueryTestCase(TestCase):
+class WhooshSearchQueryTestCase(TestCase):
     def setUp(self):
-        super(SolrSearchQueryTestCase, self).setUp()
+        super(WhooshSearchQueryTestCase, self).setUp()
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.SOLR_URL = 'http://localhost:9001/solr/test_default'
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = getattr(settings, 'WHOOSH_PATH', temp_path)
+        settings.WHOOSH_PATH = temp_path
         
         self.sq = SearchQuery(backend=SearchBackend())
     
     def tearDown(self):
-        settings.SOLR_URL = self.old_solr_url
-        super(SolrSearchQueryTestCase, self).tearDown()
+        if os.path.exists(settings.WHOOSH_PATH):
+            index_files = os.listdir(settings.WHOOSH_PATH)
+        
+            for index_file in index_files:
+                os.remove(os.path.join(settings.WHOOSH_PATH, index_file))
+        
+            os.removedirs(settings.WHOOSH_PATH)
+        
+        settings.WHOOSH_PATH = self.old_whoosh_path
+        super(WhooshSearchQueryTestCase, self).tearDown()
     
     def test_build_query_all(self):
-        self.assertEqual(self.sq.build_query(), '*:*')
+        self.assertEqual(self.sq.build_query(), '*')
     
     def test_build_query_single_word(self):
         self.sq.add_filter('content', 'hello')
@@ -62,7 +72,7 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter('created__lt', '2009-02-12 12:13:00')
         self.sq.add_filter('title__gte', 'B')
         self.sq.add_filter('id__in', [1, 2, 3])
-        self.assertEqual(self.sq.build_query(), 'why AND pub_date:[* TO "2009-02-10 01:59:00"] AND author:{daniel TO *} AND created:{* TO "2009-02-12 12:13:00"} AND title:[B TO *] AND (id:1 OR id:2 OR id:3)')
+        self.assertEqual(self.sq.build_query(), 'why AND NOT pub_date:"2009-02-10 01:59:00"..* AND author:daniel..* AND created:*.."2009-02-12 12:13:00" AND NOT title:*..B AND (id:1 OR id:2 OR id:3)')
     
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
@@ -73,7 +83,7 @@ class SolrSearchQueryTestCase(TestCase):
     def test_build_query_with_models(self):
         self.sq.add_filter('content', 'hello')
         self.sq.add_model(MockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:core.mockmodel)')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:"core.mockmodel")')
         
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:core.mockmodel OR django_ct_s:core.anothermockmodel)')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:"core.mockmodel" OR django_ct_s:"core.anothermockmodel")')

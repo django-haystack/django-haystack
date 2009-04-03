@@ -1,8 +1,8 @@
 import datetime
 from django.test import TestCase
 from haystack.backends import QueryFilter, BaseSearchQuery
-from haystack.backends.dummy import SearchBackend as DummySearchBackend
-from haystack.backends.dummy import SearchQuery as DummySearchQuery
+from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
+from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet
 from haystack.sites import SearchSite

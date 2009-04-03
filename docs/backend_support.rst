@@ -8,12 +8,14 @@ Supported Backends
 
 * Solr_
 * Lucene_
+* Whoosh_
 * Xapian_
 * `Hyper Estraier`_
 * Sphinx_
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Lucene: http://lucene.apache.org/java/
+.. _Whoosh: http://whoosh.ca/
 .. _Xapian: http://xapian.org/
 .. _Hyper Estraier: http://hyperestraier.sourceforge.net/
 .. _Sphinx: http://www.sphinxsearch.com/
@@ -43,6 +45,16 @@ Lucene
 * Stored (non-indexed) fields
 * Highlighting
 * Requires: pylucene
+
+Whoosh
+------
+
+* Full SearchQuerySet support
+* Automatic query building
+* Term Boosting
+* Stored (non-indexed) fields
+* Highlighting
+* Requires: whoosh
 
 Xapian
 ------
@@ -81,6 +93,8 @@ Sphinx
 | Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Lucene         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+| Whoosh         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Xapian         | Yes                    | Yes                 | Yes            | No         | Yes      | Yes           | Yes (plugin) |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+

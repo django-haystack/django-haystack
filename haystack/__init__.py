@@ -17,12 +17,12 @@ def load_backend(backend_name):
     try:
         # Most of the time, the search backend will be one of the  
         # backends that ships with haystack, so look there first.
-        return __import__('haystack.backends.%s' % settings.SEARCH_ENGINE, {}, {}, [''])
+        return __import__('haystack.backends.%s_backend' % settings.SEARCH_ENGINE, {}, {}, [''])
     except ImportError, e:
         # If the import failed, we might be looking for a search backend 
         # distributed external to haystack. So we'll try that next.
         try:
-            return __import__(settings.SEARCH_ENGINE, {}, {}, [''])
+            return __import__('%s_backend' % settings.SEARCH_ENGINE, {}, {}, [''])
         except ImportError, e_user:
             # The search backend wasn't found. Display a helpful error message
             # listing all possible (built-in) database backends.

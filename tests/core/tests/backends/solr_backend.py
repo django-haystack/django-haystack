@@ -3,7 +3,7 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from haystack import indexes
-from haystack.backends.solr import SearchBackend
+from haystack.backends.solr_backend import SearchBackend
 from haystack import sites
 from core.models import MockModel, AnotherMockModel
 
