@@ -1,0 +1,40 @@
+diff --git a/src/whoosh/qparser.py b/src/whoosh/qparser.py
+index bf5db03..4abde0f 100644
+--- a/src/whoosh/qparser.py
++++ b/src/whoosh/qparser.py
+@@ -63,7 +63,7 @@ def _make_default_parser():
+     ParserElement.setDefaultWhitespaceChars(" \n\t\r'")
+     
+     #wordToken = Word(self.wordChars)
+-    wordToken = Regex(r"(\w|/)+(\.?(\w|\-|/)+)*", re.UNICODE)
++    wordToken = Regex(r"(\w|/)+(\.?(\w|\-|\_|\d|/)+)*", re.UNICODE)
+     
+     # A plain old word.
+     plainWord = Group(wordToken).setResultsName("Word")
+@@ -96,7 +96,7 @@ def _make_default_parser():
+     # should be searched in a particular field by prepending 'fn:', where fn is
+     # the name of the field.
+     fieldableUnit = parenthetical | boostedUnit | boostableUnit
+-    fieldedUnit = Group(Word(alphanums) + Suppress(':') + fieldableUnit).setResultsName("Field")
++    fieldedUnit = Group(generalWord + Suppress(':') + fieldableUnit).setResultsName("Field")
+     
+     # Units of content
+     unit = fieldedUnit | fieldableUnit
+diff --git a/src/whoosh/query.py b/src/whoosh/query.py
+index 4cea704..47dec58 100644
+--- a/src/whoosh/query.py
++++ b/src/whoosh/query.py
+@@ -261,7 +261,12 @@ class Term(SimpleQuery):
+         return searcher.doc_frequency(fieldnum, self.text)
+     
+     def docs(self, searcher, exclude_docs = None):
+-        fieldnum = searcher.fieldname_to_num(self.fieldname)
++        fieldname = self.fieldname
++        
++        if not isinstance(fieldname, basestring):
++            fieldname = fieldname[0]
++        
++        fieldnum = searcher.fieldname_to_num(fieldname)
+         text = self.text
+         
+         if (fieldnum, text) in searcher:

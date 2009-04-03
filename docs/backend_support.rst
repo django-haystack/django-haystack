@@ -34,7 +34,7 @@ Solr
 * Faceting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: pysolr
+* Requires: pysolr (GitHub version) + Solr 1.3+
 
 Lucene
 ------
@@ -54,7 +54,7 @@ Whoosh
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: whoosh
+* Requires: whoosh (0.1.13 w/ included patch or better)
 
 Xapian
 ------
