@@ -1,4 +1,3 @@
-from itertools import islice
 import os
 from whoosh import store
 from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
@@ -93,7 +92,6 @@ class SearchBackend(BaseSearchBackend):
         # DRL_TODO: Perhaps add locking here?
         # self.index.lock()
         # try:
-        # import pdb; pdb.set_trace()
         writer = self.index.writer()
         
         for obj in iterable:
@@ -192,7 +190,8 @@ class SearchBackend(BaseSearchBackend):
         
         if self.index.doc_count:
             searcher = self.index.searcher()
-            raw_results = islice(searcher.search(self.parser.parse(query_string), sortedby=sort_by, reverse=reverse), start_offset, end_offset)
+            # DRL_TODO: Ignoring offsets for now, as slicing caused issues with pagination.
+            raw_results = searcher.search(self.parser.parse(query_string), sortedby=sort_by, reverse=reverse)
             return self._process_results(raw_results, highlight=highlight, query_string=query_string)
         else:
             return {
@@ -230,7 +229,7 @@ class SearchBackend(BaseSearchBackend):
                 sa = analysis.StemmingAnalyzer()
                 terms = [term.replace('*', '') for term in query_string.split()]
                 
-                # DRL_FIXME: Highlighting doesn't seem to work properly.
+                # DRL_FIXME: Highlighting doesn't seem to work properly in testing.
                 additional_fields['highlighted'] = {
                     self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                 }
