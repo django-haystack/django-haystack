@@ -24,7 +24,7 @@ class SearchSite(object):
     indexes should be available (different indexes for different sites, same
     codebase).
     
-    An SearchSite instance should be instantiated in your URLconf, since all
+    A SearchSite instance should be instantiated in your URLconf, since all
     models will have been loaded by that point.
     
     The API intentionally follows that of django.contrib.admin's AdminSite as
