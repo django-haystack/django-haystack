@@ -9,16 +9,10 @@ Supported Backends
 * Solr_
 * Lucene_
 * Whoosh_
-* Xapian_
-* `Hyper Estraier`_
-* Sphinx_
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Lucene: http://lucene.apache.org/java/
 .. _Whoosh: http://whoosh.ca/
-.. _Xapian: http://xapian.org/
-.. _Hyper Estraier: http://hyperestraier.sourceforge.net/
-.. _Sphinx: http://www.sphinxsearch.com/
 
 
 Backend Capabilities
@@ -56,6 +50,33 @@ Whoosh
 * Highlighting
 * Requires: whoosh (0.1.13 w/ included patch or better)
 
+
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+| Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
++================+========================+=====================+================+============+==========+===============+==============+
+| Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+| Lucene         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+| Whoosh         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+
+
+Wishlist
+========
+
+The following are search backends that would be nice to have in Haystack but are
+licensed in a way that prevents them from being officially bundled. If the
+community expresses interest in any of these, there may be future development.
+
+* Xapian_
+* `Hyper Estraier`_
+* Sphinx_
+
+.. _Xapian: http://xapian.org/
+.. _Hyper Estraier: http://hyperestraier.sourceforge.net/
+.. _Sphinx: http://www.sphinxsearch.com/
+
 Xapian
 ------
 
@@ -86,16 +107,9 @@ Sphinx
 * Highlighting
 * Requires: sphinxapi.py (Comes with Sphinx)
 
-
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
 +================+========================+=====================+================+============+==========+===============+==============+
-| Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
-| Lucene         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
-| Whoosh         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Xapian         | Yes                    | Yes                 | Yes            | No         | Yes      | Yes           | Yes (plugin) |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Hyper Estraier | Yes                    | Yes                 | Yes            | No         | No       | No            | Yes (plugin) |
