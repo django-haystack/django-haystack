@@ -1,0 +1,44 @@
+In Progress
+===========
+
+* Thread-safety
+
+
+Future
+======
+
+* A management command to update (last 24 hours)
+* A means to register multiple ModelIndexes with a Model?
+* A means to control commit frequency on updates
+* A pure Python dummy backend for testing purposes? (Whoosh)
+* Distributed read/write setup?
+
+
+Complete
+========
+
+* Move to "site" setup a la NFA
+* Research various backend capabilities
+* Convert to SearchQuerySet
+* Prevent forking (better extendability)
+* Rip out query parser
+* Rip out paginator
+* Fix ModelSearchForm to get site's registered indexes
+* Work on initial docs
+* Refactor ModelIndex
+* Test coverage for ModelIndex
+* Finish Solr SearchQuery
+* PySolr branch on GitHub for JSON
+* Better "no-template" handling for ModelIndex
+* Support for stored (non-indexed) fields
+* Support for More-Like-This
+* Provide a management command to create a Solr schema
+* Highlighting
+* Better ModelIndex support
+* Support for faceting
+* Support FQ to initially limit the results
+* Figure out how to load sites regardless
+* Tests for backends
+* Good Test Coverage
+* Good Docs
+* Several complete backends   
