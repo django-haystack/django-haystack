@@ -74,7 +74,7 @@ class SearchIndex(object):
         return self.prepared_data
     
     def get_content_field(self):
-        """Returns the """
+        """Returns the field that supplies the primary document to be indexed."""
         for field_name, field in self.fields.items():
             if field.document is True:
                 return field_name
@@ -98,7 +98,7 @@ class SearchIndex(object):
         self.backend.remove(instance)
 
     def clear(self):
-        """Clear the entire index"""
+        """Clear the entire index."""
         self.backend.clear(models=[self.model])
 
     def reindex(self):
