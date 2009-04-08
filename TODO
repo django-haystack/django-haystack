@@ -4,7 +4,7 @@ In Progress
 * Thread-safety.
 * Better automatic site loading.
 * Lucene backend.
-* Formal packaging (including setup.py).
+* Formal packaging.
 * Why Haystack/History documentation.
 
 
@@ -48,3 +48,4 @@ Complete
 * Good Docs
 * Several complete backends   
 * A management command to update (last 24 hours).
+* setup.py
