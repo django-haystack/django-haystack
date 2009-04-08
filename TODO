@@ -1,17 +1,20 @@
 In Progress
 ===========
 
-* Thread-safety
+* Thread-safety.
+* Better automatic site loading.
+* A management command to update (last 24 hours).
 
 
 Future
 ======
 
-* A management command to update (last 24 hours)
 * A means to register multiple ModelIndexes with a Model?
 * A means to control commit frequency on updates
 * A pure Python dummy backend for testing purposes? (Whoosh)
 * Distributed read/write setup?
+* ModelIndexes to streamline index setup.
+* SearchManager to be attached to Models?
 
 
 Complete
