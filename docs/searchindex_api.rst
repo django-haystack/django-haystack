@@ -143,45 +143,45 @@ Method Reference
 ================
 
 ``get_query_set(self)``
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 Get the default QuerySet to index when doing a full update.
 
 Subclasses can override this method to avoid indexing certain objects.
 
 ``prepare(self, obj)``
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 Fetches and adds/alters data before indexing.
 
 ``get_content_field(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Returns the field that supplies the primary document to be indexed.
 
 ``update(self)``
-~~~~~~~~~~~~~~~~
+----------------
 
 Update the entire index.
 
 ``update_object(self, instance, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------
 
 Update the index for a single object. Attached to the class's
 post-save hook.
 
 ``remove_object(self, instance, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------
 
 Remove an object from the index. Attached to the class's 
 post-delete hook.
 
 ``clear(self)``
-~~~~~~~~~~~~~~~
+---------------
 
 Clear the entire index.
 
 ``reindex(self)``
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Completely clear the index for this model and rebuild it.
