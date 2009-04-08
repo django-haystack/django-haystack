@@ -1,6 +1,6 @@
-===============
-SearchQuery API
-===============
+===================
+``SearchQuery`` API
+===================
 
 The ``SearchQuery`` class acts as an intermediary between ``SearchQuerySet``'s
 abstraction and ``SearchBackend``'s actual search. Given the metadata provided
@@ -134,7 +134,7 @@ Adds a boosted field and the amount to boost it to the query.
 
 Runs a raw query (no parsing) against the backend.
 
-This method does not affect the internal state of the SearchQuery used
+This method does not affect the internal state of the ``SearchQuery`` used
 to build queries. It does however populate the results/hit_count.
 
 ``more_like_this(self, model_instance)``
@@ -142,7 +142,7 @@ to build queries. It does however populate the results/hit_count.
 
 Returns the "More Like This" results received from the backend.
 
-This method does not affect the internal state of the SearchQuery used
+This method does not affect the internal state of the ``SearchQuery`` used
 to build queries. It does however populate the results/hit_count.
 
 ``add_highlight(self)``

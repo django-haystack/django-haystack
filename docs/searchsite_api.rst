@@ -1,6 +1,6 @@
-==============
-SearchSite API
-==============
+==================
+``SearchSite`` API
+==================
 
 The ``SearchSite`` provides a way to collect the ``SearchIndexes`` that are
 relevant to the current site, much like ``ModelAdmins`` in the ``admin`` app.
@@ -56,8 +56,9 @@ Alternatively, you can manually register only the indexes you want.::
     
     site.register(Rating, RatingIndex)
 
-API
-===
+
+Method Reference
+================
 
 ``register(self, model, index_class=None)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

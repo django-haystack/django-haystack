@@ -1,14 +1,13 @@
-=====================
+=================
 Haystack Tutorial
-=====================
-
-May need to include some bits about setting up Solr.
+=================
 
 We'll be adding search functionality to a simple application.  Here is
 ``myapp/models.py``::
 
     from django.db import models
     from django.contrib.auth.models import User
+
 
     class Note(models.Model):
         user = models.ForeignKey(User)
@@ -19,14 +18,15 @@ We'll be adding search functionality to a simple application.  Here is
         def __unicode__(self):
             return self.title
 
-1. Add Haystack To INSTALLED_APPS
+
+1. Add Haystack To ``INSTALLED_APPS``
 -------------------------------------
 
-In ``settings.py``, add ``haystack`` to INSTALLED_APPS.
+In ``settings.py``, add ``haystack`` to ``INSTALLED_APPS``.
 
 
-2. Create An SearchIndex
-------------------------
+2. Create A ``SearchIndex``
+---------------------------
 
 Within your URLconf, add the following code::
 
@@ -45,7 +45,7 @@ register models in the following manner::
     
     site.register(Note)
 
-This registers the model with the default site built into ``haystack``. The
+This registers the model with the default site built into Haystack. The
 model gets registered with a standard ``SearchIndex`` class. If you need to override
 this class and provide additional functionality, you can manually register your
 own indexes like::
@@ -64,8 +64,8 @@ You can also explicitly setup an ``SearchIndex`` as follows::
     mysite.register(Note, NoteIndex)
 
 
-3. Creating SearchIndexes
--------------------------
+3. Creating ``SearchIndexes``
+-----------------------------
 
 Registering indexes in Haystack is very similar to registering models
 and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to
@@ -120,15 +120,15 @@ You can find more information about them in the ``SearchIndex`` API reference.
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/
 
 
-4. Add The SearchView To Your URLconf
--------------------------------------
+4. Add The ``SearchView`` To Your URLconf
+-----------------------------------------
 
 Within your URLconf, add the following line::
 
     (r'^search/', include('haystack.urls')),
 
-This will pull in the default URLconf for haystack. It consists of a single
-URLconf that points to a SearchView instance. You can change this class's
+This will pull in the default URLconf for Haystack. It consists of a single
+URLconf that points to a ``SearchView`` instance. You can change this class's
 behavior by passing it any of several keyword arguments or override it entirely
 with your own view.
 
@@ -167,3 +167,16 @@ get going (your template/block names will likely differ)::
         </form>
     {% endblock %}
 
+
+6. Reindex
+----------
+
+Using ``manage.py``, run the ``reindex`` command to index all of your content.
+
+
+Complete!
+=========
+
+If you visit the search section of your site, you should now be able to enter
+a search query and (provided your database has data in it) receive search
+results back for the query.

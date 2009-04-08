@@ -1,14 +1,14 @@
-==================
-SearchQuerySet API
-==================
+======================
+``SearchQuerySet`` API
+======================
 
 The ``SearchQuerySet`` class is designed to make performing a search and iterating
 over its results easy and consistent. For those familiar with Django's ORM
 ``QuerySet``, much of the ``SearchQuerySet`` API should feel familiar.
 
 
-Why Follow QuerySet?
-====================
+Why Follow ``QuerySet``?
+========================
 
 A couple reasons to follow (at least in part) the ``QuerySet`` API:
 
@@ -34,8 +34,8 @@ For the impatient::
     recent_results = SearchQuerySet().order_by('-pub_date')[:5]
 
 
-SearchQuerySet
-==============
+``SearchQuerySet``
+==================
 
 By default, ``SearchQuerySet`` provide the documented functionality. You can
 extend with your own behavior by simply subclassing from ``SearchQuerySet`` and

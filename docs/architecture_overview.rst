@@ -2,21 +2,21 @@
 Architecture Overview
 =====================
 
-SearchQuerySet
---------------
+``SearchQuerySet``
+------------------
 
 One main implementation.
 
-* Standard API that loosely follows QuerySet
+* Standard API that loosely follows ``QuerySet``
 * Handles most queries
 * Allows for custom "parsing"/building through API
-* Dispatches to SearchQuery for actual query
+* Dispatches to ``SearchQuery`` for actual query
 * Handles automatically creating a query
 * Allows for raw queries to be passed straight to backend.
 
 
-SearchQuery
------------
+``SearchQuery``
+---------------
 
 Implemented per-backend.
 
@@ -31,8 +31,8 @@ Main class provides:
 * Method to return the results provided by the backend (likely not a full list).
 
 
-SearchBackend
--------------
+``SearchBackend``
+-----------------
 
 Implemented per-backend.
 
@@ -42,18 +42,18 @@ Implemented per-backend.
 * Method for performing the actual query
 
 
-IndexSite
----------
+``IndexSite``
+-------------
 
 One main implementation.
 
-* Standard API that loosely follows django.contrib.admin.sites.AdminSite
+* Standard API that loosely follows ``django.contrib.admin.sites.AdminSite``
 * Handles registering/unregistering models to search on a per-site basis.
-* Provides a means of adding custom indexes to a model, like ModelAdmins.
+* Provides a means of adding custom indexes to a model, like ``ModelAdmins``.
 
 
-SearchIndex
------------
+``SearchIndex``
+---------------
 
 Implemented per-model you wish to index.
 
@@ -62,5 +62,3 @@ Implemented per-model you wish to index.
 * Provides a way to limit what types of objects get indexed.
 * Provides a way to index the document(s).
 * Provides a way to remove the document(s).
-
-
