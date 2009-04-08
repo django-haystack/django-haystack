@@ -185,3 +185,13 @@ Clear the entire index.
 -----------------
 
 Completely clear the index for this model and rebuild it.
+
+``get_updated_field(self)``
+---------------------------
+
+Get the field name that represents the updated date for the model.
+
+If specified, this is used by the reindex command to filter out results
+from the ``QuerySet``, enabling you to reindex only recent records. This
+method should either return None (reindex everything always) or a
+string of the ``Model``'s ``DateField``/``DateTimeField`` name.

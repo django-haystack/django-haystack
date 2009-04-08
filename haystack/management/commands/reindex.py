@@ -1,11 +1,19 @@
+import datetime
 from optparse import make_option
 from django.core.management.base import AppCommand, CommandError
 from django.utils.encoding import smart_str
 
+
 DEFAULT_BATCH_SIZE = 1000
+DEFAULT_AGE = None
+
 
 class Command(AppCommand):
     option_list = AppCommand.option_list + (
+        make_option('-a', '--age', action='store', dest='age',
+            default=DEFAULT_AGE, type='int',
+            help='Number of hours back to consider objects new.'
+        ),
         make_option('-b', '--batch-size', action='store', dest='batchsize', 
             default=DEFAULT_BATCH_SIZE, type='int',
             help='Number of items to index at once.'
@@ -15,11 +23,13 @@ class Command(AppCommand):
         #     help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'
         # ),
     )
-    help = "Reindex the given app."
+    help = "Reindex the given app(s)."
 
     def handle(self, *apps, **options):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
+        self.age = options.get('age', DEFAULT_AGE)
+        
         if not apps:
             self.handle_app(None, **options)
         else:
@@ -41,9 +51,19 @@ class Command(AppCommand):
                     print "Skipping '%s' - no index" % model
                 continue
 
+            extra_lookup_kwargs = {}
+            updated_field = index.get_updated_field()
+            
+            if self.age:
+                if updated_field:
+                    extra_lookup_kwargs['%s__gte' % updated_field] = datetime.datetime.now() - datetime.timedelta(hours=self.age)
+                else:
+                    if self.verbosity >= 2:
+                        print "No updated date field found for '%s' - not restricting by age" % model.__name__
+            
             # DRL_TODO: .select_related() seems like a good idea here but
             #           can cause empty QuerySets. Why?
-            qs = index.get_query_set().order_by(model._meta.pk.attname)
+            qs = index.get_query_set().filter(**extra_lookup_kwargs).order_by(model._meta.pk.attname)
             total = qs.count()
 
             if self.verbosity >= 1:
