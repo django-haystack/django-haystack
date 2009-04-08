@@ -4,6 +4,9 @@ In Progress
 * Thread-safety.
 * Better automatic site loading.
 * A management command to update (last 24 hours).
+* Lucene backend.
+* Formal packaging (including setup.py).
+* Why Haystack/History documentation.
 
 
 Future
