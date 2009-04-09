@@ -83,6 +83,7 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(len(self.whoosh_search('*')), 3)
         
         self.sb.clear()
+        self.raw_whoosh = self.sb.index
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
         
         self.sb.update(self.smmi, self.sample_objs)
@@ -92,12 +93,14 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(len(self.whoosh_search('*')), 3)
         
         self.sb.clear([MockModel])
+        self.raw_whoosh = self.sb.index
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
         
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(len(self.whoosh_search('*')), 3)
         
         self.sb.clear([AnotherMockModel, MockModel])
+        self.raw_whoosh = self.sb.index
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
     
     def test_search(self):
@@ -138,3 +141,10 @@ class WhooshSearchBackendTestCase(TestCase):
         
         # Unsupported by Whoosh. Should see empty results.        
         self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
+    
+    def test_delete_index(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assert_(self.sb.index.doc_count() > 0)
+        
+        self.sb.delete_index()
+        self.assertEqual(self.sb.index.doc_count(), 0)

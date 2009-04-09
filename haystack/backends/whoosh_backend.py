@@ -130,8 +130,7 @@ class SearchBackend(BaseSearchBackend):
             self.setup()
         
         if not models:
-            # *:* matches all docs in Whoosh
-            self.index.delete_by_query(q=self.parser.parse('*'))
+            self.delete_index()
         else:
             models_to_delete = []
             
@@ -142,6 +141,20 @@ class SearchBackend(BaseSearchBackend):
         
         if commit is True:
             self.index.commit()
+    
+    def delete_index(self):
+        # Per the Whoosh mailing list, if wiping out everything from the index,
+        # it's much more efficient to simply delete the index files.
+        if os.path.exists(settings.WHOOSH_PATH):
+            index_files = os.listdir(settings.WHOOSH_PATH)
+        
+            for index_file in index_files:
+                os.remove(os.path.join(settings.WHOOSH_PATH, index_file))
+        
+            os.removedirs(settings.WHOOSH_PATH)
+        
+        # Recreate everything.
+        self.setup()
         
     def optimize(self):
         if not self.setup_complete:
