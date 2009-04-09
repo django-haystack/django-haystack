@@ -89,9 +89,6 @@ class SearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
         
-        # DRL_TODO: Perhaps add locking here?
-        # self.index.lock()
-        # try:
         writer = self.index.writer()
         
         for obj in iterable:
@@ -109,11 +106,8 @@ class SearchBackend(BaseSearchBackend):
             doc.update(other_data)
             writer.update_document(**doc)
         
-        # finally:
-        #    self.index.unlock()
-        
-        if commit is True:
-            writer.commit()
+        # For now, commit no matter what, as we run into locking issues otherwise.
+        writer.commit()
 
     def remove(self, obj, commit=True):
         if not self.setup_complete:
@@ -122,8 +116,8 @@ class SearchBackend(BaseSearchBackend):
         whoosh_id = self.get_identifier(obj)
         self.index.delete_by_query(q=self.parser.parse('id:"%s"' % whoosh_id))
         
-        if commit is True:
-            self.index.commit()
+        # For now, commit no matter what, as we run into locking issues otherwise.
+        self.index.commit()
 
     def clear(self, models=[], commit=True):
         if not self.setup_complete:
@@ -139,8 +133,8 @@ class SearchBackend(BaseSearchBackend):
             
             self.index.delete_by_query(q=self.parser.parse(" OR ".join(models_to_delete)))
         
-        if commit is True:
-            self.index.commit()
+        # For now, commit no matter what, as we run into locking issues otherwise.
+        self.index.commit()
     
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
