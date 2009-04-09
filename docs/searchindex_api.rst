@@ -195,3 +195,14 @@ If specified, this is used by the reindex command to filter out results
 from the ``QuerySet``, enabling you to reindex only recent records. This
 method should either return None (reindex everything always) or a
 string of the ``Model``'s ``DateField``/``DateTimeField`` name.
+
+``should_update(self, instance)``
+---------------------------------
+
+Determine if an object should be updated in the index.
+
+It's useful to override this when an object may save frequently and
+cause excessive reindexing. You should check conditions on the instance
+and return False if it is not to be indexed.
+
+By default, returns True (always reindex).
