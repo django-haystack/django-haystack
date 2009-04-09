@@ -11,7 +11,7 @@ Welcome to Haystack's documentation!
    tutorial
    architecture_overview
    backend_support
-   creating_new_backends
+   faq
    
    searchqueryset_api
    searchindex_api
@@ -20,6 +20,7 @@ Welcome to Haystack's documentation!
    searchbackend_api
    
    running_tests
+   creating_new_backends
 
 
 Indices and tables

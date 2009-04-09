@@ -5,7 +5,6 @@ In Progress
 * Better automatic site loading.
 * Lucene backend.
 * Formal packaging.
-* Why Haystack/History documentation.
 
 
 Future
@@ -49,3 +48,4 @@ Complete
 * Several complete backends   
 * A management command to update (last 24 hours).
 * setup.py
+* Why Haystack/History documentation.
