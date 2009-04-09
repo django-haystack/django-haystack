@@ -88,7 +88,9 @@ class SearchIndex(object):
         Update the index for a single object. Attached to the class's
         post-save hook.
         """
-        self.backend.update(self, [instance])
+        # Check to make sure we want to index this first.
+        if self.should_update(instance):
+            self.backend.update(self, [instance])
 
     def remove_object(self, instance, **kwargs):
         """
@@ -116,6 +118,18 @@ class SearchIndex(object):
         string of the Model's DateField/DateTimeField name.
         """
         return None
+    
+    def should_update(self, instance):
+        """
+        Determine if an object should be updated in the index.
+        
+        It's useful to override this when an object may save frequently and
+        cause excessive reindexing. You should check conditions on the instance
+        and return False if it is not to be indexed.
+        
+        By default, returns True (always reindex).
+        """
+        return True
 
 
 class BasicSearchIndex(SearchIndex):
