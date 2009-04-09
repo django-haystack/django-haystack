@@ -25,7 +25,47 @@ We'll be adding search functionality to a simple application.  Here is
 In ``settings.py``, add ``haystack`` to ``INSTALLED_APPS``.
 
 
-2. Create A ``SearchIndex``
+2. Modify Your ``settings.py``
+------------------------------
+
+Within your ``settings.py``, you'll need to add a setting to indicate which
+backend to use, as well as other settings for that backend.
+
+``SEARCH_ENGINE`` is a required setting and should be one of the following:
+
+* ``solr``
+* ``whoosh``
+* ``dummy``
+
+Example::
+
+    SEARCH_ENGINE = 'whoosh'
+
+Additionally, backends may require additional information.
+
+Solr
+~~~~
+
+Requires setting ``SOLR_URL`` to be the URL where your Solr is running at.
+
+Example::
+
+    SOLR_URL = 'http://127.0.0.1:9000/solr/mysite'
+
+
+Whoosh
+~~~~~~
+
+Requires setting ``WHOOSH_PATH`` to the place on your filesystem where the
+Whoosh index should be located. Standard warnings about permissions and keeping
+it out of a place your webserver may serve documents out of apply.
+
+Example::
+
+    WHOOSH_PATH = '/home/whoosh/mysite_index'
+
+
+3. Create A ``SearchIndex``
 ---------------------------
 
 Within your URLconf, add the following code::
@@ -64,7 +104,7 @@ You can also explicitly setup an ``SearchIndex`` as follows::
     mysite.register(Note, NoteIndex)
 
 
-3. Creating ``SearchIndexes``
+4. Creating ``SearchIndexes``
 -----------------------------
 
 Registering indexes in Haystack is very similar to registering models
@@ -120,7 +160,7 @@ You can find more information about them in the ``SearchIndex`` API reference.
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/
 
 
-4. Add The ``SearchView`` To Your URLconf
+5. Add The ``SearchView`` To Your URLconf
 -----------------------------------------
 
 Within your URLconf, add the following line::
@@ -133,7 +173,7 @@ behavior by passing it any of several keyword arguments or override it entirely
 with your own view.
 
 
-5. Search Template
+6. Search Template
 ------------------
 
 Your search template will likely be very simple. The following is enough to
@@ -168,14 +208,14 @@ get going (your template/block names will likely differ)::
     {% endblock %}
 
 
-6. Reindex
+7. Reindex
 ----------
 
 Using ``manage.py``, run the ``reindex`` command to index all of your content.
 
 
 Complete!
-=========
+---------
 
 If you visit the search section of your site, you should now be able to enter
 a search query and (provided your database has data in it) receive search
