@@ -28,7 +28,7 @@ def load_backend(backend_name):
             # listing all possible (built-in) database backends.
             backend_dir = os.path.join(__path__[0], 'backends')
             available_backends = [
-                os.path.splitext(f)[0] for f in os.listdir(backend_dir)
+                os.path.splitext(f)[0].split("_backend")[0] for f in os.listdir(backend_dir)
                 if f != "base.py"
                 and not f.startswith('_') 
                 and not f.startswith('.') 
