@@ -1,5 +1,5 @@
 # Default operator. Valid options are AND/OR.
-DEFAULT_OPERATOR = 'OR'
+DEFAULT_OPERATOR = 'AND'
 
 # Valid expression extensions.
 VALID_FILTERS = set(['exact', 'gt', 'gte', 'lt', 'lte', 'in'])
