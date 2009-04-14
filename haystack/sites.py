@@ -33,10 +33,6 @@ class SearchSite(object):
     
     def __init__(self):
         self._registry = {}
-        # Force the AppCache to populate. We need it loaded to be able to
-        # register using the generated Model classes, which are only fully there
-        # after the cache is loaded.
-        loading.cache.get_apps()
     
     def register(self, model, index_class=None):
         """

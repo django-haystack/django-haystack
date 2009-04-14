@@ -37,8 +37,8 @@ class Command(AppCommand):
 
     def handle_app(self, app, **options):
         # Cause the default site to load.
-        from haystack.models import load_searchsite
-        load_searchsite(None)
+        from haystack import handle_registrations
+        handle_registrations()
         
         from django.db.models import get_models
         from haystack.sites import site, NotRegistered
@@ -48,7 +48,7 @@ class Command(AppCommand):
                 index = site.get_index(model)
             except NotRegistered:
                 if self.verbosity >= 2:
-                    print "Skipping '%s' - no index" % model
+                    print "Skipping '%s' - no index." % model
                 continue
 
             extra_lookup_kwargs = {}
@@ -59,7 +59,7 @@ class Command(AppCommand):
                     extra_lookup_kwargs['%s__gte' % updated_field] = datetime.datetime.now() - datetime.timedelta(hours=self.age)
                 else:
                     if self.verbosity >= 2:
-                        print "No updated date field found for '%s' - not restricting by age" % model.__name__
+                        print "No updated date field found for '%s' - not restricting by age." % model.__name__
             
             # DRL_TODO: .select_related() seems like a good idea here but
             #           can cause empty QuerySets. Why?
@@ -67,13 +67,13 @@ class Command(AppCommand):
             total = qs.count()
 
             if self.verbosity >= 1:
-                print "Indexing %d %s" % (total, smart_str(model._meta.verbose_name_plural))
+                print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
 
             for start in range(0, total, self.batchsize):
                 end = min(start + self.batchsize, total)
                 
                 if self.verbosity >= 2:
-                    print "  indexing %s - %d of %d" % (start+1, end, total)
+                    print "  indexing %s - %d of %d." % (start+1, end, total)
                 
                 # Get a clone of the QuerySet so that the cache doesn't bloat up
                 # in memory. Useful when reindexing large amounts of data.

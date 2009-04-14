@@ -44,6 +44,34 @@ def load_backend(backend_name):
 
 backend = load_backend(settings.SEARCH_ENGINE)
 
+# Make sure the site gets loaded.
+def handle_registrations(*args, **kwargs):
+    # DRL_TODO: Some day, Django may feature a way to iterate over models without
+    #           loading everything (partial load). When that comes, we'll need a
+    #           version check here.
+    if not handle_registrations.previously_initialized:
+        from django.db import models
+        
+        # Force the AppCache to populate. We need it loaded to be able to
+        # register using the generated Model classes, which are only fully there
+        # after the cache is loaded.
+        models.loading.cache.get_apps()
+        
+        urlconf = __import__(settings.ROOT_URLCONF)
+        from haystack.sites import site
+        
+        if settings.DEBUG:
+            index_count = len(site.get_indexed_models())
+            
+            if index_count:
+                print "Loaded URLconf to initialize SearchSite..."
+                print "Main site registered %s index(es)." % index_count
+        
+        handle_registrations.previously_initialized = True
+
+handle_registrations.previously_initialized = False
+handle_registrations()
+
 
 def autodiscover():
     """

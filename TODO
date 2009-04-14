@@ -1,8 +1,9 @@
 In Progress
 ===========
 
+* Docs on faceting.
+* Docs on SearchIndexes (prepare's).
 * Thread-safety.
-* Better automatic site loading.
 * Lucene backend.
 * Formal packaging.
 
@@ -15,6 +16,7 @@ Future
 * Distributed read/write setup?
 * ModelIndexes to streamline index setup.
 * SearchManager to be attached to Models?
+* A QueueSearchIndex (add to queue for updating instead of immediately firing update)?
 
 
 Complete
@@ -48,4 +50,5 @@ Complete
 * A management command to update (last 24 hours).
 * setup.py
 * Why Haystack/History documentation.
-* A means to control commit frequency on updates
+* A means to control commit frequency on updates.
+* Better automatic site loading.
