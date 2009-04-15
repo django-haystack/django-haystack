@@ -1,4 +1,5 @@
 import os
+import warnings
 from whoosh import store
 from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
 import whoosh.index as index
@@ -38,9 +39,6 @@ class SearchBackend(BaseSearchBackend):
         """
         Defers loading until needed.
         """
-        # DRL_FIXME: This is a workaround to the current SearchSite loading
-        #            issues. Once that is fixed, this may no longer be
-        #            necessary.
         new_index = False
         
         # Make sure the index is there.
@@ -179,16 +177,13 @@ class SearchBackend(BaseSearchBackend):
                     reverse = True
         
         if facets is not None:
-            # raise SearchBackendError("Whoosh does not handle faceting.")
-            pass
+            warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
         
         if date_facets is not None:
-            # raise SearchBackendError("Whoosh does not handle date faceting.")
-            pass
+            warnings.warn("Whoosh does not handle date faceting.", Warning, stacklevel=2)
         
         if query_facets is not None:
-            # raise SearchBackendError("Whoosh does not handle query faceting.")
-            pass
+            warnings.warn("Whoosh does not handle query faceting.", Warning, stacklevel=2)
         
         if narrow_queries is not None:
             # DRL_FIXME: Determine if Whoosh can do this.
@@ -207,7 +202,7 @@ class SearchBackend(BaseSearchBackend):
             }
     
     def more_like_this(self, model_instance):
-        # raise SearchBackendError("Whoosh does not handle More Like This.")
+        warnings.warn("Whoosh does not handle More Like This.", Warning, stacklevel=2)
         return {
             'results': [],
             'hits': 0,
