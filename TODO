@@ -2,7 +2,6 @@ In Progress
 ===========
 
 * Docs on faceting.
-* Docs on SearchIndexes (prepare's).
 * Lucene backend.
 * Formal packaging.
 * Thread-safety (ongoing).
@@ -54,3 +53,5 @@ Complete
 * Why Haystack/History documentation.
 * A means to control commit frequency on updates.
 * Better automatic site loading.
+* Docs on SearchIndexes (prepare's).
+
