@@ -3,20 +3,22 @@ In Progress
 
 * Docs on faceting.
 * Docs on SearchIndexes (prepare's).
-* Thread-safety.
 * Lucene backend.
 * Formal packaging.
+* Thread-safety (ongoing).
 
 
 Future
 ======
 
-* A means to register multiple ModelIndexes with a Model?
-* A pure Python dummy backend for testing purposes? (Whoosh)
+* Make schema generation more flexible.
 * Distributed read/write setup?
-* ModelIndexes to streamline index setup.
-* SearchManager to be attached to Models?
 * A QueueSearchIndex (add to queue for updating instead of immediately firing update)?
+* ModelIndexes to streamline index setup.
+* Spelling support?
+* A pure Python dummy backend for testing purposes? (Whoosh)
+* SearchManager to be attached to Models?
+* A means to register multiple ModelIndexes with a Model?
 
 
 Complete
