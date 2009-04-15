@@ -29,12 +29,12 @@ RESERVED_CHARACTERS = (
 
 class SearchBackend(BaseSearchBackend):
     def __init__(self):
-        if not hasattr(settings, 'SOLR_URL'):
-            raise ImproperlyConfigured('You must specify a SOLR_URL in your settings.')
+        if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
+            raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
         
         # DRL_TODO: This should handle the connection more graceful, especially
         #           if the backend is down.
-        self.conn = Solr(settings.SOLR_URL)
+        self.conn = Solr(settings.HAYSTACK_SOLR_URL)
 
     def update(self, index, iterable, commit=True):
         docs = []

@@ -6,7 +6,7 @@ from django.template import RequestContext
 from haystack.forms import ModelSearchForm
 
 
-RESULTS_PER_PAGE = getattr(settings, 'SEARCH_RESULTS_PER_PAGE', 20)
+RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):

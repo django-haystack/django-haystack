@@ -9,20 +9,20 @@ __all__ = ['backend']
 
 
 # Load the search backend.
-if not hasattr(settings, "SEARCH_ENGINE"):
-    raise ImproperlyConfigured("You must define the SEARCH_ENGINE setting before using the search framework.")
+if not hasattr(settings, "HAYSTACK_SEARCH_ENGINE"):
+    raise ImproperlyConfigured("You must define the HAYSTACK_SEARCH_ENGINE setting before using the search framework.")
 
 
 def load_backend(backend_name):
     try:
         # Most of the time, the search backend will be one of the  
         # backends that ships with haystack, so look there first.
-        return __import__('haystack.backends.%s_backend' % settings.SEARCH_ENGINE, {}, {}, [''])
+        return __import__('haystack.backends.%s_backend' % settings.HAYSTACK_SEARCH_ENGINE, {}, {}, [''])
     except ImportError, e:
         # If the import failed, we might be looking for a search backend 
         # distributed external to haystack. So we'll try that next.
         try:
-            return __import__('%s_backend' % settings.SEARCH_ENGINE, {}, {}, [''])
+            return __import__('%s_backend' % settings.HAYSTACK_SEARCH_ENGINE, {}, {}, [''])
         except ImportError, e_user:
             # The search backend wasn't found. Display a helpful error message
             # listing all possible (built-in) database backends.
@@ -35,14 +35,14 @@ def load_backend(backend_name):
                 and not f.endswith('.pyc')
             ]
             available_backends.sort()
-            if settings.SEARCH_ENGINE not in available_backends:
+            if settings.HAYSTACK_SEARCH_ENGINE not in available_backends:
                 raise ImproperlyConfigured, "%r isn't an available search backend. Available options are: %s" % \
-                    (settings.SEARCH_ENGINE, ", ".join(map(repr, available_backends)))
+                    (settings.HAYSTACK_SEARCH_ENGINE, ", ".join(map(repr, available_backends)))
             else:
                 raise # If there's some other error, this must be an error in Django itself.
 
 
-backend = load_backend(settings.SEARCH_ENGINE)
+backend = load_backend(settings.HAYSTACK_SEARCH_ENGINE)
 
 
 def autodiscover():

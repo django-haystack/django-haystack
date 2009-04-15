@@ -9,4 +9,4 @@ INSTALLED_APPS = [
 
 ROOT_URLCONF = 'core.urls'
 
-SEARCH_ENGINE = 'dummy'
+HAYSTACK_SEARCH_ENGINE = 'dummy'

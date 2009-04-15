@@ -31,7 +31,7 @@ In ``settings.py``, add ``haystack`` to ``INSTALLED_APPS``.
 Within your ``settings.py``, you'll need to add a setting to indicate which
 backend to use, as well as other settings for that backend.
 
-``SEARCH_ENGINE`` is a required setting and should be one of the following:
+``HAYSTACK_SEARCH_ENGINE`` is a required setting and should be one of the following:
 
 * ``solr``
 * ``whoosh``
@@ -39,30 +39,30 @@ backend to use, as well as other settings for that backend.
 
 Example::
 
-    SEARCH_ENGINE = 'whoosh'
+    HAYSTACK_SEARCH_ENGINE = 'whoosh'
 
 Additionally, backends may require additional information.
 
 Solr
 ~~~~
 
-Requires setting ``SOLR_URL`` to be the URL where your Solr is running at.
+Requires setting ``HAYSTACK_SOLR_URL`` to be the URL where your Solr is running at.
 
 Example::
 
-    SOLR_URL = 'http://127.0.0.1:9000/solr/mysite'
+    HAYSTACK_SOLR_URL = 'http://127.0.0.1:9000/solr/mysite'
 
 
 Whoosh
 ~~~~~~
 
-Requires setting ``WHOOSH_PATH`` to the place on your filesystem where the
+Requires setting ``HAYSTACK_WHOOSH_PATH`` to the place on your filesystem where the
 Whoosh index should be located. Standard warnings about permissions and keeping
 it out of a place your webserver may serve documents out of apply.
 
 Example::
 
-    WHOOSH_PATH = '/home/whoosh/mysite_index'
+    HAYSTACK_WHOOSH_PATH = '/home/whoosh/mysite_index'
 
 
 3. Create A ``SearchIndex``

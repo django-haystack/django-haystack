@@ -23,10 +23,10 @@ class SolrSearchBackendTestCase(TestCase):
         super(SolrSearchBackendTestCase, self).setUp()
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.SOLR_URL = 'http://localhost:9001/solr/test_default'
+        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
+        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
         
-        self.raw_solr = pysolr.Solr(settings.SOLR_URL)
+        self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
         self.raw_solr.delete(q='*:*')
         
         self.sb = SearchBackend()
@@ -48,7 +48,7 @@ class SolrSearchBackendTestCase(TestCase):
             self.sample_objs.append(mock)
     
     def tearDown(self):
-        settings.SOLR_URL = self.old_solr_url
+        settings.HAYSTACK_SOLR_URL = self.old_solr_url
         sites.site = self.old_site
         super(SolrSearchBackendTestCase, self).tearDown()
     

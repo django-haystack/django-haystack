@@ -11,21 +11,21 @@ class WhooshSearchQueryTestCase(TestCase):
         
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = getattr(settings, 'WHOOSH_PATH', temp_path)
-        settings.WHOOSH_PATH = temp_path
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
         
         self.sq = SearchQuery(backend=SearchBackend())
     
     def tearDown(self):
-        if os.path.exists(settings.WHOOSH_PATH):
-            index_files = os.listdir(settings.WHOOSH_PATH)
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
         
             for index_file in index_files:
-                os.remove(os.path.join(settings.WHOOSH_PATH, index_file))
+                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
         
-            os.removedirs(settings.WHOOSH_PATH)
+            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
         
-        settings.WHOOSH_PATH = self.old_whoosh_path
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
         super(WhooshSearchQueryTestCase, self).tearDown()
     
     def test_build_query_all(self):

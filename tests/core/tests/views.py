@@ -11,11 +11,11 @@ class SearchViewTestCase(TestCase):
         super(SearchViewTestCase, self).setUp()
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'SOLR_URL', 'http://localhost:9001/solr/default')
-        settings.SOLR_URL = 'http://localhost:9001/solr/default'
+        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/default')
+        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/default'
     
     def tearDown(self):
-        settings.SOLR_URL = self.old_solr_url
+        settings.HAYSTACK_SOLR_URL = self.old_solr_url
         super(SearchViewTestCase, self).tearDown()
     
     def test_search_no_query(self):

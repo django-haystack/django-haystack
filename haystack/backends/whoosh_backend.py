@@ -31,8 +31,8 @@ class SearchBackend(BaseSearchBackend):
         super(SearchBackend, self).__init__(site)
         self.setup_complete = False
         
-        if not hasattr(settings, 'WHOOSH_PATH'):
-            raise ImproperlyConfigured('You must specify a WHOOSH_PATH in your settings.')
+        if not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
+            raise ImproperlyConfigured('You must specify a HAYSTACK_WHOOSH_PATH in your settings.')
     
     def setup(self):
         """
@@ -44,22 +44,22 @@ class SearchBackend(BaseSearchBackend):
         new_index = False
         
         # Make sure the index is there.
-        if not os.path.exists(settings.WHOOSH_PATH):
-            os.makedirs(settings.WHOOSH_PATH)
+        if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
             new_index = True
         
-        self.storage = store.FileStorage(settings.WHOOSH_PATH)
+        self.storage = store.FileStorage(settings.HAYSTACK_WHOOSH_PATH)
         self.content_field_name, fields = self.site.build_unified_schema()
         self.schema = self.build_schema(fields)
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
         
         if new_index is True:
-            self.index = index.create_in(settings.WHOOSH_PATH, self.schema)
+            self.index = index.create_in(settings.HAYSTACK_WHOOSH_PATH, self.schema)
         else:
             try:
                 self.index = index.Index(self.storage, schema=self.schema)
             except index.EmptyIndexError:
-                self.index = index.create_in(settings.WHOOSH_PATH, self.schema)
+                self.index = index.create_in(settings.HAYSTACK_WHOOSH_PATH, self.schema)
         
         self.setup_complete = True
     
@@ -139,13 +139,13 @@ class SearchBackend(BaseSearchBackend):
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
         # it's much more efficient to simply delete the index files.
-        if os.path.exists(settings.WHOOSH_PATH):
-            index_files = os.listdir(settings.WHOOSH_PATH)
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
         
             for index_file in index_files:
-                os.remove(os.path.join(settings.WHOOSH_PATH, index_file))
+                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
         
-            os.removedirs(settings.WHOOSH_PATH)
+            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
         
         # Recreate everything.
         self.setup()
