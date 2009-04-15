@@ -26,7 +26,7 @@ class SearchViewTestCase(TestCase):
         response = self.client.get(reverse('haystack_search'), {'query': 'hello world'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context[-1]['page'].object_list), 1)
-        self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), 'haystack.None')
+        self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), 'haystack.dummymodel')
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, 1)
     
     def test_model_choices(self):

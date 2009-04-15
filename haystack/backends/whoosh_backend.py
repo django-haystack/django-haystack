@@ -214,7 +214,7 @@ class SearchBackend(BaseSearchBackend):
         
         for raw_result in raw_results:
             raw_result = dict(raw_result)
-            app_label, model_name = raw_result['django_ct_s'].split('.')
+            app_label, module_name = raw_result['django_ct_s'].split('.')
             additional_fields = {}
             
             for key, value in raw_result.items():
@@ -236,7 +236,7 @@ class SearchBackend(BaseSearchBackend):
                     self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                 }
             
-            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result.get('score', 0), **additional_fields)
+            result = SearchResult(app_label, module_name, raw_result['django_id_s'], raw_result.get('score', 0), **additional_fields)
             results.append(result)
         
         return {

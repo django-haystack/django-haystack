@@ -13,8 +13,8 @@ class SearchResult(object):
     Note that iterating over SearchResults and getting the object for each
     result will do O(N) database queries -- not such a great idea.
     """
-    def __init__(self, app_label, model_name, pk, score, **kwargs):
-        self.app_label, self.module_name = app_label, model_name
+    def __init__(self, app_label, module_name, pk, score, **kwargs):
+        self.app_label, self.module_name = app_label, module_name
         self.pk = pk
         self.score = score
         self._object = None

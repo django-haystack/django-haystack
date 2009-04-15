@@ -24,7 +24,7 @@ class DummySearchResult(SearchResult):
         pass
 
     def content_type(self):
-        return u"%s.%s" % (self.app_label, self.model_name)
+        return u"%s.%s" % (self.app_label, self.module_name)
 
 
 class SearchBackend(BaseSearchBackend):

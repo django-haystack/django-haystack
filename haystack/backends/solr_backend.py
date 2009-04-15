@@ -147,7 +147,7 @@ class SearchBackend(BaseSearchBackend):
                     facets[key][facet_field] = zip(facets[key][facet_field][::2], facets[key][facet_field][1::2])
         
         for raw_result in raw_results.docs:
-            app_label, model_name = raw_result['django_ct_s'].split('.')
+            app_label, module_name = raw_result['django_ct_s'].split('.')
             additional_fields = {}
             
             for key, value in raw_result.items():
@@ -160,7 +160,7 @@ class SearchBackend(BaseSearchBackend):
             if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
                 additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
             
-            result = SearchResult(app_label, model_name, raw_result['django_id_s'], raw_result['score'], **additional_fields)
+            result = SearchResult(app_label, module_name, raw_result['django_id_s'], raw_result['score'], **additional_fields)
             results.append(result)
         
         return {
