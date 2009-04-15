@@ -82,6 +82,7 @@ Xapian
 
 * Full SearchQuerySet support
 * Automatic query building
+* Term Boosting
 * "More Like This" functionality
 * Faceting
 * Stored (non-indexed) fields
