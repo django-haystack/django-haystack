@@ -136,7 +136,103 @@ contents of that field, which avoids the database hit.::
 Advanced Data Preparation
 =========================
 
-Coming soon.
+In most cases, using the `model_attr` parameter on your fields allows you to
+easily get data from a Django model to the document in your index, as it handles
+both direct attribute access as well as callable functions within your model.
+
+However, sometimes, even more control over what gets placed in your index is
+needed. To facilitate this, ``SearchIndex`` objects have a 'preparation' stage
+that populates data just before it is indexed. You can hook into this phase in
+several ways.
+
+This should be very familiar to developers who have used Django's ``forms``
+before as it loosely follows similar concepts, though the emphasis here is
+less on cleansing data from user input and more on making the data friendly
+to the search backend.
+
+1. ``prepare_FOO(self, object)``
+--------------------------------
+
+The most common way to affect a single field's data is to create a
+``prepare_FOO`` method (where FOO is the name of the field). As a parameter
+to this method, you will receive the instance that is attempting to be indexed.
+
+To keep with our existing example, one use case might be altering the name
+inside the ``author`` field to be "firstname lastname <email>". In this case,
+you might write the following code::
+
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+        
+        def prepare_author(self, object):
+            return "%s <%s>" % (object.user.get_full_name(), object.user.email)
+
+This method should return a single value (or list/tuple/dict) to populate that
+fields data upon indexing. Note that this method takes priority over whatever
+data may come from the field itself.
+
+
+2. ``prepare(self, object)``
+----------------------------
+
+Each ``SearchIndex`` gets a ``prepare`` method, which handles collecting all
+the data. This method should return a dictionary that will be the final data
+used by the search backend.
+
+Overriding this method is useful if you need to collect more than one piece
+of data or need to incorporate additional data that is not well represented
+by a single ``SearchField``. An example might look like::
+
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+        
+        def prepare(self, object):
+            self.prepared_data = super(NoteIndex, self).prepare(object)
+            
+            # Add in tags (assuming there's a M2M relationship to Tag on the model).
+            # Note that this would NOT get picked up by the automatic
+            # schema tools provided by Haystack.
+            self.prepared_data['tags'] = [tag.name for tag in self.tags.all()]
+            
+            return self.prepared_data
+
+If you choose to use this method, you should make a point to be careful to call
+the ``super()`` method before altering the data. Without doing so, you may have
+an incomplete set of data populating your indexes.
+
+This method has the final say in all data, overriding both what the fields
+provide as well as any ``prepare_FOO`` methods on the class.
+
+
+3. Overriding ``prepare(self, object)`` On Individual ``SearchField`` Objects
+-----------------------------------------------------------------------------
+
+The final way to manipulate your data is to implement a custom ``SearchField``
+object and write its ``prepare`` method to populate/alter the data any way you
+choose. For instance, a (naive) user-created ``GeoPointField`` might look
+something like::
+
+    from haystack.indexes import CharField
+    
+    class GeoPointField(CharField):
+        def __init__(self, **kwargs):
+            kwargs['default'] = '0.00-0.00'
+            super(GeoPointField, self).__init__(**kwargs)
+
+        def prepare(self, obj):
+            return unicode("%s-%s" % (obj.latitude, obj.longitude))
+
+The ``prepare`` method simply returns the value to be used for that field. It's
+entirely possible to include data that's not directly referenced to the object
+here, depending on your needs.
+
+Note that this is NOT a recommended approach to storing geographic data in a
+search engine (there is no formal suggestion on this as support is usually
+non-existent), merely an example of how to extend existing fields.
 
 
 Method Reference
