@@ -28,7 +28,9 @@ Solr
 * Faceting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: pysolr (GitHub version) + Solr 1.3+
+* Requires: pysolr (`GitHub version`_) + Solr 1.3+
+
+.. _Github version: http://github.com/toastdriven/pysolr
 
 Lucene
 ------
