@@ -91,7 +91,7 @@ Several possibilities on this.
 
    A common problem is that the Python bindings for a specific engine may
    have been released under an incompatible license. The goal is for Haystack
-   to remain MIT licensed and importing bindings with an incompatible license
+   to remain BSD licensed and importing bindings with an incompatible license
    can technically convert the entire codebase to that license. This most
    commonly occurs with GPL'ed bindings.
 
