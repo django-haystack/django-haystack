@@ -2,6 +2,7 @@ import warnings
 warnings.simplefilter('ignore', Warning)
 
 from core.tests.fields import *
+from core.tests.forms import *
 from core.tests.indexes import *
 from core.tests.models import *
 from core.tests.query import *
