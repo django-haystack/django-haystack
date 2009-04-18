@@ -1,7 +1,10 @@
 In Progress
 ===========
 
+* Docs on backends.
+* Docs on forms/views.
 * Docs on faceting.
+* Docs on contributing.
 * Lucene backend.
 * Formal packaging.
 * Thread-safety (ongoing).

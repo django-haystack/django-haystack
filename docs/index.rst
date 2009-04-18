@@ -24,6 +24,7 @@ you up and running:
    :maxdepth: 1
    
    faq
+   installing_engines
 
 
 Reference

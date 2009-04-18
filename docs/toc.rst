@@ -8,6 +8,7 @@ Table Of Contents
    tutorial
    architecture_overview
    backend_support
+   installing_engines
    faq
    
    searchqueryset_api
