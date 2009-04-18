@@ -1,14 +1,18 @@
 import os
 import warnings
-from whoosh import store
-from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
-import whoosh.index as index
-from whoosh.qparser import QueryParser
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_unicode
-from haystack.backends import BaseSearchBackend, BaseSearchQuery, SearchBackendError
+from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
+try:
+    from whoosh import store
+    from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
+    import whoosh.index as index
+    from whoosh.qparser import QueryParser
+except ImportError:
+    raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
 
 # Word reserved by Whoosh for special use.

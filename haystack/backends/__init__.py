@@ -2,14 +2,11 @@
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
+from haystack.exceptions import SearchBackendError
 try:
     set
 except NameError:
     from sets import Set as set
-
-
-class SearchBackendError(Exception):
-    pass
 
 
 class BaseSearchBackend(object):

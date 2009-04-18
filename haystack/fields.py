@@ -1,8 +1,5 @@
 from django.template import loader, Context
-
-
-class SearchFieldError(Exception):
-    pass
+from haystack.exceptions import SearchFieldError
 
 
 # All the SearchFields variants.

@@ -1,10 +1,13 @@
-from pysolr import Solr
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.exceptions import MissingDependency
 from haystack.models import SearchResult
-
+try:
+    from pysolr import Solr
+except ImportError:
+    raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
 
 # Word reserved by Solr for special use.
 RESERVED_WORDS = (

@@ -1,18 +1,12 @@
-from django.db.models import signals, loading
+from django.db.models import signals
 from django.db.models.base import ModelBase
+from haystack.exceptions import AlreadyRegistered, NotRegistered
 from haystack.indexes import BasicSearchIndex
 from haystack.fields import *
 try:
     set
 except NameError:
     from sets import Set as set
-
-
-class AlreadyRegistered(Exception):
-    pass
-
-class NotRegistered(Exception):
-    pass
 
 
 class SearchSite(object):

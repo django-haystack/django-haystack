@@ -54,4 +54,4 @@ Complete
 * A means to control commit frequency on updates.
 * Better automatic site loading.
 * Docs on SearchIndexes (prepare's).
-
+* Handle missing dependencies.
