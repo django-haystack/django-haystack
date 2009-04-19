@@ -18,6 +18,13 @@ We'll be adding search functionality to a simple application.  Here is
         def __unicode__(self):
             return self.title
 
+Initial Setup
+-------------
+
+Before starting with Haystack, you will want to choose a search backend to get
+started. There is a quick-start guide to :doc:`installing_search_engines`, though you may
+want to defer to each engine's official instructions.
+
 
 1. Add Haystack To ``INSTALLED_APPS``
 -------------------------------------

@@ -24,7 +24,7 @@ you up and running:
    :maxdepth: 1
    
    faq
-   installing_engines
+   installing_search_engines
 
 
 Reference
