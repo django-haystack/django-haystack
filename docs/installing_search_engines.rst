@@ -5,11 +5,13 @@ Installing Search Engines
 Solr
 ====
 
+Official Download Location: http://www.apache.org/dyn/closer.cgi/lucene/solr/
+
 Solr is Java but comes in a pre=packaged form that requires very little other
 than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack requires Solr 1.3+. Installation is relatively simple::
 
-    curl -O http://apache.mirrors.tds.net/lucene/solr/1.3.0/apache-solr-1.3.0.tgz (or another mirror from http://www.apache.org/dyn/closer.cgi/lucene/solr/)
+    curl -O http://apache.mirrors.tds.net/lucene/solr/1.3.0/apache-solr-1.3.0.tgz
     tar xvzf apache-solr-1.3.0.tgz
     cd apache-solr-1.3.0
     cd example
@@ -29,6 +31,8 @@ distributed via PyPI. Place ``pysolr.py`` somewhere on your ``PYTHONPATH``.
 Whoosh
 ======
 
+Official Download Location: http://whoosh.ca/
+
 Whoosh is pure Python, so it's a great option for getting started quickly. For
 now (as of 2009/04/17), it requires a bit of patching (Whoosh version 0.1.13).
 The patch needed is included with Haystack (at the root as
@@ -44,22 +48,24 @@ or Subversion, apply the patch and install.::
 Xapian
 ======
 
+Official Download Location: http://xapian.org/download
+
 Xapian is written in C++ so it requires compilation (unless your OS has a
 package for it). Installation looks like::
 
-    curl -O http://oligarchy.co.uk/xapian/1.0.7/xapian-core-1.0.7.tar.gz
-    curl -O http://oligarchy.co.uk/xapian/1.0.7/xapian-bindings-1.0.7.tar.gz
+    curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-core-1.0.11.tar.gz
+    curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-bindings-1.0.11.tar.gz
     
-    tar xvzf xapian-core-1.0.7.tar.gz
-    tar xvzf xapian-bindings-1.0.7.tar.gz
+    tar xvzf xapian-core-1.0.11.tar.gz
+    tar xvzf xapian-bindings-1.0.11.tar.gz
     
-    cd xapian-core-1.0.7
+    cd xapian-core-1.0.11
     ./configure
     make
     sudo make install
     
     cd ..
-    cd xapian-bindings-1.0.7
+    cd xapian-bindings-1.0.11
     ./configure
     make
     sudo make install

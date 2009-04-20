@@ -11,7 +11,8 @@ setup(
     url='http://haystacksearch.org/',
     package_dir={'haystack': 'haystack'},
     packages=['haystack', 'haystack.backends', 'haystack.management', 'haystack.management.commands'],
-    package_data={'haystack': ['templates/*']},
+    # DRL_FIXME: This doesn't work. Programmatically generate a file list.
+    package_data={'haystack': ['templates/*', 'templates/*/*']},
     classifiers=['Development Status :: 4 - Beta',
                  'Environment :: Web Environment',
                  'Framework :: Django',

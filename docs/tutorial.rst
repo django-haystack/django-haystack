@@ -183,8 +183,9 @@ with your own view.
 6. Search Template
 ------------------
 
-Your search template will likely be very simple. The following is enough to
-get going (your template/block names will likely differ)::
+Your search template (``search/search.html`` for the default case) will likely
+be very simple. The following is enough to get going (your template/block names
+will likely differ)::
 
     {% extends 'base.html' %}
     
