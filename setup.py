@@ -9,10 +9,16 @@ setup(
     author='Daniel Lindsley',
     author_email='daniel@toastdriven.com',
     url='http://haystacksearch.org/',
-    package_dir={'haystack': 'haystack'},
-    packages=['haystack', 'haystack.backends', 'haystack.management', 'haystack.management.commands'],
-    # DRL_FIXME: This doesn't work. Programmatically generate a file list.
-    package_data={'haystack': ['templates/*', 'templates/*/*']},
+    packages=[
+        'haystack',
+        'haystack.backends',
+        'haystack.management',
+        'haystack.management.commands'
+    ],
+    package_data={
+        'haystack': ['templates/search_configuration/*']
+    },
+    zip_safe=False,
     classifiers=['Development Status :: 4 - Beta',
                  'Environment :: Web Environment',
                  'Framework :: Django',

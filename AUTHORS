@@ -15,3 +15,5 @@ Thanks to
     * Brian Rosner for various patches.
     * Richard Boulton for feedback and suggestions.
     * Cyberdelia for feedback and patches.
+    * Jannis Leidel for patching the setup.py.
+    * Ask Solem for for patching the setup.py.
