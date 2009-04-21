@@ -53,7 +53,7 @@ class SearchView(object):
         }, context_instance=self.context_class(request))
 
 
-class FacetedSearchView(object):
+class FacetedSearchView(SearchView):
     def __name__(self):
         return "FacetedSearchView"
 
