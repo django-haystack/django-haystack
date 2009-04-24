@@ -21,10 +21,19 @@ index bf5db03..4abde0f 100644
      # Units of content
      unit = fieldedUnit | fieldableUnit
 diff --git a/src/whoosh/query.py b/src/whoosh/query.py
-index 4cea704..47dec58 100644
+index 4cea704..2c4d51f 100644
 --- a/src/whoosh/query.py
 +++ b/src/whoosh/query.py
-@@ -261,7 +261,12 @@ class Term(SimpleQuery):
+@@ -218,6 +218,8 @@ class SimpleQuery(Query):
+         of the term to search for. boost is a boost factor to apply to
+         the raw scores of any documents matched by this query.
+         """
++        if not isinstance(fieldname, basestring):
++            fieldname = fieldname[0]
+         
+         self.fieldname = fieldname
+         self.text = text
+@@ -261,7 +263,12 @@ class Term(SimpleQuery):
          return searcher.doc_frequency(fieldnum, self.text)
      
      def docs(self, searcher, exclude_docs = None):
