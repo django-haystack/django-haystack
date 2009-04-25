@@ -79,7 +79,7 @@ Narrows the search by looking for (and including) certain attributes.
 
 The lookup parameters (``**kwargs``) should follow the `Field lookups`_ below.
 If you specify more than one pair, they will be joined in the query according to
-the ``HAYSTACK_DEFAULT_OPERATOR`` setting (defaults to ``OR``).
+the ``HAYSTACK_DEFAULT_OPERATOR`` setting (defaults to ``AND``).
 
 If a string with one or more spaces in it is specified as the value, an exact
 match will be performed on that phrase.
