@@ -76,7 +76,7 @@ within which to primarily search. Because this ideal is so central and most of
 Haystack is designed to have pluggable backends, it is important to ensure that
 all engines have at least a bare minimum of the data they need to function.
 
-As a result, when creating a ``SeachIndex``, at least one field must be marked
+As a result, when creating a ``SearchIndex``, at least one field must be marked
 with ``document=True``. This signifies to Haystack that whatever is placed in
 this field while indexing is to be the primary text the search engine indexes.
 The name of this field can be almost anything, but ``text`` is one of the
@@ -112,20 +112,20 @@ contents of that field, which avoids the database hit.:
 
 Within ``myapp/search_indexes.py``::
 
-    class MyIndex(indexes.SearchIndex):
+    class NoteIndex(indexes.SearchIndex):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
         # Define the additional field.
         rendered = indexes.CharField(use_template=True, indexed=False)
     
-Then, inside ``templates/search/indexes/myapp/myindex_rendered.txt``::
+Then, inside a template named ``search/indexes/myapp/note_rendered.txt``::
 
     <h2>{{ object.title }}</h2>
     
     <p>{{ object.content }}</p>
     
-And finally, ``templates/search/search.html``::
+And finally, in ``search/search.html``::
     
     ...
     
