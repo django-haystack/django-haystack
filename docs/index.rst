@@ -44,6 +44,7 @@ looking for API documentation and advanced usage as detailed in:
    
    architecture_overview
    backend_support
+   settings
 
 
 Developing
