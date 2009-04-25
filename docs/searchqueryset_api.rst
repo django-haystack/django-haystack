@@ -49,6 +49,27 @@ query as late as possible). So the following is valid::
     results = SearchQuerySet().exclude(content='hello').filter(content='world').order_by('-pub_date').boost('title', 0.5)[10:20]
 
 
+The ``content`` Shortcut
+========================
+
+Searching your document fields is a very common activity. To help mitigate
+possible differences in ``SearchField`` names (and to help the backends deal
+with search queries that inspect the main corpus), there is a special field
+called ``content``. You may use this in any place that other fields names would
+work (e.g. `` filter``, ``exclude``, etc.) to indicate you simply want to
+search the main documents.
+
+For example::
+
+    from haystack.query import SearchQuerySet
+    
+    # This searches whatever fields were marked ``document=True``.
+    results = SearchQuerySet().exclude(content='hello')
+
+This special pseudo-field works best with the ``exact`` lookup and may yield
+strange or unexpected results with the other lookups.
+
+
 ``SearchQuerySet`` Methods
 ==========================
 
