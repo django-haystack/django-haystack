@@ -71,6 +71,9 @@ class SearchBackend(BaseSearchBackend):
             'django_ct_s': ID(stored=True),
             'django_id_s': ID(stored=True),
         }
+        # Grab the number of keys that are hard-coded into Haystack.
+        # We'll use this to (possibly) fail slightly more gracefully later.
+        initial_key_count = len(schema_fields)
         
         for field in fields:
             if field['multi_valued'] is True:
@@ -84,6 +87,11 @@ class SearchBackend(BaseSearchBackend):
                 schema_fields[field['field_name']] = TEXT(stored=True)
             else:
                 raise SearchBackendError("Whoosh backend does not support type '%s'. Please report this bug." % field['type'])
+        
+        # Fail more gracefully than relying on the backend to die if no fields
+        # are found.
+        if len(schema_fields) <= initial_key_count:
+            raise SearchBackendError("No fields were found in any search_indexes. Please correct this before attempting to search.")
         
         return Schema(**schema_fields)
 
