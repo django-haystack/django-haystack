@@ -63,7 +63,7 @@ class Command(AppCommand):
             
             # DRL_TODO: .select_related() seems like a good idea here but
             #           can cause empty QuerySets. Why?
-            qs = index.get_query_set().filter(**extra_lookup_kwargs).order_by(model._meta.pk.attname)
+            qs = index.get_query_set().filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
             total = qs.count()
 
             if self.verbosity >= 1:
