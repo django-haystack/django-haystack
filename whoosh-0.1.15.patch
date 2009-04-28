@@ -1,0 +1,22 @@
+diff --git a/src/whoosh/writing.py b/src/whoosh/writing.py
+index 85739a6..198ffee 100644
+--- a/src/whoosh/writing.py
++++ b/src/whoosh/writing.py
+@@ -202,7 +202,7 @@ class IndexWriter(index.DeletionMixin):
+         searcher = self.searcher()
+         for name in unique_fields:
+             self.delete_by_term(name, fields[name], searcher = searcher)
+-        searcher.close()
++        # searcher.close()
+         
+         # Add the given fields
+         self.add_document(**fields)
+@@ -561,7 +561,7 @@ class SegmentWriter(object):
+ 
+ 
+ 
+-if __name__ == '__main__':
++if __name__ == '__main__':
+     pass
+ 
+ 
