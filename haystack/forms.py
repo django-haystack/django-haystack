@@ -13,7 +13,7 @@ def model_choices(site=None):
 
 
 class SearchForm(forms.Form):
-    query = forms.CharField(required=False)
+    q = forms.CharField(required=False)
     
     def __init__(self, *args, **kwargs):
         self.searchqueryset = kwargs.get('searchqueryset', None)
@@ -30,7 +30,7 @@ class SearchForm(forms.Form):
     
     def search(self):
         self.clean()
-        return self.searchqueryset.auto_query(self.cleaned_data['query'])
+        return self.searchqueryset.auto_query(self.cleaned_data['q'])
 
 
 class HighlightedSearchForm(SearchForm):

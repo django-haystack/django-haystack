@@ -31,7 +31,7 @@ class SearchView(object):
         facets = {}
         
         if form.is_valid():
-            query = form.cleaned_data['query']
+            query = form.cleaned_data['q']
             
             if query:
                 results = form.search()
@@ -68,7 +68,7 @@ class FacetedSearchView(SearchView):
         facets = {}
         
         if form.is_valid():
-            query = form.cleaned_data['query']
+            query = form.cleaned_data['q']
             
             if query:
                 results = form.search()
