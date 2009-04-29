@@ -34,15 +34,17 @@ Whoosh
 Official Download Location: http://whoosh.ca/
 
 Whoosh is pure Python, so it's a great option for getting started quickly. For
-now (as of 2009/04/17), it requires a bit of patching (Whoosh version 0.1.13).
-The patch needed is included with Haystack (at the root as
-``whoosh-0.1.13.patch``), so it's best to grab either a source distribution
-or Subversion, apply the patch and install.::
+now (as of 2009/04/28), it requires a bit of patching (Whoosh version 0.1.15).
+A forked version that ought to be stable for Haystack use can be found at
+http://github.com/toastdriven/whoosh::
 
-    svn co http://svn.whoosh.ca/projects/whoosh/trunk/ whoosh
+    git clone http://github.com/toastdriven/whoosh
     cd whoosh
-    patch -p1 < /path/to/your/haystack/whoosh-0.1.13.patch
     sudo python setup.py install
+
+As Whoosh gains features and becomes more stable/performant, the hope is to
+eventually defer to the main release and drop the fork entirely. When that
+time comes, this documentation will be updated.
 
 
 Xapian
