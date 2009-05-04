@@ -101,7 +101,7 @@ def handle_registrations(*args, **kwargs):
         if settings.DEBUG:
             index_count = len(site.get_indexed_models())
             
-            if index_count:
+            if index_count and settings.DEBUG is True:
                 print "Loaded URLconf to initialize SearchSite..."
                 print "Main site registered %s index(es)." % index_count
         
