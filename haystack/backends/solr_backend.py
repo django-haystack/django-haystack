@@ -1,3 +1,4 @@
+import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_unicode
@@ -51,7 +52,7 @@ class SearchBackend(BaseSearchBackend):
                 doc.update(index.prepare(obj))
                 docs.append(doc)
         except UnicodeDecodeError:
-            print "Chunk failed."
+            sys.stderr.write("Chunk failed.\n")
             pass
         
         self.conn.add(docs, commit=commit)
