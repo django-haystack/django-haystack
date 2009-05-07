@@ -105,9 +105,9 @@ You can also explicitly setup an ``SearchIndex`` as follows::
 
     from myapp.indexes import NoteIndex
     from myapp.models import Note
-    from haystack.sites import SearchIndex
+    from haystack.sites import SearchSite
     
-    mysite = SearchIndex()
+    mysite = SearchSite()
     mysite.register(Note, NoteIndex)
 
 
