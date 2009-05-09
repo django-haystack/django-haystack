@@ -1,6 +1,8 @@
 # "Hey, Django! Look at me, I'm an app! For Serious!"
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.utils.encoding import force_unicode
+from django.utils.text import capfirst
 
 
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
@@ -19,6 +21,7 @@ class SearchResult(object):
         self.score = score
         self._object = None
         self._model = None
+        self._verbose_name = None
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
@@ -52,6 +55,11 @@ class SearchResult(object):
         self._model = obj
     
     model = property(_get_model, _set_model)
+    
+    def _get_verbose_name(self):
+        return force_unicode(capfirst(self.model._meta.verbose_name))
+    
+    verbose_name = property(_get_verbose_name)
 
     def content_type(self):
         return unicode(self.model._meta)
