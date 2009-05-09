@@ -46,32 +46,32 @@ class SearchIndexTestCase(TestCase):
         self.mi = GoodMockSearchIndex(MockModel, backend=self.msb)
         self.cmi = GoodCustomMockSearchIndex(MockModel, backend=self.msb)
         self.sample_docs = {
-            'core.mockmodel.1': {
+            u'core.mockmodel.1': {
                 'content': u'Indexed!\n1',
                 'django_id_s': u'1',
                 'django_ct_s': u'core.mockmodel',
                 'extra': u'Stored!\n1',
                 'author': u'daniel1',
                 'pub_date': datetime.datetime(2009, 3, 17, 6, 0),
-                'id': 'core.mockmodel.1'
+                'id': u'core.mockmodel.1'
             },
-            'core.mockmodel.2': {
+            u'core.mockmodel.2': {
                 'content': u'Indexed!\n2',
                 'django_id_s': u'2',
                 'django_ct_s': u'core.mockmodel',
                 'extra': u'Stored!\n2',
                 'author': u'daniel2',
-                'pub_date': datetime.datetime(2009, 3, 17, 6, 0),
-                'id': 'core.mockmodel.2'
+                'pub_date': datetime.datetime(2009, 3, 17, 7, 0),
+                'id': u'core.mockmodel.2'
             },
-            'core.mockmodel.3': {
+            u'core.mockmodel.3': {
                 'content': u'Indexed!\n3',
                 'django_id_s': u'3',
                 'django_ct_s': u'core.mockmodel',
                 'extra': u'Stored!\n3',
                 'author': u'daniel3',
-                'pub_date': datetime.datetime(2009, 3, 17, 6, 0),
-                'id': 'core.mockmodel.3'
+                'pub_date': datetime.datetime(2009, 3, 17, 8, 0),
+                'id': u'core.mockmodel.3'
             }
         }
     

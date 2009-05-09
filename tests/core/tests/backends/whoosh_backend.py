@@ -155,3 +155,12 @@ class WhooshSearchBackendTestCase(TestCase):
         
         self.sb.delete_index()
         self.assertEqual(self.sb.index.doc_count(), 0)
+    
+    def test_order_by(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        results = self.sb.search('*', sort_by=['pub_date'])
+        self.assertEqual([result.pk for result in results['results']], [u'1', u'2', u'3'])
+        
+        results = self.sb.search('*', sort_by=['-pub_date'])
+        self.assertEqual([result.pk for result in results['results']], [u'3', u'2', u'1'])
