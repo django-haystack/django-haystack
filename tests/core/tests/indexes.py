@@ -24,6 +24,11 @@ class GoodMockSearchIndex(indexes.SearchIndex):
     extra = indexes.CharField(indexed=False, use_template=True)
 
 
+# For testing inheritance...
+class AltGoodMockSearchIndex(GoodMockSearchIndex):
+    additional = indexes.CharField(model_attr='user')
+
+
 class GoodCustomMockSearchIndex(indexes.SearchIndex):
     content = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='user')
@@ -83,7 +88,7 @@ class SearchIndexTestCase(TestCase):
     
     def test_contentfield_present(self):
         try:
-            mi = GoodMockSearchIndex(GoodMockSearchIndex, backend=MockSearchBackend())
+            mi = GoodMockSearchIndex(MockModel, backend=MockSearchBackend())
         except:
             self.fail()
     
@@ -180,3 +185,21 @@ class SearchIndexTestCase(TestCase):
         self.mi.reindex()
         self.assertEqual(self.msb.docs, self.sample_docs)
         self.msb.clear()
+    
+    def test_inheritance(self):
+        try:
+            agmi = AltGoodMockSearchIndex(MockModel, backend=self.msb)
+        except:
+            self.fail()
+        
+        self.assertEqual(len(agmi.fields), 5)
+        self.assert_('content' in agmi.fields)
+        self.assert_(isinstance(agmi.fields['content'], indexes.CharField))
+        self.assert_('author' in agmi.fields)
+        self.assert_(isinstance(agmi.fields['author'], indexes.CharField))
+        self.assert_('pub_date' in agmi.fields)
+        self.assert_(isinstance(agmi.fields['pub_date'], indexes.DateTimeField))
+        self.assert_('extra' in agmi.fields)
+        self.assert_(isinstance(agmi.fields['extra'], indexes.CharField))
+        self.assert_('additional' in agmi.fields)
+        self.assert_(isinstance(agmi.fields['additional'], indexes.CharField))

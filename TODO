@@ -1,7 +1,6 @@
 In Progress
 ===========
 
-* Docs on backends.
 * Docs on forms/views.
 * Docs on faceting.
 * Docs on contributing.
@@ -58,3 +57,4 @@ Complete
 * Better automatic site loading.
 * Docs on SearchIndexes (prepare's).
 * Handle missing dependencies.
+* Docs on backends.

@@ -6,6 +6,18 @@ class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
         attrs['fields'] = {}
         
+        # Inherit any fields from parent(s).
+        try:
+            parents = [b for b in bases if issubclass(b, SearchIndex)]
+            
+            for p in parents:
+                fields = getattr(p, 'fields', None)
+                
+                if fields:
+                    attrs['fields'].update(fields)
+        except NameError:
+            pass
+        
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
                 field = attrs.pop(field_name)
