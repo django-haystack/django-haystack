@@ -107,7 +107,14 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(len(self.whoosh_search('*')), 3)
         
+        # No query string should always yield zero results.
         self.assertEqual(self.sb.search(''), [])
+        
+        # A one letter query string gets nabbed by a stopwords filter. Should
+        # always yield zero results.
+        self.assertEqual(self.sb.search('a'), [])
+        
+        
         self.assertEqual(self.sb.search('*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*')['results']], [u'3', u'2', u'1'])
         

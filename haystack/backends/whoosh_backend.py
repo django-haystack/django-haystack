@@ -27,7 +27,7 @@ RESERVED_WORDS = (
 # The '\\' must come first, so as not to overwrite the other slash replacements.
 RESERVED_CHARACTERS = (
     '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}', 
-    '[', ']', '^', '"', '~', '*', '?', ':',
+    '[', ']', '^', '"', '~', '*', '?', ':', '.',
 )
 
 
@@ -172,7 +172,13 @@ class SearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
         
+        # A zero length query should return no results.
         if len(query_string) == 0:
+            return []
+        
+        # A one-character query (non-wildcard) gets nabbed by a stopwords
+        # filter and should yield zero results.
+        if len(query_string) <= 1 and query_string != '*':
             return []
         
         reverse = False
