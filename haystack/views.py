@@ -10,83 +10,117 @@ RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):
+    template = 'search/search.html'
+    extra_context = {}
+    query = ''
+    results = []
+    request = None
+    form = None
+    
     def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext):
         self.load_all = load_all
-        self.template = template or 'search/search.html'
         self.form_class = form_class
         self.context_class = context_class
         self.searchqueryset = searchqueryset
+        
+        if template:
+            self.template = template
 
     def __name__(self):
         return "SearchView"
 
     def __call__(self, request):
+        """
+        Generates the actual response to the search.
+        
+        Relies on internal, overridable methods to construct the response.
+        """
+        self.request = request
+        
+        self.form = self.build_form()
+        self.query = self.get_query()
+        self.results = self.get_results()
+        
+        return self.create_response()
+    
+    def build_form(self):
+        """
+        Instantiates the form the class should use to process the search query.
+        """
         if self.searchqueryset is None:
-            form = self.form_class(request.GET)
-        else:
-            form = self.form_class(request.GET, searchqueryset=self.searchqueryset)
+            return self.form_class(self.request.GET)
         
-        query = ''
-        results = []
-        facets = {}
+        return self.form_class(self.request.GET, searchqueryset=self.searchqueryset)
+    
+    def get_query(self):
+        """
+        Returns the query provided by the user.
         
-        if form.is_valid():
-            query = form.cleaned_data['q']
-            
-            if query:
-                results = form.search()
-            else:
-                results = []
+        Returns an empty string if the query is invalid.
+        """
+        if self.form.is_valid():
+            return self.form.cleaned_data['q']
         
-        paginator = Paginator(results, RESULTS_PER_PAGE)
+        return ''
+    
+    def get_results(self):
+        """
+        Fetches the results via the form.
+        
+        Returns an empty list if there's no query to search with.
+        """
+        if self.query:
+            return self.form.search()
+        
+        return []
+    
+    def build_page(self):
+        """
+        Paginates the results appropriately.
+        
+        In case someone does not want to use Django's built-in pagination, it
+        should be a simple matter to override this method to do what they would
+        like.
+        """
+        paginator = Paginator(self.results, RESULTS_PER_PAGE)
         
         try:
-            page = paginator.page(int(request.GET.get('page', 1)))
+            page = paginator.page(int(self.request.GET.get('page', 1)))
         except ValueError:
             raise Http404
         
-        return render_to_response(self.template, {
-            'query': query,
-            'form': form,
+        return (paginator, page)
+    
+    def extra_context(self):
+        """
+        Allows the addition of more context variables as needed.
+        
+        Must return a dictionary.
+        """
+        return {}
+    
+    def create_response(self):
+        """
+        Generates the actual HttpResponse to send back to the user.
+        """
+        (paginator, page) = self.build_page()
+        
+        context = {
+            'query': self.query,
+            'form': self.form,
             'page': page,
             'paginator': paginator,
-        }, context_instance=self.context_class(request))
+        }
+        context.update(self.extra_context())
+        
+        return render_to_response(self.template, context, context_instance=self.context_class(self.request))
 
 
 class FacetedSearchView(SearchView):
     def __name__(self):
         return "FacetedSearchView"
-
-    def __call__(self, request):
-        if self.searchqueryset is None:
-            form = self.form_class(request.GET)
-        else:
-            form = self.form_class(request.GET, searchqueryset=self.searchqueryset)
-        
-        query = ''
-        results = []
-        facets = {}
-        
-        if form.is_valid():
-            query = form.cleaned_data['q']
-            
-            if query:
-                results = form.search()
-                facets = results.facet_counts()
-            else:
-                results = []
-        
-        paginator = Paginator(results, RESULTS_PER_PAGE)
-        
-        try:
-            page = paginator.page(int(request.GET.get('page', 1)))
-        except ValueError:
-            raise Http404
-        
-        return render_to_response(self.template, {
-            'query': query,
-            'form': form,
-            'facets': facets,
-            'page': page,
-            'paginator': paginator,
-        }, context_instance=self.context_class(request))
+    
+    def extra_context(self):
+        return {
+            'facets': self.results.facet_counts(),
+        }
