@@ -200,8 +200,9 @@ class SearchQuery(BaseSearchQuery):
                 
                 value = the_filter.value
                 
-                if isinstance(value, (int, long, float, complex)):
-                    value = str(value)
+                if not isinstance(value, (list, tuple)):
+                    # Convert whatever we find to what pysolr wants.
+                    value = self.backend.conn._from_python(value)
                 
                 # Check to see if it's a phrase for an exact match.
                 if ' ' in value:
