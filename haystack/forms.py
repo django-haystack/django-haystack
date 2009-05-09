@@ -38,6 +38,18 @@ class HighlightedSearchForm(SearchForm):
         return super(HighlightedSearchForm, self).search().highlight()
 
 
+class FacetedSearchForm(SearchForm):
+    selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
+    
+    def search(self):
+        sqs = super(FacetedSearchForm, self).search()
+        
+        if self.cleaned_data['selected_facets']:
+            sqs = sqs.narrow(self.cleaned_data['selected_facets'])
+        
+        return sqs
+
+
 class ModelSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
         super(ModelSearchForm, self).__init__(*args, **kwargs)
