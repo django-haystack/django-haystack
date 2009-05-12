@@ -155,7 +155,7 @@ class SearchBackend(BaseSearchBackend):
             additional_fields = {}
             
             for key, value in raw_result.items():
-                additional_fields[str(key)] = value
+                additional_fields[str(key)] = self.conn._to_python(value)
             
             del(additional_fields['django_ct_s'])
             del(additional_fields['django_id_s'])

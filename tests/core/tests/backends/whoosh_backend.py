@@ -68,7 +68,7 @@ class WhooshSearchBackendTestCase(TestCase):
         
         # Check what Whoosh thinks is there.
         self.assertEqual(len(self.whoosh_search('*')), 3)
-        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id_s': u'3', 'django_ct_s': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22', 'id': u'core.mockmodel.3'}, {'django_id_s': u'2', 'django_ct_s': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23', 'id': u'core.mockmodel.2'}, {'django_id_s': u'1', 'django_ct_s': u'core.mockmodel', 'name': u'daniel1', 'text': u'Indexed!\n1', 'pub_date': u'2009-02-24', 'id': u'core.mockmodel.1'}])
+        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id_s': u'3', 'django_ct_s': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'"2009-02-22T00:00:00.000Z"', 'id': u'core.mockmodel.3'}, {'django_id_s': u'2', 'django_ct_s': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'"2009-02-23T00:00:00.000Z"', 'id': u'core.mockmodel.2'}, {'django_id_s': u'1', 'django_ct_s': u'core.mockmodel', 'name': u'daniel1', 'text': u'Indexed!\n1', 'pub_date': u'"2009-02-24T00:00:00.000Z"', 'id': u'core.mockmodel.1'}])
     
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -76,7 +76,7 @@ class WhooshSearchBackendTestCase(TestCase):
         
         self.sb.remove(self.sample_objs[0])
         self.assertEqual(len(self.whoosh_search('*')), 2)
-        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id_s': u'3', 'django_ct_s': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22', 'id': u'core.mockmodel.3'}, {'django_id_s': u'2', 'django_ct_s': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23', 'id': u'core.mockmodel.2'}])
+        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id_s': u'3', 'django_ct_s': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'"2009-02-22T00:00:00.000Z"', 'id': u'core.mockmodel.3'}, {'django_id_s': u'2', 'django_ct_s': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'"2009-02-23T00:00:00.000Z"', 'id': u'core.mockmodel.2'}])
     
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -164,3 +164,27 @@ class WhooshSearchBackendTestCase(TestCase):
         
         results = self.sb.search('*', sort_by=['-pub_date'])
         self.assertEqual([result.pk for result in results['results']], [u'3', u'2', u'1'])
+    
+    def test__from_python(self):
+        self.assertEqual(self.sb._from_python('abc'), u'abc')
+        self.assertEqual(self.sb._from_python(1), u'1')
+        self.assertEqual(self.sb._from_python(2653), u'2653')
+        self.assertEqual(self.sb._from_python(25.5), u'25.5')
+        self.assertEqual(self.sb._from_python([1, 2, 3]), u'[1, 2, 3]')
+        self.assertEqual(self.sb._from_python((1, 2, 3)), u'(1, 2, 3)')
+        self.assertEqual(self.sb._from_python({'a': 1, 'c': 3, 'b': 2}), u"{'a': 1, 'c': 3, 'b': 2}")
+        self.assertEqual(self.sb._from_python(datetime.datetime(2009, 5, 9, 16, 14)), u'"2009-05-09T16:14:00.000Z"')
+        self.assertEqual(self.sb._from_python(datetime.datetime(2009, 5, 9, 0, 0)), u'"2009-05-09T00:00:00.000Z"')
+    
+    def test__to_python(self):
+        self.assertEqual(self.sb._to_python('abc'), 'abc')
+        self.assertEqual(self.sb._to_python('1'), 1)
+        self.assertEqual(self.sb._to_python('2653'), 2653)
+        self.assertEqual(self.sb._to_python('25.5'), 25.5)
+        self.assertEqual(self.sb._to_python('[1, 2, 3]'), [1, 2, 3])
+        self.assertEqual(self.sb._to_python('(1, 2, 3)'), (1, 2, 3))
+        self.assertEqual(self.sb._to_python('{"a": 1, "b": 2, "c": 3}'), {'a': 1, 'c': 3, 'b': 2})
+        self.assertEqual(self.sb._to_python('2009-05-09T16:14:00.000Z'), datetime.datetime(2009, 5, 9, 16, 14))
+        self.assertEqual(self.sb._to_python('2009-05-09T00:00:00.000Z'), datetime.datetime(2009, 5, 9, 0, 0))
+        self.assertEqual(self.sb._to_python('"2009-05-09T16:14:00.000Z"'), datetime.datetime(2009, 5, 9, 16, 14))
+        self.assertEqual(self.sb._to_python('"2009-05-09T00:00:00.000Z"'), datetime.datetime(2009, 5, 9, 0, 0))

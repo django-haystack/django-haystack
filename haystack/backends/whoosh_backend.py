@@ -1,4 +1,6 @@
+import datetime
 import os
+import re
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -29,6 +31,8 @@ RESERVED_CHARACTERS = (
     '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}', 
     '[', ']', '^', '"', '~', '*', '?', ':', '.',
 )
+
+DATETIME_REGEX = re.compile('^(\"?)(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\.000Z(\"?)$')
 
 
 class SearchBackend(BaseSearchBackend):
@@ -111,7 +115,7 @@ class SearchBackend(BaseSearchBackend):
             # Really make sure it's unicode, because Whoosh won't have it any
             # other way.
             for key in other_data:
-                other_data[key] = force_unicode(other_data[key])
+                other_data[key] = self._from_python(other_data[key])
             
             doc.update(other_data)
             writer.update_document(**doc)
@@ -257,7 +261,7 @@ class SearchBackend(BaseSearchBackend):
             additional_fields = {}
             
             for key, value in raw_result.items():
-                additional_fields[str(key)] = value
+                additional_fields[str(key)] = self._to_python(value)
             
             del(additional_fields['django_ct_s'])
             del(additional_fields['django_id_s'])
@@ -283,6 +287,61 @@ class SearchBackend(BaseSearchBackend):
             'hits': len(results),
             'facets': facets,
         }
+    
+    def _from_python(self, value):
+        """
+        Converts Python values to a string for Whoosh.
+        
+        Code courtesy of pysolr.
+        """
+        if isinstance(value, datetime.datetime):
+            value = force_unicode(value.strftime('\"%Y-%m-%dT%H:%M:%S.000Z\"'))
+        elif isinstance(value, datetime.date):
+            value = force_unicode(value.strftime('\"%Y-%m-%dT00:00:00.000Z\"'))
+        elif isinstance(value, bool):
+            if value:
+                value = u'true'
+            else:
+                value = u'false'
+        else:
+            value = force_unicode(value)
+        return value
+    
+    def _to_python(self, value):
+        """
+        Converts values from Whoosh to native Python values.
+        
+        A port of the same method in pysolr, as they deal with data the same way.
+        """
+        if value == 'true':
+            return True
+        elif value == 'false':
+            return False
+        
+        possible_datetime = DATETIME_REGEX.search(value)
+        
+        if possible_datetime:
+            date_values = possible_datetime.groupdict()
+            
+            for dk, dv in date_values.items():
+                date_values[dk] = int(dv)
+            
+            return datetime.datetime(date_values['year'], date_values['month'], date_values['day'], date_values['hour'], date_values['minute'], date_values['second'])
+        
+        try:
+            # This is slightly gross but it's hard to tell otherwise what the
+            # string's original type might have been. Be careful who you trust.
+            converted_value = eval(value)
+            
+            # Try to handle most built-in types.
+            if isinstance(converted_value, (list, tuple, set, dict, int, float, long, complex)):
+                return converted_value
+        except:
+            # If it fails (SyntaxError or its ilk) or we don't trust it,
+            # continue on.
+            pass
+        
+        return value
 
 
 class SearchQuery(BaseSearchQuery):
@@ -311,8 +370,11 @@ class SearchQuery(BaseSearchQuery):
                 
                 value = the_filter.value
                 
-                if isinstance(value, (int, long, float, complex)):
-                    value = str(value)
+                if the_filter.filter_type != 'in':
+                    # 'in' is a bit of a special case, as we don't want to
+                    # convert a valid list/tuple to string. Defer handling it
+                    # until later...
+                    value = self.backend._from_python(value)
                 
                 # Check to see if it's a phrase for an exact match.
                 if ' ' in value:
