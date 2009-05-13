@@ -120,7 +120,7 @@ class QueryFilter(object):
         if self.is_or():
             join = 'OR'
         
-        return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), self.value.encode('utf8'))
+        return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), force_unicode(self.value).encode('utf8'))
     
     def split_expression(self, expression):
         """Parses an expression and determines the field and filter type."""
