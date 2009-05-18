@@ -2,20 +2,27 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test import TestCase
 from haystack.forms import model_choices
-from haystack.sites import SearchSite
+from haystack import sites
 from core.models import MockModel, AnotherMockModel
 
 
 class SearchViewTestCase(TestCase):
     def setUp(self):
         super(SearchViewTestCase, self).setUp()
+        mock_index_site = sites.SearchSite()
+        mock_index_site.register(MockModel)
+        mock_index_site.register(AnotherMockModel)
         
         # Stow.
-        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/default')
-        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/default'
+        self.old_site = sites.site
+        sites.site = mock_index_site
+        
+        self.old_engine = getattr(settings, 'HAYSTACK_SEARCH_ENGINE')
+        settings.HAYSTACK_SEARCH_ENGINE = 'dummy'
     
     def tearDown(self):
-        settings.HAYSTACK_SOLR_URL = self.old_solr_url
+        sites.site = self.old_site
+        settings.HAYSTACK_SEARCH_ENGINE = self.old_engine
         super(SearchViewTestCase, self).tearDown()
     
     def test_search_no_query(self):
@@ -28,10 +35,3 @@ class SearchViewTestCase(TestCase):
         self.assertEqual(len(response.context[-1]['page'].object_list), 1)
         self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), 'haystack.dummymodel')
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, 1)
-    
-    def test_model_choices(self):
-        mis = SearchSite()
-        mis.register(MockModel)
-        mis.register(AnotherMockModel)
-        self.assertEqual(len(model_choices(site=mis)), 2)
-        self.assertEqual([option[1] for option in model_choices(site=mis)], [u'another mock models', u'mock models'])
