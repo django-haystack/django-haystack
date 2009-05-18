@@ -32,7 +32,7 @@ RESERVED_CHARACTERS = (
     '[', ']', '^', '"', '~', '*', '?', ':', '.',
 )
 
-DATETIME_REGEX = re.compile('^(\"?)(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\.000Z(\"?)$')
+DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\.000Z$')
 
 
 class SearchBackend(BaseSearchBackend):
@@ -295,9 +295,9 @@ class SearchBackend(BaseSearchBackend):
         Code courtesy of pysolr.
         """
         if isinstance(value, datetime.datetime):
-            value = force_unicode(value.strftime('\"%Y-%m-%dT%H:%M:%S.000Z\"'))
+            value = force_unicode(value.strftime('%Y-%m-%dT%H:%M:%S.000Z'))
         elif isinstance(value, datetime.date):
-            value = force_unicode(value.strftime('\"%Y-%m-%dT00:00:00.000Z\"'))
+            value = force_unicode(value.strftime('%Y-%m-%dT00:00:00.000Z'))
         elif isinstance(value, bool):
             if value:
                 value = u'true'
