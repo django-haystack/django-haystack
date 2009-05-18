@@ -27,6 +27,12 @@ grabbed from GitHub via http://github.com/toastdriven/pysolr/tree/master. In the
 near future, this should be merged into the main ``pysolr`` package and
 distributed via PyPI. Place ``pysolr.py`` somewhere on your ``PYTHONPATH``.
 
+Finally, to enable the "More Like This" functionality in Haystack, you'll need
+to enable the ``MoreLikeThisHandler``. Add the following line to your
+``solrconfig.xml`` file within the ``config`` tag::
+
+    <requestHandler name="/mlt" class="solr.MoreLikeThisHandler" />
+
 
 Whoosh
 ======
