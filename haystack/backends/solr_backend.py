@@ -219,6 +219,7 @@ class SearchQuery(BaseSearchQuery):
                         'gte': "%s:[%s TO *]",
                         'lt': "%s:{* TO %s}",
                         'lte': "%s:[* TO %s]",
+                        'startswith': "%s:%s*",
                     }
                     
                     if the_filter.filter_type != 'in':

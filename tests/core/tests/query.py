@@ -24,6 +24,7 @@ class QueryFilterTestCase(TestCase):
         self.assertEqual(qf.split_expression('foo__gt'), ('foo', 'gt'))
         self.assertEqual(qf.split_expression('foo__gte'), ('foo', 'gte'))
         self.assertEqual(qf.split_expression('foo__in'), ('foo', 'in'))
+        self.assertEqual(qf.split_expression('foo__startswith'), ('foo', 'startswith'))
         
         self.assertEqual(qf.split_expression('foo__moof'), ('foo', 'exact'))
     

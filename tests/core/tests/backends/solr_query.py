@@ -73,6 +73,11 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter('id__in', [1, 2, 3])
         self.assertEqual(self.sq.build_query(), 'why AND pub_date:[* TO "2009-02-10 01:59:00"] AND author:{daniel TO *} AND created:{* TO "2009-02-12 12:13:00"} AND title:[B TO *] AND (id:1 OR id:2 OR id:3)')
     
+    def test_build_query_wildcard_filter_types(self):
+        self.sq.add_filter('content', 'why')
+        self.sq.add_filter('title__startswith', 'haystack')
+        self.assertEqual(self.sq.build_query(), 'why AND title:haystack*')
+    
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
         self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')

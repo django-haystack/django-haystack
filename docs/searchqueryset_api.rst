@@ -337,6 +337,7 @@ The following lookup types are supported:
 * lt
 * lte
 * in
+* startswith
 
 These options are similar in function to the way Django's lookup types work.
 The actual behavior of these lookups is backend-specific.

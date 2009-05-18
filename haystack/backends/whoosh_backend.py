@@ -391,6 +391,7 @@ class SearchQuery(BaseSearchQuery):
                         'gte': "NOT %s:*..%s",
                         'lt': "%s:*..%s",
                         'lte': "NOT %s:%s..*",
+                        'startswith': "%s:%s*",
                     }
                     
                     if the_filter.filter_type != 'in':

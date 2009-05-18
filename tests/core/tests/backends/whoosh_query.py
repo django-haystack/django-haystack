@@ -75,6 +75,11 @@ class WhooshSearchQueryTestCase(TestCase):
         self.sq.add_filter('id__in', [1, 2, 3])
         self.assertEqual(self.sq.build_query(), 'why AND NOT pub_date:"2009-02-10T01:59:00.000Z"..* AND author:daniel..* AND created:*.."2009-02-12T12:13:00.000Z" AND NOT title:*..B AND (id:1 OR id:2 OR id:3)')
     
+    def test_build_query_wildcard_filter_types(self):
+        self.sq.add_filter('content', 'why')
+        self.sq.add_filter('title__startswith', 'haystack')
+        self.assertEqual(self.sq.build_query(), 'why AND title:haystack*')
+    
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
         self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')
