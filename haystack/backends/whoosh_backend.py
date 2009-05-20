@@ -228,15 +228,29 @@ class SearchBackend(BaseSearchBackend):
         if query_facets is not None:
             warnings.warn("Whoosh does not handle query faceting.", Warning, stacklevel=2)
         
+        narrowed_results = None
+        
         if narrow_queries is not None:
-            # DRL_FIXME: Determine if Whoosh can do this.
-            # kwargs['fq'] = list(narrow_queries)
-            pass
+            # Potentially expensive? I don't see another way to do it in Whoosh...
+            narrow_searcher = self.index.searcher()
+            
+            for nq in narrow_queries:
+                recent_narrowed_results = narrow_searcher.search(self.parser.parse(nq))
+                
+                if narrowed_results:
+                    narrowed_results.filter(recent_narrowed_results)
+                else:
+                   narrowed_results = recent_narrowed_results
         
         if self.index.doc_count:
             searcher = self.index.searcher()
             # DRL_TODO: Ignoring offsets for now, as slicing caused issues with pagination.
             raw_results = searcher.search(self.parser.parse(query_string), sortedby=sort_by, reverse=reverse)
+            
+            # Handle the case where the results have been narrowed.
+            if narrowed_results:
+                raw_results.filter(narrowed_results)
+            
             return self._process_results(raw_results, highlight=highlight, query_string=query_string)
         else:
             return {
