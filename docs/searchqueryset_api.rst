@@ -198,7 +198,21 @@ Implemented. Documentation coming soon.
 ``narrow(self, query)``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Implemented. Documentation coming soon.
+Pulls a subset of documents from the search engine to search within. This is
+for advanced usage, especially useful when faceting.
+
+Example::
+
+    # Search, from recipes containing 'blend', for recipes containing 'banana'.
+    SearchQuerySet().narrow('blend').filter(content='banana')
+    
+    # Using a fielded search where the recipe's title contains 'smoothie', find all recipes published before 2009.
+    SearchQuerySet().narrow('title:smoothie').filter(pub_date__lte=datetime.datetime(2009, 1, 1))
+
+Please note that this is, generally speaking, not necessarily portable between
+backends. The syntax is entirely dependent on the backend, though most backends
+have a similar syntax for basic fielded queries. No validation/cleansing is
+performed and it is up to the developer to ensure the query's syntax is correct.
 
 ``raw_search(self, query_string, **kwargs)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
