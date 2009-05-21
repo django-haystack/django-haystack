@@ -200,8 +200,8 @@ Implemented. Documentation coming soon.
 
 Implemented. Documentation coming soon.
 
-``raw_search(self, query_string)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``raw_search(self, query_string, **kwargs)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Passes a raw query directly to the backend. This is for advanced usage, where
 the desired query can not be expressed via ``SearchQuerySet``.
@@ -214,6 +214,12 @@ Example::
 Please note that this is **NOT** portable between backends. The syntax is entirely
 dependent on the backend. No validation/cleansing is performed and it is up to
 the developer to ensure the query's syntax is correct.
+
+Further, the use of ``**kwargs`` are completely undocumented intentionally. If
+a third-party backend can implement special features beyond what's present, it
+should use those ``**kwargs`` for passing that information. Developers should
+be careful to make sure there are no conflicts with the backend's ``search``
+method, as that is called directly.
 
 ``load_all(self)``
 ~~~~~~~~~~~~~~~~~~

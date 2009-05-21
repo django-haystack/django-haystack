@@ -129,8 +129,8 @@ Clears any existing limits.
 
 Adds a boosted field and the amount to boost it to the query.
 
-``raw_search(self, query_string)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``raw_search(self, query_string, **kwargs)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Runs a raw query (no parsing) against the backend.
 

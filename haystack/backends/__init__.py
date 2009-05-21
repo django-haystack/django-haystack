@@ -56,7 +56,9 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields=[], highlight=False):
+    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
+               narrow_queries=None, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -328,14 +330,14 @@ class BaseSearchQuery(object):
         """Adds a boosted field and the amount to boost it to the query."""
         self.boost[field] = boost_value
     
-    def raw_search(self, query_string):
+    def raw_search(self, query_string, **kwargs):
         """
         Runs a raw query (no parsing) against the backend.
         
         This method does not affect the internal state of the SearchQuery used
         to build queries. It does however populate the results/hit_count.
         """
-        results = self.backend.search(query_string)
+        results = self.backend.search(query_string, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     

@@ -269,10 +269,10 @@ class SearchQuerySet(object):
         return clone
     
     # DRL_TODO: Should this prevent other methods (filter/exclude/etc) from working?
-    def raw_search(self, query_string):
+    def raw_search(self, query_string, **kwargs):
         """Passes a raw query directly to the backend."""
         clone = self._clone()
-        clone.query.raw_search(query_string)
+        clone.query.raw_search(query_string, **kwargs)
         return clone
     
     def load_all(self):

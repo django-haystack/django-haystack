@@ -172,7 +172,7 @@ class SearchBackend(BaseSearchBackend):
 
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None):
+               narrow_queries=None, **kwargs):
         if not self.setup_complete:
             self.setup()
         
