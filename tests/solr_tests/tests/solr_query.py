@@ -32,7 +32,7 @@ class SolrSearchQueryTestCase(TestCase):
     
     def test_build_query_datetime(self):
         self.sq.add_filter('content', datetime.datetime(2009, 5, 8, 11, 28))
-        self.assertEqual(self.sq.build_query(), '2009-05-08T11:28:00.000Z')
+        self.assertEqual(self.sq.build_query(), '2009-05-08T11:28:00Z')
     
     def test_build_query_multiple_words_and(self):
         self.sq.add_filter('content', 'hello')
