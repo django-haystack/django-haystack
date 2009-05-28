@@ -269,7 +269,7 @@ class SearchBackend(BaseSearchBackend):
         results = []
         facets = {}
         
-        for raw_result in raw_results:
+        for doc_offset, raw_result in enumerate(raw_results):
             raw_result = dict(raw_result)
             app_label, module_name = raw_result['django_ct_s'].split('.')
             additional_fields = {}
@@ -279,8 +279,6 @@ class SearchBackend(BaseSearchBackend):
             
             del(additional_fields['django_ct_s'])
             del(additional_fields['django_id_s'])
-            # DRL_FIXME: Figure out if there's a way to get the score out of Whoosh.
-            # del(additional_fields['score'])
             
             if highlight:
                 from whoosh import analysis
@@ -293,7 +291,16 @@ class SearchBackend(BaseSearchBackend):
                     self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                 }
             
-            result = SearchResult(app_label, module_name, raw_result['django_id_s'], raw_result.get('score', 0), **additional_fields)
+            # Requires Whoosh 0.1.20+.
+            if hasattr(raw_results, 'score'):
+                score = raw_results.score(doc_offset)
+            else:
+                score = None
+            
+            if score is None:
+                score = 0
+            
+            result = SearchResult(app_label, module_name, raw_result['django_id_s'], score, **additional_fields)
             results.append(result)
         
         return {
