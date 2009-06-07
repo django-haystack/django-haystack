@@ -108,37 +108,37 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(len(self.whoosh_search('*')), 3)
         
         # No query string should always yield zero results.
-        self.assertEqual(self.sb.search(''), [])
+        self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
         
         # A one letter query string gets nabbed by a stopwords filter. Should
         # always yield zero results.
-        self.assertEqual(self.sb.search('a'), [])
+        self.assertEqual(self.sb.search('a'), {'hits': 0, 'results': []})
         
         
         self.assertEqual(self.sb.search('*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*')['results']], [u'3', u'2', u'1'])
         
-        self.assertEqual(self.sb.search('', highlight=True), [])
+        self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index*', highlight=True)['hits'], 3)
         # DRL_FIXME: Uncomment once highlighting works.
         # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
         
-        self.assertEqual(self.sb.search('', facets=['name']), [])
+        self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', facets=['name'])
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}}), [])
+        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), [])
+        self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', query_facets={'name': '[* TO e]'})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        # self.assertEqual(self.sb.search('', narrow_queries=['name:daniel1']), [])
+        # self.assertEqual(self.sb.search('', narrow_queries=['name:daniel1']), {'hits': 0, 'results': []})
         # results = self.sb.search('Index*', narrow_queries=['name:daniel1'])
         # self.assertEqual(results['hits'], 1)
     

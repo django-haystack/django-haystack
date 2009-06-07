@@ -178,12 +178,18 @@ class SearchBackend(BaseSearchBackend):
         
         # A zero length query should return no results.
         if len(query_string) == 0:
-            return []
+            return {
+                'results': [],
+                'hits': 0,
+            }
         
         # A one-character query (non-wildcard) gets nabbed by a stopwords
         # filter and should yield zero results.
         if len(query_string) <= 1 and query_string != '*':
-            return []
+            return {
+                'results': [],
+                'hits': 0,
+            }
         
         reverse = False
         
