@@ -183,17 +183,58 @@ Example::
 ``facet(self, field)``
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Implemented. Documentation coming soon.
+Adds faceting to a query for the provided field. You provide the field (from one
+of the ``SearchIndex`` classes) you like to facet on.
+
+In the search results you get back, facet counts will be populated in the
+``SearchResult`` object. You can access them via the ``facet_counts`` method.
+
+Example::
+
+    # Count document hits for each author within the index.
+    SearchQuerySet().filter(content='foo').facet('author')
 
 ``date_facet(self, field, **kwargs)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Implemented. Documentation coming soon.
+Adds faceting to a query for the provided field by date. You provide the field
+(from one of the ``SearchIndex`` classes) you like to facet on and any
+parameters your engine of choice requires (Solr uses ``start_date``,
+``end_date`` and ``gap``).
+
+.. note::
+
+    This syntax will likely change before 1.0 release. It would be nice to
+    have a nicer, less backend-specific API (likely using the same filter syntax as
+    other methods). This is waiting on implementing other backends that support
+    faceting and ensuring that the API meets their needs as well.
+
+In the search results you get back, facet counts will be populated in the
+``SearchResult`` object. You can access them via the ``facet_counts`` method.
+
+Example::
+
+    # Count document hits for each day between 2009-06-07 to 2009-07-07 within the index.
+    SearchQuerySet().filter(content='foo').date_facet('pub_date', start_date=datetime.date(2009, 6, 7), end_date=datetime.date(2009, 7, 7), gap='+1DAY')
 
 ``query_facet(self, field, query)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Implemented. Documentation coming soon.
+Adds faceting to a query for the provided field with a custom query. You provide
+the field (from one of the ``SearchIndex`` classes) you like to facet on and the
+backend-specific query (as a string) you'd like to execute.
+
+Please note that this is **NOT** portable between backends. The syntax is entirely
+dependent on the backend. No validation/cleansing is performed and it is up to
+the developer to ensure the query's syntax is correct.
+
+In the search results you get back, facet counts will be populated in the
+``SearchResult`` object. You can access them via the ``facet_counts`` method.
+
+Example::
+
+    # Count document hits for authors that start with 'jo' within the index.
+    SearchQuerySet().filter(content='foo').query_facet('author', 'jo*')
 
 ``narrow(self, query)``
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -342,7 +383,40 @@ Example::
 ``facet_counts(self)``
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Implemented. Documentation coming soon.
+Returns the facet counts found by the query. This will cause the query to
+execute and should generally be used when presenting the data (template-level).
+
+You receive back a dictionary with three keys: ``fields``, ``dates`` and
+``queries``. Each contains the facet counts for whatever facets you specified
+within your ``SearchQuerySet``.
+
+.. note::
+
+    The resulting dictionary may change before 1.0 release. It's fairly
+    backend-specific at the time of writing. Standardizing is waiting on
+    implementing other backends that support faceting and ensuring that the
+    results presented will meet their needs as well.
+
+Example::
+
+    # Count document hits for each author.
+    sqs = SearchQuerySet().filter(content='foo').facet('author')
+    
+    sqs.facet_counts()
+    # Gives the following response:
+    # {
+    #     'dates': {},
+    #     'fields': {
+    #         'author': [
+    #             ('john', 4),
+    #             ('daniel', 2),
+    #             ('sally', 1),
+    #             ('terry', 1),
+    #         ],
+    #     },
+    #     'queries': {}
+    # }
+
 
 .. _field-lookups:
 
