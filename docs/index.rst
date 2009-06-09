@@ -27,6 +27,18 @@ you up and running:
    installing_search_engines
 
 
+Advanced Uses
+-------------
+
+Once you've got Haystack working, here are some of the more complex features
+you may want to include in your application.
+
+.. toctree::
+   :maxdepth: 1
+   
+   faceting
+
+
 Reference
 ---------
 

@@ -12,6 +12,8 @@ Table Of Contents
    settings
    faq
    
+   faceting
+   
    searchqueryset_api
    searchindex_api
    searchsite_api
