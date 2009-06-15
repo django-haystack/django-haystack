@@ -105,11 +105,74 @@ URLconf should resemble::
     )
 
 The ``FacetedSearchView`` will now instantiate the ``FacetedSearchForm`` and use
-the ``SearchQuerySet`` we provided.
+the ``SearchQuerySet`` we provided. Now, a ``facets`` variable will be present
+in the context. This is added in an overridden ``extra_context`` method.
 
 
 3. Display The Facets In The Template
 -------------------------------------
 
-Coming soon.
+Templating facets involves simply adding an extra bit of processing to display
+the facets (and optionally to link to provide drill-down). An example template
+might look like this::
 
+    <form method="get" action=".">
+        <table>
+            <tbody>
+                {{ form.as_table }}
+                <tr>
+                    <td>&nbsp;</td>
+                    <td><input type="submit" value="Search"></td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    
+    {% if query %}
+        <!-- Begin faceting. -->
+        <h2>By Author</h2>
+    
+        <div>
+            <dl>
+                {% if facets.fields.author %}
+                    <dt>Author</dt>
+                    {# Provide only the top 5 authors #}
+                    {% for author in facets.fields.author|slice:":5" %}
+                        <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
+                    {% endfor %}
+                {% else %}
+                    <p>No author facets.</p>
+                {% endif %}
+            </dl>
+        </div>
+        <!-- End faceting -->
+    
+        <!-- Display results... -->
+        {% for result in results %}
+            <div class="search_result">
+                <h3><a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a></h3>
+            
+                <p>{{ result.object.body|truncatewords:80 }}</p>
+            </div>
+        {% empty %}
+            <p>Sorry, no results found.</p>
+        {% endfor %}
+    {% endif %}
+
+Displaying the facets is a matter of looping through the facets you want and
+providing the UI to suit. The ``author.0`` is the facet text from the backend
+and the ``author.1`` is the facet count.
+
+4. Narrowing The Search
+-----------------------
+
+We've also set ourselves up for the last bit, the drill-down aspect. By
+appending on the ``selected_facets`` to the URLs, we're informing the
+``FacetedSearchForm`` that we want to narrow our results to only those
+containing the author we provided.
+
+This is simply the default behavior but it is possible to override or provide
+your own form which does additional processing. You could also write your own
+faceted ``SearchView``, which could provide additional/different facets based
+on facets chosen. There is a wide range of possibilities available to help the
+user navigate your content.
