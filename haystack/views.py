@@ -121,6 +121,11 @@ class FacetedSearchView(SearchView):
         return "FacetedSearchView"
     
     def extra_context(self):
-        return {
-            'facets': self.results.facet_counts(),
-        }
+        extra = super(FacetedSearchView, self).extra_context()
+        
+        if self.results == []:
+            extra['facets'] = self.form.search().facet_counts()
+        else:
+            extra['facets'] = self.results.facet_counts()
+        
+        return extra
