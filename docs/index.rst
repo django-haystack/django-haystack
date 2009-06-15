@@ -23,6 +23,7 @@ you up and running:
 .. toctree::
    :maxdepth: 1
    
+   views_and_forms
    faq
    installing_search_engines
 

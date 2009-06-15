@@ -6,6 +6,7 @@ Table Of Contents
    
    index
    tutorial
+   views_and_forms
    architecture_overview
    backend_support
    installing_search_engines

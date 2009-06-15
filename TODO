@@ -1,8 +1,6 @@
 In Progress
 ===========
 
-* Docs on forms/views.
-* Docs on faceting.
 * Docs on contributing.
 * Lucene backend.
 * Formal packaging.
@@ -58,3 +56,6 @@ Complete
 * Docs on SearchIndexes (prepare's).
 * Handle missing dependencies.
 * Docs on backends.
+* Docs on faceting.
+* Docs on forms/views.
+
