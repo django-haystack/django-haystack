@@ -114,6 +114,8 @@ class WhooshSearchBackendTestCase(TestCase):
         # always yield zero results.
         self.assertEqual(self.sb.search('a'), {'hits': 0, 'results': []})
         
+        # Possible AttributeError?
+        self.assertEqual(self.sb.search('a b'), {'hits': 0, 'results': []})
         
         self.assertEqual(self.sb.search('*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*')['results']], [u'3', u'2', u'1'])
