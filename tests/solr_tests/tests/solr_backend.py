@@ -3,7 +3,7 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from haystack import indexes
-from haystack.backends.solr_backend import SearchBackend
+from haystack.backends.solr_backend import SearchBackend, SearchQuery
 from haystack import sites
 from core.models import MockModel, AnotherMockModel
 
@@ -101,6 +101,9 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']], ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
         
+        self.assertEqual(self.sb.search('Indx')['hits'], 0)
+        self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], 'index')
+        
         self.assertEqual(self.sb.search('', facets=['name']), [])
         results = self.sb.search('Index', facets=['name'])
         self.assertEqual(results['hits'], 3)
@@ -129,3 +132,22 @@ class SolrSearchBackendTestCase(TestCase):
         #           seem to find any similar documents. Need better sample data?
         self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
         self.assertEqual([result.pk for result in self.sb.more_like_this(self.sample_objs[0])['results']], [])
+
+
+class LiveSolrSearchQueryTestCase(TestCase):
+    def setUp(self):
+        super(LiveSolrSearchQueryTestCase, self).setUp()
+        
+        # Stow.
+        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
+        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
+        
+        self.sq = SearchQuery(backend=SearchBackend())
+    
+    def tearDown(self):
+        settings.HAYSTACK_SOLR_URL = self.old_solr_url
+        super(LiveSolrSearchQueryTestCase, self).tearDown()
+    
+    def test_get_spelling(self):
+        self.sq.add_filter('content', 'Indx')
+        self.assertEqual(self.sq.get_spelling_suggestion(), u'index')

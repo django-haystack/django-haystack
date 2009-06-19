@@ -417,6 +417,24 @@ Example::
     #     'queries': {}
     # }
 
+``spelling_suggestion(self)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Returns the spelling suggestion found by the query.
+
+To work, you must set ``settings.HAYSTACK_INCLUDE_SPELLING`` (see
+:doc:`settings`) to ``True``. Otherwise, ``None`` will be returned.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run. Search results will be populated as normal but with an additional spelling
+suggestion. Note that this does *NOT* run the revised query, only suggests
+improvements.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('mor exmples')
+    sqs.spelling_suggestion() # u'more examples'
+
 
 .. _field-lookups:
 

@@ -4,7 +4,7 @@ from whoosh.qparser import QueryParser
 from django.conf import settings
 from django.test import TestCase
 from haystack import indexes
-from haystack.backends.whoosh_backend import SearchBackend
+from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
 from haystack import sites
 from core.models import MockModel, AnotherMockModel
 
@@ -125,6 +125,9 @@ class WhooshSearchBackendTestCase(TestCase):
         # DRL_FIXME: Uncomment once highlighting works.
         # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
         
+        self.assertEqual(self.sb.search('Indx')['hits'], 0)
+        self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], u'indexed')
+        
         self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', facets=['name'])
         self.assertEqual(results['hits'], 3)
@@ -190,3 +193,52 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb._to_python('{"a": 1, "b": 2, "c": 3}'), {'a': 1, 'c': 3, 'b': 2})
         self.assertEqual(self.sb._to_python('2009-05-09T16:14:00'), datetime.datetime(2009, 5, 9, 16, 14))
         self.assertEqual(self.sb._to_python('2009-05-09T00:00:00'), datetime.datetime(2009, 5, 9, 0, 0))
+
+
+class LiveWhooshSearchQueryTestCase(TestCase):
+    def setUp(self):
+        super(LiveWhooshSearchQueryTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        
+        self.site = WhooshSearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.smmi = WhooshMockSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshMockSearchIndex)
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        self.raw_whoosh.delete_by_query(q=self.parser.parse('*'))
+        
+        self.sample_objs = []
+        
+        for i in xrange(1, 4):
+            mock = MockModel()
+            mock.id = i
+            mock.author = 'daniel%s' % i
+            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            self.sample_objs.append(mock)
+        
+        self.sq = SearchQuery(backend=self.sb)
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
+        
+            for index_file in index_files:
+                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
+        
+            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
+        
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        super(LiveWhooshSearchQueryTestCase, self).tearDown()
+    
+    def test_get_spelling(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        self.sq.add_filter('content', 'Indx')
+        self.assertEqual(self.sq.get_spelling_suggestion(), u'indexed')

@@ -191,6 +191,7 @@ class BaseSearchQuery(object):
         self._results = None
         self._hit_count = None
         self._facet_counts = None
+        self._spelling_suggestion = None
         self.backend = backend or SearchBackend()
     
     def __str__(self):
@@ -224,6 +225,7 @@ class BaseSearchQuery(object):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
+        self._spelling_suggestion = results.get('spelling_suggestion', None)
     
     def get_count(self):
         """
@@ -251,7 +253,7 @@ class BaseSearchQuery(object):
     
     def get_facet_counts(self):
         """
-        Returns the results received from the backend.
+        Returns the facet counts received from the backend.
         
         If the query has not been run, this will execute the query and store
         the results.
@@ -260,6 +262,18 @@ class BaseSearchQuery(object):
             self.run()
         
         return self._facet_counts
+    
+    def get_spelling_suggestion(self):
+        """
+        Returns the spelling suggestion received from the backend.
+        
+        If the query has not been run, this will execute the query and store
+        the results.
+        """
+        if self._spelling_suggestion is None:
+            self.run()
+        
+        return self._spelling_suggestion
     
     
     # Methods for backends to implement.

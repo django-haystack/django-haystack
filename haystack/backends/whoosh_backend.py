@@ -13,6 +13,7 @@ try:
     from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
     import whoosh.index as index
     from whoosh.qparser import QueryParser
+    from whoosh.spelling import SpellChecker
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
@@ -122,6 +123,11 @@ class SearchBackend(BaseSearchBackend):
         
         # For now, commit no matter what, as we run into locking issues otherwise.
         writer.commit()
+        
+        # If spelling support is desired, add to the dictionary.
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+            sp = SpellChecker(self.storage)
+            sp.add_field(self.index, self.content_field_name)
 
     def remove(self, obj, commit=True):
         if not self.setup_complete:
@@ -259,9 +265,13 @@ class SearchBackend(BaseSearchBackend):
             
             return self._process_results(raw_results, highlight=highlight, query_string=query_string)
         else:
+            if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+                spelling_suggestion = self.create_spelling_suggestion(query_string)
+            
             return {
                 'results': [],
                 'hits': 0,
+                'spelling_suggestion': spelling_suggestion,
             }
     
     def more_like_this(self, model_instance):
@@ -309,11 +319,43 @@ class SearchBackend(BaseSearchBackend):
             result = SearchResult(app_label, module_name, raw_result['django_id_s'], score, **additional_fields)
             results.append(result)
         
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+            spelling_suggestion = self.create_spelling_suggestion(query_string)
+        
         return {
             'results': results,
             'hits': len(results),
             'facets': facets,
+            'spelling_suggestion': spelling_suggestion,
         }
+    
+    def create_spelling_suggestion(self, query_string):
+        spelling_suggestion = None
+        sp = SpellChecker(self.storage)
+        cleaned_query = query_string
+        
+        if not query_string:
+            return spelling_suggestion
+        
+        # Clean the string.
+        for rev_word in RESERVED_WORDS:
+            cleaned_query = cleaned_query.replace(rev_word, '')
+        
+        for rev_char in RESERVED_CHARACTERS:
+            cleaned_query = cleaned_query.replace(rev_char, '')
+        
+        # Break it down.
+        query_words = cleaned_query.split()
+        suggested_words = []
+        
+        for word in query_words:
+            suggestions = sp.suggest(word, number=1)
+            
+            if len(suggestions) > 0:
+                suggested_words.append(suggestions[0])
+        
+        spelling_suggestion = ' '.join(suggested_words)
+        return spelling_suggestion
     
     def _from_python(self, value):
         """
@@ -502,3 +544,4 @@ class SearchQuery(BaseSearchQuery):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
+        self._spelling_suggestion = results.get('spelling_suggestion', None)

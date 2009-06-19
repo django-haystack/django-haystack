@@ -56,6 +56,22 @@ An example::
 Defaults to ``20``.
 
 
+``HAYSTACK_INCLUDE_SPELLING``
+=============================
+
+**Optional**
+
+This setting controls if spelling suggestions should be included in search
+results. This can potentially have performance implications so it is disabled
+by default.
+
+An example::
+
+    HAYSTACK_INCLUDE_SPELLING = True
+
+Works for the ``solr`` and ``whoosh`` backends.
+
+
 ``HAYSTACK_SOLR_URL``
 =====================
 

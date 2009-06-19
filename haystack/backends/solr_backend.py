@@ -53,7 +53,6 @@ class SearchBackend(BaseSearchBackend):
                 docs.append(doc)
         except UnicodeDecodeError:
             sys.stderr.write("Chunk failed.\n")
-            pass
         
         self.conn.add(docs, commit=commit)
 
@@ -102,6 +101,11 @@ class SearchBackend(BaseSearchBackend):
             kwargs['hl'] = 'true'
             kwargs['hl.fragsize'] = '200'
         
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+            kwargs['spellcheck'] = 'true'
+            kwargs['spellcheck.collate'] = 'true'
+            kwargs['spellcheck.count'] = 1
+        
         if facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
@@ -136,6 +140,7 @@ class SearchBackend(BaseSearchBackend):
     def _process_results(self, raw_results, highlight=False):
         results = []
         facets = {}
+        spelling_suggestion = None
         
         if hasattr(raw_results, 'facets'):
             facets = {
@@ -149,6 +154,13 @@ class SearchBackend(BaseSearchBackend):
                     # Convert to a two-tuple, as Solr's json format returns a list of
                     # pairs.
                     facets[key][facet_field] = zip(facets[key][facet_field][::2], facets[key][facet_field][1::2])
+        
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+            if hasattr(raw_results, 'spellcheck'):
+                if len(raw_results.spellcheck.get('suggestions', [])):
+                    # For some reason, it's an array of pairs. Pull off the
+                    # collated result from the end.
+                    spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
         
         for raw_result in raw_results.docs:
             app_label, module_name = raw_result['django_ct_s'].split('.')
@@ -171,6 +183,7 @@ class SearchBackend(BaseSearchBackend):
             'results': results,
             'hits': raw_results.hits,
             'facets': facets,
+            'spelling_suggestion': spelling_suggestion,
         }
 
 
@@ -311,3 +324,4 @@ class SearchQuery(BaseSearchQuery):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
+        self._spelling_suggestion = results.get('spelling_suggestion', None)

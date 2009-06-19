@@ -296,7 +296,13 @@ class SearchQuerySetTestCase(TestCase):
     def test_highlight(self):
         sqs = self.bsqs.highlight()
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assert_(sqs.query.highlight, True)
+        self.assertEqual(sqs.query.highlight, True)
+    
+    def test_spelling(self):
+        # Test the case where spelling support is disabled.
+        sqs = self.bsqs.filter(content='Indx')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(sqs.spelling_suggestion(), None)
     
     def test_raw_search(self):
         self.assertEqual(len(self.bsqs.raw_search('foo')), 0)
