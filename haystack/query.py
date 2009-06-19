@@ -83,7 +83,6 @@ class SearchQuerySet(object):
         
         cache_length = len(self._result_cache)
         self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
-        self.query.run()
         results = self.query.get_results()
         
         # Check if we wish to load all objects.
