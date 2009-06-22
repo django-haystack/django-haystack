@@ -219,7 +219,7 @@ class SearchQuerySet(object):
         return clone
     
     def highlight(self):
-        """Alters the order in which the results should appear."""
+        """Adds highlighting to the results."""
         clone = self._clone()
         clone.query.add_highlight()
         return clone
