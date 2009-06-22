@@ -24,8 +24,8 @@ class MockSearchBackend(BaseSearchBackend):
         for obj in iterable:
             doc = {}
             doc['id'] = self.get_identifier(obj)
-            doc['django_ct_s'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
-            doc['django_id_s'] = force_unicode(obj.pk)
+            doc['django_ct'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
+            doc['django_id'] = force_unicode(obj.pk)
             doc.update(index.prepare(obj))
             self.docs[doc['id']] = doc
 

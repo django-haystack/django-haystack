@@ -68,7 +68,7 @@ class WhooshSearchBackendTestCase(TestCase):
         
         # Check what Whoosh thinks is there.
         self.assertEqual(len(self.whoosh_search('*')), 3)
-        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id_s': u'3', 'django_ct_s': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id_s': u'2', 'django_ct_s': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}, {'django_id_s': u'1', 'django_ct_s': u'core.mockmodel', 'name': u'daniel1', 'text': u'Indexed!\n1', 'pub_date': u'2009-02-24T00:00:00', 'id': u'core.mockmodel.1'}])
+        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id': u'3', 'django_ct': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id': u'2', 'django_ct': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}, {'django_id': u'1', 'django_ct': u'core.mockmodel', 'name': u'daniel1', 'text': u'Indexed!\n1', 'pub_date': u'2009-02-24T00:00:00', 'id': u'core.mockmodel.1'}])
     
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -76,7 +76,7 @@ class WhooshSearchBackendTestCase(TestCase):
         
         self.sb.remove(self.sample_objs[0])
         self.assertEqual(len(self.whoosh_search('*')), 2)
-        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id_s': u'3', 'django_ct_s': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id_s': u'2', 'django_ct_s': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}])
+        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id': u'3', 'django_ct': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id': u'2', 'django_ct': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}])
     
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)

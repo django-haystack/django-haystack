@@ -77,6 +77,9 @@
     <dynamicField name="*_d"  type="sdouble" indexed="true"  stored="true"/>
     <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
     
+    <field name="django_ct" type="string"   indexed="true"  stored="true"  multiValued="false" />
+    <field name="django_id" type="string"   indexed="true"  stored="true"  multiValued="false" />
+    
 {% for field in fields %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="true" multiValued="{{ field.multi_valued }}" />
 {% endfor %}

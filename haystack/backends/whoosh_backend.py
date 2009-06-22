@@ -73,8 +73,8 @@ class SearchBackend(BaseSearchBackend):
     def build_schema(self, fields):
         schema_fields = {
             'id': ID(stored=True, unique=True),
-            'django_ct_s': ID(stored=True),
-            'django_id_s': ID(stored=True),
+            'django_ct': ID(stored=True),
+            'django_id': ID(stored=True),
         }
         # Grab the number of keys that are hard-coded into Haystack.
         # We'll use this to (possibly) fail slightly more gracefully later.
@@ -109,8 +109,8 @@ class SearchBackend(BaseSearchBackend):
         for obj in iterable:
             doc = {}
             doc['id'] = force_unicode(self.get_identifier(obj))
-            doc['django_ct_s'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
-            doc['django_id_s'] = force_unicode(obj.pk)
+            doc['django_ct'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
+            doc['django_id'] = force_unicode(obj.pk)
             other_data = index.prepare(obj)
             
             # Really make sure it's unicode, because Whoosh won't have it any
@@ -149,7 +149,7 @@ class SearchBackend(BaseSearchBackend):
             models_to_delete = []
             
             for model in models:
-                models_to_delete.append("django_ct_s:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
             
             self.index.delete_by_query(q=self.parser.parse(" OR ".join(models_to_delete)))
         
@@ -287,14 +287,14 @@ class SearchBackend(BaseSearchBackend):
         
         for doc_offset, raw_result in enumerate(raw_results):
             raw_result = dict(raw_result)
-            app_label, module_name = raw_result['django_ct_s'].split('.')
+            app_label, module_name = raw_result['django_ct'].split('.')
             additional_fields = {}
             
             for key, value in raw_result.items():
                 additional_fields[str(key)] = self._to_python(value)
             
-            del(additional_fields['django_ct_s'])
-            del(additional_fields['django_id_s'])
+            del(additional_fields['django_ct'])
+            del(additional_fields['django_id'])
             
             if highlight:
                 from whoosh import analysis
@@ -316,7 +316,7 @@ class SearchBackend(BaseSearchBackend):
             if score is None:
                 score = 0
             
-            result = SearchResult(app_label, module_name, raw_result['django_id_s'], score, **additional_fields)
+            result = SearchResult(app_label, module_name, raw_result['django_id'], score, **additional_fields)
             results.append(result)
         
         if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
@@ -480,7 +480,7 @@ class SearchQuery(BaseSearchQuery):
             query = " ".join(query_chunks)
         
         if len(self.models):
-            models = ['django_ct_s:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
+            models = ['django_ct:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
             models_clause = ' OR '.join(models)
             final_query = '(%s) AND (%s)' % (query, models_clause)
         else:

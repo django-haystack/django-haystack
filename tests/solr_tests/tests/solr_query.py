@@ -87,7 +87,7 @@ class SolrSearchQueryTestCase(TestCase):
     def test_build_query_with_models(self):
         self.sq.add_filter('content', 'hello')
         self.sq.add_model(MockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:core.mockmodel)')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:core.mockmodel)')
         
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:core.mockmodel OR django_ct_s:core.anothermockmodel)')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:core.mockmodel OR django_ct:core.anothermockmodel)')

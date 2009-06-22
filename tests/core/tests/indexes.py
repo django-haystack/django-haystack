@@ -53,8 +53,8 @@ class SearchIndexTestCase(TestCase):
         self.sample_docs = {
             u'core.mockmodel.1': {
                 'content': u'Indexed!\n1',
-                'django_id_s': u'1',
-                'django_ct_s': u'core.mockmodel',
+                'django_id': u'1',
+                'django_ct': u'core.mockmodel',
                 'extra': u'Stored!\n1',
                 'author': u'daniel1',
                 'pub_date': datetime.datetime(2009, 3, 17, 6, 0),
@@ -62,8 +62,8 @@ class SearchIndexTestCase(TestCase):
             },
             u'core.mockmodel.2': {
                 'content': u'Indexed!\n2',
-                'django_id_s': u'2',
-                'django_ct_s': u'core.mockmodel',
+                'django_id': u'2',
+                'django_ct': u'core.mockmodel',
                 'extra': u'Stored!\n2',
                 'author': u'daniel2',
                 'pub_date': datetime.datetime(2009, 3, 17, 7, 0),
@@ -71,8 +71,8 @@ class SearchIndexTestCase(TestCase):
             },
             u'core.mockmodel.3': {
                 'content': u'Indexed!\n3',
-                'django_id_s': u'3',
-                'django_ct_s': u'core.mockmodel',
+                'django_id': u'3',
+                'django_ct': u'core.mockmodel',
                 'extra': u'Stored!\n3',
                 'author': u'daniel3',
                 'pub_date': datetime.datetime(2009, 3, 17, 8, 0),
@@ -151,7 +151,7 @@ class SearchIndexTestCase(TestCase):
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
         self.mi.update_object(mock)
-        self.assertEqual(self.msb.docs, {'core.mockmodel.20': {'django_id_s': u'20', 'django_ct_s': u'core.mockmodel', 'author': u'daniel20', 'extra': u'Stored!\n20', 'content': u'Indexed!\n20', 'pub_date': datetime.datetime(2009, 1, 31, 4, 19), 'id': 'core.mockmodel.20'}})
+        self.assertEqual(self.msb.docs, {'core.mockmodel.20': {'django_id': u'20', 'django_ct': u'core.mockmodel', 'author': u'daniel20', 'extra': u'Stored!\n20', 'content': u'Indexed!\n20', 'pub_date': datetime.datetime(2009, 1, 31, 4, 19), 'id': 'core.mockmodel.20'}})
         self.msb.clear()
     
     def test_remove_object(self):

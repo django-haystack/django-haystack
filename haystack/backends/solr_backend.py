@@ -47,8 +47,8 @@ class SearchBackend(BaseSearchBackend):
             for obj in iterable:
                 doc = {}
                 doc['id'] = self.get_identifier(obj)
-                doc['django_ct_s'] = "%s.%s" % (obj._meta.app_label, obj._meta.module_name)
-                doc['django_id_s'] = force_unicode(obj.pk)
+                doc['django_ct'] = "%s.%s" % (obj._meta.app_label, obj._meta.module_name)
+                doc['django_id'] = force_unicode(obj.pk)
                 doc.update(index.prepare(obj))
                 docs.append(doc)
         except UnicodeDecodeError:
@@ -68,7 +68,7 @@ class SearchBackend(BaseSearchBackend):
             models_to_delete = []
             
             for model in models:
-                models_to_delete.append("django_ct_s:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
             
             self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
         
@@ -163,20 +163,20 @@ class SearchBackend(BaseSearchBackend):
                     spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
         
         for raw_result in raw_results.docs:
-            app_label, module_name = raw_result['django_ct_s'].split('.')
+            app_label, module_name = raw_result['django_ct'].split('.')
             additional_fields = {}
             
             for key, value in raw_result.items():
                 additional_fields[str(key)] = self.conn._to_python(value)
             
-            del(additional_fields['django_ct_s'])
-            del(additional_fields['django_id_s'])
+            del(additional_fields['django_ct'])
+            del(additional_fields['django_id'])
             del(additional_fields['score'])
             
             if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
                 additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
             
-            result = SearchResult(app_label, module_name, raw_result['django_id_s'], raw_result['score'], **additional_fields)
+            result = SearchResult(app_label, module_name, raw_result['django_id'], raw_result['score'], **additional_fields)
             results.append(result)
         
         return {
@@ -252,7 +252,7 @@ class SearchQuery(BaseSearchQuery):
             query = " ".join(query_chunks)
         
         if len(self.models):
-            models = ['django_ct_s:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
+            models = ['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
             models_clause = ' OR '.join(models)
             final_query = '(%s) AND (%s)' % (query, models_clause)
         else:

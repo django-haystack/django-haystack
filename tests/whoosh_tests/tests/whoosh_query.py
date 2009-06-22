@@ -89,10 +89,10 @@ class WhooshSearchQueryTestCase(TestCase):
     def test_build_query_with_models(self):
         self.sq.add_filter('content', 'hello')
         self.sq.add_model(MockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:"core.mockmodel")')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:"core.mockmodel")')
         
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct_s:"core.mockmodel" OR django_ct_s:"core.anothermockmodel")')
+        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:"core.mockmodel" OR django_ct:"core.anothermockmodel")')
     
     def test_build_query_with_datetime(self):
         self.sq.add_filter('pub_date', datetime.datetime(2009, 5, 9, 16, 20))

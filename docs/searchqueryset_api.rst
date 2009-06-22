@@ -264,7 +264,7 @@ the desired query can not be expressed via ``SearchQuerySet``.
 Example::
 
     # In the case of Solr... (this example could be expressed with SearchQuerySet)
-    SearchQuerySet().raw_search('django_ct_s:blog.blogentry "However, it is"')
+    SearchQuerySet().raw_search('django_ct:blog.blogentry "However, it is"')
 
 Please note that this is **NOT** portable between backends. The syntax is entirely
 dependent on the backend. No validation/cleansing is performed and it is up to

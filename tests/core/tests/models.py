@@ -11,8 +11,8 @@ class SearchResultTestCase(TestCase):
             'stored': 'I am stored data. How fun.',
         }
         no_overwrite_data = {
-            'django_id_s': 2,
-            'django_ct_s': 'haystack.anothermockmodel',
+            'django_id': 2,
+            'django_ct': 'haystack.anothermockmodel',
             'stored': 'I am stored data. How fun.',
         }
         
