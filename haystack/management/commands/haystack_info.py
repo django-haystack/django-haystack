@@ -12,7 +12,5 @@ class Command(NoArgsCommand):
         from haystack.sites import site
         
         index_count = len(site.get_indexed_models())
-        
-        if index_count:
-            print "Loaded URLconf to initialize SearchSite..."
-            print "Main site registered %s index(es)." % index_count
+        print "Loaded URLconf to initialize SearchSite..."
+        print "Main site registered %s index(es)." % index_count
