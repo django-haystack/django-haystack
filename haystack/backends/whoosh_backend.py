@@ -267,6 +267,8 @@ class SearchBackend(BaseSearchBackend):
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
                 spelling_suggestion = self.create_spelling_suggestion(query_string)
+            else:
+                spelling_suggestion = None
             
             return {
                 'results': [],
@@ -321,6 +323,8 @@ class SearchBackend(BaseSearchBackend):
         
         if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
             spelling_suggestion = self.create_spelling_suggestion(query_string)
+        else:
+            spelling_suggestion = None
         
         return {
             'results': results,
