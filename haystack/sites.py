@@ -116,12 +116,14 @@ class SearchSite(object):
                 if field_object.indexed is False:
                     field_data['indexed'] = 'false'
             
-                if isinstance(field_object, DateField) or isinstance(field_object, DateTimeField):
+                if isinstance(field_object, DateField):
                     field_data['type'] = 'date'
+                elif isinstance(field_object, DateTimeField):
+                    field_data['type'] = 'datetime'
                 elif isinstance(field_object, IntegerField):
-                    field_data['type'] = 'slong'
+                    field_data['type'] = 'long'
                 elif isinstance(field_object, FloatField):
-                    field_data['type'] = 'sfloat'
+                    field_data['type'] = 'float'
                 elif isinstance(field_object, BooleanField):
                     field_data['type'] = 'boolean'
                 elif isinstance(field_object, MultiValueField):

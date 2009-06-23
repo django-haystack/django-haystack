@@ -83,7 +83,7 @@ class SearchBackend(BaseSearchBackend):
         for field in fields:
             if field['multi_valued'] is True:
                 schema_fields[field['field_name']] = KEYWORD(stored=True, comma=True)
-            elif field['type'] in ('slong', 'sfloat', 'boolean', 'date'):
+            elif field['type'] in ('long', 'float', 'boolean', 'date', 'datetime'):
                 if field['indexed'] is False:
                     schema_fields[field['field_name']] = STORED
                 else:

@@ -16,11 +16,24 @@ class Command(NoArgsCommand):
         
         default_operator = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR)
         content_field_name, fields = site.build_unified_schema()
+        translated_fields = []
+        
+        for field in fields:
+            if field['type'] == 'long':
+                field['type'] = 'slong'
+            
+            if field['type'] == 'float':
+                field['type'] = 'sfloat'
+            
+            if field['type'] == 'datetime':
+                field['type'] = 'date'
+            
+            translated_fields.append(field)
         
         t = loader.get_template('search_configuration/solr.xml')
         c = Context({
             'content_field_name': content_field_name,
-            'fields': fields,
+            'fields': translated_fields,
             'default_operator': default_operator,
         })
         schema_xml = t.render(c)
