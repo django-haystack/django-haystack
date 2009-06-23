@@ -26,18 +26,11 @@ RESERVED_CHARACTERS = (
 )
 
 
-# TODO: Support for using Solr dynnamicField declarations, the magic fieldname
-# postfixes like _i for integers. Requires some sort of global field registry
-# though. Is it even worth it?
-
-
 class SearchBackend(BaseSearchBackend):
     def __init__(self):
         if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
         
-        # DRL_TODO: This should handle the connection more graceful, especially
-        #           if the backend is down.
         self.conn = Solr(settings.HAYSTACK_SOLR_URL)
 
     def update(self, index, iterable, commit=True):
