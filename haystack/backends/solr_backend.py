@@ -31,7 +31,8 @@ class SearchBackend(BaseSearchBackend):
         if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
         
-        self.conn = Solr(settings.HAYSTACK_SOLR_URL)
+        timeout = getattr(settings, 'HAYSTACK_SOLR_TIMEOUT', 10)
+        self.conn = Solr(settings.HAYSTACK_SOLR_URL, timeout=timeout)
 
     def update(self, index, iterable, commit=True):
         docs = []

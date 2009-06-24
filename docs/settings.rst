@@ -88,6 +88,20 @@ Examples::
 No default is provided.
 
 
+``HAYSTACK_SOLR_TIMEOUT``
+=========================
+
+**Optional when using the ``solr`` backend**
+
+This setting controls the time to wait for a response from Solr in seconds.
+
+Examples::
+
+    HAYSTACK_SOLR_TIMEOUT = 30
+
+The default is 10 seconds.
+
+
 ``HAYSTACK_WHOOSH_PATH``
 ========================
 
