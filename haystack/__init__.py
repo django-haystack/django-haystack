@@ -96,7 +96,6 @@ def handle_registrations(*args, **kwargs):
         models.loading.cache.get_apps()
         
         urlconf = __import__(settings.ROOT_URLCONF)
-        from haystack.sites import site
         handle_registrations.previously_initialized = True
 
 handle_registrations.previously_initialized = False
