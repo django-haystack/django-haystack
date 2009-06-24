@@ -1,5 +1,6 @@
 from django import forms
 from django.db import models
+from django.utils.text import capfirst
 import haystack
 from haystack.query import SearchQuerySet
 
@@ -8,7 +9,7 @@ def model_choices(site=None):
     if site is None:
         site = haystack.sites.site
     
-    choices = [("%s.%s" % (m._meta.app_label, m._meta.module_name), unicode(m._meta.verbose_name_plural)) for m in site.get_indexed_models()]
+    choices = [("%s.%s" % (m._meta.app_label, m._meta.module_name), capfirst(unicode(m._meta.verbose_name_plural))) for m in site.get_indexed_models()]
     return sorted(choices, key=lambda x: x[1])
 
 
