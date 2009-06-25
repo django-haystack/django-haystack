@@ -1,4 +1,3 @@
-from django.db.models import signals
 from django.db.models.base import ModelBase
 from haystack.exceptions import AlreadyRegistered, NotRegistered
 from haystack.indexes import BasicSearchIndex
@@ -47,7 +46,7 @@ class SearchSite(object):
             raise AlreadyRegistered('The model %s is already registered' % model.__class__)
         
         self._registry[model] = index_class(model)
-        self._setup_signals(model, self._registry[model])
+        self._setup(model, self._registry[model])
     
     def unregister(self, model):
         """
@@ -55,16 +54,16 @@ class SearchSite(object):
         """
         if model not in self._registry:
             raise NotRegistered('The model %s is not registered' % model.__class__)
-        self._teardown_signals(model, self._registry[model])
+        self._teardown(model, self._registry[model])
         del(self._registry[model])
     
-    def _setup_signals(self, model, index):
-        signals.post_save.connect(index.update_object, sender=model)
-        signals.post_delete.connect(index.remove_object, sender=model)
+    def _setup(self, model, index):
+        index._setup_save(model)
+        index._setup_delete(model)
     
-    def _teardown_signals(self, model, index):
-        signals.post_save.disconnect(index.update_object, sender=model)
-        signals.post_delete.disconnect(index.remove_object, sender=model)
+    def _teardown(self, model, index):
+        index._teardown_save(model)
+        index._teardown_delete(model)
     
     def get_index(self, model):
         """Provide the index that're being used for a particular model."""
