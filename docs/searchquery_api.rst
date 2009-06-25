@@ -50,21 +50,20 @@ be sent to the backend.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``clean(self, query_fragment)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Provides a mechanism for sanitizing user input before presenting the
-value to the backend.
-
-This method MUST be implemented by each backend, as it will be highly
-specific to each one.
-
 
 Inheritable Methods
 ===================
 
 The following methods have a complete implementation in the base class and
 can largely be used unchanged.
+
+``clean(self, query_fragment)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Provides a mechanism for sanitizing user input before presenting the
+value to the backend.
+
+A basic (override-able) implementation is provided.
 
 ``get_count(self)``
 ~~~~~~~~~~~~~~~~~~~

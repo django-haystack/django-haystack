@@ -60,9 +60,6 @@ class BaseSearchQueryTestCase(TestCase):
     def test_build_query(self):
         self.assertRaises(NotImplementedError, self.bsq.build_query)
     
-    def test_clean(self):
-        self.assertRaises(NotImplementedError, self.bsq.clean, 'foo')
-    
     def test_add_filter(self):
         self.assertEqual(len(self.bsq.query_filters), 0)
         

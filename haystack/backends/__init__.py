@@ -10,6 +10,10 @@ except NameError:
 
 
 class BaseSearchBackend(object):
+    # Backends should include their own reserved words/characters.
+    RESERVED_WORDS = []
+    RESERVED_CHARACTERS = []
+    
     """
     Abstract search engine base class.
     """
@@ -293,10 +297,21 @@ class BaseSearchQuery(object):
         Provides a mechanism for sanitizing user input before presenting the
         value to the backend.
         
-        This method MUST be implemented by each backend, as it will be highly
-        specific to each one.
+        A basic (override-able) implementation is provided.
         """
-        raise NotImplementedError("Subclasses must provide a way to sanitize a portion of the query via the 'clean' method.")
+        words = query_fragment.split()
+        cleaned_words = []
+        
+        for word in words:
+            if word in self.backend.RESERVED_WORDS:
+                word = word.replace(word, word.lower())
+        
+            for char in self.backend.RESERVED_CHARACTERS:
+                word = word.replace(char, '\\%s' % char)
+            
+            cleaned_words.append(word)
+        
+        return ' '.join(cleaned_words)
     
     
     # Standard methods to alter the query.

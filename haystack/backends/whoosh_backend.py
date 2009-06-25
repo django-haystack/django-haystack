@@ -18,25 +18,25 @@ except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
 
-# Word reserved by Whoosh for special use.
-RESERVED_WORDS = (
-    'AND',
-    'NOT',
-    'OR',
-    'TO',
-)
-
-# Characters reserved by Whoosh for special use.
-# The '\\' must come first, so as not to overwrite the other slash replacements.
-RESERVED_CHARACTERS = (
-    '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}', 
-    '[', ']', '^', '"', '~', '*', '?', ':', '.',
-)
-
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
 
 
 class SearchBackend(BaseSearchBackend):
+    # Word reserved by Whoosh for special use.
+    RESERVED_WORDS = (
+        'AND',
+        'NOT',
+        'OR',
+        'TO',
+    )
+
+    # Characters reserved by Whoosh for special use.
+    # The '\\' must come first, so as not to overwrite the other slash replacements.
+    RESERVED_CHARACTERS = (
+        '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}',
+        '[', ']', '^', '"', '~', '*', '?', ':', '.',
+    )
+    
     def __init__(self, site=None):
         super(SearchBackend, self).__init__(site)
         self.setup_complete = False
@@ -342,10 +342,10 @@ class SearchBackend(BaseSearchBackend):
             return spelling_suggestion
         
         # Clean the string.
-        for rev_word in RESERVED_WORDS:
+        for rev_word in self.RESERVED_WORDS:
             cleaned_query = cleaned_query.replace(rev_word, '')
         
-        for rev_char in RESERVED_CHARACTERS:
+        for rev_char in self.RESERVED_CHARACTERS:
             cleaned_query = cleaned_query.replace(rev_char, '')
         
         # Break it down.
@@ -499,22 +499,6 @@ class SearchQuery(BaseSearchQuery):
             final_query = "%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
-    
-    def clean(self, query_fragment):
-        """Sanitizes a fragment from using reserved character/words."""
-        words = query_fragment.split()
-        cleaned_words = []
-        
-        for word in words:
-            if word in RESERVED_WORDS:
-                word = word.replace(word, word.lower())
-        
-            for char in RESERVED_CHARACTERS:
-                word = word.replace(char, '\\%s' % char)
-            
-            cleaned_words.append(word)
-        
-        return " ".join(cleaned_words)
     
     def run(self):
         """Builds and executes the query. Returns a list of search results."""

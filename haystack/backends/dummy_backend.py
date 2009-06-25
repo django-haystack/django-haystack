@@ -93,6 +93,3 @@ class SearchQuery(BaseSearchQuery):
             query = "%s ORDER BY %s" % (query, ", ".join(self.order_by))
         
         return query
-    
-    def clean(self, query_fragment):
-        return query_fragment

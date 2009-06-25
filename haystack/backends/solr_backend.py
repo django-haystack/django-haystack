@@ -10,30 +10,30 @@ try:
 except ImportError:
     raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
 
-# Word reserved by Solr for special use.
-RESERVED_WORDS = (
-    'AND',
-    'NOT',
-    'OR',
-    'TO',
-)
-
-# Characters reserved by Solr for special use.
-# The '\\' must come first, so as not to overwrite the other slash replacements.
-RESERVED_CHARACTERS = (
-    '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}', 
-    '[', ']', '^', '"', '~', '*', '?', ':',
-)
-
 
 class SearchBackend(BaseSearchBackend):
+    # Word reserved by Solr for special use.
+    RESERVED_WORDS = (
+        'AND',
+        'NOT',
+        'OR',
+        'TO',
+    )
+    
+    # Characters reserved by Solr for special use.
+    # The '\\' must come first, so as not to overwrite the other slash replacements.
+    RESERVED_CHARACTERS = (
+        '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}',
+        '[', ']', '^', '"', '~', '*', '?', ':',
+    )
+    
     def __init__(self):
         if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
         
         timeout = getattr(settings, 'HAYSTACK_SOLR_TIMEOUT', 10)
         self.conn = Solr(settings.HAYSTACK_SOLR_URL, timeout=timeout)
-
+    
     def update(self, index, iterable, commit=True):
         docs = []
         
@@ -261,22 +261,6 @@ class SearchQuery(BaseSearchQuery):
             final_query = "%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
-    
-    def clean(self, query_fragment):
-        """Sanitizes a fragment from using reserved character/words."""
-        words = query_fragment.split()
-        cleaned_words = []
-        
-        for word in words:
-            if word in RESERVED_WORDS:
-                word = word.replace(word, word.lower())
-        
-            for char in RESERVED_CHARACTERS:
-                word = word.replace(char, '\\%s' % char)
-            
-            cleaned_words.append(word)
-        
-        return " ".join(cleaned_words)
     
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
