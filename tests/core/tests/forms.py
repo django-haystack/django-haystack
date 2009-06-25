@@ -31,7 +31,7 @@ class ModelSearchFormTestCase(TestCase):
             'models': ['core.mockmodel', 'core.anothermockmodel'],
         }, searchqueryset=self.sqs)
         
-        self.assertEqual(msf.fields['models'].choices, [('core.anothermockmodel', u'another mock models'), ('core.mockmodel', u'mock models')])
+        self.assertEqual(msf.fields['models'].choices, [('core.anothermockmodel', u'Another mock models'), ('core.mockmodel', u'Mock models')])
         self.assertEqual(msf.errors, {})
         self.assertEqual(msf.is_valid(), True)
         
@@ -43,4 +43,4 @@ class ModelSearchFormTestCase(TestCase):
         mis.register(MockModel)
         mis.register(AnotherMockModel)
         self.assertEqual(len(model_choices(site=mis)), 2)
-        self.assertEqual([option[1] for option in model_choices(site=mis)], [u'another mock models', u'mock models'])
+        self.assertEqual([option[1] for option in model_choices(site=mis)], [u'Another mock models', u'Mock models'])
