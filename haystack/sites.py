@@ -90,7 +90,7 @@ class SearchSite(object):
         With no arguments, it will pull in the main site to discover the available
         SearchIndexes.
         """
-        from haystack.fields import *
+        from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
         content_field_name = ''
         fields = []
         field_names = set()
