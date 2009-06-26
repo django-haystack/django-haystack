@@ -20,7 +20,7 @@ class SearchQuerySet(object):
         if site is not None:
             self.site = site
         else:
-            from haystack.sites import site as main_site
+            from haystack import site as main_site
             self.site = main_site
     
     def __getstate__(self):

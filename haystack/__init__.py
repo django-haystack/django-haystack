@@ -1,6 +1,7 @@
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from haystack.sites import site
 
 
 __author__ = 'Daniel Lindsley'

@@ -19,7 +19,7 @@ For the impatient::
 
     import datetime
     from haystack import indexes
-    from haystack.sites import site
+    from haystack import site
     from myapp.models import Note
     
     

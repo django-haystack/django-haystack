@@ -27,7 +27,9 @@ class SearchBackend(BaseSearchBackend):
         '[', ']', '^', '"', '~', '*', '?', ':',
     )
     
-    def __init__(self):
+    def __init__(self, site=None):
+        super(SearchBackend, self).__init__(site)
+        
         if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
         
@@ -125,8 +127,7 @@ class SearchBackend(BaseSearchBackend):
         return self._process_results(raw_results, highlight=highlight)
     
     def more_like_this(self, model_instance):
-        from haystack.sites import site, NotRegistered
-        index = site.get_index(model_instance.__class__)
+        index = self.site.get_index(model_instance.__class__)
         field_name = index.get_content_field()    
         raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')
         return self._process_results(raw_results)

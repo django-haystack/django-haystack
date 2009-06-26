@@ -1,7 +1,5 @@
 from django.db.models.base import ModelBase
 from haystack.exceptions import AlreadyRegistered, NotRegistered
-from haystack.indexes import BasicSearchIndex
-from haystack.fields import *
 try:
     set
 except NameError:
@@ -37,6 +35,7 @@ class SearchSite(object):
         to the model.
         """
         if not index_class:
+            from haystack.indexes import BasicSearchIndex
             index_class = BasicSearchIndex
         
         if not isinstance(model, ModelBase):
@@ -91,6 +90,7 @@ class SearchSite(object):
         With no arguments, it will pull in the main site to discover the available
         SearchIndexes.
         """
+        from haystack.fields import *
         content_field_name = ''
         fields = []
         field_names = set()

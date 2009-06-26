@@ -29,9 +29,9 @@ class SolrSearchBackendTestCase(TestCase):
         self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
         self.raw_solr.delete(q='*:*')
         
-        self.sb = SearchBackend()
-        self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
         self.site = SolrSearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
         self.site.register(MockModel, SolrMockSearchIndex)
         
         # Stow.

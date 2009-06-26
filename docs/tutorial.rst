@@ -88,7 +88,7 @@ default ``SearchIndex``.
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
 register models in the following manner::
 
-    from haystack.sites import site
+    from haystack import site
     
     site.register(Note)
 
@@ -97,7 +97,7 @@ model gets registered with a standard ``SearchIndex`` class. If you need to over
 this class and provide additional functionality, you can manually register your
 own indexes like::
 
-    from haystack.sites import site
+    from haystack import site
     
     site.register(Note, NoteIndex)
 
@@ -125,7 +125,7 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
 
     import datetime
     from haystack import indexes
-    from haystack.sites import site
+    from haystack import site
     from myapp.models import Note
     
     

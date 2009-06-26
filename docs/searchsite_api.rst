@@ -50,7 +50,7 @@ you don't want.::
 
 Alternatively, you can manually register only the indexes you want.::
 
-    from haystack.sites import site
+    from haystack import site
     from ratings.models import Rating
     from ratings.search_indexes import RatingIndex
     

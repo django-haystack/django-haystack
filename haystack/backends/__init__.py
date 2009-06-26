@@ -21,7 +21,7 @@ class BaseSearchBackend(object):
         if site is not None:
             self.site = site
         else:
-            from haystack.sites import site
+            from haystack import site
             self.site = site
     
     def get_identifier(self, obj):

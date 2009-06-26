@@ -41,7 +41,8 @@ class Command(AppCommand):
         handle_registrations()
         
         from django.db.models import get_models
-        from haystack.sites import site, NotRegistered
+        from haystack import site
+        from haystack.exceptions import NotRegistered
 
         for model in get_models(app):
             try:

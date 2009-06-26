@@ -9,7 +9,7 @@ class Command(NoArgsCommand):
         # Cause the default site to load.
         from django.conf import settings
         __import__(settings.ROOT_URLCONF)
-        from haystack.sites import site
+        from haystack import site
         
         index_count = len(site.get_indexed_models())
         print "Loaded URLconf to initialize SearchSite..."
