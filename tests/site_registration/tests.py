@@ -8,6 +8,17 @@ class ManualSiteRegistrationTestCase(TestCase):
         
         from haystack import site
         self.assertEqual(len(site.get_indexed_models()), 2)
+        
+        from site_registration.models import Foo, Bar
+        site.unregister(Bar)
+        
+        self.assertEqual(len(sb.site.get_indexed_models()), 1)
+        self.assertEqual(len(site.get_indexed_models()), 1)
+        
+        site.unregister(Foo)
+        
+        self.assertEqual(len(sb.site.get_indexed_models()), 0)
+        self.assertEqual(len(site.get_indexed_models()), 0)
 
 
 class AutoSiteRegistrationTestCase(TestCase):
