@@ -2,6 +2,7 @@ import datetime
 from optparse import make_option
 from django.conf import settings
 from django.core.management.base import AppCommand, CommandError
+from django.db import reset_queries
 from django.utils.encoding import smart_str
 
 
@@ -81,3 +82,6 @@ class Command(AppCommand):
                 # in memory. Useful when reindexing large amounts of data.
                 small_cache_qs = qs.all()
                 index.backend.update(index, small_cache_qs[start:end])
+                
+                # Clear out the DB connections queries because it bloats up RAM.
+                reset_queries()
