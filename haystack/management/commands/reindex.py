@@ -1,10 +1,11 @@
 import datetime
 from optparse import make_option
+from django.conf import settings
 from django.core.management.base import AppCommand, CommandError
 from django.utils.encoding import smart_str
 
 
-DEFAULT_BATCH_SIZE = 1000
+DEFAULT_BATCH_SIZE = getattr(settings, 'HAYSTACK_BATCH_SIZE', 1000)
 DEFAULT_AGE = None
 
 

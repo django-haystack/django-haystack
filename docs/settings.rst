@@ -121,3 +121,19 @@ An example::
     HAYSTACK_WHOOSH_PATH = '/home/mysite/whoosh_index'
 
 No default is provided.
+
+
+``HAYSTACK_BATCH_SIZE``
+=======================
+
+**Optional**
+
+This setting controls the number of model instances loaded at a time while
+reindexing. This affects how often the search indexes must merge (an intensive
+operation).
+
+An example::
+
+    HAYSTACK_BATCH_SIZE = 100
+
+The default is 1000 models per commit.
