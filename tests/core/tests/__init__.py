@@ -3,6 +3,7 @@ warnings.simplefilter('ignore', Warning)
 
 from django.conf import settings
 
+from core.tests.backends import *
 from core.tests.fields import *
 from core.tests.forms import *
 from core.tests.indexes import *

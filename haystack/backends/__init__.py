@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
@@ -7,6 +8,9 @@ try:
     set
 except NameError:
     from sets import Set as set
+
+
+IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')
 
 
 class BaseSearchBackend(object):
@@ -24,13 +28,20 @@ class BaseSearchBackend(object):
             from haystack import site
             self.site = site
     
-    def get_identifier(self, obj):
+    def get_identifier(self, obj_or_string):
         """
-        Get an unique identifier for the object.
+        Get an unique identifier for the object or a string representing the
+        object.
 
         If not overridden, uses <app_label>.<object_name>.<pk>.
         """
-        return u"%s.%s.%s" % (obj._meta.app_label, obj._meta.module_name, obj._get_pk_val())
+        if isinstance(obj_or_string, basestring):
+            if not IDENTIFIER_REGEX.match(obj_or_string):
+                raise AttributeError("Provided string '%s' is not a valid identifier." % obj_or_string)
+            
+            return obj_or_string
+        
+        return u"%s.%s.%s" % (obj_or_string._meta.app_label, obj_or_string._meta.module_name, obj_or_string._get_pk_val())
 
     def update(self, index, iterable):
         """
@@ -42,9 +53,11 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def remove(self, obj):
+    def remove(self, obj_or_string):
         """
-        Removes a document/object from the backend.
+        Removes a document/object from the backend. Can be either a model
+        instance or the identifier (i.e. ``app_name.model_name.id``) in the
+        event the object no longer exists.
         
         This method MUST be implemented by each backend, as it will be highly
         specific to each one.

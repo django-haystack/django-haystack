@@ -52,8 +52,8 @@ class SearchBackend(BaseSearchBackend):
         
         self.conn.add(docs, commit=commit)
 
-    def remove(self, obj, commit=True):
-        solr_id = self.get_identifier(obj)
+    def remove(self, obj_or_string, commit=True):
+        solr_id = self.get_identifier(obj_or_string)
         self.conn.delete(id=solr_id, commit=commit)
 
     def clear(self, models=[], commit=True):

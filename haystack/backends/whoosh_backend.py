@@ -129,11 +129,11 @@ class SearchBackend(BaseSearchBackend):
             sp = SpellChecker(self.storage)
             sp.add_field(self.index, self.content_field_name)
 
-    def remove(self, obj, commit=True):
+    def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
             self.setup()
         
-        whoosh_id = self.get_identifier(obj)
+        whoosh_id = self.get_identifier(obj_or_string)
         self.index.delete_by_query(q=self.parser.parse('id:"%s"' % whoosh_id))
         
         # For now, commit no matter what, as we run into locking issues otherwise.

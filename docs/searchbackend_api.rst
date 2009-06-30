@@ -16,10 +16,11 @@ access this class.
 Method Reference
 ================
 
-``get_identifier(self, obj)``
------------------------------
+``get_identifier(self, obj_or_string)``
+---------------------------------------
 
-Get an unique identifier for the object.
+Get an unique identifier for the object or a string representing the
+object.
 
 If not overridden, uses <app_label>.<object_name>.<pk>.
 
@@ -32,10 +33,12 @@ documents.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``remove(self, obj)``
----------------------
+``remove(self, obj_or_string)``
+-------------------------------
 
-Removes a document/object from the backend.
+Removes a document/object from the backend. Can be either a model
+instance or the identifier (i.e. ``app_name.model_name.id``) in the
+event the object no longer exists.
 
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
