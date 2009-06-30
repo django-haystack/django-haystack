@@ -21,10 +21,6 @@ class Command(AppCommand):
             default=DEFAULT_BATCH_SIZE, type='int',
             help='Number of items to index at once.'
         ),
-        # make_option('--verbosity', action='store', dest='verbosity', default='1',
-        #     type='choice', choices=['0', '1', '2'],
-        #     help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'
-        # ),
     )
     
     # Django 1.0.X compatibility.
