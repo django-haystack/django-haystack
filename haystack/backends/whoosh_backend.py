@@ -257,8 +257,17 @@ class SearchBackend(BaseSearchBackend):
         
         if self.index.doc_count:
             searcher = self.index.searcher()
+            parsed_query = self.parser.parse(query_string)
+            
+            # In the event of an invalid/stopworded query, recover gracefully.
+            if parsed_query is None:
+                return {
+                    'results': [],
+                    'hits': 0,
+                }
+            
             # DRL_TODO: Ignoring offsets for now, as slicing caused issues with pagination.
-            raw_results = searcher.search(self.parser.parse(query_string), sortedby=sort_by, reverse=reverse)
+            raw_results = searcher.search(parsed_query, sortedby=sort_by, reverse=reverse)
             
             # Handle the case where the results have been narrowed.
             if narrowed_results:
