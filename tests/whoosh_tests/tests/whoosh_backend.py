@@ -126,7 +126,7 @@ class WhooshSearchBackendTestCase(TestCase):
         # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
         
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
-        self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], u'indexed')
+        self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], u'index')
         
         self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', facets=['name'])
