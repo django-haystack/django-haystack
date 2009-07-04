@@ -241,4 +241,4 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         
         self.sq.add_filter('content', 'Indx')
-        self.assertEqual(self.sq.get_spelling_suggestion(), u'indexed')
+        self.assertEqual(self.sq.get_spelling_suggestion(), u'index')

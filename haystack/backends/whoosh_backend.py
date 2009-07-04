@@ -10,6 +10,7 @@ from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
 try:
     from whoosh import store
+    from whoosh.analysis import StemmingAnalyzer
     from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
     import whoosh.index as index
     from whoosh.qparser import QueryParser
@@ -89,7 +90,7 @@ class SearchBackend(BaseSearchBackend):
                 else:
                     schema_fields[field['field_name']] = ID(stored=True)
             elif field['type'] == 'text':
-                schema_fields[field['field_name']] = TEXT(stored=True)
+                schema_fields[field['field_name']] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             else:
                 raise SearchBackendError("Whoosh backend does not support type '%s'. Please report this bug." % field['type'])
         
