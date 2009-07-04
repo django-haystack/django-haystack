@@ -160,6 +160,12 @@ SearchField to should directly map to the field your search backend is
 expecting. You instantiate most search fields with a parameter that points to
 the attribute of the object to populate that field with.
 
+.. note::
+
+    There is nothing special about the ``text`` field name used in all of the
+    examples. It could be anything; you could call it ``pink_polka_dot`` and
+    it won't matter. It's simply a convention to call it ``text``.
+
 The exception to this is the ``TemplateField`` class.
 This take either no arguments or an explicit template name to populate their contents.
 You can find more information about them in the ``SearchIndex`` API reference.
