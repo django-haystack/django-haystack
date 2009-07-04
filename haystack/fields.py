@@ -21,13 +21,21 @@ class SearchField(object):
         # Give priority to a template.
         if self.use_template:
             return self.prepare_template(obj)
-        elif self.model_attr is not None and hasattr(obj, self.model_attr):
-            attr = getattr(obj, self.model_attr)
+        elif self.model_attr is not None:
+            # Check for `__` in the field for looking through the relation.
+            attrs = self.model_attr.split('__')
+            current_object = obj
             
-            if callable(attr):
-                return attr()
+            for attr in attrs:
+                if not hasattr(current_object, attr):
+                    return self.default
+                
+                current_object = getattr(current_object, attr)
             
-            return attr
+            if callable(current_object):
+                return current_object()
+            
+            return current_object
         
         return self.default
     

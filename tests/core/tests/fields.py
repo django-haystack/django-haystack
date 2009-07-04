@@ -2,7 +2,7 @@ import datetime
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
 from haystack.fields import *
-from core.models import MockModel
+from core.models import MockModel, MockTag
 
 
 class CharFieldTestCase(TestCase):
@@ -18,6 +18,22 @@ class CharFieldTestCase(TestCase):
         author = CharField(model_attr='user')
         
         self.assertEqual(author.prepare(mock), u'daniel')
+        
+        # Do a lookup through the relation.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_name = CharField(model_attr='tag__name')
+        
+        self.assertEqual(tag_name.prepare(mock), u'primary')
+        
+        # Simulate failed lookups.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_slug = CharField(model_attr='tag__slug')
+        
+        self.assertEqual(tag_slug.prepare(mock), u'')
 
 class IntegerFieldTestCase(TestCase):
     def test_init(self):
@@ -32,6 +48,14 @@ class IntegerFieldTestCase(TestCase):
         pk = IntegerField(model_attr='pk')
         
         self.assertEqual(pk.prepare(mock), 1)
+        
+        # Simulate failed lookups.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_count = IntegerField(model_attr='tag__count')
+        
+        self.assertEqual(tag_count.prepare(mock), 0)
 
 class FloatFieldTestCase(TestCase):
     def test_init(self):

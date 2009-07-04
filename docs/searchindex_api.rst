@@ -143,6 +143,13 @@ In most cases, using the `model_attr` parameter on your fields allows you to
 easily get data from a Django model to the document in your index, as it handles
 both direct attribute access as well as callable functions within your model.
 
+.. note::
+
+    The ``model_attr`` keyword argument also can look through relations in
+    models. So you can do something like ``model_attr='author__first_name'``
+    to pull just the first name of the author, similar to some lookups used
+    by Django's ORM.
+
 However, sometimes, even more control over what gets placed in your index is
 needed. To facilitate this, ``SearchIndex`` objects have a 'preparation' stage
 that populates data just before it is indexed. You can hook into this phase in
@@ -178,7 +185,7 @@ data may come from the field itself.
 
 .. note::
 
-   This method is analagous to Django's ``Form.clean_FOO`` methods.
+   This method is analogous to Django's ``Form.clean_FOO`` methods.
 
 
 2. ``prepare(self, object)``
@@ -216,7 +223,7 @@ provide as well as any ``prepare_FOO`` methods on the class.
 
 .. note::
 
-   This method is roughly analagous to Django's ``Form.full_clean`` and
+   This method is roughly analogous to Django's ``Form.full_clean`` and
    ``Form.clean`` methods. However, unlike these methods, it is not fired
    as the result of trying to access ``self.prepared_data``. It requires
    an explicit call.
