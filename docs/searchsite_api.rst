@@ -102,3 +102,19 @@ field. Valid keys are 'field', 'type', 'indexed' and 'multi_valued'.
 
 With no arguments, it will pull in the main site to discover the available
 SearchIndexes.
+
+``update_object(self, instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Updates the instance's data in the index.
+
+A shortcut for updating on the instance's index. Errors from `get_index`
+and `update_object` will be allowed to propogate.
+
+``remove_object(self, instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Removes the instance's data in the index.
+
+A shortcut for removing on the instance's index. Errors from `get_index`
+and `remove_object` will be allowed to propogate.

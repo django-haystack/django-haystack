@@ -129,8 +129,26 @@ class SearchSite(object):
                     field_data['multi_valued'] = 'true'
         
                 fields.append(field_data)
-    
+        
         return (content_field_name, fields)
+    
+    def update_object(self, instance):
+        """
+        Updates the instance's data in the index.
+        
+        A shortcut for updating on the instance's index. Errors from `get_index`
+        and `update_object` will be allowed to propogate.
+        """
+        return self.get_index(type(instance)).update_object(instance)
+    
+    def remove_object(self, instance):
+        """
+        Removes the instance's data in the index.
+        
+        A shortcut for removing on the instance's index. Errors from `get_index`
+        and `remove_object` will be allowed to propogate.
+        """
+        return self.get_index(type(instance)).remove_object(instance)
 
 
 # The common case. Feel free to override/replace/define your own in your URLconfs.
