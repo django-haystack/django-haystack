@@ -51,6 +51,7 @@ looking for API documentation and advanced usage as detailed in:
    
    searchqueryset_api
    searchindex_api
+   searchresult_api
    searchsite_api
    searchquery_api
    searchbackend_api
