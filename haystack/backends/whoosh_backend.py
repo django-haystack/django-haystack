@@ -299,7 +299,7 @@ class SearchBackend(BaseSearchBackend):
         
         for doc_offset, raw_result in enumerate(raw_results):
             raw_result = dict(raw_result)
-            app_label, module_name = raw_result['django_ct'].split('.')
+            app_label, model_name = raw_result['django_ct'].split('.')
             additional_fields = {}
             
             for key, value in raw_result.items():
@@ -328,7 +328,7 @@ class SearchBackend(BaseSearchBackend):
             if score is None:
                 score = 0
             
-            result = SearchResult(app_label, module_name, raw_result['django_id'], score, **additional_fields)
+            result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
             results.append(result)
         
         if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:

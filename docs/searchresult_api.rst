@@ -13,7 +13,7 @@ Attribute Reference
 The class exposes the following useful attributes/properties:
 
 * ``app_label`` - The application the model is attached to.
-* ``module_name`` - The model's name.
+* ``model_name`` - The model's name.
 * ``pk`` - The primary key of the model.
 * ``score`` - The score provided by the search engine.
 * ``object`` - The actual model instance (lazy loaded).

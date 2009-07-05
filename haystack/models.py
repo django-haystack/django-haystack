@@ -16,8 +16,8 @@ class SearchResult(object):
     result will do O(N) database queries, which may not fit your needs for
     performance.
     """
-    def __init__(self, app_label, module_name, pk, score, **kwargs):
-        self.app_label, self.module_name = app_label, module_name
+    def __init__(self, app_label, model_name, pk, score, **kwargs):
+        self.app_label, self.model_name = app_label, model_name
         self.pk = pk
         self.score = score
         self._object = None
@@ -32,7 +32,7 @@ class SearchResult(object):
                 self._additional_fields.append(key)
 
     def __repr__(self):
-        return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.module_name, self.pk)
+        return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.model_name, self.pk)
     
     def __getattr__(self, attr):
         return self.__dict__.get(attr, None)
@@ -52,7 +52,7 @@ class SearchResult(object):
     
     def _get_model(self):
         if self._model is None:
-            self._model = models.get_model(self.app_label, self.module_name)
+            self._model = models.get_model(self.app_label, self.model_name)
         return self._model
     
     def _set_model(self, obj):

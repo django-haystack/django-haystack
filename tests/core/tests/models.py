@@ -24,7 +24,7 @@ class SearchResultTestCase(TestCase):
     
     def test_init(self):
         self.assertEqual(self.no_data_sr.app_label, 'haystack')
-        self.assertEqual(self.no_data_sr.module_name, 'mockmodel')
+        self.assertEqual(self.no_data_sr.model_name, 'mockmodel')
         self.assertEqual(self.no_data_sr.model, MockModel)
         self.assertEqual(self.no_data_sr.verbose_name, u'Mock model')
         self.assertEqual(self.no_data_sr.pk, '1')
@@ -32,7 +32,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(self.no_data_sr.stored, None)
         
         self.assertEqual(self.extra_data_sr.app_label, 'haystack')
-        self.assertEqual(self.extra_data_sr.module_name, 'mockmodel')
+        self.assertEqual(self.extra_data_sr.model_name, 'mockmodel')
         self.assertEqual(self.extra_data_sr.model, MockModel)
         self.assertEqual(self.extra_data_sr.verbose_name, u'Mock model')
         self.assertEqual(self.extra_data_sr.pk, '1')
@@ -40,7 +40,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(self.extra_data_sr.stored, 'I am stored data. How fun.')
         
         self.assertEqual(self.no_overwrite_data_sr.app_label, 'haystack')
-        self.assertEqual(self.no_overwrite_data_sr.module_name, 'mockmodel')
+        self.assertEqual(self.no_overwrite_data_sr.model_name, 'mockmodel')
         self.assertEqual(self.no_overwrite_data_sr.model, MockModel)
         self.assertEqual(self.no_overwrite_data_sr.verbose_name, u'Mock model')
         self.assertEqual(self.no_overwrite_data_sr.pk, '1')
