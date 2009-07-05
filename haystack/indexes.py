@@ -155,6 +155,18 @@ class SearchIndex(object):
         By default, returns True (always reindex).
         """
         return True
+    
+    def load_all_queryset(self):
+        """
+        Provides the ability to override how objects get loaded in conjunction
+        with ``SearchQuerySet.load_all``.
+        
+        This is useful for post-processing the results from the query, enabling
+        things like adding ``select_related`` or filtering certain data.
+        
+        By default, returns ``all()`` on the model's default manager.
+        """
+        return self.model._default_manager.all()
 
 
 class BasicSearchIndex(SearchIndex):

@@ -289,6 +289,30 @@ Example::
 
     SearchQuerySet().filter(content='foo').load_all()
 
+``load_all_queryset(self, model_class, queryset)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Allows for specifying a custom ``QuerySet`` that changes how ``load_all`` will
+fetch records for the provided model. This is useful for post-processing the
+results from the query, enabling things like adding ``select_related`` or
+filtering certain data.
+
+Example::
+
+    sqs = SearchQuerySet().filter(content='foo').load_all()
+    # For the Entry model, we want to include related models directly associated
+    # with the Entry to save on DB queries.
+    sqs = sqs.load_all_queryset(Entry, Entry.objects.all().select_related(depth=1))
+
+This method chains indefinitely, so you can specify ``QuerySets`` for as many
+models as you wish, one per model. The ``SearchQuerySet`` appends on a call to
+``in_bulk``, so be sure that the ``QuerySet`` you provide can accommodate this
+and that the ids passed to ``in_bulk`` will map to the model in question.
+
+If you need to do this frequently and have one ``QuerySet`` you'd like to apply
+everywhere, you can specify this at the ``SearchIndex`` level using the
+``load_all_queryset`` method. See :doc:`searchindex_api` for usage.
+
 ``auto_query(self, query_string)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

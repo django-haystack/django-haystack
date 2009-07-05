@@ -42,6 +42,9 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex):
     
     def prepare_author(self, obj):
         return "Hi, I'm %s" % self.prepared_data['author']
+    
+    def load_all_queryset(self):
+        return self.model._default_manager.filter(id__gt=1)
 
 
 class SearchIndexTestCase(TestCase):
@@ -203,3 +206,6 @@ class SearchIndexTestCase(TestCase):
         self.assert_(isinstance(agmi.fields['extra'], indexes.CharField))
         self.assert_('additional' in agmi.fields)
         self.assert_(isinstance(agmi.fields['additional'], indexes.CharField))
+    
+    def test_load_all_queryset(self):
+        self.assertEqual([obj.id for obj in self.cmi.load_all_queryset()], [2, 3])

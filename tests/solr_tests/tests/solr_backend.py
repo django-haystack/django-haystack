@@ -3,8 +3,9 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from haystack import indexes
+from haystack.sites import SearchSite
 from haystack.backends.solr_backend import SearchBackend, SearchQuery
-from haystack import sites
+from haystack.query import SearchQuerySet
 from core.models import MockModel, AnotherMockModel
 
 
@@ -12,10 +13,6 @@ class SolrMockSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
-
-
-class SolrSearchSite(sites.SearchSite):
-    pass
 
 
 class SolrSearchBackendTestCase(TestCase):
@@ -29,14 +26,15 @@ class SolrSearchBackendTestCase(TestCase):
         self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
         self.raw_solr.delete(q='*:*')
         
-        self.site = SolrSearchSite()
+        self.site = SearchSite()
         self.sb = SearchBackend(site=self.site)
         self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
         self.site.register(MockModel, SolrMockSearchIndex)
         
         # Stow.
-        self.old_site = sites.site
-        sites.site = self.site
+        import haystack
+        self.old_site = haystack.site
+        haystack.site = self.site
         
         self.sample_objs = []
         
@@ -48,8 +46,9 @@ class SolrSearchBackendTestCase(TestCase):
             self.sample_objs.append(mock)
     
     def tearDown(self):
+        import haystack
+        haystack.site = self.old_site
         settings.HAYSTACK_SOLR_URL = self.old_solr_url
-        sites.site = self.old_site
         super(SolrSearchBackendTestCase, self).tearDown()
     
     def test_update(self):
@@ -151,3 +150,40 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def test_get_spelling(self):
         self.sq.add_filter('content', 'Indx')
         self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
+
+
+class LiveSolrSearchQuerySetTestCase(TestCase):
+    """Used to test actual implementation details of the SearchQuerySet."""
+    def setUp(self):
+        super(LiveSolrSearchQuerySetTestCase, self).setUp()
+        self.sqs = SearchQuerySet()
+        
+        # With the models registered, you get the proper bits.
+        import haystack
+        from haystack.sites import SearchSite
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+    
+    def tearDown(self):
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        super(LiveSolrSearchQuerySetTestCase, self).tearDown()
+    
+    def test_load_all(self):
+        sqs = self.sqs.load_all()
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(sqs[0].object.foo, 'bar')
+    
+    def test_load_all_queryset(self):
+        sqs = self.sqs.load_all()
+        self.assertEqual(len(sqs._load_all_querysets), 0)
+        
+        sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs._load_all_querysets), 1)
+        self.assertEqual([obj.object.id for obj in sqs], [2, 3])

@@ -33,6 +33,14 @@ class WhooshSearchBackendTestCase(TestCase):
         self.smmi = WhooshMockSearchIndex(MockModel, backend=self.sb)
         self.site.register(MockModel, WhooshMockSearchIndex)
         
+        # With the models registered, you get the proper bits.
+        import haystack
+        from haystack.sites import SearchSite
+        
+        # Stow.
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
         self.sb.setup()
         self.raw_whoosh = self.sb.index
         self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
@@ -57,6 +65,11 @@ class WhooshSearchBackendTestCase(TestCase):
             os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
         
         settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        
         super(WhooshSearchBackendTestCase, self).tearDown()
     
     def whoosh_search(self, query):

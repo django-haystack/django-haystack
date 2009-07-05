@@ -1,7 +1,5 @@
-import datetime
-from django.db import models
+from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
-from haystack import indexes
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
 from haystack.models import SearchResult
 from core.models import MockModel
@@ -36,7 +34,26 @@ class MockSearchBackend(BaseSearchBackend):
         self.docs = {}
     
     def search(self, query, highlight=False):
-        return MOCK_SEARCH_RESULTS
+        from haystack import site
+        results = []
+        hits = len(MOCK_SEARCH_RESULTS)
+        indexed_models = site.get_indexed_models()
+        
+        for result in MOCK_SEARCH_RESULTS:
+            model = get_model('core', 'mockmodel')
+            
+            if model:
+                if model in indexed_models:
+                    results.append(result)
+                else:
+                    hits -= 1
+            else:
+                hits -= 1
+        
+        return {
+            'results': results,
+            'hits': hits,
+        }
     
     def more_like_this(self, model_instance):
         return {
@@ -56,5 +73,6 @@ class MockSearchQuery(BaseSearchQuery):
         # To simulate the chunking behavior of a regular search, return a slice
         # of our results using start/end offset.
         final_query = self.build_query()
-        self._results = self.backend.search(final_query)[self.start_offset:self.end_offset]
-        self._hit_count = len(MOCK_SEARCH_RESULTS)
+        results = self.backend.search(final_query)
+        self._results = results['results'][self.start_offset:self.end_offset]
+        self._hit_count = results['hits']

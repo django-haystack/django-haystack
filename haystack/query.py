@@ -2,6 +2,7 @@ import re
 from django.conf import settings
 from haystack import backend
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
+from haystack.exceptions import NotRegistered
 
 
 class SearchQuerySet(object):
@@ -16,6 +17,8 @@ class SearchQuerySet(object):
         self._result_count = None
         self._cache_full = False
         self._load_all = False
+        self._load_all_querysets = {}
+        self._ignored_result_count = 0
         
         if site is not None:
             self.site = site
@@ -53,7 +56,7 @@ class SearchQuerySet(object):
     
     def _cache_is_full(self):
         # Use ">=" because it's possible that search results have disappeared.
-        return len(self._result_cache) >= len(self)
+        return len(self._result_cache) >= len(self) - self._ignored_result_count
     
     def _manual_iter(self):
         # If we're here, our cache isn't fully populated.
@@ -69,7 +72,7 @@ class SearchQuerySet(object):
                 yield self._result_cache[current_position]
                 current_position += 1
             
-            if current_cache_max >= len(self):
+            if self._cache_is_full():
                 raise StopIteration
             
             # We've run out of results and haven't hit our limit.
@@ -77,10 +80,12 @@ class SearchQuerySet(object):
             self._fill_cache()
     
     def _fill_cache(self):
-        # Tell the query where to start from and how many we'd like.
+        from haystack import site
+        
         if self._result_cache is None:
             self._result_cache = []
         
+        # Tell the query where to start from and how many we'd like.
         cache_length = len(self._result_cache)
         self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
         results = self.query.get_results()
@@ -90,16 +95,29 @@ class SearchQuerySet(object):
             original_results = []
             models_pks = {}
             loaded_objects = {}
-
+            
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
                 original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
             
-            # Load the objects for each model in turn
+            # Load the objects for each model in turn.
             for model in models_pks:
-                loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
-            
+                if model in self._load_all_querysets:
+                    # Use the overriding queryset.
+                    loaded_objects[model] = self._load_all_querysets[model].in_bulk(models_pks[model])
+                else:
+                    # Check the SearchIndex for the model for an override.
+                    try:
+                        index = site.get_index(model)
+                        qs = index.load_all_queryset()
+                        loaded_objects[model] = qs.in_bulk(models_pks[model])
+                    except NotRegistered:
+                        # The model returned doesn't seem to be registered with
+                        # the current site. We should silently fail and populate
+                        # nothing for those objects.
+                        loaded_objects[model] = []
+        
         for result in results:
             if self._load_all:
                 # We have to deal with integer keys being cast from strings; if this
@@ -110,8 +128,10 @@ class SearchQuerySet(object):
                     pass
                 try:
                     result._object = loaded_objects[result.model][result.pk]
-                except KeyError:
-                    # The object must have been deleted since we indexed; fail silently.
+                except (KeyError, IndexError):
+                    # The object was either deleted since we indexed or should
+                    # be ignored; fail silently.
+                    self._ignored_result_count += 1
                     continue
             
             self._result_cache.append(result)
@@ -280,6 +300,18 @@ class SearchQuerySet(object):
         clone._load_all = True
         return clone
     
+    def load_all_queryset(self, model, queryset):
+        """
+        Allows for specifying a custom ``QuerySet`` that changes how ``load_all``
+        will fetch records for the provided model.
+        
+        This is useful for post-processing the results from the query, enabling
+        things like adding ``select_related`` or filtering certain data.
+        """
+        clone = self._clone()
+        clone._load_all_querysets[model] = queryset
+        return clone
+    
     def auto_query(self, query_string):
         """
         Performs a best guess constructing the search query.
@@ -380,4 +412,6 @@ class SearchQuerySet(object):
         
         query = self.query._clone()
         clone = klass(site=self.site, query=query)
+        clone._load_all = self._load_all
+        clone._load_all_querysets = self._load_all_querysets
         return clone

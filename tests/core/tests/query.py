@@ -1,5 +1,6 @@
 import datetime
 from django.test import TestCase
+import haystack
 from haystack.backends import QueryFilter, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
@@ -168,9 +169,18 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(self.bsq.narrow_queries, set(['foo:bar', 'moof:baz']))
     
     def test_run(self):
+        # Stow.
+        old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+        
         msq = MockSearchQuery(backend=MockSearchBackend())
         self.assertEqual(len(msq.get_results()), 100)
         self.assertEqual(msq.get_results()[0], MOCK_SEARCH_RESULTS[0])
+        
+        # Restore.
+        haystack.site = old_site
     
     def test_clone(self):
         self.bsq.add_filter('foo', 'bar')
@@ -207,6 +217,17 @@ class SearchQuerySetTestCase(TestCase):
         super(SearchQuerySetTestCase, self).setUp()
         self.bsqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
         self.msqs = SearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+    
+    def tearDown(self):
+        # Restore.
+        haystack.site = self.old_site
+        super(SearchQuerySetTestCase, self).tearDown()
     
     def test_len(self):
         # Dummy always returns 0.
@@ -306,9 +327,23 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(self.bsqs.raw_search('content__exact hello AND content__exact world')), 1)
     
     def test_load_all(self):
+        # If nothing is registered, you get nothing.
+        haystack.site.unregister(MockModel)
         sqs = self.msqs.load_all()
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(sqs[0].object.foo, 'bar')
+        self.assertEqual(len(sqs), 0)
+        
+        # For full tests, see the solr_backend.
+    
+    def test_load_all_queryset(self):
+        sqs = self.msqs.load_all()
+        self.assertEqual(len(sqs._load_all_querysets), 0)
+        
+        sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs._load_all_querysets), 1)
+        
+        # For full tests, see the solr_backend.
     
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
