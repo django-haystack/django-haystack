@@ -494,7 +494,7 @@ class SearchQuery(BaseSearchQuery):
                         in_options = []
                         
                         for possible_value in value:
-                            in_options.append("%s:%s" % (the_filter.field, possible_value))
+                            in_options.append('%s:"%s"' % (the_filter.field, self.backend._from_python(possible_value)))
                         
                         query_chunks.append("(%s)" % " OR ".join(in_options))
             
