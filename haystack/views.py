@@ -48,9 +48,9 @@ class SearchView(object):
         Instantiates the form the class should use to process the search query.
         """
         if self.searchqueryset is None:
-            return self.form_class(self.request.GET)
+            return self.form_class(self.request.GET, load_all=self.load_all)
         
-        return self.form_class(self.request.GET, searchqueryset=self.searchqueryset)
+        return self.form_class(self.request.GET, searchqueryset=self.searchqueryset, load_all=self.load_all)
     
     def get_query(self):
         """

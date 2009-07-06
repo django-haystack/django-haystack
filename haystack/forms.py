@@ -18,6 +18,7 @@ class SearchForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
         self.searchqueryset = kwargs.get('searchqueryset', None)
+        self.load_all = kwargs.get('load_all', False)
         
         if self.searchqueryset is None:
             self.searchqueryset = SearchQuerySet()
@@ -27,11 +28,21 @@ class SearchForm(forms.Form):
         except KeyError:
             pass
         
+        try:
+            del(kwargs['load_all'])
+        except KeyError:
+            pass
+        
         super(SearchForm, self).__init__(*args, **kwargs)
     
     def search(self):
         self.clean()
-        return self.searchqueryset.auto_query(self.cleaned_data['q'])
+        sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
+        
+        if self.load_all:
+            sqs = sqs.load_all()
+        
+        return sqs
 
 
 class HighlightedSearchForm(SearchForm):
