@@ -1,6 +1,7 @@
 import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
 from haystack.exceptions import MissingDependency
@@ -133,7 +134,9 @@ class SearchBackend(BaseSearchBackend):
         return self._process_results(raw_results)
     
     def _process_results(self, raw_results, highlight=False):
+        from haystack import site
         results = []
+        hits = raw_results.hits
         facets = {}
         spelling_suggestion = None
         
@@ -157,6 +160,8 @@ class SearchBackend(BaseSearchBackend):
                     # collated result from the end.
                     spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
         
+        indexed_models = site.get_indexed_models()
+        
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct'].split('.')
             additional_fields = {}
@@ -171,12 +176,20 @@ class SearchBackend(BaseSearchBackend):
             if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
                 additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
             
-            result = SearchResult(app_label, model_name, raw_result['django_id'], raw_result['score'], **additional_fields)
-            results.append(result)
+            model = get_model(app_label, model_name)
+            
+            if model:
+                if model in indexed_models:
+                    result = SearchResult(app_label, model_name, raw_result['django_id'], raw_result['score'], **additional_fields)
+                    results.append(result)
+                else:
+                    hits -= 1
+            else:
+                hits -= 1
         
         return {
             'results': results,
-            'hits': raw_results.hits,
+            'hits': hits,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
         }

@@ -4,6 +4,7 @@ import re
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
 from haystack.exceptions import MissingDependency, SearchBackendError
@@ -294,8 +295,12 @@ class SearchBackend(BaseSearchBackend):
         }
     
     def _process_results(self, raw_results, highlight=False, query_string=''):
+        from haystack import site
         results = []
+        hits = len(raw_results)
         facets = {}
+        spelling_suggestion = None
+        indexed_models = site.get_indexed_models()
         
         for doc_offset, raw_result in enumerate(raw_results):
             raw_result = dict(raw_result)
@@ -328,17 +333,23 @@ class SearchBackend(BaseSearchBackend):
             if score is None:
                 score = 0
             
-            result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
-            results.append(result)
+            model = get_model(app_label, model_name)
+            
+            if model:
+                if model in indexed_models:
+                    result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
+                    results.append(result)
+                else:
+                    hits -= 1
+            else:
+                hits -= 1
         
         if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
             spelling_suggestion = self.create_spelling_suggestion(query_string)
-        else:
-            spelling_suggestion = None
         
         return {
             'results': results,
-            'hits': len(results),
+            'hits': hits,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
         }
