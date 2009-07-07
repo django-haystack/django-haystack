@@ -36,6 +36,10 @@ you'd like to use. If using this form in conjunction with a ``SearchView``,
 the form will receive whatever ``SearchQuerySet`` you provide to the view with
 no additional work needed.
 
+The ``SearchForm`` also accepts a ``load_all`` parameter (``True`` or
+``False``), which determines how the database is queried when iterating through
+the results. This also is received automatically from the ``SearchView``.
+
 All other forms in Haystack inherit (either directly or indirectly) from this
 form.
 
