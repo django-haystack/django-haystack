@@ -57,7 +57,9 @@ Requires setting ``HAYSTACK_SOLR_URL`` to be the URL where your Solr is running 
 
 Example::
 
-    HAYSTACK_SOLR_URL = 'http://127.0.0.1:9000/solr/mysite'
+    HAYSTACK_SOLR_URL = 'http://127.0.0.1:8983/solr'
+    # ...or for multicore...
+    HAYSTACK_SOLR_URL = 'http://127.0.0.1:8983/solr/mysite'
 
 
 Whoosh
