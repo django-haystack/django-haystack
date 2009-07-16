@@ -87,6 +87,7 @@ class SearchQuerySet(object):
         
         # Tell the query where to start from and how many we'd like.
         cache_length = len(self._result_cache)
+        self.query._reset()
         self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
         results = self.query.get_results()
         

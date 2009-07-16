@@ -414,6 +414,16 @@ class BaseSearchQuery(object):
         """Adds a existing facet on a field."""
         self.narrow_queries.add(query)
     
+    def _reset(self):
+        """
+        Resets the instance's internal state to appear as though no query has
+        been run before. Only need to tweak a few variables we check.
+        """
+        self._results = None
+        self._hit_count = None
+        self._facet_counts = None
+        self._spelling_suggestion = None
+    
     def _clone(self, klass=None):
         if klass is None:
             klass = self.__class__

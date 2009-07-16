@@ -134,6 +134,8 @@ class SolrSearchBackendTestCase(TestCase):
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
+    fixtures = ['initial_data.json']
+    
     def setUp(self):
         super(LiveSolrSearchQueryTestCase, self).setUp()
         
@@ -142,6 +144,10 @@ class LiveSolrSearchQueryTestCase(TestCase):
         settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
         
         self.sq = SearchQuery(backend=SearchBackend())
+        
+        # Force indexing of the content.
+        for mock in MockModel.objects.all():
+            mock.save()
     
     def tearDown(self):
         settings.HAYSTACK_SOLR_URL = self.old_solr_url
@@ -154,6 +160,8 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
 class LiveSolrSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
+    fixtures = ['initial_data.json']
+    
     def setUp(self):
         super(LiveSolrSearchQuerySetTestCase, self).setUp()
         self.sqs = SearchQuerySet()
@@ -167,6 +175,10 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         test_site = SearchSite()
         test_site.register(MockModel)
         haystack.site = test_site
+        
+        # Force indexing of the content.
+        for mock in MockModel.objects.all():
+            mock.save()
     
     def tearDown(self):
         # Restore.
@@ -187,3 +199,59 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
         self.assertEqual([obj.object.id for obj in sqs], [2, 3])
+
+
+class SolrMockModelSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(model_attr='foo', document=True)
+    name = indexes.CharField(model_attr='author')
+    pub_date = indexes.DateField(model_attr='pub_date')
+
+
+class LiveSolrRegressionsTestCase(TestCase):
+    fixtures = ['solr_bulk_data.json']
+    
+    def setUp(self):
+        super(LiveSolrRegressionsTestCase, self).setUp()
+        self.sqs = SearchQuerySet()
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # With the models registered, you get the proper bits.
+        import haystack
+        from haystack.sites import SearchSite
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel, SolrMockModelSearchIndex)
+        haystack.site = test_site
+        
+        # Force indexing of the content.
+        for mock in MockModel.objects.all():
+            mock.save()
+    
+    def tearDown(self):
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        super(LiveSolrRegressionsTestCase, self).tearDown()
+    
+    def test_regression_proper_start_offsets(self):
+        sqs = self.sqs.filter(text='search')
+        self.assertNotEqual(sqs.count(), 0)
+        
+        id_counts = {}
+        
+        for item in sqs:
+            if item.id in id_counts:
+                id_counts[item.id] += 1
+            else:
+                id_counts[item.id] = 1
+        
+        for key, value in id_counts.items():
+            if value > 1:
+                self.fail("Result with id '%s' seen more than once in the results." % key)
