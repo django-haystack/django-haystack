@@ -55,7 +55,7 @@ class MockSearchBackend(BaseSearchBackend):
             'hits': hits,
         }
     
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, additional_query_string=None):
         return {
             'results': MOCK_SEARCH_RESULTS,
             'hits': len(MOCK_SEARCH_RESULTS),

@@ -127,8 +127,8 @@ class SolrSearchBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
         
-        # DRL_TODO: Even though I've confirmed MLT works correctly, it doesn't
-        #           seem to find any similar documents. Need better sample data?
+        # A functional MLT example with enough data to work is below. Rely on
+        # this to ensure the API is correct enough.
         self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
         self.assertEqual([result.pk for result in self.sb.more_like_this(self.sample_objs[0])['results']], [])
 
@@ -203,7 +203,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
 class SolrMockModelSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(model_attr='foo', document=True)
-    name = indexes.CharField(model_attr='author')
+    name = indexes.CharField(model_attr='user')
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
@@ -255,3 +255,48 @@ class LiveSolrRegressionsTestCase(TestCase):
         for key, value in id_counts.items():
             if value > 1:
                 self.fail("Result with id '%s' seen more than once in the results." % key)
+
+
+class LiveSolrMoreLikeThisTestCase(TestCase):
+    fixtures = ['solr_bulk_data.json']
+    
+    def setUp(self):
+        super(LiveSolrMoreLikeThisTestCase, self).setUp()
+        self.sqs = SearchQuerySet()
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # With the models registered, you get the proper bits.
+        import haystack
+        from haystack.sites import SearchSite
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel, SolrMockModelSearchIndex)
+        haystack.site = test_site
+        
+        # Force indexing of the content.
+        for mock in MockModel.objects.all():
+            mock.save()
+        
+        self.sqs = SearchQuerySet()
+    
+    def tearDown(self):
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        super(LiveSolrMoreLikeThisTestCase, self).tearDown()
+    
+    def test_more_like_this(self):
+        mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
+        self.assertEqual(mlt.count(), 23)
+        self.assertEqual([result.pk for result in mlt], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'])
+        
+        alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
+        self.assertEqual(alt_mlt.count(), 9)
+        self.assertEqual([result.pk for result in alt_mlt], ['3', '4', '10', '13', '16', '17', '19', '22', '23'])

@@ -127,10 +127,17 @@ class SearchBackend(BaseSearchBackend):
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)
     
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, additional_query_string=None):
         index = self.site.get_index(model_instance.__class__)
-        field_name = index.get_content_field()    
-        raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')
+        field_name = index.get_content_field()
+        params = {
+            'fl': '*,score',
+        }
+        
+        if additional_query_string:
+            params['fq'] = additional_query_string
+        
+        raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, **params)
         return self._process_results(raw_results)
     
     def _process_results(self, raw_results, highlight=False):

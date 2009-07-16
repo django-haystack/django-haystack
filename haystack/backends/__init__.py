@@ -98,7 +98,7 @@ class BaseSearchBackend(object):
         """
         return force_unicode(value)
     
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, additional_query_string=None):
         """
         Takes a model object and returns results the backend thinks are similar.
         
@@ -390,7 +390,8 @@ class BaseSearchQuery(object):
         This method does not affect the internal state of the SearchQuery used
         to build queries. It does however populate the results/hit_count.
         """
-        results = self.backend.more_like_this(model_instance)
+        additional_query_string = self.build_query()
+        results = self.backend.more_like_this(model_instance, additional_query_string)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     

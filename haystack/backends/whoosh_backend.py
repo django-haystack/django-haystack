@@ -287,7 +287,7 @@ class SearchBackend(BaseSearchBackend):
                 'spelling_suggestion': spelling_suggestion,
             }
     
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, additional_query_string=None):
         warnings.warn("Whoosh does not handle More Like This.", Warning, stacklevel=2)
         return {
             'results': [],
