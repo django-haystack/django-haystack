@@ -143,12 +143,14 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
     
     site.register(Note, NoteIndex)
 
-Every custom ``SearchIndex`` requires there be one and only one field with ``document=True``.
-This is the primary field that will get passed to the backend for indexing. For
-this field, you'll then need to create a template at 
-``search/indexes/myapp/note_text.txt``. This allows you to customize the document 
-that will be passed to the search backend for indexing. A sample template
-might look like::
+Every custom ``SearchIndex`` requires there be one and only one field with
+``document=True``. This is the primary field that will get passed to the backend
+for indexing.
+
+Additionally, if you provide ``use_template=True`` on any fields, you'll then
+need to create a template at ``search/indexes/myapp/note_<fieldname>.txt``. This
+allows you to customize the contents of the field in a way that will mean more
+to the search engine. A sample template for the ``text`` field might look like::
 
     {{ object.title }}
     Written by {{ object.user.full_name }}
