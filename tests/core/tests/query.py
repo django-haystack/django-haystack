@@ -257,6 +257,8 @@ class SearchQuerySetTestCase(TestCase):
         results = self.msqs.all()
         self.assertEqual(len(results._result_cache), 0)
         results._fill_cache()
+        self.assertEqual(len(results._result_cache), 10)
+        results._fill_cache()
         self.assertEqual(len(results._result_cache), 20)
     
     def test_cache_is_full(self):
