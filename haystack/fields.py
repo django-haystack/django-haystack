@@ -6,7 +6,9 @@ from haystack.exceptions import SearchFieldError
 
 class SearchField(object):
     """The base implementation of a search field."""
-    def __init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, default=None):
+    def __init__(self, model_attr=None, use_template=False, template_name=None, 
+                 document=False, indexed=True, stored=True, default=None,
+                 null=False):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -16,6 +18,7 @@ class SearchField(object):
         self.indexed = indexed
         self.stored = stored
         self.default = default
+        self.null = null
     
     def prepare(self, obj):
         # Give priority to a template.

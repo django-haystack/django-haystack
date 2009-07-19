@@ -47,12 +47,18 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex):
         return self.model._default_manager.filter(id__gt=1)
 
 
+class GoodNullableMockSearchIndex(indexes.SearchIndex):
+    content = indexes.CharField(document=True, use_template=True)
+    author = indexes.CharField(model_attr='user', null=True)
+
+
 class SearchIndexTestCase(TestCase):
     def setUp(self):
         super(SearchIndexTestCase, self).setUp()
         self.msb = MockSearchBackend()
         self.mi = GoodMockSearchIndex(MockModel, backend=self.msb)
         self.cmi = GoodCustomMockSearchIndex(MockModel, backend=self.msb)
+        self.cnmi = GoodNullableMockSearchIndex(MockModel, backend=self.msb)
         self.sample_docs = {
             u'core.mockmodel.1': {
                 'content': u'Indexed!\n1',
@@ -209,3 +215,12 @@ class SearchIndexTestCase(TestCase):
     
     def test_load_all_queryset(self):
         self.assertEqual([obj.id for obj in self.cmi.load_all_queryset()], [2, 3])
+    
+    def test_nullable(self):
+        mock = MockModel()
+        mock.pk = 20
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        
+        prepared_data = self.cnmi.prepare(mock)
+        self.assertEqual(len(prepared_data), 1)
+        self.assertEqual(sorted(prepared_data.keys()), ['content'])
