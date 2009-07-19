@@ -9,6 +9,6 @@ haystack.autodiscover()
 
 
 urlpatterns = patterns('haystack.views',
-    url(r'^$', SearchView(), name='haystack_search'),
+    url(r'^$', SearchView(load_all=False), name='haystack_search'),
     url(r'^faceted/$', FacetedSearchView(searchqueryset=SearchQuerySet().facet('author')), name='haystack_faceted_search'),
 )
