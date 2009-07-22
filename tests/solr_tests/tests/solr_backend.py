@@ -295,8 +295,8 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
         self.assertEqual(mlt.count(), 23)
-        self.assertEqual([result.pk for result in mlt], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'])
+        self.assertEqual([result.pk for result in mlt], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '19', '18', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])
         
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
         self.assertEqual(alt_mlt.count(), 9)
-        self.assertEqual([result.pk for result in alt_mlt], ['3', '4', '10', '13', '16', '17', '19', '22', '23'])
+        self.assertEqual([result.pk for result in alt_mlt], ['23', '13', '17', '16', '22', '19', '4', '10'])

@@ -21,3 +21,7 @@ class AlreadyRegistered(HaystackError):
 class NotRegistered(HaystackError):
     """Raised when a model is not registered with a site."""
     pass
+
+class MoreLikeThisError(HaystackError):
+    """Raised when a model instance has not been provided for More Like This."""
+    pass

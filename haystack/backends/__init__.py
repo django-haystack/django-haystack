@@ -3,7 +3,7 @@ import re
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
-from haystack.exceptions import SearchBackendError
+from haystack.exceptions import SearchBackendError, MoreLikeThisError
 try:
     set
 except NameError:
@@ -205,6 +205,8 @@ class BaseSearchQuery(object):
         self.date_facets = {}
         self.query_facets = {}
         self.narrow_queries = set()
+        self._more_like_this = False
+        self._mlt_instance = None
         self._results = None
         self._hit_count = None
         self._facet_counts = None
@@ -244,6 +246,19 @@ class BaseSearchQuery(object):
         self._facet_counts = results.get('facets', {})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
     
+    def run_mlt(self):
+        """
+        Executes the More Like This. Returns a list of search results similar
+        to the provided document (and optionally query).
+        """
+        if self._more_like_this is False or self._mlt_instance is None:
+            raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
+        
+        additional_query_string = self.build_query()
+        results = self.backend.more_like_this(self._mlt_instance, additional_query_string)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
+    
     def get_count(self):
         """
         Returns the number of results the backend found for the query.
@@ -252,7 +267,11 @@ class BaseSearchQuery(object):
         the results.
         """
         if self._hit_count is None:
-            self.run()
+            if self._more_like_this:
+                # Special case for MLT.
+                self.run_mlt()
+            else:
+                self.run()
         
         return self._hit_count
     
@@ -264,7 +283,11 @@ class BaseSearchQuery(object):
         the results.
         """
         if self._results is None:
-            self.run()
+            if self._more_like_this:
+                # Special case for MLT.
+                self.run_mlt()
+            else:
+                self.run()
         
         return self._results
     
@@ -386,14 +409,9 @@ class BaseSearchQuery(object):
     def more_like_this(self, model_instance):
         """
         Returns the "More Like This" results received from the backend.
-        
-        This method does not affect the internal state of the SearchQuery used
-        to build queries. It does however populate the results/hit_count.
         """
-        additional_query_string = self.build_query()
-        results = self.backend.more_like_this(model_instance, additional_query_string)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
+        self._more_like_this = True
+        self._mlt_instance = model_instance
     
     def add_highlight(self):
         """Adds highlighting to the search results."""

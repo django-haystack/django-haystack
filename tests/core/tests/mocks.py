@@ -76,3 +76,11 @@ class MockSearchQuery(BaseSearchQuery):
         results = self.backend.search(final_query)
         self._results = results['results'][self.start_offset:self.end_offset]
         self._hit_count = results['hits']
+    
+    def run_mlt(self):
+        # To simulate the chunking behavior of a regular search, return a slice
+        # of our results using start/end offset.
+        final_query = self.build_query()
+        results = self.backend.more_like_this(self._mlt_instance, final_query)
+        self._results = results['results'][self.start_offset:self.end_offset]
+        self._hit_count = results['hits']

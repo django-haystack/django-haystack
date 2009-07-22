@@ -4,7 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
-from haystack.exceptions import MissingDependency
+from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
 try:
     from pysolr import Solr
@@ -127,12 +127,18 @@ class SearchBackend(BaseSearchBackend):
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)
     
-    def more_like_this(self, model_instance, additional_query_string=None):
+    def more_like_this(self, model_instance, additional_query_string=None, start_offset=0, end_offset=None, **kwargs):
         index = self.site.get_index(model_instance.__class__)
         field_name = index.get_content_field()
         params = {
             'fl': '*,score',
         }
+        
+        if start_offset is not None:
+            params['start'] = start_offset
+        
+        if end_offset is not None:
+            params['rows'] = end_offset
         
         if additional_query_string:
             params['fq'] = additional_query_string
@@ -324,3 +330,20 @@ class SearchQuery(BaseSearchQuery):
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
+    
+    def run_mlt(self):
+        """Builds and executes the query. Returns a list of search results."""
+        if self._more_like_this is False or self._mlt_instance is None:
+            raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
+        
+        additional_query_string = self.build_query()
+        kwargs = {
+            'start_offset': self.start_offset,
+        }
+        
+        if self.end_offset is not None:
+            kwargs['end_offset'] = self.end_offset - self.start_offset
+        
+        results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
