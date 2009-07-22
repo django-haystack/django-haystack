@@ -335,6 +335,31 @@ Example::
 
 This method is somewhat naive but works well enough for simple, common cases.
 
+``more_like_this(self, model_instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finds similar results to the object passed in.
+
+You should pass in an instance of a model (for example, one fetched via a
+``get`` in Django's ORM). This will execute a query on the backend that searches
+for similar results. The instance you pass in should be an indexed object.
+Previously called methods will have an effect on the provided results.
+
+It will evaluate its own backend-specific query and populate the
+`SearchQuerySet`` in the same manner as other methods.
+
+Example::
+
+    entry = Entry.objects.get(slug='haystack-one-oh-released')
+    mlt = SearchQuerySet().more_like_this(entry)
+    mlt.count() # 5
+    mlt[0].object.title # "Haystack Beta 1 Released"
+    
+    # ...or...
+    mlt = SearchQuerySet().filter(public=True).exclude(pub_date__lte=datetime.date(2009, 7, 21)).more_like_this(entry)
+    mlt.count() # 2
+    mlt[0].object.title # "Haystack Beta 1 Released"
+
 
 Methods That Do Not Return A ``SearchQuerySet``
 -----------------------------------------------
@@ -379,30 +404,6 @@ found::
     
     # Identical to:
     foo = SearchQuerySet().filter(content='foo').order_by('-pub_date')[0]
-
-``more_like_this(self, model_instance)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Finds similar results to the object passed in.
-
-You should pass in an instance of a model (for example, one fetched via a
-``get`` in Django's ORM). This will execute a query on the backend that searches
-for similar results. The instance you pass in should be an indexed object.
-This method does not actually effect the existing ``SearchQuerySet`` but will
-ignore any existing constraints.
-
-It will evaluate its own backend-specific query and return a dictionary with two
-keys: ``results`` (which will be a list of ``SearchResult`` objects) and
-``hits`` (an integer count of the total number of similar results).
-
-The number of results returned will be backend/configuration specific.
-
-Example::
-
-    entry = Entry.objects.get(slug='haystack-one-oh-released')
-    mlt = SearchQuerySet().more_like_this(entry)
-    mlt['hits'] # 5
-    mlt['results'][0].object.title # "Haystack Beta 1 Released"
 
 ``facet_counts(self)``
 ~~~~~~~~~~~~~~~~~~~~~~

@@ -50,6 +50,12 @@ be sent to the backend.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
+``run_mlt(self)``
+~~~~~~~~~~~~~~~~~
+
+Executes the More Like This. Returns a list of search results similar
+to the provided document (and optionally query).
+
 
 Inheritable Methods
 ===================
@@ -139,10 +145,8 @@ to build queries. It does however populate the results/hit_count.
 ``more_like_this(self, model_instance)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Returns the "More Like This" results received from the backend.
-
-This method does not affect the internal state of the ``SearchQuery`` used
-to build queries. It does however populate the results/hit_count.
+Allows backends with support for "More Like This" to return results
+similar to the provided instance.
 
 ``add_highlight(self)``
 ~~~~~~~~~~~~~~~~~~~~~~~

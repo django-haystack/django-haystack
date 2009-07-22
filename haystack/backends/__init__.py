@@ -408,7 +408,8 @@ class BaseSearchQuery(object):
     
     def more_like_this(self, model_instance):
         """
-        Returns the "More Like This" results received from the backend.
+        Allows backends with support for "More Like This" to return results
+        similar to the provided instance.
         """
         self._more_like_this = True
         self._mlt_instance = model_instance
