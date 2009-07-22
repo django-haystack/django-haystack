@@ -255,13 +255,10 @@ class SearchQuerySet(object):
         
         return clone
     
-    def boost(self, **kwargs):
+    def boost(self, term, boost):
         """Boosts a certain aspect of the query."""
         clone = self._clone()
-        
-        for field, boost_value in kwargs.items():
-            clone.query.add_boost(field, boost_value)
-        
+        clone.query.add_boost(term, boost)
         return clone
     
     def facet(self, field):

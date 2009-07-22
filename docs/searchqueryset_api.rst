@@ -169,16 +169,16 @@ Example::
 
     SearchQuerySet().filter(content='foo').models(BlogEntry, Comment)
 
-``boost(self, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+``boost(self, term, boost_value)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Boosts a certain term of the query. You should provide pairs, where the
-parameter is the term to be boosted and the value is the amount to boost it by.
-Boost amounts may be either an integer or a float.
+Boosts a certain term of the query. You provide the term to be boosted and the
+value is the amount to boost it by. Boost amounts may be either an integer or a
+float.
 
 Example::
 
-    SearchQuerySet().filter(content='foo').boost(bar=1.5)
+    SearchQuerySet().filter(content='foo').boost('bar', 1.5)
 
 ``facet(self, field)``
 ~~~~~~~~~~~~~~~~~~~~~~

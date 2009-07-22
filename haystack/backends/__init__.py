@@ -391,9 +391,9 @@ class BaseSearchQuery(object):
         """Clears any existing limits."""
         self.start_offset, self.end_offset = 0, None
     
-    def add_boost(self, field, boost_value):
-        """Adds a boosted field and the amount to boost it to the query."""
-        self.boost[field] = boost_value
+    def add_boost(self, term, boost_value):
+        """Adds a boosted term and the amount to boost it to the query."""
+        self.boost[term] = boost_value
     
     def raw_search(self, query_string, **kwargs):
         """

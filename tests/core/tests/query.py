@@ -309,7 +309,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs.query.models), 2)
     
     def test_boost(self):
-        sqs = self.bsqs.boost(foo=10)
+        sqs = self.bsqs.boost('foo', 10)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.boost.keys()), 1)
     
