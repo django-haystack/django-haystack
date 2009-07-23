@@ -83,12 +83,15 @@ def autodiscover():
         # to bubble up.
         __import__("%s.search_indexes" % app)
 
+PREVIOUSLY_INITIALIZED = False
+
 # Make sure the site gets loaded.
 def handle_registrations(*args, **kwargs):
     # DRL_TODO: Some day, Django may feature a way to iterate over models without
     #           loading everything (partial load). When that comes, we'll need a
     #           version check here.
-    if not handle_registrations.previously_initialized:
+    global PREVIOUSLY_INITIALIZED
+    if not PREVIOUSLY_INITIALIZED:
         from django.db import models
         
         # Force the AppCache to populate. We need it loaded to be able to
@@ -97,7 +100,6 @@ def handle_registrations(*args, **kwargs):
         models.loading.cache.get_apps()
         
         urlconf = __import__(settings.ROOT_URLCONF)
-        handle_registrations.previously_initialized = True
+        PREVIOUSLY_INITIALIZED = True
 
-handle_registrations.previously_initialized = False
 handle_registrations()
