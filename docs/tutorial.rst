@@ -145,7 +145,9 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
 
 Every custom ``SearchIndex`` requires there be one and only one field with
 ``document=True``. This is the primary field that will get passed to the backend
-for indexing.
+for indexing. The field needs to have the same fieldname on all ``SearchIndex``
+classes.
+
 
 Additionally, if you provide ``use_template=True`` on any fields, you'll then
 need to create a template at ``search/indexes/myapp/note_<fieldname>.txt``. This

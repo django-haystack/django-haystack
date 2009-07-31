@@ -1,6 +1,7 @@
 import datetime
 from django.test import TestCase
 from haystack import indexes
+from haystack.exceptions import SearchFieldError
 from haystack.sites import SearchSite, AlreadyRegistered, NotRegistered
 from core.models import MockModel, AnotherMockModel
 
@@ -21,6 +22,10 @@ class FakeSearchIndex(indexes.BasicSearchIndex):
         # make it here. We rely on the `SearchIndex` tests to ensure correct
         # behavior.
         return True
+
+
+class InvalidSeachIndex(indexes.SearchIndex):
+    document = indexes.CharField(document=True)
 
 
 class SearchSiteTestCase(TestCase):
@@ -79,6 +84,10 @@ class SearchSiteTestCase(TestCase):
         content_field_name, fields = self.site.build_unified_schema()
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}])
+        
+        self.site.unregister(AnotherMockModel)
+        self.site.register(AnotherMockModel, InvalidSeachIndex)
+        self.assertRaises(SearchFieldError, self.site.build_unified_schema)
     
     def test_update_object(self):
         self.site.register(MockModel, FakeSearchIndex)
