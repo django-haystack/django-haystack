@@ -3,13 +3,11 @@ from django.core.management.base import NoArgsCommand
 
 
 class Command(NoArgsCommand):
-    help = "Provides feedback about the current Haystack setup."
+    help = "Clears out any/all data in your search engine's index."
     
     def handle_noargs(self, **options):
-        """Provides feedback about the current Haystack setup."""
+        """Clears out any/all data in your search engine's index."""
         # Cause the default site to load.
-        from django.conf import settings
-        __import__(settings.ROOT_URLCONF)
         from haystack import site
         
         print
