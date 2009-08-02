@@ -20,7 +20,7 @@ Autodiscovery
 Since the common use case is to simply grab everything that is indexed for
 search, there is an autodiscovery mechanism which will pull in and register
 all indexes it finds within your project. To enable this, place the following
-inside your URLconf::
+inside your ``ROOT_URLCONF``::
 
     import haystack
     haystack.autodiscover()

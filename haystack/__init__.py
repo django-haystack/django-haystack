@@ -1,8 +1,6 @@
-import inspect
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import get_resolver
 from haystack.sites import site
 
 
@@ -21,12 +19,12 @@ def load_backend(backend_name):
         # Most of the time, the search backend will be one of the  
         # backends that ships with haystack, so look there first.
         return __import__('haystack.backends.%s_backend' % settings.HAYSTACK_SEARCH_ENGINE, {}, {}, [''])
-    except ImportError:
+    except ImportError, e:
         # If the import failed, we might be looking for a search backend 
         # distributed external to haystack. So we'll try that next.
         try:
             return __import__('%s_backend' % settings.HAYSTACK_SEARCH_ENGINE, {}, {}, [''])
-        except ImportError:
+        except ImportError, e_user:
             # The search backend wasn't found. Display a helpful error message
             # listing all possible (built-in) database backends.
             backend_dir = os.path.join(__path__[0], 'backends')
@@ -55,6 +53,7 @@ def autodiscover():
     Again, almost exactly as django.contrib.admin does things, for consistency.
     """
     import imp
+    from django.conf import settings
 
     for app in settings.INSTALLED_APPS:
         # For each app, we need to look for an search_indexes.py inside that app's
@@ -84,40 +83,23 @@ def autodiscover():
         # to bubble up.
         __import__("%s.search_indexes" % app)
 
+PREVIOUSLY_INITIALIZED = False
 
 # Make sure the site gets loaded.
-def handle_registrations():
-    """
-    Ensures that any configuration of the SearchSite(s) in the URLconfs are
-    handled when importing Haystack.
-    
-    This makes it possible for scripts/management commands that know nothing
-    of Haystack but affect models to keep the index up to date.
-    """
+def handle_registrations(*args, **kwargs):
     # DRL_TODO: Some day, Django may feature a way to iterate over models without
     #           loading everything (partial load). When that comes, we'll need a
     #           version check here.
-    
-    # This is a little dirty but we need to run the code that follows only
-    # once, no matter how many times the main Haystack module is imported.
-    # We'll look through the stack to see if we appear anywhere and simply
-    # return if we do, allowing the original call to finish.
-    stack = inspect.stack()
-    
-    for stack_info in stack[1:]:
-        if 'handle_registrations' in stack_info[3]:
-            return
-    
-    from django.db import models
-    
-    # Force the AppCache to populate. We need it loaded to be able to
-    # register using the generated Model classes, which are only fully there
-    # after the cache is loaded.
-    models.loading.cache.get_apps()
-    
-    # Trigger the parsing of the full URLconf tree so haystack.autodiscover()
-    # can be run in any included URLconf.
-    get_resolver(None).reverse_dict
-
+    global PREVIOUSLY_INITIALIZED
+    if not PREVIOUSLY_INITIALIZED:
+        from django.db import models
+        
+        # Force the AppCache to populate. We need it loaded to be able to
+        # register using the generated Model classes, which are only fully there
+        # after the cache is loaded.
+        models.loading.cache.get_apps()
+        
+        urlconf = __import__(settings.ROOT_URLCONF)
+        PREVIOUSLY_INITIALIZED = True
 
 handle_registrations()
