@@ -207,6 +207,15 @@ class SolrMockModelSearchIndex(indexes.SearchIndex):
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
+class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True)
+    name = indexes.CharField(model_attr='user')
+    pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def prepare_text(self, obj):
+        return u"You might be searching for the user %s" % obj.user
+
+
 class LiveSolrRegressionsTestCase(TestCase):
     fixtures = ['solr_bulk_data.json']
     
@@ -275,10 +284,15 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.old_site = haystack.site
         test_site = SearchSite()
         test_site.register(MockModel, SolrMockModelSearchIndex)
+        test_site.register(AnotherMockModel, SolrAnotherMockModelSearchIndex)
         haystack.site = test_site
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():
+            mock.save()
+        
+        # Force indexing of the content.
+        for mock in AnotherMockModel.objects.all():
             mock.save()
         
         self.sqs = SearchQuerySet()
@@ -294,9 +308,13 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
     
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(mlt.count(), 23)
-        self.assertEqual([result.pk for result in mlt], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '19', '18', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])
+        self.assertEqual(mlt.count(), 25)
+        self.assertEqual([result.pk for result in mlt], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '1', '2', '20', '16', '17', '8', '11'])
         
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
-        self.assertEqual(alt_mlt.count(), 9)
-        self.assertEqual([result.pk for result in alt_mlt], ['23', '13', '17', '16', '22', '19', '4', '10'])
+        self.assertEqual(alt_mlt.count(), 11)
+        self.assertEqual([result.pk for result in alt_mlt], ['23', '13', '17', '16', '22', '19', '4', '10', '1', '2'])
+        
+        alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
+        self.assertEqual(alt_mlt_with_models.count(), 23)
+        self.assertEqual([result.pk for result in alt_mlt_with_models], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])

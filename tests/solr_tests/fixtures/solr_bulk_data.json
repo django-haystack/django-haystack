@@ -235,5 +235,21 @@
       "pub_date": "2009-07-17 00:30:00",
       "tag": 1
     }
+  },
+  {
+    "pk": 1,
+    "model": "core.anothermockmodel",
+    "fields": {
+      "user": "daniel3",
+      "pub_date": "2009-07-17 00:30:00"
+    }
+  },
+  {
+    "pk": 2,
+    "model": "core.anothermockmodel",
+    "fields": {
+      "user": "daniel3",
+      "pub_date": "2009-07-17 00:30:00"
+    }
   }
 ]
