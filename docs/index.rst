@@ -24,6 +24,7 @@ you up and running:
    :maxdepth: 1
    
    views_and_forms
+   glossary
    faq
    installing_search_engines
 

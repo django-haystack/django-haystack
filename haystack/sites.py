@@ -1,5 +1,5 @@
 from django.db.models.base import ModelBase
-from haystack.exceptions import AlreadyRegistered, NotRegistered
+from haystack.exceptions import AlreadyRegistered, NotRegistered, SearchFieldError
 try:
     set
 except NameError:
@@ -110,6 +110,9 @@ class SearchSite(object):
                 }
             
                 if field_object.document is True:
+                    if content_field_name != '' and content_field_name != field_name:
+                        raise SearchFieldError("All SearchIndex fields with 'document=True' must use the same fieldname.")
+                    
                     content_field_name = field_name
             
                 if field_object.indexed is False:

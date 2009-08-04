@@ -30,7 +30,7 @@ capabilities. The general workflow in this regard is:
 
 Haystack provides functionality so that all of the above steps are possible.
 From the ground up, let's build a faceted search setup. This assumes that you 
-have been able to work through the :doc:`tutorial` and have a working Haystack
+have been to work through the :doc:`tutorial` and have a working Haystack
 installation. The same setup from the :doc:`tutorial` applies here.
 
 1. Determine Facets And ``SearchQuerySet``
