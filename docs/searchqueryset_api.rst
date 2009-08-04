@@ -156,11 +156,19 @@ string with a ``-``::
     In general, ordering is locale-specific. Haystack makes no effort to try to
     reconcile differences between characters from different languages. This
     means that accented characters will sort closely with the same character
-    and *NOT* necessarily close to the unaccented form of the character.
+    and **NOT** necessarily close to the unaccented form of the character.
     
     If you want this kind of behavior, you should override the ``prepare_FOO``
     methods on your ``SearchIndex`` objects to transliterate the characters
     as you see fit.
+
+.. warning::
+
+    **Whoosh only** If you're planning on ordering by an ``IntegerField`` using
+    Whoosh, you'll need to adequately zero-pad your numbers in the
+    ``prepare_FOO`` method. This is because Whoosh uses UTF-8 string for
+    everything, and from the schema, there is no way to know how a field should
+    be treated.
 
 ``highlight(self)``
 ~~~~~~~~~~~~~~~~~~~
