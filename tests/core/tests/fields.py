@@ -56,6 +56,13 @@ class IntegerFieldTestCase(TestCase):
         tag_count = IntegerField(model_attr='tag__count')
         
         self.assertEqual(tag_count.prepare(mock), 0)
+        
+        # Simulate null=True.
+        mock = MockModel()
+        mock.pk = None
+        pk_none = IntegerField(model_attr='pk', null=True)
+        
+        self.assertEqual(pk_none.prepare(mock), None)
 
 class FloatFieldTestCase(TestCase):
     def test_init(self):
@@ -70,6 +77,13 @@ class FloatFieldTestCase(TestCase):
         floaty = FloatField(model_attr='floaty')
         
         self.assertEqual(floaty.prepare(mock), 12.5)
+        
+        # Simulate null=True.
+        mock = MockModel()
+        mock.floaty = None
+        floaty_none = FloatField(model_attr='floaty', null=True)
+        
+        self.assertEqual(floaty_none.prepare(mock), None)
 
 class BooleanFieldTestCase(TestCase):
     def test_init(self):

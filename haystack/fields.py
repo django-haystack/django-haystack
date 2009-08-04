@@ -77,7 +77,12 @@ class IntegerField(SearchField):
         super(IntegerField, self).__init__(**kwargs)
     
     def prepare(self, obj):
-        return int(super(IntegerField, self).prepare(obj))
+        prepared = super(IntegerField, self).prepare(obj)
+        
+        if prepared is None:
+            return None
+        
+        return int(prepared)
 
 
 class FloatField(SearchField):
@@ -86,7 +91,12 @@ class FloatField(SearchField):
         super(FloatField, self).__init__(**kwargs)
     
     def prepare(self, obj):
-        return float(super(FloatField, self).prepare(obj))
+        prepared = super(FloatField, self).prepare(obj)
+        
+        if prepared is None:
+            return None
+        
+        return float(prepared)
 
 
 class BooleanField(SearchField):
