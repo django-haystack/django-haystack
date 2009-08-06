@@ -1,3 +1,4 @@
+import inspect
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -9,11 +10,13 @@ __version__ = (1, 0, 0, 'beta')
 __all__ = ['backend']
 
 
-# Load the search backend.
+if not hasattr(settings, "HAYSTACK_SITECONF"):
+    raise ImproperlyConfigured("You must define the HAYSTACK_SITECONF setting before using the search framework.")
 if not hasattr(settings, "HAYSTACK_SEARCH_ENGINE"):
     raise ImproperlyConfigured("You must define the HAYSTACK_SEARCH_ENGINE setting before using the search framework.")
 
 
+# Load the search backend.
 def load_backend(backend_name):
     try:
         # Most of the time, the search backend will be one of the  
@@ -83,23 +86,39 @@ def autodiscover():
         # to bubble up.
         __import__("%s.search_indexes" % app)
 
-PREVIOUSLY_INITIALIZED = False
-
 # Make sure the site gets loaded.
 def handle_registrations(*args, **kwargs):
+    """
+    Ensures that any configuration of the SearchSite(s) are handled when
+    importing Haystack.
+    
+    This makes it possible for scripts/management commands that affect models
+    but know nothing of Haystack to keep the index up to date.
+    """
     # DRL_TODO: Some day, Django may feature a way to iterate over models without
     #           loading everything (partial load). When that comes, we'll need a
     #           version check here.
-    global PREVIOUSLY_INITIALIZED
-    if not PREVIOUSLY_INITIALIZED:
-        from django.db import models
-        
-        # Force the AppCache to populate. We need it loaded to be able to
-        # register using the generated Model classes, which are only fully there
-        # after the cache is loaded.
-        models.loading.cache.get_apps()
-        
-        urlconf = __import__(settings.ROOT_URLCONF)
-        PREVIOUSLY_INITIALIZED = True
+    
+    # This is a little dirty but we need to run the code that follows only
+    # once, no matter how many times the main Haystack module is imported.
+    # We'll look through the stack to see if we appear anywhere and simply
+    # return if we do, allowing the original call to finish.
+    stack = inspect.stack()
+    
+    for stack_info in stack[1:]:
+        if 'handle_registrations' in stack_info[3]:
+            return
+    
+    from django.db import models
+    
+    # Force the AppCache to populate. We need it loaded to be able to
+    # register using the generated Model classes, which are only fully there
+    # after the cache is loaded.
+    models.loading.cache.get_apps()
+    
+    # Pull in the config file, causing any SearchSite initialization code to
+    # execute.
+    search_sites_conf = __import__(settings.HAYSTACK_SITECONF)
+
 
 handle_registrations()

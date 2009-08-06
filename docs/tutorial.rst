@@ -35,8 +35,15 @@ In ``settings.py``, add ``haystack`` to ``INSTALLED_APPS``.
 2. Modify Your ``settings.py``
 ------------------------------
 
-Within your ``settings.py``, you'll need to add a setting to indicate which
-backend to use, as well as other settings for that backend.
+Within your ``settings.py``, you'll need to add a setting to indicate where your
+site configuration file will live and which backend to use, as well as other settings for that backend.
+
+``HAYSTACK_SITECONF`` is a required settings and should provide a Python import
+path to a file where you keep your ``SearchSite`` configurations in. This will
+be explained in the next step, but for now, add the following settings
+(substituting your correct information) and create an empty file at that path::
+
+    HAYSTACK_SITECONF = 'myproject.search_sites'
 
 ``HAYSTACK_SEARCH_ENGINE`` is a required setting and should be one of the following:
 
@@ -77,15 +84,15 @@ Example::
 3. Create A ``SearchIndex``
 ---------------------------
 
-Within your URLconf, add the following code::
+Within the empty file you create corresponding to your ``HAYSTACK_SITECONF``,
+add the following code::
 
     import haystack
-    
     haystack.autodiscover()
 
 This will create a default ``SearchIndex`` instance, search through all of your
-INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndexes`` with the
-default ``SearchIndex``.
+INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndexes`` with
+the default ``SearchIndex``.
 
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
 register models in the following manner::

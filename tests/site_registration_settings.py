@@ -5,7 +5,7 @@ INSTALLED_APPS += [
     'site_registration',
 ]
 
-ROOT_URLCONF = 'site_registration.manual_urls'
+HAYSTACK_SITECONF = 'site_registration.search_sites'
 
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 HAYSTACK_WHOOSH_PATH = os.path.join('tmp', 'test_whoosh_query')

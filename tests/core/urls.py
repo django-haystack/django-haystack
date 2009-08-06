@@ -4,10 +4,6 @@ from haystack.query import SearchQuerySet
 from haystack.views import SearchView, FacetedSearchView
 
 
-import haystack
-haystack.autodiscover()
-
-
 urlpatterns = patterns('haystack.views',
     url(r'^$', SearchView(load_all=False), name='haystack_search'),
     url(r'^faceted/$', FacetedSearchView(searchqueryset=SearchQuerySet().facet('author')), name='haystack_faceted_search'),

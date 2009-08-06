@@ -22,7 +22,16 @@ class ManualSiteRegistrationTestCase(TestCase):
 
 
 class AutoSiteRegistrationTestCase(TestCase):
-    urls = 'site_registration.auto_urls'
+    def setUp(self):
+        super(AutoSiteRegistrationTestCase, self).setUp()
+        
+        # Stow.
+        import haystack
+        self.old_site = haystack.site
+        test_site = haystack.sites.SearchSite()
+        haystack.site = test_site
+        
+        haystack.autodiscover()
     
     def test_registrations(self):
         from haystack import backend

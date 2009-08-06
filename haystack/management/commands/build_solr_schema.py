@@ -11,7 +11,6 @@ class Command(NoArgsCommand):
         """Generates a Solr schema that reflects the indexes."""
         # Cause the default site to load.
         from django.conf import settings
-        __import__(settings.ROOT_URLCONF)
         from haystack import site
         
         default_operator = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR)
