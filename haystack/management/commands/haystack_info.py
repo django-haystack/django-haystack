@@ -7,8 +7,6 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         """Provides feedback about the current Haystack setup."""
         # Cause the default site to load.
-        from django.conf import settings
-        __import__(settings.ROOT_URLCONF)
         from haystack import site
         
         index_count = len(site.get_indexed_models())

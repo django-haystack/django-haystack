@@ -64,7 +64,12 @@ class SearchResult(object):
         return force_unicode(capfirst(self.model._meta.verbose_name))
     
     verbose_name = property(_get_verbose_name)
-
+    
+    def _get_verbose_name_plural(self):
+        return force_unicode(capfirst(self.model._meta.verbose_name_plural))
+    
+    verbose_name_plural = property(_get_verbose_name_plural)
+    
     def content_type(self):
         """Returns the content type for the result's model instance."""
         return unicode(self.model._meta)

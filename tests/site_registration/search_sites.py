@@ -1,5 +1,3 @@
-from django.conf.urls.defaults import *
-
 from haystack import indexes
 from haystack import site
 from site_registration.models import Foo, Bar
@@ -9,7 +7,3 @@ class FooIndex(indexes.SearchIndex):
 
 site.register(Foo, FooIndex)
 site.register(Bar)
-
-urlpatterns = patterns('',
-    (r'^search/', include('haystack.urls')),
-)
