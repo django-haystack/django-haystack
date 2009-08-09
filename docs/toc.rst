@@ -14,6 +14,7 @@ Table Of Contents
    settings
    faq
    
+   best_practices
    faceting
    
    searchqueryset_api

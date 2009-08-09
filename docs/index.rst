@@ -38,6 +38,7 @@ you may want to include in your application.
 .. toctree::
    :maxdepth: 1
    
+   best_practices
    faceting
 
 
