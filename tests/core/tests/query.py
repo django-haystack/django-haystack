@@ -5,7 +5,7 @@ from haystack.backends import QueryFilter, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel
 from core.tests.mocks import MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
@@ -434,3 +434,28 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.filter(content='bar')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filters), 1)
+    
+    def test_none(self):
+        sqs = self.bsqs.none()
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)
+
+
+class EmptySearchQuerySetTestCase(TestCase):
+    def setUp(self):
+        super(EmptySearchQuerySetTestCase, self).setUp()
+        self.esqs = EmptySearchQuerySet()
+    
+    def test_get_count(self):
+        self.assertEqual(self.esqs.count(), 0)
+        self.assertEqual(len(self.esqs.all()), 0)
+    
+    def test_filter(self):
+        sqs = self.esqs.filter(content='foo')
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)
+    
+    def test_exclude(self):
+        sqs = self.esqs.exclude(content='foo')
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)

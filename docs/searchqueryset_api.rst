@@ -93,6 +93,12 @@ Methods That Return A ``SearchQuerySet``
 Returns all results for the query. This is largely a no-op (returns an identical
 copy) but useful for denoting exactly what behavior is going on.
 
+``none(self):``
+~~~~~~~~~~~~~~~
+
+Returns an ``EmptySearchQuerySet`` that behaves like a ``SearchQuerySet`` but
+always yields no results.
+
 ``filter(self, **kwargs)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -508,3 +514,11 @@ Example::
     # Other usages look like:
     SearchQuerySet().filter(pub_date__gte=datetime.date(2008, 1, 1), pub_date__lt=datetime.date(2009, 1, 1))
     SearchQuerySet().filter(author__in=['daniel', 'john', 'jane'])
+
+
+``EmptySearchQuerySet``
+=======================
+
+Also included in Haystack is an ``EmptySearchQuerySet`` class. It behaves just
+like ``SearchQuerySet`` but will always return zero results. This is useful for
+places where you want no query to occur or results to be returned.
