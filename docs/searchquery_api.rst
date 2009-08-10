@@ -50,14 +50,11 @@ be sent to the backend.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``clean(self, query_fragment)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``run_mlt(self)``
+~~~~~~~~~~~~~~~~~
 
-Provides a mechanism for sanitizing user input before presenting the
-value to the backend.
-
-This method MUST be implemented by each backend, as it will be highly
-specific to each one.
+Executes the More Like This. Returns a list of search results similar
+to the provided document (and optionally query).
 
 
 Inheritable Methods
@@ -65,6 +62,14 @@ Inheritable Methods
 
 The following methods have a complete implementation in the base class and
 can largely be used unchanged.
+
+``clean(self, query_fragment)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Provides a mechanism for sanitizing user input before presenting the
+value to the backend.
+
+A basic (override-able) implementation is provided.
 
 ``get_count(self)``
 ~~~~~~~~~~~~~~~~~~~
@@ -124,10 +129,10 @@ Restricts the query by altering either the start, end or both offsets.
 
 Clears any existing limits.
 
-``add_boost(self, field, boost_value)``
+``add_boost(self, term, boost_value)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Adds a boosted field and the amount to boost it to the query.
+Adds a boosted term and the amount to boost it to the query.
 
 ``raw_search(self, query_string, **kwargs)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,10 +145,8 @@ to build queries. It does however populate the results/hit_count.
 ``more_like_this(self, model_instance)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Returns the "More Like This" results received from the backend.
-
-This method does not affect the internal state of the ``SearchQuery`` used
-to build queries. It does however populate the results/hit_count.
+Allows backends with support for "More Like This" to return results
+similar to the provided instance.
 
 ``add_highlight(self)``
 ~~~~~~~~~~~~~~~~~~~~~~~

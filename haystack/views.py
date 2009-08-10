@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -48,9 +48,9 @@ class SearchView(object):
         Instantiates the form the class should use to process the search query.
         """
         if self.searchqueryset is None:
-            return self.form_class(self.request.GET)
+            return self.form_class(self.request.GET, load_all=self.load_all)
         
-        return self.form_class(self.request.GET, searchqueryset=self.searchqueryset)
+        return self.form_class(self.request.GET, searchqueryset=self.searchqueryset, load_all=self.load_all)
     
     def get_query(self):
         """
@@ -85,8 +85,8 @@ class SearchView(object):
         paginator = Paginator(self.results, RESULTS_PER_PAGE)
         
         try:
-            page = paginator.page(int(self.request.GET.get('page', 1)))
-        except ValueError:
+            page = paginator.page(self.request.GET.get('page', 1))
+        except InvalidPage:
             raise Http404
         
         return (paginator, page)

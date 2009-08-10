@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
+import re
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
-from haystack.exceptions import SearchBackendError
+from haystack.exceptions import SearchBackendError, MoreLikeThisError
 try:
     set
 except NameError:
     from sets import Set as set
 
 
+IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')
+
+
 class BaseSearchBackend(object):
+    # Backends should include their own reserved words/characters.
+    RESERVED_WORDS = []
+    RESERVED_CHARACTERS = []
+    
     """
     Abstract search engine base class.
     """
@@ -17,16 +25,23 @@ class BaseSearchBackend(object):
         if site is not None:
             self.site = site
         else:
-            from haystack.sites import site
+            from haystack import site
             self.site = site
     
-    def get_identifier(self, obj):
+    def get_identifier(self, obj_or_string):
         """
-        Get an unique identifier for the object.
+        Get an unique identifier for the object or a string representing the
+        object.
 
         If not overridden, uses <app_label>.<object_name>.<pk>.
         """
-        return u"%s.%s.%s" % (obj._meta.app_label, obj._meta.module_name, obj._get_pk_val())
+        if isinstance(obj_or_string, basestring):
+            if not IDENTIFIER_REGEX.match(obj_or_string):
+                raise AttributeError("Provided string '%s' is not a valid identifier." % obj_or_string)
+            
+            return obj_or_string
+        
+        return u"%s.%s.%s" % (obj_or_string._meta.app_label, obj_or_string._meta.module_name, obj_or_string._get_pk_val())
 
     def update(self, index, iterable):
         """
@@ -38,9 +53,11 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def remove(self, obj):
+    def remove(self, obj_or_string):
         """
-        Removes a document/object from the backend.
+        Removes a document/object from the backend. Can be either a model
+        instance or the identifier (i.e. ``app_name.model_name.id``) in the
+        event the object no longer exists.
         
         This method MUST be implemented by each backend, as it will be highly
         specific to each one.
@@ -81,7 +98,7 @@ class BaseSearchBackend(object):
         """
         return force_unicode(value)
     
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, additional_query_string=None):
         """
         Takes a model object and returns results the backend thinks are similar.
         
@@ -188,6 +205,8 @@ class BaseSearchQuery(object):
         self.date_facets = {}
         self.query_facets = {}
         self.narrow_queries = set()
+        self._more_like_this = False
+        self._mlt_instance = None
         self._results = None
         self._hit_count = None
         self._facet_counts = None
@@ -227,6 +246,19 @@ class BaseSearchQuery(object):
         self._facet_counts = results.get('facets', {})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
     
+    def run_mlt(self):
+        """
+        Executes the More Like This. Returns a list of search results similar
+        to the provided document (and optionally query).
+        """
+        if self._more_like_this is False or self._mlt_instance is None:
+            raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
+        
+        additional_query_string = self.build_query()
+        results = self.backend.more_like_this(self._mlt_instance, additional_query_string)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
+    
     def get_count(self):
         """
         Returns the number of results the backend found for the query.
@@ -235,7 +267,11 @@ class BaseSearchQuery(object):
         the results.
         """
         if self._hit_count is None:
-            self.run()
+            if self._more_like_this:
+                # Special case for MLT.
+                self.run_mlt()
+            else:
+                self.run()
         
         return self._hit_count
     
@@ -247,7 +283,11 @@ class BaseSearchQuery(object):
         the results.
         """
         if self._results is None:
-            self.run()
+            if self._more_like_this:
+                # Special case for MLT.
+                self.run_mlt()
+            else:
+                self.run()
         
         return self._results
     
@@ -293,10 +333,21 @@ class BaseSearchQuery(object):
         Provides a mechanism for sanitizing user input before presenting the
         value to the backend.
         
-        This method MUST be implemented by each backend, as it will be highly
-        specific to each one.
+        A basic (override-able) implementation is provided.
         """
-        raise NotImplementedError("Subclasses must provide a way to sanitize a portion of the query via the 'clean' method.")
+        words = query_fragment.split()
+        cleaned_words = []
+        
+        for word in words:
+            if word in self.backend.RESERVED_WORDS:
+                word = word.replace(word, word.lower())
+        
+            for char in self.backend.RESERVED_CHARACTERS:
+                word = word.replace(char, '\\%s' % char)
+            
+            cleaned_words.append(word)
+        
+        return ' '.join(cleaned_words)
     
     
     # Standard methods to alter the query.
@@ -340,9 +391,9 @@ class BaseSearchQuery(object):
         """Clears any existing limits."""
         self.start_offset, self.end_offset = 0, None
     
-    def add_boost(self, field, boost_value):
-        """Adds a boosted field and the amount to boost it to the query."""
-        self.boost[field] = boost_value
+    def add_boost(self, term, boost_value):
+        """Adds a boosted term and the amount to boost it to the query."""
+        self.boost[term] = boost_value
     
     def raw_search(self, query_string, **kwargs):
         """
@@ -357,14 +408,11 @@ class BaseSearchQuery(object):
     
     def more_like_this(self, model_instance):
         """
-        Returns the "More Like This" results received from the backend.
-        
-        This method does not affect the internal state of the SearchQuery used
-        to build queries. It does however populate the results/hit_count.
+        Allows backends with support for "More Like This" to return results
+        similar to the provided instance.
         """
-        results = self.backend.more_like_this(model_instance)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
+        self._more_like_this = True
+        self._mlt_instance = model_instance
     
     def add_highlight(self):
         """Adds highlighting to the search results."""
@@ -385,6 +433,16 @@ class BaseSearchQuery(object):
     def add_narrow_query(self, query):
         """Adds a existing facet on a field."""
         self.narrow_queries.add(query)
+    
+    def _reset(self):
+        """
+        Resets the instance's internal state to appear as though no query has
+        been run before. Only need to tweak a few variables we check.
+        """
+        self._results = None
+        self._hit_count = None
+        self._facet_counts = None
+        self._spelling_suggestion = None
     
     def _clone(self, klass=None):
         if klass is None:

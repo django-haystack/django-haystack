@@ -30,4 +30,3 @@ Responsible for taking structured data about the query and converting it into a
 backend appropriate format.
 
 * Method for creating the backend specific query - ``build_query``.
-* Method for sanitizing user queries - ``clean``.

@@ -1,14 +1,17 @@
 import datetime
 from optparse import make_option
+from django.conf import settings
 from django.core.management.base import AppCommand, CommandError
+from django.db import reset_queries
 from django.utils.encoding import smart_str
 
 
-DEFAULT_BATCH_SIZE = 1000
+DEFAULT_BATCH_SIZE = getattr(settings, 'HAYSTACK_BATCH_SIZE', 1000)
 DEFAULT_AGE = None
 
 
 class Command(AppCommand):
+    help = "Reindex the given app(s)."
     option_list = AppCommand.option_list + (
         make_option('-a', '--age', action='store', dest='age',
             default=DEFAULT_AGE, type='int',
@@ -18,12 +21,22 @@ class Command(AppCommand):
             default=DEFAULT_BATCH_SIZE, type='int',
             help='Number of items to index at once.'
         ),
-        # make_option('--verbosity', action='store', dest='verbosity', default='1',
-        #     type='choice', choices=['0', '1', '2'],
-        #     help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'
-        # ),
     )
-    help = "Reindex the given app(s)."
+    
+    # Django 1.0.X compatibility.
+    verbosity_present = False
+    
+    for option in option_list:
+        if option.get_opt_string() == '--verbosity':
+            verbosity_present = True
+    
+    if verbosity_present is False:
+        option_list = option_list + (
+            make_option('--verbosity', action='store', dest='verbosity', default='1',
+                type='choice', choices=['0', '1', '2'],
+                help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'
+            ),
+        )
 
     def handle(self, *apps, **options):
         self.verbosity = int(options.get('verbosity', 1))
@@ -41,7 +54,8 @@ class Command(AppCommand):
         handle_registrations()
         
         from django.db.models import get_models
-        from haystack.sites import site, NotRegistered
+        from haystack import site
+        from haystack.exceptions import NotRegistered
 
         for model in get_models(app):
             try:
@@ -79,3 +93,6 @@ class Command(AppCommand):
                 # in memory. Useful when reindexing large amounts of data.
                 small_cache_qs = qs.all()
                 index.backend.update(index, small_cache_qs[start:end])
+                
+                # Clear out the DB connections queries because it bloats up RAM.
+                reset_queries()

@@ -1,10 +1,11 @@
 import datetime
 from django.test import TestCase
+import haystack
 from haystack.backends import QueryFilter, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel
 from core.tests.mocks import MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
@@ -59,9 +60,6 @@ class BaseSearchQueryTestCase(TestCase):
     
     def test_build_query(self):
         self.assertRaises(NotImplementedError, self.bsq.build_query)
-    
-    def test_clean(self):
-        self.assertRaises(NotImplementedError, self.bsq.clean, 'foo')
     
     def test_add_filter(self):
         self.assertEqual(len(self.bsq.query_filters), 0)
@@ -171,9 +169,18 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(self.bsq.narrow_queries, set(['foo:bar', 'moof:baz']))
     
     def test_run(self):
+        # Stow.
+        old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+        
         msq = MockSearchQuery(backend=MockSearchBackend())
         self.assertEqual(len(msq.get_results()), 100)
         self.assertEqual(msq.get_results()[0], MOCK_SEARCH_RESULTS[0])
+        
+        # Restore.
+        haystack.site = old_site
     
     def test_clone(self):
         self.bsq.add_filter('foo', 'bar')
@@ -210,6 +217,17 @@ class SearchQuerySetTestCase(TestCase):
         super(SearchQuerySetTestCase, self).setUp()
         self.bsqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
         self.msqs = SearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+    
+    def tearDown(self):
+        # Restore.
+        haystack.site = self.old_site
+        super(SearchQuerySetTestCase, self).tearDown()
     
     def test_len(self):
         # Dummy always returns 0.
@@ -238,6 +256,8 @@ class SearchQuerySetTestCase(TestCase):
     def test_fill_cache(self):
         results = self.msqs.all()
         self.assertEqual(len(results._result_cache), 0)
+        results._fill_cache()
+        self.assertEqual(len(results._result_cache), 10)
         results._fill_cache()
         self.assertEqual(len(results._result_cache), 20)
     
@@ -289,7 +309,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs.query.models), 2)
     
     def test_boost(self):
-        sqs = self.bsqs.boost(foo=10)
+        sqs = self.bsqs.boost('foo', 10)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.boost.keys()), 1)
     
@@ -309,9 +329,23 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(self.bsqs.raw_search('content__exact hello AND content__exact world')), 1)
     
     def test_load_all(self):
+        # If nothing is registered, you get nothing.
+        haystack.site.unregister(MockModel)
         sqs = self.msqs.load_all()
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(sqs[0].object.foo, 'bar')
+        self.assertEqual(len(sqs), 0)
+        
+        # For full tests, see the solr_backend.
+    
+    def test_load_all_queryset(self):
+        sqs = self.msqs.load_all()
+        self.assertEqual(len(sqs._load_all_querysets), 0)
+        
+        sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs._load_all_querysets), 1)
+        
+        # For full tests, see the solr_backend.
     
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
@@ -400,3 +434,28 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.filter(content='bar')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filters), 1)
+    
+    def test_none(self):
+        sqs = self.bsqs.none()
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)
+
+
+class EmptySearchQuerySetTestCase(TestCase):
+    def setUp(self):
+        super(EmptySearchQuerySetTestCase, self).setUp()
+        self.esqs = EmptySearchQuerySet()
+    
+    def test_get_count(self):
+        self.assertEqual(self.esqs.count(), 0)
+        self.assertEqual(len(self.esqs.all()), 0)
+    
+    def test_filter(self):
+        sqs = self.esqs.filter(content='foo')
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)
+    
+    def test_exclude(self):
+        sqs = self.esqs.exclude(content='foo')
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)

@@ -10,8 +10,14 @@ apps, ``django.contrib``, etc.) as well as customize on a per-site basis what
 indexes should be available (different indexes for different sites, same
 codebase).
 
-A ``SearchSite`` instance should be instantiated in your URLconf, since all
-models will have been loaded by that point.
+A ``SearchSite`` instance(s) should be configured within a configuration file, which gets specified in your settings file as ``HAYSTACK_SITECONF``. An example of this setting might be ``myproject.search_sites``.
+
+.. warning::
+
+    For a long time before the 1.0 release of Haystack, the convention was to
+    place this configuration within your URLconf. This is no longer recommended
+    as it can cause issues in certain production setups (Django 1.1+/mod_wsgi
+    for example).
 
 
 Autodiscovery
@@ -20,7 +26,7 @@ Autodiscovery
 Since the common use case is to simply grab everything that is indexed for
 search, there is an autodiscovery mechanism which will pull in and register
 all indexes it finds within your project. To enable this, place the following
-inside your ``ROOT_URLCONF``::
+code inside the file you specified as your ``HAYSTACK_SITECONF``::
 
     import haystack
     haystack.autodiscover()
@@ -50,7 +56,7 @@ you don't want.::
 
 Alternatively, you can manually register only the indexes you want.::
 
-    from haystack.sites import site
+    from haystack import site
     from ratings.models import Rating
     from ratings.search_indexes import RatingIndex
     
@@ -102,3 +108,19 @@ field. Valid keys are 'field', 'type', 'indexed' and 'multi_valued'.
 
 With no arguments, it will pull in the main site to discover the available
 SearchIndexes.
+
+``update_object(self, instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Updates the instance's data in the index.
+
+A shortcut for updating on the instance's index. Errors from `get_index`
+and `update_object` will be allowed to propogate.
+
+``remove_object(self, instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Removes the instance's data in the index.
+
+A shortcut for removing on the instance's index. Errors from `get_index`
+and `remove_object` will be allowed to propogate.

@@ -23,6 +23,25 @@ Valid options are::
 Defaults to ``AND``.
 
 
+``HAYSTACK_SITECONF``
+=====================
+
+**Required**
+
+This setting controls what module should be loaded to setup your ``SearchSite``.
+The module should be on your ``PYTHONPATH`` and should contain only the calls
+necessary to setup Haystack to your needs.
+
+The convention is to name this file ``search_sites`` and place it in the same
+directory as your ``settings.py`` and/or ``urls.py``.
+
+Valid options are::
+
+    HAYSTACK_SITECONF = 'myproject.search_sites'
+
+No default is provided.
+
+
 ``HAYSTACK_SEARCH_ENGINE``
 ==========================
 
@@ -88,6 +107,20 @@ Examples::
 No default is provided.
 
 
+``HAYSTACK_SOLR_TIMEOUT``
+=========================
+
+**Optional when using the ``solr`` backend**
+
+This setting controls the time to wait for a response from Solr in seconds.
+
+Examples::
+
+    HAYSTACK_SOLR_TIMEOUT = 30
+
+The default is 10 seconds.
+
+
 ``HAYSTACK_WHOOSH_PATH``
 ========================
 
@@ -107,3 +140,19 @@ An example::
     HAYSTACK_WHOOSH_PATH = '/home/mysite/whoosh_index'
 
 No default is provided.
+
+
+``HAYSTACK_BATCH_SIZE``
+=======================
+
+**Optional**
+
+This setting controls the number of model instances loaded at a time while
+reindexing. This affects how often the search indexes must merge (an intensive
+operation).
+
+An example::
+
+    HAYSTACK_BATCH_SIZE = 100
+
+The default is 1000 models per commit.

@@ -1,38 +1,42 @@
 import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
-from haystack.exceptions import MissingDependency
+from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
 try:
     from pysolr import Solr
 except ImportError:
     raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
 
-# Word reserved by Solr for special use.
-RESERVED_WORDS = (
-    'AND',
-    'NOT',
-    'OR',
-    'TO',
-)
-
-# Characters reserved by Solr for special use.
-# The '\\' must come first, so as not to overwrite the other slash replacements.
-RESERVED_CHARACTERS = (
-    '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}', 
-    '[', ']', '^', '"', '~', '*', '?', ':',
-)
-
 
 class SearchBackend(BaseSearchBackend):
-    def __init__(self):
+    # Word reserved by Solr for special use.
+    RESERVED_WORDS = (
+        'AND',
+        'NOT',
+        'OR',
+        'TO',
+    )
+    
+    # Characters reserved by Solr for special use.
+    # The '\\' must come first, so as not to overwrite the other slash replacements.
+    RESERVED_CHARACTERS = (
+        '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}',
+        '[', ']', '^', '"', '~', '*', '?', ':',
+    )
+    
+    def __init__(self, site=None):
+        super(SearchBackend, self).__init__(site)
+        
         if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
         
-        self.conn = Solr(settings.HAYSTACK_SOLR_URL)
-
+        timeout = getattr(settings, 'HAYSTACK_SOLR_TIMEOUT', 10)
+        self.conn = Solr(settings.HAYSTACK_SOLR_URL, timeout=timeout)
+    
     def update(self, index, iterable, commit=True):
         docs = []
         
@@ -49,8 +53,8 @@ class SearchBackend(BaseSearchBackend):
         
         self.conn.add(docs, commit=commit)
 
-    def remove(self, obj, commit=True):
-        solr_id = self.get_identifier(obj)
+    def remove(self, obj_or_string, commit=True):
+        solr_id = self.get_identifier(obj_or_string)
         self.conn.delete(id=solr_id, commit=commit)
 
     def clear(self, models=[], commit=True):
@@ -123,15 +127,29 @@ class SearchBackend(BaseSearchBackend):
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)
     
-    def more_like_this(self, model_instance):
-        from haystack.sites import site, NotRegistered
-        index = site.get_index(model_instance.__class__)
-        field_name = index.get_content_field()    
-        raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, fl='*,score')
+    def more_like_this(self, model_instance, additional_query_string=None, start_offset=0, end_offset=None, **kwargs):
+        index = self.site.get_index(model_instance.__class__)
+        field_name = index.get_content_field()
+        params = {
+            'fl': '*,score',
+        }
+        
+        if start_offset is not None:
+            params['start'] = start_offset
+        
+        if end_offset is not None:
+            params['rows'] = end_offset
+        
+        if additional_query_string:
+            params['fq'] = additional_query_string
+        
+        raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, **params)
         return self._process_results(raw_results)
     
     def _process_results(self, raw_results, highlight=False):
+        from haystack import site
         results = []
+        hits = raw_results.hits
         facets = {}
         spelling_suggestion = None
         
@@ -155,8 +173,10 @@ class SearchBackend(BaseSearchBackend):
                     # collated result from the end.
                     spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
         
+        indexed_models = site.get_indexed_models()
+        
         for raw_result in raw_results.docs:
-            app_label, module_name = raw_result['django_ct'].split('.')
+            app_label, model_name = raw_result['django_ct'].split('.')
             additional_fields = {}
             
             for key, value in raw_result.items():
@@ -169,12 +189,20 @@ class SearchBackend(BaseSearchBackend):
             if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
                 additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
             
-            result = SearchResult(app_label, module_name, raw_result['django_id'], raw_result['score'], **additional_fields)
-            results.append(result)
+            model = get_model(app_label, model_name)
+            
+            if model:
+                if model in indexed_models:
+                    result = SearchResult(app_label, model_name, raw_result['django_id'], raw_result['score'], **additional_fields)
+                    results.append(result)
+                else:
+                    hits -= 1
+            else:
+                hits -= 1
         
         return {
             'results': results,
-            'hits': raw_results.hits,
+            'hits': hits,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
         }
@@ -234,7 +262,7 @@ class SearchQuery(BaseSearchQuery):
                         in_options = []
                         
                         for possible_value in value:
-                            in_options.append("%s:%s" % (the_filter.field, possible_value))
+                            in_options.append('%s:"%s"' % (the_filter.field, self.backend.conn._from_python(possible_value)))
                         
                         query_chunks.append("(%s)" % " OR ".join(in_options))
             
@@ -260,22 +288,6 @@ class SearchQuery(BaseSearchQuery):
             final_query = "%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
-    
-    def clean(self, query_fragment):
-        """Sanitizes a fragment from using reserved character/words."""
-        words = query_fragment.split()
-        cleaned_words = []
-        
-        for word in words:
-            if word in RESERVED_WORDS:
-                word = word.replace(word, word.lower())
-        
-            for char in RESERVED_CHARACTERS:
-                word = word.replace(char, '\\%s' % char)
-            
-            cleaned_words.append(word)
-        
-        return " ".join(cleaned_words)
     
     def run(self):
         """Builds and executes the query. Returns a list of search results."""
@@ -318,3 +330,20 @@ class SearchQuery(BaseSearchQuery):
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
+    
+    def run_mlt(self):
+        """Builds and executes the query. Returns a list of search results."""
+        if self._more_like_this is False or self._mlt_instance is None:
+            raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
+        
+        additional_query_string = self.build_query()
+        kwargs = {
+            'start_offset': self.start_offset,
+        }
+        
+        if self.end_offset is not None:
+            kwargs['end_offset'] = self.end_offset - self.start_offset
+        
+        results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)

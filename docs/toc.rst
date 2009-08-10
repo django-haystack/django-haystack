@@ -6,6 +6,7 @@ Table Of Contents
    
    index
    tutorial
+   glossary
    views_and_forms
    architecture_overview
    backend_support
@@ -13,10 +14,12 @@ Table Of Contents
    settings
    faq
    
+   best_practices
    faceting
    
    searchqueryset_api
    searchindex_api
+   searchresult_api
    searchsite_api
    searchquery_api
    searchbackend_api

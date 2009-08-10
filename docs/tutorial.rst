@@ -35,8 +35,15 @@ In ``settings.py``, add ``haystack`` to ``INSTALLED_APPS``.
 2. Modify Your ``settings.py``
 ------------------------------
 
-Within your ``settings.py``, you'll need to add a setting to indicate which
-backend to use, as well as other settings for that backend.
+Within your ``settings.py``, you'll need to add a setting to indicate where your
+site configuration file will live and which backend to use, as well as other settings for that backend.
+
+``HAYSTACK_SITECONF`` is a required settings and should provide a Python import
+path to a file where you keep your ``SearchSite`` configurations in. This will
+be explained in the next step, but for now, add the following settings
+(substituting your correct information) and create an empty file at that path::
+
+    HAYSTACK_SITECONF = 'myproject.search_sites'
 
 ``HAYSTACK_SEARCH_ENGINE`` is a required setting and should be one of the following:
 
@@ -57,7 +64,9 @@ Requires setting ``HAYSTACK_SOLR_URL`` to be the URL where your Solr is running 
 
 Example::
 
-    HAYSTACK_SOLR_URL = 'http://127.0.0.1:9000/solr/mysite'
+    HAYSTACK_SOLR_URL = 'http://127.0.0.1:8983/solr'
+    # ...or for multicore...
+    HAYSTACK_SOLR_URL = 'http://127.0.0.1:8983/solr/mysite'
 
 
 Whoosh
@@ -75,20 +84,20 @@ Example::
 3. Create A ``SearchIndex``
 ---------------------------
 
-Within your URLconf, add the following code::
+Within the empty file you create corresponding to your ``HAYSTACK_SITECONF``,
+add the following code::
 
     import haystack
-    
     haystack.autodiscover()
 
 This will create a default ``SearchIndex`` instance, search through all of your
-INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndexes`` with the
-default ``SearchIndex``.
+INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndexes`` with
+the default ``SearchIndex``.
 
 If autodiscovery and inclusion of all indexes is not desirable, you can manually
 register models in the following manner::
 
-    from haystack.sites import site
+    from haystack import site
     
     site.register(Note)
 
@@ -97,7 +106,7 @@ model gets registered with a standard ``SearchIndex`` class. If you need to over
 this class and provide additional functionality, you can manually register your
 own indexes like::
 
-    from haystack.sites import site
+    from haystack import site
     
     site.register(Note, NoteIndex)
 
@@ -125,7 +134,7 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
 
     import datetime
     from haystack import indexes
-    from haystack.sites import site
+    from haystack import site
     from myapp.models import Note
     
     
@@ -141,12 +150,16 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
     
     site.register(Note, NoteIndex)
 
-Every custom ``SearchIndex`` requires there be one and only one field with ``document=True``.
-This is the primary field that will get passed to the backend for indexing. For
-this field, you'll then need to create a template at 
-``search/indexes/myapp/note_text.txt``. This allows you to customize the document 
-that will be passed to the search backend for indexing. A sample template
-might look like::
+Every custom ``SearchIndex`` requires there be one and only one field with
+``document=True``. This is the primary field that will get passed to the backend
+for indexing. The field needs to have the same fieldname on all ``SearchIndex``
+classes.
+
+
+Additionally, if you provide ``use_template=True`` on any fields, you'll then
+need to create a template at ``search/indexes/myapp/note_<fieldname>.txt``. This
+allows you to customize the contents of the field in a way that will mean more
+to the search engine. A sample template for the ``text`` field might look like::
 
     {{ object.title }}
     Written by {{ object.user.full_name }}
@@ -159,6 +172,12 @@ well as the date the document was published. The variable you assign the
 SearchField to should directly map to the field your search backend is 
 expecting. You instantiate most search fields with a parameter that points to
 the attribute of the object to populate that field with.
+
+.. note::
+
+    There is nothing special about the ``text`` field name used in all of the
+    examples. It could be anything; you could call it ``pink_polka_dot`` and
+    it won't matter. It's simply a convention to call it ``text``.
 
 The exception to this is the ``TemplateField`` class.
 This take either no arguments or an explicit template name to populate their contents.

@@ -1,8 +1,5 @@
-from django.db.models import signals
 from django.db.models.base import ModelBase
-from haystack.exceptions import AlreadyRegistered, NotRegistered
-from haystack.indexes import BasicSearchIndex
-from haystack.fields import *
+from haystack.exceptions import AlreadyRegistered, NotRegistered, SearchFieldError
 try:
     set
 except NameError:
@@ -38,6 +35,7 @@ class SearchSite(object):
         to the model.
         """
         if not index_class:
+            from haystack.indexes import BasicSearchIndex
             index_class = BasicSearchIndex
         
         if not isinstance(model, ModelBase):
@@ -47,7 +45,7 @@ class SearchSite(object):
             raise AlreadyRegistered('The model %s is already registered' % model.__class__)
         
         self._registry[model] = index_class(model)
-        self._setup_signals(model, self._registry[model])
+        self._setup(model, self._registry[model])
     
     def unregister(self, model):
         """
@@ -55,16 +53,16 @@ class SearchSite(object):
         """
         if model not in self._registry:
             raise NotRegistered('The model %s is not registered' % model.__class__)
-        self._teardown_signals(model, self._registry[model])
+        self._teardown(model, self._registry[model])
         del(self._registry[model])
     
-    def _setup_signals(self, model, index):
-        signals.post_save.connect(index.update_object, sender=model)
-        signals.post_delete.connect(index.remove_object, sender=model)
+    def _setup(self, model, index):
+        index._setup_save(model)
+        index._setup_delete(model)
     
-    def _teardown_signals(self, model, index):
-        signals.post_save.disconnect(index.update_object, sender=model)
-        signals.post_delete.disconnect(index.remove_object, sender=model)
+    def _teardown(self, model, index):
+        index._teardown_save(model)
+        index._teardown_delete(model)
     
     def get_index(self, model):
         """Provide the index that're being used for a particular model."""
@@ -92,6 +90,7 @@ class SearchSite(object):
         With no arguments, it will pull in the main site to discover the available
         SearchIndexes.
         """
+        from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
         content_field_name = ''
         fields = []
         field_names = set()
@@ -111,6 +110,9 @@ class SearchSite(object):
                 }
             
                 if field_object.document is True:
+                    if content_field_name != '' and content_field_name != field_name:
+                        raise SearchFieldError("All SearchIndex fields with 'document=True' must use the same fieldname.")
+                    
                     content_field_name = field_name
             
                 if field_object.indexed is False:
@@ -130,8 +132,26 @@ class SearchSite(object):
                     field_data['multi_valued'] = 'true'
         
                 fields.append(field_data)
-    
+        
         return (content_field_name, fields)
+    
+    def update_object(self, instance):
+        """
+        Updates the instance's data in the index.
+        
+        A shortcut for updating on the instance's index. Errors from `get_index`
+        and `update_object` will be allowed to propogate.
+        """
+        return self.get_index(type(instance)).update_object(instance)
+    
+    def remove_object(self, instance):
+        """
+        Removes the instance's data in the index.
+        
+        A shortcut for removing on the instance's index. Errors from `get_index`
+        and `remove_object` will be allowed to propogate.
+        """
+        return self.get_index(type(instance)).remove_object(instance)
 
 
 # The common case. Feel free to override/replace/define your own in your URLconfs.

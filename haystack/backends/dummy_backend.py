@@ -24,7 +24,7 @@ class DummySearchResult(SearchResult):
         pass
 
     def content_type(self):
-        return u"%s.%s" % (self.app_label, self.module_name)
+        return u"%s.%s" % (self.app_label, self.model_name)
 
 
 class SearchBackend(BaseSearchBackend):
@@ -54,7 +54,7 @@ class SearchBackend(BaseSearchBackend):
     def prep_value(self, db_field, value):
         return value
     
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, additional_query_string=None):
         return {
             'results': [],
             'hits': 0
@@ -93,6 +93,3 @@ class SearchQuery(BaseSearchQuery):
             query = "%s ORDER BY %s" % (query, ", ".join(self.order_by))
         
         return query
-    
-    def clean(self, query_fragment):
-        return query_fragment

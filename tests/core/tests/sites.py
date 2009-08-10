@@ -1,12 +1,31 @@
-from django.db import models
+import datetime
 from django.test import TestCase
-from haystack.indexes import BasicSearchIndex
+from haystack import indexes
+from haystack.exceptions import SearchFieldError
 from haystack.sites import SearchSite, AlreadyRegistered, NotRegistered
 from core.models import MockModel, AnotherMockModel
 
 
 class MockNotAModel(object):
     pass
+
+
+class FakeSearchIndex(indexes.BasicSearchIndex):
+    def update_object(self, instance, **kwargs):
+        # Incorrect behavior but easy to test and all we care about is that we
+        # make it here. We rely on the `SearchIndex` tests to ensure correct
+        # behavior.
+        return True
+
+    def remove_object(self, instance, **kwargs):
+        # Incorrect behavior but easy to test and all we care about is that we
+        # make it here. We rely on the `SearchIndex` tests to ensure correct
+        # behavior.
+        return True
+
+
+class InvalidSeachIndex(indexes.SearchIndex):
+    document = indexes.CharField(document=True)
 
 
 class SearchSiteTestCase(TestCase):
@@ -36,7 +55,7 @@ class SearchSiteTestCase(TestCase):
         self.assertRaises(NotRegistered, self.site.get_index, MockModel)
         
         self.site.register(MockModel)
-        self.assert_(isinstance(self.site.get_index(MockModel), BasicSearchIndex))
+        self.assert_(isinstance(self.site.get_index(MockModel), indexes.BasicSearchIndex))
     
     def test_get_indexes(self):
         self.assertEqual(self.site.get_indexes(), {})
@@ -65,3 +84,25 @@ class SearchSiteTestCase(TestCase):
         content_field_name, fields = self.site.build_unified_schema()
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}])
+        
+        self.site.unregister(AnotherMockModel)
+        self.site.register(AnotherMockModel, InvalidSeachIndex)
+        self.assertRaises(SearchFieldError, self.site.build_unified_schema)
+    
+    def test_update_object(self):
+        self.site.register(MockModel, FakeSearchIndex)
+        
+        mock = MockModel()
+        mock.pk = 20
+        mock.user = 'daniel%s' % mock.id
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        
+        self.assertEqual(self.site.update_object(mock), True)
+    
+    def test_remove_object(self):
+        self.site.register(MockModel, FakeSearchIndex)
+        
+        mock = MockModel()
+        mock.pk = 20
+        
+        self.assertEqual(self.site.remove_object(mock), True)

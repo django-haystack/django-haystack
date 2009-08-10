@@ -24,6 +24,7 @@ you up and running:
    :maxdepth: 1
    
    views_and_forms
+   glossary
    faq
    installing_search_engines
 
@@ -37,6 +38,7 @@ you may want to include in your application.
 .. toctree::
    :maxdepth: 1
    
+   best_practices
    faceting
 
 
@@ -51,6 +53,7 @@ looking for API documentation and advanced usage as detailed in:
    
    searchqueryset_api
    searchindex_api
+   searchresult_api
    searchsite_api
    searchquery_api
    searchbackend_api

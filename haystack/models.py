@@ -13,22 +13,26 @@ class SearchResult(object):
     object; until then this object only stores the model, pk, and score.
     
     Note that iterating over SearchResults and getting the object for each
-    result will do O(N) database queries -- not such a great idea.
+    result will do O(N) database queries, which may not fit your needs for
+    performance.
     """
-    def __init__(self, app_label, module_name, pk, score, **kwargs):
-        self.app_label, self.module_name = app_label, module_name
+    def __init__(self, app_label, model_name, pk, score, **kwargs):
+        self.app_label, self.model_name = app_label, model_name
         self.pk = pk
         self.score = score
         self._object = None
         self._model = None
         self._verbose_name = None
+        self._additional_fields = []
+        self.stored_fields = None
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
                 self.__dict__[key] = value
+                self._additional_fields.append(key)
 
     def __repr__(self):
-        return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.module_name, self.pk)
+        return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.model_name, self.pk)
     
     def __getattr__(self, attr):
         return self.__dict__.get(attr, None)
@@ -48,7 +52,7 @@ class SearchResult(object):
     
     def _get_model(self):
         if self._model is None:
-            self._model = models.get_model(self.app_label, self.module_name)
+            self._model = models.get_model(self.app_label, self.model_name)
         return self._model
     
     def _set_model(self, obj):
@@ -60,6 +64,54 @@ class SearchResult(object):
         return force_unicode(capfirst(self.model._meta.verbose_name))
     
     verbose_name = property(_get_verbose_name)
-
+    
+    def _get_verbose_name_plural(self):
+        return force_unicode(capfirst(self.model._meta.verbose_name_plural))
+    
+    verbose_name_plural = property(_get_verbose_name_plural)
+    
     def content_type(self):
+        """Returns the content type for the result's model instance."""
         return unicode(self.model._meta)
+    
+    def get_additional_fields(self):
+        """
+        Returns a dictionary of all of the fields from the raw result.
+        
+        Useful for serializing results. Only returns what was seen from the
+        search engine, so it may have extra fields Haystack's indexes aren't
+        aware of.
+        """
+        additional_fields = {}
+        
+        for fieldname in self._additional_fields:
+            additional_fields[fieldname] = getattr(self, fieldname)
+        
+        return additional_fields
+    
+    def get_stored_fields(self):
+        """
+        Returns a dictionary of all of the stored fields from the SearchIndex.
+        
+        Useful for serializing results. Only returns the fields Haystack's
+        indexes are aware of as being 'stored'.
+        """
+        if self._stored_fields is None:
+            from haystack import site
+            from haystack.exceptions import NotRegistered
+            
+            try:
+                index = site.get_index(self.model)
+            except NotRegistered:
+                # Not found? Return nothing.
+                return {}
+            
+            self._stored_fields = {}
+            
+            # Iterate through the index's fields, pulling out the fields that
+            # are stored.
+            for fieldname, field in index.fields.items():
+                if field.stored is True:
+                    self._stored_fields[fieldname] = getattr(self, fieldname, u'')
+        
+        return self._stored_fields

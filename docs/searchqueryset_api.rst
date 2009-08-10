@@ -56,7 +56,7 @@ Searching your document fields is a very common activity. To help mitigate
 possible differences in ``SearchField`` names (and to help the backends deal
 with search queries that inspect the main corpus), there is a special field
 called ``content``. You may use this in any place that other fields names would
-work (e.g. `` filter``, ``exclude``, etc.) to indicate you simply want to
+work (e.g. ``filter``, ``exclude``, etc.) to indicate you simply want to
 search the main documents.
 
 For example::
@@ -92,6 +92,12 @@ Methods That Return A ``SearchQuerySet``
 
 Returns all results for the query. This is largely a no-op (returns an identical
 copy) but useful for denoting exactly what behavior is going on.
+
+``none(self):``
+~~~~~~~~~~~~~~~
+
+Returns an ``EmptySearchQuerySet`` that behaves like a ``SearchQuerySet`` but
+always yields no results.
 
 ``filter(self, **kwargs)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,6 +157,25 @@ string with a ``-``::
 
     SearchQuerySet().filter(content='foo').order_by('-pub_date')
 
+.. note::
+
+    In general, ordering is locale-specific. Haystack makes no effort to try to
+    reconcile differences between characters from different languages. This
+    means that accented characters will sort closely with the same character
+    and **NOT** necessarily close to the unaccented form of the character.
+    
+    If you want this kind of behavior, you should override the ``prepare_FOO``
+    methods on your ``SearchIndex`` objects to transliterate the characters
+    as you see fit.
+
+.. warning::
+
+    **Whoosh only** If you're planning on ordering by an ``IntegerField`` using
+    Whoosh, you'll need to adequately zero-pad your numbers in the
+    ``prepare_FOO`` method. This is because Whoosh uses UTF-8 string for
+    everything, and from the schema, there is no way to know how a field should
+    be treated.
+
 ``highlight(self)``
 ~~~~~~~~~~~~~~~~~~~
 
@@ -169,16 +194,16 @@ Example::
 
     SearchQuerySet().filter(content='foo').models(BlogEntry, Comment)
 
-``boost(self, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+``boost(self, term, boost_value)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Boosts a certain term of the query. You should provide pairs, where the
-parameter is the term to be boosted and the value is the amount to boost it by.
-Boost amounts may be either an integer or a float.
+Boosts a certain term of the query. You provide the term to be boosted and the
+value is the amount to boost it by. Boost amounts may be either an integer or a
+float.
 
 Example::
 
-    SearchQuerySet().filter(content='foo').boost(bar=1.5)
+    SearchQuerySet().filter(content='foo').boost('bar', 1.5)
 
 ``facet(self, field)``
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -289,6 +314,30 @@ Example::
 
     SearchQuerySet().filter(content='foo').load_all()
 
+``load_all_queryset(self, model_class, queryset)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Allows for specifying a custom ``QuerySet`` that changes how ``load_all`` will
+fetch records for the provided model. This is useful for post-processing the
+results from the query, enabling things like adding ``select_related`` or
+filtering certain data.
+
+Example::
+
+    sqs = SearchQuerySet().filter(content='foo').load_all()
+    # For the Entry model, we want to include related models directly associated
+    # with the Entry to save on DB queries.
+    sqs = sqs.load_all_queryset(Entry, Entry.objects.all().select_related(depth=1))
+
+This method chains indefinitely, so you can specify ``QuerySets`` for as many
+models as you wish, one per model. The ``SearchQuerySet`` appends on a call to
+``in_bulk``, so be sure that the ``QuerySet`` you provide can accommodate this
+and that the ids passed to ``in_bulk`` will map to the model in question.
+
+If you need to do this frequently and have one ``QuerySet`` you'd like to apply
+everywhere, you can specify this at the ``SearchIndex`` level using the
+``load_all_queryset`` method. See :doc:`searchindex_api` for usage.
+
 ``auto_query(self, query_string)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -310,6 +359,31 @@ Example::
     SearchQuerySet().filter(content='old one eye').filter(content='goldfish').exclude(content='tank')
 
 This method is somewhat naive but works well enough for simple, common cases.
+
+``more_like_this(self, model_instance)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finds similar results to the object passed in.
+
+You should pass in an instance of a model (for example, one fetched via a
+``get`` in Django's ORM). This will execute a query on the backend that searches
+for similar results. The instance you pass in should be an indexed object.
+Previously called methods will have an effect on the provided results.
+
+It will evaluate its own backend-specific query and populate the
+`SearchQuerySet`` in the same manner as other methods.
+
+Example::
+
+    entry = Entry.objects.get(slug='haystack-one-oh-released')
+    mlt = SearchQuerySet().more_like_this(entry)
+    mlt.count() # 5
+    mlt[0].object.title # "Haystack Beta 1 Released"
+    
+    # ...or...
+    mlt = SearchQuerySet().filter(public=True).exclude(pub_date__lte=datetime.date(2009, 7, 21)).more_like_this(entry)
+    mlt.count() # 2
+    mlt[0].object.title # "Haystack Beta 1 Released"
 
 
 Methods That Do Not Return A ``SearchQuerySet``
@@ -355,30 +429,6 @@ found::
     
     # Identical to:
     foo = SearchQuerySet().filter(content='foo').order_by('-pub_date')[0]
-
-``more_like_this(self, model_instance)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Finds similar results to the object passed in.
-
-You should pass in an instance of a model (for example, one fetched via a
-``get`` in Django's ORM). This will execute a query on the backend that searches
-for similar results. The instance you pass in should be an indexed object.
-This method does not actually effect the existing ``SearchQuerySet`` but will
-ignore any existing constraints.
-
-It will evaluate its own backend-specific query and return a dictionary with two
-keys: ``results`` (which will be a list of ``SearchResult`` objects) and
-``hits`` (an integer count of the total number of similar results).
-
-The number of results returned will be backend/configuration specific.
-
-Example::
-
-    entry = Entry.objects.get(slug='haystack-one-oh-released')
-    mlt = SearchQuerySet().more_like_this(entry)
-    mlt['hits'] # 5
-    mlt['results'][0].object.title # "Haystack Beta 1 Released"
 
 ``facet_counts(self)``
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -464,3 +514,11 @@ Example::
     # Other usages look like:
     SearchQuerySet().filter(pub_date__gte=datetime.date(2008, 1, 1), pub_date__lt=datetime.date(2009, 1, 1))
     SearchQuerySet().filter(author__in=['daniel', 'john', 'jane'])
+
+
+``EmptySearchQuerySet``
+=======================
+
+Also included in Haystack is an ``EmptySearchQuerySet`` class. It behaves just
+like ``SearchQuerySet`` but will always return zero results. This is useful for
+places where you want no query to occur or results to be returned.

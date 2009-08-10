@@ -18,7 +18,6 @@ setup(
     package_data={
         'haystack': ['templates/search_configuration/*']
     },
-    zip_safe=False,
     classifiers=['Development Status :: 4 - Beta',
                  'Environment :: Web Environment',
                  'Framework :: Django',

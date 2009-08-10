@@ -8,9 +8,7 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         """Provides feedback about the current Haystack setup."""
         # Cause the default site to load.
-        from django.conf import settings
-        __import__(settings.ROOT_URLCONF)
-        from haystack.sites import site
+        from haystack import site
         
         print
         print "WARNING: This will irreparably remove EVERYTHING from your search index."

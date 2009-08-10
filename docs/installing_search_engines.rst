@@ -83,7 +83,7 @@ now (as of 2009/04/28), it requires a bit of patching (Whoosh version 0.1.15).
 A forked version that ought to be stable for Haystack use can be found at
 http://github.com/toastdriven/whoosh::
 
-    git clone http://github.com/toastdriven/whoosh
+    git clone http://github.com/toastdriven/whoosh.git
     cd whoosh
     sudo python setup.py install
 

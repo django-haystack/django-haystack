@@ -14,7 +14,7 @@ Faceting is particularly useful when trying to provide users with drill-down
 capabilities. The general workflow in this regard is:
 
   #. You can choose what you want to facet on.
-  #. The search engine will return the counts it sees that match.
+  #. The search engine will return the counts it sees for that match.
   #. You display those counts to the user and provide them with a link.
   #. When the user chooses a link, you narrow the search query to only include
      those conditions and display the rests, potentially with further facets.
@@ -29,8 +29,8 @@ capabilities. The general workflow in this regard is:
     help you narrow down how you can help your users.
 
 Haystack provides functionality so that all of the above steps are possible.
-From ground up, let's build a faceted search setup. This assumes that you have
-been to work through the :doc:`tutorial` and have a working Haystack
+From the ground up, let's build a faceted search setup. This assumes that you 
+have been to work through the :doc:`tutorial` and have a working Haystack
 installation. The same setup from the :doc:`tutorial` applies here.
 
 1. Determine Facets And ``SearchQuerySet``

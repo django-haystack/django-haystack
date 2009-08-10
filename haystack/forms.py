@@ -1,5 +1,6 @@
 from django import forms
 from django.db import models
+from django.utils.text import capfirst
 import haystack
 from haystack.query import SearchQuerySet
 
@@ -8,7 +9,7 @@ def model_choices(site=None):
     if site is None:
         site = haystack.sites.site
     
-    choices = [("%s.%s" % (m._meta.app_label, m._meta.module_name), unicode(m._meta.verbose_name_plural)) for m in site.get_indexed_models()]
+    choices = [("%s.%s" % (m._meta.app_label, m._meta.module_name), capfirst(unicode(m._meta.verbose_name_plural))) for m in site.get_indexed_models()]
     return sorted(choices, key=lambda x: x[1])
 
 
@@ -17,6 +18,7 @@ class SearchForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
         self.searchqueryset = kwargs.get('searchqueryset', None)
+        self.load_all = kwargs.get('load_all', False)
         
         if self.searchqueryset is None:
             self.searchqueryset = SearchQuerySet()
@@ -26,11 +28,21 @@ class SearchForm(forms.Form):
         except KeyError:
             pass
         
+        try:
+            del(kwargs['load_all'])
+        except KeyError:
+            pass
+        
         super(SearchForm, self).__init__(*args, **kwargs)
     
     def search(self):
         self.clean()
-        return self.searchqueryset.auto_query(self.cleaned_data['q'])
+        sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
+        
+        if self.load_all:
+            sqs = sqs.load_all()
+        
+        return sqs
 
 
 class HighlightedSearchForm(SearchForm):

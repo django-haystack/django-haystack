@@ -19,7 +19,7 @@ For the impatient::
 
     import datetime
     from haystack import indexes
-    from haystack.sites import site
+    from haystack import site
     from myapp.models import Note
     
     
@@ -143,6 +143,13 @@ In most cases, using the `model_attr` parameter on your fields allows you to
 easily get data from a Django model to the document in your index, as it handles
 both direct attribute access as well as callable functions within your model.
 
+.. note::
+
+    The ``model_attr`` keyword argument also can look through relations in
+    models. So you can do something like ``model_attr='author__first_name'``
+    to pull just the first name of the author, similar to some lookups used
+    by Django's ORM.
+
 However, sometimes, even more control over what gets placed in your index is
 needed. To facilitate this, ``SearchIndex`` objects have a 'preparation' stage
 that populates data just before it is indexed. You can hook into this phase in
@@ -178,7 +185,7 @@ data may come from the field itself.
 
 .. note::
 
-   This method is analagous to Django's ``Form.clean_FOO`` methods.
+   This method is analogous to Django's ``Form.clean_FOO`` methods.
 
 
 2. ``prepare(self, object)``
@@ -216,7 +223,7 @@ provide as well as any ``prepare_FOO`` methods on the class.
 
 .. note::
 
-   This method is roughly analagous to Django's ``Form.full_clean`` and
+   This method is roughly analogous to Django's ``Form.full_clean`` and
    ``Form.clean`` methods. However, unlike these methods, it is not fired
    as the result of trying to access ``self.prepared_data``. It requires
    an explicit call.
@@ -320,3 +327,32 @@ cause excessive reindexing. You should check conditions on the instance
 and return False if it is not to be indexed.
 
 By default, returns True (always reindex).
+
+``load_all_queryset(self)``
+---------------------------
+
+Provides the ability to override how objects get loaded in conjunction
+with ``SearchQuerySet.load_all``. This is useful for post-processing the
+results from the query, enabling things like adding ``select_related`` or
+filtering certain data.
+
+By default, returns ``all()`` on the model's default manager.
+
+Example::
+
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+        
+        def load_all_queryset(self):
+            # Pull all objects related to the Note in search results.
+            return Note.objects.all().select_related()
+
+When searching, the ``SearchQuerySet`` appends on a call to ``in_bulk``, so be
+sure that the ``QuerySet`` you provide can accommodate this and that the ids
+passed to ``in_bulk`` will map to the model in question.
+
+If you need a specific ``QuerySet`` in one place, you can specify this at the
+``SearchQuerySet`` level using the ``load_all_queryset`` method. See
+:doc:`searchqueryset_api` for usage.
