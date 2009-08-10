@@ -196,6 +196,10 @@ class SearchQuerySet(object):
         """Returns all results for the query."""
         return self._clone()
     
+    def none(self):
+        """Returns all results for the query."""
+        return self._clone(klass=EmptySearchQuerySet)
+    
     def filter(self, **kwargs):
         """Narrows the search based on certain attributes and the default operator."""
         if getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR) == 'OR':
@@ -412,4 +416,22 @@ class SearchQuerySet(object):
         clone = klass(site=self.site, query=query)
         clone._load_all = self._load_all
         clone._load_all_querysets = self._load_all_querysets
+        return clone
+
+
+class EmptySearchQuerySet(SearchQuerySet):
+    """
+    A stubbed SearchQuerySet that behaves as normal but always returns no
+    results.
+    """
+    def __len__(self):
+        return 0
+    
+    def _cache_is_full(self):
+        # Pretend the cache is always full with no results.
+        return True
+    
+    def _clone(self, klass=None):
+        clone = super(EmptySearchQuerySet, self)._clone(klass=klass)
+        clone._result_cache = []
         return clone
