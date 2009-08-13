@@ -81,6 +81,22 @@ Example::
     HAYSTACK_WHOOSH_PATH = '/home/whoosh/mysite_index'
 
 
+Xapian
+~~~~~~
+
+First, install the Xapian backend (via
+http://github.com/notanumber/xapian-haystack/tree/master) per the instructions
+included with the backend.
+
+Requires setting ``HAYSTACK_XAPIAN_PATH`` to the place on your filesystem where the
+Xapian index should be located. Standard warnings about permissions and keeping
+it out of a place your webserver may serve documents out of apply.
+
+Example::
+
+    HAYSTACK_XAPIAN_PATH = '/home/xapian/mysite_index'
+
+
 3. Create A ``SearchIndex``
 ---------------------------
 

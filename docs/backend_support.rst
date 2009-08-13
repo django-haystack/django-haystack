@@ -21,6 +21,8 @@ Backend Capabilities
 Solr
 ----
 
+**Complete & included with Haystack.**
+
 * Full SearchQuerySet support
 * Automatic query building
 * "More Like This" functionality
@@ -44,6 +46,8 @@ Lucene
 
 Whoosh
 ------
+
+**Complete & included with Haystack.**
 
 * Full SearchQuerySet support
 * Automatic query building
@@ -74,15 +78,17 @@ licensed in a way that prevents them from being officially bundled. If the
 community expresses interest in any of these, there may be future development.
 
 * Xapian_
-* `Hyper Estraier`_
 * Sphinx_
+* `Hyper Estraier`_
 
 .. _Xapian: http://xapian.org/
-.. _Hyper Estraier: http://hyperestraier.sourceforge.net/
 .. _Sphinx: http://www.sphinxsearch.com/
+.. _Hyper Estraier: http://hyperestraier.sourceforge.net/
 
 Xapian
 ------
+
+**Complete but not included with Haystack.**
 
 * Full SearchQuerySet support
 * Automatic query building
@@ -91,16 +97,7 @@ Xapian
 * Faceting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: xappy?
-
-Hyper Estraier
---------------
-
-* Full SearchQuerySet support
-* Automatic query building
-* "More Like This" functionality
-* Highlighting
-* Requires: SWIG bindings
+* Requires: xapian bindings included with Xapian
 
 Sphinx
 ------
@@ -112,12 +109,21 @@ Sphinx
 * Highlighting
 * Requires: sphinxapi.py (Comes with Sphinx)
 
+Hyper Estraier
+--------------
+
+* Full SearchQuerySet support
+* Automatic query building
+* "More Like This" functionality
+* Highlighting
+* Requires: SWIG bindings
+
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
 +================+========================+=====================+================+============+==========+===============+==============+
 | Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes (plugin) |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
-| Hyper Estraier | Yes                    | Yes                 | Yes            | No         | No       | No            | Yes (plugin) |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Sphinx         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+| Hyper Estraier | Yes                    | Yes                 | Yes            | No         | No       | No            | Yes (plugin) |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
