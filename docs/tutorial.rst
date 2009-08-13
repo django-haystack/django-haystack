@@ -94,7 +94,7 @@ it out of a place your webserver may serve documents out of apply.
 
 Example::
 
-    HAYSTACK_XAPIAN_PATH = '/home/whoosh/mysite_index'
+    HAYSTACK_XAPIAN_PATH = '/home/xapian/mysite_index'
 
 
 3. Create A ``SearchIndex``

@@ -142,6 +142,27 @@ An example::
 No default is provided.
 
 
+``HAYSTACK_XAPIAN_PATH``
+========================
+
+**Required when using the ``xapian`` backend**
+
+This setting controls where on the filesystem the Xapian indexes will be stored.
+The user must have the appropriate permissions for reading and writing to this
+directory.
+
+Any trailing slashes should be left off.
+
+Finally, you should ensure that this directory is not located within the
+document root of your site and that you take appropriate security precautions.
+
+An example::
+
+    HAYSTACK_XAPIAN_PATH = '/home/mysite/xapian_index'
+
+No default is provided.
+
+
 ``HAYSTACK_BATCH_SIZE``
 =======================
 
