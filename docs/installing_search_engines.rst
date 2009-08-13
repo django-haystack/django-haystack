@@ -78,8 +78,10 @@ Whoosh
 
 Official Download Location: http://whoosh.ca/
 
-Whoosh is pure Python, so it's a great option for getting started quickly. For
-now (as of 2009/04/28), it requires a bit of patching (Whoosh version 0.1.15).
+Whoosh is pure Python, so it's a great option for getting started quickly and
+for development. **As a warning, it is not generally suitable for production
+use due to issues with multiple processes/threads not locking correctly.** For
+now (as of 2009/08/13), it requires a bit of patching (Whoosh version 0.1.21+).
 A forked version that ought to be stable for Haystack use can be found at
 http://github.com/toastdriven/whoosh::
 
@@ -116,3 +118,10 @@ package for it). Installation looks like::
     ./configure
     make
     sudo make install
+
+Xapian is a supported backend but is not included in Haystack proper due to
+licensing. You can download the source from
+http://github.com/notanumber/xapian-haystack/tree/master. Installation
+instructions can be found on that page as well. The backend, written
+by David Sauve (notanumber), fully implements the `SearchQuerySet` API and is
+an excellent alternative to Solr.
