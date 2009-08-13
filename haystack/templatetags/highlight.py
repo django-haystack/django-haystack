@@ -1,6 +1,5 @@
 from django.conf import settings
 from django import template
-from haystack.utils import highlighter
 
 
 register = template.Library()
@@ -21,8 +20,11 @@ class HighlightNode(template.Node):
         # Handle a user-defined highlighting function.
         if hasattr(settings, 'HAYSTACK_CUSTOM_HIGHLIGHTER'):
             # Do the import dance.
+            
         else:
-            highlighted_text = highlighter(text_block, query, css_class, max_words)
+            from haystack.utils import Highlighter
+            highlighter = Highlighter(query, css_class=css_class, max_words=max_words)
+            highlighted_text = highlighter.highlight(text_block)
         
         return ''
 
