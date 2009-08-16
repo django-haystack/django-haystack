@@ -111,6 +111,13 @@ the ``HAYSTACK_DEFAULT_OPERATOR`` setting (defaults to ``AND``).
 If a string with one or more spaces in it is specified as the value, an exact
 match will be performed on that phrase.
 
+.. warning::
+
+    Any data you pass to ``filter/exclude`` is passed along **unescaped**. If
+    you don't trust the data you're passing along, you should either use
+    ``auto_query`` or use the ``clean`` method on your ``SearchBackend`` to
+    sanitize the data.
+
 Example::
 
     SearchQuerySet().filter(content='foo')
