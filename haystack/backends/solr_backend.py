@@ -5,6 +5,7 @@ from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
 from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.models import SearchResult
 try:
     from pysolr import Solr
@@ -206,7 +207,39 @@ class SearchBackend(BaseSearchBackend):
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
         }
-
+    
+    def build_schema(self, fields):
+        content_field_name = ''
+        schema_fields = []
+        
+        for field_name, field_class in fields.items():
+            field_data = {
+                'field_name': field_name,
+                'type': 'text',
+                'indexed': 'true',
+                'multi_valued': 'false',
+            }
+            
+            if field_class.document is True:
+                content_field_name = field_name
+            
+            if field_class.indexed is False:
+                field_data['indexed'] = 'false'
+            
+            if isinstance(field_class, (DateField, DateTimeField)):
+                field_data['type'] = 'date'
+            elif isinstance(field_class, IntegerField):
+                field_data['type'] = 'slong'
+            elif isinstance(field_class, FloatField):
+                field_data['type'] = 'sfloat'
+            elif isinstance(field_class, BooleanField):
+                field_data['type'] = 'boolean'
+            elif isinstance(field_class, MultiValueField):
+                field_data['multi_valued'] = 'true'
+            
+            schema_fields.append(field_data)
+        
+        return (content_field_name, schema_fields)
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, backend=None):

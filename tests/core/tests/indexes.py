@@ -112,8 +112,8 @@ class SearchIndexTestCase(TestCase):
         self.assert_('extra' in self.mi.fields)
         self.assert_(isinstance(self.mi.fields['extra'], indexes.CharField))
     
-    def test_get_query_set(self):
-        self.assertEqual(len(self.mi.get_query_set()), 3)
+    def test_get_queryset(self):
+        self.assertEqual(len(self.mi.get_queryset()), 3)
     
     def test_prepare(self):
         mock = MockModel()

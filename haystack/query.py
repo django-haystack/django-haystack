@@ -344,7 +344,7 @@ class SearchQuerySet(object):
         for keyword in keywords:
             exclude = False
             
-            if keyword.startswith('-'):
+            if keyword.startswith('-') and len(keyword) > 1:
                 keyword = keyword[1:]
                 exclude = True
             

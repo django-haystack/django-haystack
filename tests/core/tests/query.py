@@ -363,6 +363,10 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.auto_query('test "my thing" search \'moar quotes\' "foo -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=my thing>', '<QueryFilter: AND content__exact=moar quotes>', '<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: AND content__exact="foo>', '<QueryFilter: NOT content__exact=stuff>'])
+        
+        sqs = self.bsqs.auto_query('test - stuff')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=->', '<QueryFilter: AND content__exact=stuff>'])
     
     def test_count(self):
         self.assertEqual(self.bsqs.count(), 0)

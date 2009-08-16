@@ -7,6 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
 try:
@@ -58,8 +59,7 @@ class SearchBackend(BaseSearchBackend):
             new_index = True
         
         self.storage = store.FileStorage(settings.HAYSTACK_WHOOSH_PATH)
-        self.content_field_name, fields = self.site.build_unified_schema()
-        self.schema = self.build_schema(fields)
+        self.content_field_name, self.schema = self.build_schema(self.site.all_searchfields())
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
         
         if new_index is True:
@@ -81,26 +81,28 @@ class SearchBackend(BaseSearchBackend):
         # Grab the number of keys that are hard-coded into Haystack.
         # We'll use this to (possibly) fail slightly more gracefully later.
         initial_key_count = len(schema_fields)
+        content_field_name = ''
         
-        for field in fields:
-            if field['multi_valued'] is True:
-                schema_fields[field['field_name']] = KEYWORD(stored=True, comma=True)
-            elif field['type'] in ('long', 'float', 'boolean', 'date', 'datetime'):
-                if field['indexed'] is False:
-                    schema_fields[field['field_name']] = STORED
+        for field_name, field_class in fields.items():
+            if isinstance(field_class, MultiValueField):
+                schema_fields[field_name] = KEYWORD(stored=True, commas=True)
+            elif isinstance(field_class, (DateField, DateTimeField, IntegerField, FloatField, BooleanField)):
+                if field_class.indexed is False:
+                    schema_fields[field_name] = STORED
                 else:
-                    schema_fields[field['field_name']] = ID(stored=True)
-            elif field['type'] == 'text':
-                schema_fields[field['field_name']] = TEXT(stored=True, analyzer=StemmingAnalyzer())
+                    schema_fields[field_name] = ID(stored=True)
             else:
-                raise SearchBackendError("Whoosh backend does not support type '%s'. Please report this bug." % field['type'])
+                schema_fields[field_name] = TEXT(stored=True, analyzer=StemmingAnalyzer())
+            
+            if field_class.document is True:
+                content_field_name = field_name
         
         # Fail more gracefully than relying on the backend to die if no fields
         # are found.
         if len(schema_fields) <= initial_key_count:
             raise SearchBackendError("No fields were found in any search_indexes. Please correct this before attempting to search.")
         
-        return Schema(**schema_fields)
+        return (content_field_name, Schema(**schema_fields))
 
     def update(self, index, iterable, commit=True):
         if not self.setup_complete:

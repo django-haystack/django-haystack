@@ -159,7 +159,7 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
         
-        def get_query_set(self):
+        def get_queryset(self):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     

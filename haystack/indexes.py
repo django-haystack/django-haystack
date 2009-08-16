@@ -43,8 +43,8 @@ class SearchIndex(object):
             author = indexes.CharField(model_attr='user')
             pub_date = indexes.DateTimeField(model_attr='pub_date')
             
-            def get_query_set(self):
-                return super(NoteIndex, self).get_query_set().filter(pub_date__lte=datetime.datetime.now())
+            def get_queryset(self):
+                return super(NoteIndex, self).get_queryset().filter(pub_date__lte=datetime.datetime.now())
     
     """
     __metaclass__ = DeclarativeMetaclass
@@ -74,7 +74,7 @@ class SearchIndex(object):
     def _teardown_delete(self, model):
         signals.post_delete.disconnect(self.remove_object, sender=model)
     
-    def get_query_set(self):
+    def get_queryset(self):
         """
         Get the default QuerySet to index when doing a full update.
         
@@ -112,7 +112,7 @@ class SearchIndex(object):
 
     def update(self):
         """Update the entire index"""
-        self.backend.update(self, self.get_query_set())
+        self.backend.update(self, self.get_queryset())
 
     def update_object(self, instance, **kwargs):
         """
