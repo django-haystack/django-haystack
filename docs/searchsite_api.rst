@@ -96,18 +96,15 @@ Provides a dictionary of all indexes that're being used.
 
 Provides a list of all models being indexed.
 
-``build_unified_schema(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``all_searchfields(self)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Builds a list of all fields appearing in any of the SearchIndexes registered
-with a site.
+Builds a dictionary of all fields appearing in any of the `SearchIndex`
+instances registered with a site.
 
-This is useful when building a schema for an engine. A list of dictionaries
-is returned, with each dictionary being a field and the attributes about the
-field. Valid keys are 'field', 'type', 'indexed' and 'multi_valued'.
-
-With no arguments, it will pull in the main site to discover the available
-SearchIndexes.
+This is useful when building a schema for an engine. A dictionary is
+returned, with each key being a fieldname and the value being the
+`SearchField` class assigned to it.
 
 ``update_object(self, instance)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

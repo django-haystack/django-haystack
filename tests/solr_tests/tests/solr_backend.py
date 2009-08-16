@@ -131,6 +131,12 @@ class SolrSearchBackendTestCase(TestCase):
         # this to ensure the API is correct enough.
         self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
         self.assertEqual([result.pk for result in self.sb.more_like_this(self.sample_objs[0])['results']], [])
+    
+    def test_build_schema(self):
+        (content_field_name, fields) = self.sb.build_schema(self.site.all_searchfields())
+        self.assertEqual(content_field_name, 'text')
+        self.assertEqual(len(fields), 3)
+        self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'date', 'field_name': 'pub_date', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'text', 'field_name': 'name', 'multi_valued': 'false'}])
 
 
 class LiveSolrSearchQueryTestCase(TestCase):

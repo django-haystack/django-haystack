@@ -106,6 +106,15 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError("Subclasses must provide a way to fetch similar record via the 'more_like_this' method if supported by the backend.")
+    
+    def build_schema(self, fields):
+        """
+        Takes a dictionary of fields and returns schema information.
+        
+        This method MUST be implemented by each backend, as it will be highly
+        specific to each one.
+        """
+        raise NotImplementedError("Subclasses must provide a way to build their schema.")
 
 
 # Alias for easy loading within SearchQuery objects.

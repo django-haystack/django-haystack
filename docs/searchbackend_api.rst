@@ -81,3 +81,11 @@ Takes a model object and returns results the backend thinks are similar.
 
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
+
+``build_schema(self, fields)``
+------------------------------
+
+Takes a dictionary of fields and returns schema information.
+
+This method MUST be implemented by each backend, as it will be highly
+specific to each one.

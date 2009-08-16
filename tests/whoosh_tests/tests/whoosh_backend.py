@@ -1,5 +1,6 @@
 import datetime
 import os
+from whoosh.fields import ID, TEXT, KEYWORD, STORED
 from whoosh.qparser import QueryParser
 from django.conf import settings
 from django.test import TestCase
@@ -13,6 +14,14 @@ class WhooshMockSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
+
+
+class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, use_template=True)
+    name = indexes.CharField(model_attr='author', indexed=False)
+    pub_date = indexes.DateField(model_attr='pub_date')
+    sites = indexes.MultiValueField()
+    seen_count = indexes.IntegerField(indexed=False)
 
 
 class WhooshSearchSite(sites.SearchSite):
@@ -206,6 +215,19 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb._to_python('{"a": 1, "b": 2, "c": 3}'), {'a': 1, 'c': 3, 'b': 2})
         self.assertEqual(self.sb._to_python('2009-05-09T16:14:00'), datetime.datetime(2009, 5, 9, 16, 14))
         self.assertEqual(self.sb._to_python('2009-05-09T00:00:00'), datetime.datetime(2009, 5, 9, 0, 0))
+    
+    def test_build_schema(self):
+        self.site.unregister(MockModel)
+        self.site.register(MockModel, AllTypesWhooshMockSearchIndex)
+        
+        (content_field_name, schema) = self.sb.build_schema(self.site.all_searchfields())
+        self.assertEqual(content_field_name, 'text')
+        self.assertEqual(len(schema._names), 8)
+        self.assertEqual(schema._names, ['django_ct', 'django_id', 'id', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
+        self.assert_(isinstance(schema._by_name['text'], TEXT))
+        self.assert_(isinstance(schema._by_name['pub_date'], ID))
+        self.assert_(isinstance(schema._by_name['seen_count'], STORED))
+        self.assert_(isinstance(schema._by_name['sites'], KEYWORD))
 
 
 class LiveWhooshSearchQueryTestCase(TestCase):
