@@ -148,11 +148,11 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(self.bsq.facets, set(['foo', 'bar']))
     
     def test_add_date_facet(self):
-        self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 2, 25))
-        self.assertEqual(self.bsq.date_facets, {'foo': {'start_date': datetime.date(2009, 2, 25)}})
+        self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 2, 25), end_date=datetime.date(2009, 3, 25), gap_by='day')
+        self.assertEqual(self.bsq.date_facets, {'foo': {'gap_by': 'day', 'start_date': datetime.date(2009, 2, 25), 'end_date': datetime.date(2009, 3, 25), 'gap_amount': 1}})
         
-        self.bsq.add_date_facet('bar')
-        self.assertEqual(self.bsq.date_facets, {'foo': {'start_date': datetime.date(2009, 2, 25)}, 'bar': {}})
+        self.bsq.add_date_facet('bar', start_date=datetime.date(2008, 1, 1), end_date=datetime.date(2009, 12, 1), gap_by='month')
+        self.assertEqual(self.bsq.date_facets, {'foo': {'gap_by': 'day', 'start_date': datetime.date(2009, 2, 25), 'end_date': datetime.date(2009, 3, 25), 'gap_amount': 1}, 'bar': {'gap_by': 'month', 'start_date': datetime.date(2008, 1, 1), 'end_date': datetime.date(2009, 12, 1), 'gap_amount': 1}})
     
     def test_add_query_facet(self):
         self.bsq.add_query_facet('foo', 'bar')
@@ -192,7 +192,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_boost('foo', 2)
         self.bsq.add_highlight()
         self.bsq.add_field_facet('foo')
-        self.bsq.add_date_facet('foo')
+        self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 1, 1), end_date=datetime.date(2009, 1, 31), gap_by='day')
         self.bsq.add_query_facet('foo', 'bar')
         self.bsq.add_narrow_query('foo:bar')
         
@@ -396,11 +396,11 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs2.query.facets), 2)
     
     def test_date_facets(self):
-        sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap='/MONTH')
+        sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.date_facets), 1)
         
-        sqs2 = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap='/MONTH').date_facet('bar', start_date=datetime.date(2007, 2, 25), end_date=datetime.date(2009, 2, 25), gap='/YEAR')
+        sqs2 = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month').date_facet('bar', start_date=datetime.date(2007, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='year')
         self.assert_(isinstance(sqs2, SearchQuerySet))
         self.assertEqual(len(sqs2.query.date_facets), 2)
     

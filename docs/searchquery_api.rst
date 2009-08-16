@@ -158,8 +158,8 @@ Adds highlighting to the search results.
 
 Adds a regular facet on a field.
 
-``add_date_facet(self, field, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_date_facet(self, field, start_date, end_date, gap_by, gap_amount)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adds a date-based facet on a field.
 
