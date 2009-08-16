@@ -37,7 +37,7 @@ class Command(AppCommand):
                 help='Verbosity level; 0=minimal output, 1=normal output, 2=all output'
             ),
         )
-
+    
     def handle(self, *apps, **options):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
@@ -47,7 +47,7 @@ class Command(AppCommand):
             self.handle_app(None, **options)
         else:
             return super(Command, self).handle(*apps, **options)
-
+    
     def handle_app(self, app, **options):
         # Cause the default site to load.
         from haystack import handle_registrations
@@ -56,7 +56,7 @@ class Command(AppCommand):
         from django.db.models import get_models
         from haystack import site
         from haystack.exceptions import NotRegistered
-
+        
         for model in get_models(app):
             try:
                 index = site.get_index(model)
@@ -64,7 +64,7 @@ class Command(AppCommand):
                 if self.verbosity >= 2:
                     print "Skipping '%s' - no index." % model
                 continue
-
+                
             extra_lookup_kwargs = {}
             updated_field = index.get_updated_field()
             
@@ -75,14 +75,14 @@ class Command(AppCommand):
                     if self.verbosity >= 2:
                         print "No updated date field found for '%s' - not restricting by age." % model.__name__
             
-            # DRL_TODO: .select_related() seems like a good idea here but
-            #           can cause empty QuerySets. Why?
-            qs = index.get_query_set().filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
+            # `.select_related()` seems like a good idea here but can fail on
+            # nullable `ForeignKey` as well as what seems like other cases.
+            qs = index.get_queryset().filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
             total = qs.count()
-
+            
             if self.verbosity >= 1:
                 print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
-
+            
             for start in range(0, total, self.batchsize):
                 end = min(start + self.batchsize, total)
                 

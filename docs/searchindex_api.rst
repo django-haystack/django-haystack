@@ -28,7 +28,7 @@ For the impatient::
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
         
-        def get_query_set(self):
+        def get_queryset(self):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     
@@ -263,7 +263,7 @@ non-existent), merely an example of how to extend existing fields.
 Method Reference
 ================
 
-``get_query_set(self)``
+``get_queryset(self)``
 -----------------------
 
 Get the default QuerySet to index when doing a full update.
