@@ -271,10 +271,10 @@ class SearchQuerySet(object):
         clone.query.add_field_facet(field)
         return clone
     
-    def date_facet(self, field, **kwargs):
+    def date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds faceting to a query for the provided field by date."""
         clone = self._clone()
-        clone.query.add_date_facet(field, **kwargs)
+        clone.query.add_date_facet(field, start_date, end_date, gap_by, gap_amount=gap_amount)
         return clone
     
     def query_facet(self, field, query):

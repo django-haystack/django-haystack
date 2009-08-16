@@ -3,7 +3,7 @@ import re
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
-from haystack.exceptions import SearchBackendError, MoreLikeThisError
+from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
 try:
     set
 except NameError:
@@ -11,6 +11,7 @@ except NameError:
 
 
 IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')
+VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
 
 class BaseSearchBackend(object):
@@ -431,9 +432,18 @@ class BaseSearchQuery(object):
         """Adds a regular facet on a field."""
         self.facets.add(field)
     
-    def add_date_facet(self, field, **kwargs):
+    def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
-        self.date_facets[field] = kwargs
+        if not gap_by in VALID_GAPS:
+            raise FacetingError("The gap_by ('%s') must be one of the following: %s." (gap_by, ', '.join(VALID_GAPS)))
+        
+        details = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'gap_by': gap_by,
+            'gap_amount': gap_amount,
+        }
+        self.date_facets[field] = details
     
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""

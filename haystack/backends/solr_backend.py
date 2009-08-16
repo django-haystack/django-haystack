@@ -116,7 +116,12 @@ class SearchBackend(BaseSearchBackend):
                 # Date-based facets in Solr kinda suck.
                 kwargs["f.%s.facet.date.start" % key] = self.conn._from_python(value.get('start_date'))
                 kwargs["f.%s.facet.date.end" % key] = self.conn._from_python(value.get('end_date'))
-                kwargs["f.%s.facet.date.gap" % key] = value.get('gap')
+                gap_string = value.get('gap_by').upper()
+                
+                if value.get('gap_amount') != 1:
+                    gap_string = "%d%sS" % (value.get('gap_amount'), gap_string)
+                
+                kwargs["f.%s.facet.date.gap" % key] = "/%s" % gap_string
         
         if query_facets is not None:
             kwargs['facet'] = 'on'
@@ -226,6 +231,12 @@ class SearchBackend(BaseSearchBackend):
             if field_class.indexed is False:
                 field_data['indexed'] = 'false'
             
+            # DRL_FIXME: Perhaps move to something where, if none of these
+            #            checks succeed, call a custom method on the form that
+            #            returns, per-backend, the right type of storage?
+            # DRL_FIXME: Also think about removing `isinstance` and replacing
+            #            it with a method call/string returned (like 'text' or
+            #            'date').
             if isinstance(field_class, (DateField, DateTimeField)):
                 field_data['type'] = 'date'
             elif isinstance(field_class, IntegerField):

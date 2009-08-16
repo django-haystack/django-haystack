@@ -219,20 +219,18 @@ Example::
     # Count document hits for each author within the index.
     SearchQuerySet().filter(content='foo').facet('author')
 
-``date_facet(self, field, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``date_facet(self, field, start_date, end_date, gap_by, gap_amount=1)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adds faceting to a query for the provided field by date. You provide the field
-(from one of the ``SearchIndex`` classes) you like to facet on and any
-parameters your engine of choice requires (Solr uses ``start_date``,
-``end_date`` and ``gap``).
+(from one of the ``SearchIndex`` classes) you like to facet on, a ``start_date``
+(either ``datetime.datetime`` or ``datetime.date``), an ``end_date`` and the
+amount of time between gaps as ``gap_by`` (one of ``'year'``, ``'month'``,
+``'day'``, ``'hour'``, ``'minute'`` or ``'second'``).
 
-.. note::
-
-    This syntax will likely change before 1.0 release. It would be nice to
-    have a nicer, less backend-specific API (likely using the same filter syntax as
-    other methods). This is waiting on implementing other backends that support
-    faceting and ensuring that the API meets their needs as well.
+You can also optionally provide a ``gap_amount`` to specify a different
+increment than ``1``. For example, specifying gaps by week (every seven days)
+would would be ``gap_by='day', gap_amount=7``).
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.
@@ -240,7 +238,7 @@ In the search results you get back, facet counts will be populated in the
 Example::
 
     # Count document hits for each day between 2009-06-07 to 2009-07-07 within the index.
-    SearchQuerySet().filter(content='foo').date_facet('pub_date', start_date=datetime.date(2009, 6, 7), end_date=datetime.date(2009, 7, 7), gap='+1DAY')
+    SearchQuerySet().filter(content='foo').date_facet('pub_date', start_date=datetime.date(2009, 6, 7), end_date=datetime.date(2009, 7, 7), gap_by='day')
 
 ``query_facet(self, field, query)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

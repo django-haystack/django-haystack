@@ -25,3 +25,7 @@ class NotRegistered(HaystackError):
 class MoreLikeThisError(HaystackError):
     """Raised when a model instance has not been provided for More Like This."""
     pass
+
+class FacetingError(HaystackError):
+    """Raised when incorrect arguments have been provided for faceting."""
+    pass
