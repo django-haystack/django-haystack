@@ -356,3 +356,63 @@ passed to ``in_bulk`` will map to the model in question.
 If you need a specific ``QuerySet`` in one place, you can specify this at the
 ``SearchQuerySet`` level using the ``load_all_queryset`` method. See
 :doc:`searchqueryset_api` for usage.
+
+
+ModelSearchIndex
+================
+
+The ``ModelSearchIndex`` class allows for automatic generation of a
+``SearchIndex`` based on the fields of the model assigned to it.
+
+With the exception of the automated introspection, it is a ``SearchIndex``
+class, so all notes above pertaining to ``SearchIndexes`` apply. As with the
+``ModelForm`` class in Django, it employs an inner class called ``Meta``,
+which should either contain a ``pass`` to include all fields, a ``fields`` list
+to specify a whitelisted set of fields or ``excludes`` to prevent certain fields
+from appearing in the class. Unlike ``ModelForm``, you should **NOT** specify
+a ``model`` attribute, as that is already handled when registering the class.
+
+In addition, it adds a `text` field that is the ``document=True`` field and
+has `use_template=True` option set, just like the ``BasicSearchIndex``.
+
+.. warning::
+
+    Usage of this class might result in inferior ``SearchIndex`` objects, which
+    can directly affect your search results. Use this to establish basic
+    functionality and move to custom `SearchIndex` objects for better control.
+
+At this time, it does not handle related fields.
+
+Quick Start
+-----------
+
+For the impatient::
+
+    import datetime
+    from haystack import indexes
+    from haystack import site
+    from myapp.models import Note
+    
+    # All Fields
+    class AllNoteIndex(indexes.ModelSearchIndex):
+        class Meta:
+            pass
+    
+    # Blacklisted Fields
+    class LimitedNoteIndex(indexes.ModelSearchIndex):
+        class Meta:
+            excludes = ['user']
+    
+    # Whitelisted Fields
+    class NoteIndex(indexes.ModelSearchIndex):
+        class Meta:
+            fields = ['user', 'pub_date']
+        
+        # Note that regular ``SearchIndex`` methods apply.
+        def get_queryset(self):
+            "Used when the entire index for model is updated."
+            return Note.objects.filter(pub_date__lte=datetime.datetime.now())
+    
+    
+    site.register(Note, NoteIndex)
+
