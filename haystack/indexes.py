@@ -177,3 +177,114 @@ class SearchIndex(object):
 
 class BasicSearchIndex(SearchIndex):
     text = CharField(document=True, use_template=True)
+
+
+# End SearchIndexes
+# Begin ModelSearchIndexes
+
+
+def fields_for_searchindex(model, existing_fields, fields=None, excludes=None):
+    """
+    Used by the `ModelSearchIndex` class to generate a field list by
+    introspecting the model.
+    """
+    final_fields = {}
+    
+    if fields is None:
+        fields = []
+    
+    if excludes is None:
+        excludes = []
+    
+    for f in model._meta.fields:
+        if f.name in existing_fields:
+            continue
+        
+        if fields and f.name not in fields:
+            continue
+        
+        if excludes and f.name in excludes:
+            continue
+        
+        # Skip reserved fieldnames from Haystack.
+        if f.name in ('id', 'django_ct', 'django_id', 'content', 'text'):
+            continue
+        
+        # Ignore certain fields (AutoField, related fields).
+        if f.primary_key or getattr(f, 'rel'):
+            continue
+        
+        if f.get_internal_type() in ('DateField', 'DateTimeField'):
+            index_field_class = DateTimeField
+        elif f.get_internal_type() in ('BooleanField', 'NullBooleanField'):
+            index_field_class = BooleanField
+        elif f.get_internal_type() in ('CommaSeparatedIntegerField',):
+            index_field_class = MultiValueField
+        elif f.get_internal_type() in ('DecimalField', 'FloatField'):
+            index_field_class = FloatField
+        elif f.get_internal_type() in ('IntegerField', 'PositiveIntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField'):
+            index_field_class = FloatField
+        else:
+            index_field_class = CharField
+        
+        kwargs = {
+            'model_attr': f.name,
+        }
+        
+        if f.null is True:
+            kwargs['null'] = True
+        
+        if f.has_default():
+            kwargs['default'] = f.default
+        
+        final_fields[f.name] = index_field_class(**kwargs)
+    
+    return final_fields
+
+
+class ModelSearchIndex(SearchIndex):
+    """
+    Introspects the model assigned to it and generates a `SearchIndex` based on
+    the fields of that model.
+    
+    In addition, it adds a `text` field that is the `document=True` field and
+    has `use_template=True` option set, just like the `BasicSearchIndex`.
+    
+    Usage of this class might result in inferior `SearchIndex` objects, which
+    can directly affect your search results. Use this to establish basic
+    functionality and move to custom `SearchIndex` objects for better control.
+    
+    At this time, it does not handle related fields.
+    """
+    text = CharField(document=True, use_template=True)
+    
+    def __init__(self, model, backend=None):
+        self.model = model
+        self.backend = backend or haystack.backend.SearchBackend()
+        self.prepared_data = None
+        content_fields = []
+        
+        # Introspect the model, adding/removing fields as needed.
+        # Adds/Excludes should happen only if the fields are not already
+        # defined in `self.fields`.
+        self._meta = getattr(self, 'Meta', None)
+        
+        if self._meta:
+            fields = []
+            excludes = []
+            
+            if getattr(self._meta, 'fields', None):
+                fields = self._meta.fields
+            
+            if getattr(self._meta, 'excludes', None):
+                excludes = self._meta.excludes
+            
+            # Add in the new fields.
+            self.fields.update(fields_for_searchindex(self.model, self.fields, fields, excludes))
+        
+        for field_name, field in self.fields.items():
+            if field.document is True:
+                content_fields.append(field_name)
+        
+        if not len(content_fields) == 1:
+            raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")

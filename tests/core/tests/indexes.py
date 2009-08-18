@@ -224,3 +224,76 @@ class SearchIndexTestCase(TestCase):
         prepared_data = self.cnmi.prepare(mock)
         self.assertEqual(len(prepared_data), 1)
         self.assertEqual(sorted(prepared_data.keys()), ['content'])
+
+
+class BasicModelSearchIndex(indexes.ModelSearchIndex):
+    class Meta:
+        pass
+
+
+class FieldsModelSearchIndex(indexes.ModelSearchIndex):
+    class Meta:
+        fields = ['user', 'pub_date']
+
+
+class ExcludesModelSearchIndex(indexes.ModelSearchIndex):
+    class Meta:
+        excludes = ['user', 'foo']
+
+
+class FieldsWithOverrideModelSearchIndex(indexes.ModelSearchIndex):
+    foo = indexes.IntegerField(model_attr='foo')
+    
+    class Meta:
+        fields = ['user', 'foo']
+
+
+class ModelSearchIndexTestCase(TestCase):
+    def setUp(self):
+        super(ModelSearchIndexTestCase, self).setUp()
+        self.msb = MockSearchBackend()
+        self.bmsi = BasicModelSearchIndex(MockModel, backend=self.msb)
+        self.fmsi = FieldsModelSearchIndex(MockModel, backend=self.msb)
+        self.emsi = ExcludesModelSearchIndex(MockModel, backend=self.msb)
+        self.fwomsi = FieldsWithOverrideModelSearchIndex(MockModel, backend=self.msb)
+    
+    def test_basic(self):
+        self.assertEqual(len(self.bmsi.fields), 4)
+        self.assert_('foo' in self.bmsi.fields)
+        self.assert_(isinstance(self.bmsi.fields['foo'], indexes.CharField))
+        self.assertEqual(self.bmsi.fields['foo'].null, False)
+        self.assert_('user' in self.bmsi.fields)
+        self.assert_(isinstance(self.bmsi.fields['user'], indexes.CharField))
+        self.assertEqual(self.bmsi.fields['user'].null, False)
+        self.assert_('pub_date' in self.bmsi.fields)
+        self.assert_(isinstance(self.bmsi.fields['pub_date'], indexes.DateTimeField))
+        self.assert_(isinstance(self.bmsi.fields['pub_date'].default, datetime.datetime))
+        self.assert_('text' in self.bmsi.fields)
+        self.assert_(isinstance(self.bmsi.fields['text'], indexes.CharField))
+        self.assertEqual(self.bmsi.fields['text'].document, True)
+        self.assertEqual(self.bmsi.fields['text'].use_template, True)
+    
+    def test_fields(self):
+        self.assertEqual(len(self.fmsi.fields), 3)
+        self.assert_('user' in self.fmsi.fields)
+        self.assert_(isinstance(self.fmsi.fields['user'], indexes.CharField))
+        self.assert_('pub_date' in self.fmsi.fields)
+        self.assert_(isinstance(self.fmsi.fields['pub_date'], indexes.DateTimeField))
+        self.assert_('text' in self.fmsi.fields)
+        self.assert_(isinstance(self.fmsi.fields['text'], indexes.CharField))
+    
+    def test_excludes(self):
+        self.assertEqual(len(self.emsi.fields), 2)
+        self.assert_('pub_date' in self.emsi.fields)
+        self.assert_(isinstance(self.emsi.fields['pub_date'], indexes.DateTimeField))
+        self.assert_('text' in self.emsi.fields)
+        self.assert_(isinstance(self.emsi.fields['text'], indexes.CharField))
+    
+    def test_fields_with_override(self):
+        self.assertEqual(len(self.fwomsi.fields), 3)
+        self.assert_('user' in self.fwomsi.fields)
+        self.assert_(isinstance(self.fwomsi.fields['user'], indexes.CharField))
+        self.assert_('foo' in self.fwomsi.fields)
+        self.assert_(isinstance(self.fwomsi.fields['foo'], indexes.IntegerField))
+        self.assert_('text' in self.fwomsi.fields)
+        self.assert_(isinstance(self.fwomsi.fields['text'], indexes.CharField))
