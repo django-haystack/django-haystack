@@ -1,0 +1,26 @@
+a { background-color: transparent !important; }
+dl dt { text-decoration: underline; }
+div#header { margin-bottom: 0px; }
+div.document, div.related, div.footer { width: 900px; margin: 0 auto; }
+div.document { margin-top: 10px; }
+div.related { background-color: #262511; padding-left: 10px; padding-right: 10px; }
+div.documentwrapper { width:640px; float:left;}
+div.body h1,
+div.body h2,
+div.body h3,
+div.body h4,
+div.body h5,
+div.body h6 {
+    background-color: #053211;
+    font-weight: normal;
+    border-bottom: 2px solid #262511;
+    margin: 20px -20px 10px -20px;
+    padding: 3px 0 3px 10px;
+}
+div.sphinxsidebar { width:220px; float:right;}
+div.sphinxsidebar ul { padding-left: 10px; }
+div.sphinxsidebar ul ul { padding-left: 10px; margin-left: 10px; }
+div.bodywrapper { margin: 0px; }
+div.highlight-python, div.highlight { background-color: #262511; margin-bottom: 10px; padding: 10px; }
+div.footer { background-color:#262511; font-size: 90%; padding: 10px; }
+table thead { background-color: #053211; border-bottom: 1px solid #262511; }
