@@ -62,6 +62,20 @@ class MockSearchBackend(BaseSearchBackend):
         }
 
 
+class MixedMockSearchBackend(MockSearchBackend):
+    def search(self, query, highlight=False):
+        result_info = super(MixedMockSearchBackend, self).search(query, highlight)
+        result_info['results'] = result_info['results'][:30]
+        result_info['hits'] = 30
+        
+        # Add search results from other models.
+        del(result_info['results'][9]) # MockSearchResult('core', 'AnotherMockModel', 9, .1)
+        del(result_info['results'][13]) # MockSearchResult('core', 'AnotherMockModel', 13, .1)
+        del(result_info['results'][14]) # MockSearchResult('core', 'NonexistentMockModel', 14, .1)
+        
+        return result_info
+
+
 class MockSearchQuery(BaseSearchQuery):
     def build_query(self):
         return ''
