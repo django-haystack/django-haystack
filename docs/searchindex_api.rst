@@ -210,7 +210,7 @@ by a single ``SearchField``. An example might look like::
             # Add in tags (assuming there's a M2M relationship to Tag on the model).
             # Note that this would NOT get picked up by the automatic
             # schema tools provided by Haystack.
-            self.prepared_data['tags'] = [tag.name for tag in self.tags.all()]
+            self.prepared_data['tags'] = [tag.name for tag in object.tags.all()]
             
             return self.prepared_data
 
