@@ -77,7 +77,10 @@ class SearchBackend(BaseSearchBackend):
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, **kwargs):
         if len(query_string) == 0:
-            return []
+            return {
+                'results': [],
+                'hits': 0,
+            }
         
         kwargs = {
             'fl': '* score',
@@ -251,6 +254,7 @@ class SearchBackend(BaseSearchBackend):
             schema_fields.append(field_data)
         
         return (content_field_name, schema_fields)
+
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, backend=None):
