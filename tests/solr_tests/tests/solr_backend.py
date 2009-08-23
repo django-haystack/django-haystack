@@ -15,6 +15,15 @@ class SolrMockSearchIndex(indexes.SearchIndex):
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
+class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, use_template=True)
+    month = indexes.CharField(indexed=False)
+    pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def prepare_month(self, obj):
+        return "%02d" % obj.pub_date.month
+
+
 class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
@@ -29,6 +38,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.site = SearchSite()
         self.sb = SearchBackend(site=self.site)
         self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
+        self.smtmmi = SolrMaintainTypeMockSearchIndex(MockModel, backend=self.sb)
         self.site.register(MockModel, SolrMockSearchIndex)
         
         # Stow.
@@ -137,6 +147,15 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(fields), 3)
         self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'date', 'field_name': 'pub_date', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'text', 'field_name': 'name', 'multi_valued': 'false'}])
+    
+    def test_verify_type(self):
+        import haystack
+        haystack.site.unregister(MockModel)
+        haystack.site.register(MockModel, SolrMaintainTypeMockSearchIndex)
+        self.sb.update(self.smtmmi, self.sample_objs)
+        
+        self.assertEqual(self.sb.search('*:*')['hits'], 3)
+        self.assertEqual([result.month for result in self.sb.search('*:*')['results']], [u'02', u'02', u'02'])
 
 
 class LiveSolrSearchQueryTestCase(TestCase):

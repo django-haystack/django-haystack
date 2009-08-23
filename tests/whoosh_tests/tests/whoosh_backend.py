@@ -24,6 +24,15 @@ class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
     seen_count = indexes.IntegerField(indexed=False)
 
 
+class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, use_template=True)
+    month = indexes.CharField(indexed=False)
+    pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def prepare_month(self, obj):
+        return "%02d" % obj.pub_date.month
+
+
 class WhooshSearchSite(sites.SearchSite):
     pass
 
@@ -40,6 +49,7 @@ class WhooshSearchBackendTestCase(TestCase):
         self.site = WhooshSearchSite()
         self.sb = SearchBackend(site=self.site)
         self.smmi = WhooshMockSearchIndex(MockModel, backend=self.sb)
+        self.wmtmmi = WhooshMaintainTypeMockSearchIndex(MockModel, backend=self.sb)
         self.site.register(MockModel, WhooshMockSearchIndex)
         
         # With the models registered, you get the proper bits.
@@ -173,7 +183,7 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(len(self.whoosh_search('*')), 3)
         
-        # Unsupported by Whoosh. Should see empty results.        
+        # Unsupported by Whoosh. Should see empty results.
         self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
     
     def test_delete_index(self):
@@ -228,6 +238,16 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assert_(isinstance(schema._by_name['pub_date'], ID))
         self.assert_(isinstance(schema._by_name['seen_count'], STORED))
         self.assert_(isinstance(schema._by_name['sites'], KEYWORD))
+    
+    def test_verify_type(self):
+        import haystack
+        haystack.site.unregister(MockModel)
+        haystack.site.register(MockModel, WhooshMaintainTypeMockSearchIndex)
+        self.sb.setup()
+        self.sb.update(self.wmtmmi, self.sample_objs)
+        
+        self.assertEqual(self.sb.search('*')['hits'], 3)
+        self.assertEqual([result.month for result in self.sb.search('*')['results']], [u'02', u'02', u'02'])
 
 
 class LiveWhooshSearchQueryTestCase(TestCase):
