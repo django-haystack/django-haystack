@@ -77,7 +77,10 @@ class CharField(SearchField):
         super(CharField, self).__init__(**kwargs)
     
     def prepare(self, obj):
-        return unicode(super(CharField, self).prepare(obj))
+        return self.convert(super(CharField, self).prepare(obj))
+    
+    def convert(self, value):
+        return unicode(value)
 
 
 class IntegerField(SearchField):
@@ -93,7 +96,10 @@ class IntegerField(SearchField):
         if prepared is None:
             return None
         
-        return int(prepared)
+        return self.convert(prepared)
+    
+    def convert(self, value):
+        return int(value)
 
 
 class FloatField(SearchField):
@@ -109,7 +115,10 @@ class FloatField(SearchField):
         if prepared is None:
             return None
         
-        return float(prepared)
+        return self.convert(prepared)
+    
+    def convert(self, value):
+        return float(value)
 
 
 class BooleanField(SearchField):
@@ -120,7 +129,10 @@ class BooleanField(SearchField):
         super(BooleanField, self).__init__(**kwargs)
     
     def prepare(self, obj):
-        return bool(super(BooleanField, self).prepare(obj))
+        return self.convert(super(BooleanField, self).prepare(obj))
+    
+    def convert(self, value):
+        return bool(value)
 
 
 class DateField(SearchField):
@@ -153,4 +165,7 @@ class MultiValueField(SearchField):
         super(MultiValueField, self).__init__(**kwargs)
     
     def prepare(self, obj):
-        return list(super(MultiValueField, self).prepare(obj))
+        return self.convert(super(MultiValueField, self).prepare(obj))
+    
+    def convert(self, value):
+        return list(value)

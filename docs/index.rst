@@ -27,6 +27,7 @@ you up and running:
    views_and_forms
    glossary
    faq
+   who_uses
    installing_search_engines
 
 

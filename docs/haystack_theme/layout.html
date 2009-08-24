@@ -1,0 +1,22 @@
+{% extends "basic/layout.html" %}
+
+{%- block extrahead %}
+    <link rel="stylesheet" href="http://haystacksearch.org/css/front.css" media="screen">
+    <link rel="stylesheet" href="_static/documentation.css" media="screen">
+{% endblock %}
+
+{%- block header %}
+    <div id="header">
+        <h1>Haystack</h1>
+        <p>Modular search for Django</p>
+
+        <ul class="features">
+          <li>Term Boost</li>
+          <li>More Like This</li>
+          <li>Faceting</li>
+          <li>Stored (non-indexed) fields</li>
+          <li>Highlighting</li>
+          <li>Spelling Suggestions</li>
+        </ul>
+    </div>
+{% endblock %}

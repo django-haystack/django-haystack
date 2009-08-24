@@ -308,41 +308,43 @@ class SearchBackend(BaseSearchBackend):
             raw_result = dict(raw_result)
             app_label, model_name = raw_result['django_ct'].split('.')
             additional_fields = {}
-            
-            for key, value in raw_result.items():
-                additional_fields[str(key)] = self._to_python(value)
-            
-            del(additional_fields['django_ct'])
-            del(additional_fields['django_id'])
-            
-            if highlight:
-                from whoosh import analysis
-                from whoosh.highlight import highlight, ContextFragmenter, UppercaseFormatter
-                sa = analysis.StemmingAnalyzer()
-                terms = [term.replace('*', '') for term in query_string.split()]
-                
-                # DRL_FIXME: Highlighting doesn't seem to work properly in testing.
-                additional_fields['highlighted'] = {
-                    self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
-                }
-            
-            # Requires Whoosh 0.1.20+.
-            if hasattr(raw_results, 'score'):
-                score = raw_results.score(doc_offset)
-            else:
-                score = None
-            
-            if score is None:
-                score = 0
-            
             model = get_model(app_label, model_name)
             
-            if model:
-                if model in indexed_models:
-                    result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
-                    results.append(result)
+            if model and model in indexed_models:
+                for key, value in raw_result.items():
+                    index = site.get_index(model)
+                    string_key = str(key)
+                    
+                    if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
+                        additional_fields[string_key] = index.fields[string_key].convert(value)
+                    else:
+                        additional_fields[string_key] = self._to_python(value)
+                
+                del(additional_fields['django_ct'])
+                del(additional_fields['django_id'])
+                
+                if highlight:
+                    from whoosh import analysis
+                    from whoosh.highlight import highlight, ContextFragmenter, UppercaseFormatter
+                    sa = analysis.StemmingAnalyzer()
+                    terms = [term.replace('*', '') for term in query_string.split()]
+                    
+                    # DRL_FIXME: Highlighting doesn't seem to work properly in testing.
+                    additional_fields['highlighted'] = {
+                        self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
+                    }
+                
+                # Requires Whoosh 0.1.20+.
+                if hasattr(raw_results, 'score'):
+                    score = raw_results.score(doc_offset)
                 else:
-                    hits -= 1
+                    score = None
+                
+                if score is None:
+                    score = 0
+                
+                result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
+                results.append(result)
             else:
                 hits -= 1
         

@@ -8,7 +8,7 @@ from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel
-from core.tests.mocks import MockSearchQuery, MockSearchBackend, MOCK_SEARCH_RESULTS
+from core.tests.mocks import MockSearchQuery, MockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
 
 
 class QueryFilterTestCase(TestCase):
@@ -217,6 +217,7 @@ class SearchQuerySetTestCase(TestCase):
         super(SearchQuerySetTestCase, self).setUp()
         self.bsqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
         self.msqs = SearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
+        self.mmsqs = SearchQuerySet(query=MockSearchQuery(backend=MixedMockSearchBackend()))
         
         # Stow.
         self.old_site = haystack.site
@@ -252,6 +253,12 @@ class SearchQuerySetTestCase(TestCase):
         
         for offset, result in enumerate(results._manual_iter()):
             self.assertEqual(result, MOCK_SEARCH_RESULTS[offset])
+        
+        # Test to ensure we properly fill the cache, even if we get fewer
+        # results back (not in the SearchSite) than the hit count indicates.
+        # This will hang indefinitely if broken.
+        results = self.mmsqs.all()
+        self.assertEqual([result.pk for result in results._manual_iter()], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
     
     def test_fill_cache(self):
         results = self.msqs.all()
@@ -260,6 +267,21 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(results._result_cache), 10)
         results._fill_cache()
         self.assertEqual(len(results._result_cache), 20)
+        
+        # Test to ensure we properly fill the cache, even if we get fewer
+        # results back (not in the SearchSite) than the hit count indicates.
+        results = self.mmsqs.all()
+        self.assertEqual(len(results._result_cache), 0)
+        self.assertEqual([result.pk for result in results._result_cache], [])
+        results._fill_cache()
+        self.assertEqual(len(results._result_cache), 10)
+        self.assertEqual([result.pk for result in results._result_cache], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10])
+        results._fill_cache()
+        self.assertEqual(len(results._result_cache), 20)
+        self.assertEqual([result.pk for result in results._result_cache], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22])
+        results._fill_cache()
+        self.assertEqual(len(results._result_cache), 27)
+        self.assertEqual([result.pk for result in results._result_cache], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
     
     def test_cache_is_full(self):
         # Dummy always has a count of 0 and an empty _result_cache, hence True.

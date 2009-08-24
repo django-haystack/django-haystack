@@ -119,6 +119,9 @@ class SearchQuerySet(object):
                         # nothing for those objects.
                         loaded_objects[model] = []
         
+        if len(results) < ITERATOR_LOAD_PER_QUERY:
+            self._ignored_result_count += ITERATOR_LOAD_PER_QUERY - len(results)
+        
         for result in results:
             if self._load_all:
                 # We have to deal with integer keys being cast from strings; if this

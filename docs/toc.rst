@@ -13,6 +13,7 @@ Table Of Contents
    installing_search_engines
    settings
    faq
+   who_uses
    
    best_practices
    faceting

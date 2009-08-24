@@ -77,7 +77,10 @@ class SearchBackend(BaseSearchBackend):
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, **kwargs):
         if len(query_string) == 0:
-            return []
+            return {
+                'results': [],
+                'hits': 0,
+            }
         
         kwargs = {
             'fl': '* score',
@@ -184,25 +187,27 @@ class SearchBackend(BaseSearchBackend):
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result['django_ct'].split('.')
             additional_fields = {}
-            
-            for key, value in raw_result.items():
-                additional_fields[str(key)] = self.conn._to_python(value)
-            
-            del(additional_fields['django_ct'])
-            del(additional_fields['django_id'])
-            del(additional_fields['score'])
-            
-            if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
-                additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
-            
             model = get_model(app_label, model_name)
             
-            if model:
-                if model in indexed_models:
-                    result = SearchResult(app_label, model_name, raw_result['django_id'], raw_result['score'], **additional_fields)
-                    results.append(result)
-                else:
-                    hits -= 1
+            if model and model in indexed_models:
+                for key, value in raw_result.items():
+                    index = site.get_index(model)
+                    string_key = str(key)
+                    
+                    if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
+                        additional_fields[string_key] = index.fields[string_key].convert(value)
+                    else:
+                        additional_fields[string_key] = self.conn._to_python(value)
+                
+                del(additional_fields['django_ct'])
+                del(additional_fields['django_id'])
+                del(additional_fields['score'])
+                
+                if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
+                    additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
+                
+                result = SearchResult(app_label, model_name, raw_result['django_id'], raw_result['score'], **additional_fields)
+                results.append(result)
             else:
                 hits -= 1
         
@@ -251,6 +256,7 @@ class SearchBackend(BaseSearchBackend):
             schema_fields.append(field_data)
         
         return (content_field_name, schema_fields)
+
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, backend=None):

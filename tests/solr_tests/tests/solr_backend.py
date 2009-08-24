@@ -15,6 +15,15 @@ class SolrMockSearchIndex(indexes.SearchIndex):
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
+class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, use_template=True)
+    month = indexes.CharField(indexed=False)
+    pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def prepare_month(self, obj):
+        return "%02d" % obj.pub_date.month
+
+
 class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
@@ -29,6 +38,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.site = SearchSite()
         self.sb = SearchBackend(site=self.site)
         self.smmi = SolrMockSearchIndex(MockModel, backend=self.sb)
+        self.smtmmi = SolrMaintainTypeMockSearchIndex(MockModel, backend=self.sb)
         self.site.register(MockModel, SolrMockSearchIndex)
         
         # Stow.
@@ -92,34 +102,34 @@ class SolrSearchBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
         
-        self.assertEqual(self.sb.search(''), [])
+        self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('*:*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], ['1', '2', '3'])
         
-        self.assertEqual(self.sb.search('', highlight=True), [])
+        self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']], ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
         
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], 'index')
         
-        self.assertEqual(self.sb.search('', facets=['name']), [])
+        self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
         results = self.sb.search('Index', facets=['name'])
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['fields']['name'], [('daniel1', 1), ('daniel2', 1), ('daniel3', 1)])
         
-        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 3, 26), 'gap_by': 'month', 'gap_amount': 1}}), [])
+        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 3, 26), 'gap_by': 'month', 'gap_amount': 1}}), {'hits': 0, 'results': []})
         results = self.sb.search('Index', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 3, 26), 'gap_by': 'month', 'gap_amount': 1}})
         self.assertEqual(results['hits'], 3)
         # DRL_TODO: Correct output but no counts. Another case of needing better test data?
         # self.assertEqual(results['facets']['dates']['pub_date'], {'end': '2008-02-26T00:00:00Z', 'gap': '/MONTH'})
         
-        self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), [])
+        self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
         results = self.sb.search('Index', query_facets={'name': '[* TO e]'})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {'name:[* TO e]': 3})
         
-        self.assertEqual(self.sb.search('', narrow_queries=['name:daniel1']), [])
+        self.assertEqual(self.sb.search('', narrow_queries=['name:daniel1']), {'hits': 0, 'results': []})
         results = self.sb.search('Index', narrow_queries=['name:daniel1'])
         self.assertEqual(results['hits'], 1)
     
@@ -137,6 +147,15 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(fields), 3)
         self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'date', 'field_name': 'pub_date', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'text', 'field_name': 'name', 'multi_valued': 'false'}])
+    
+    def test_verify_type(self):
+        import haystack
+        haystack.site.unregister(MockModel)
+        haystack.site.register(MockModel, SolrMaintainTypeMockSearchIndex)
+        self.sb.update(self.smtmmi, self.sample_objs)
+        
+        self.assertEqual(self.sb.search('*:*')['hits'], 3)
+        self.assertEqual([result.month for result in self.sb.search('*:*')['results']], [u'02', u'02', u'02'])
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
