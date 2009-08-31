@@ -36,10 +36,12 @@ Backend-Specific Methods
 
 When implementing a new backend, the following methods will need to be created:
 
-``run(self)``
-~~~~~~~~~~~~~
+``run(self, spelling_query=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Builds and executes the query. Returns a list of search results.
+
+Optionally passes along an alternate query for spelling suggestions.
 
 ``build_query(self)``
 ~~~~~~~~~~~~~~~~~~~~~

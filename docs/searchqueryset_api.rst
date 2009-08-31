@@ -472,8 +472,8 @@ Example::
     #     'queries': {}
     # }
 
-``spelling_suggestion(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``spelling_suggestion(self, preferred_query=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Returns the spelling suggestion found by the query.
 
@@ -485,10 +485,19 @@ run. Search results will be populated as normal but with an additional spelling
 suggestion. Note that this does *NOT* run the revised query, only suggests
 improvements.
 
+If provided, the optional argument to this method lets you specify an alternate
+query for the spelling suggestion to be run on. This is useful for passing along
+a raw user-provided query, especially when there are many methods chained on the
+``SearchQuerySet``.
+
 Example::
 
     sqs = SearchQuerySet().auto_query('mor exmples')
     sqs.spelling_suggestion() # u'more examples'
+    
+    # ...or...
+    suggestion = SearchQuerySet().spelling_suggestion('moar exmples')
+    suggestion # u'more examples'
 
 
 .. _field-lookups:

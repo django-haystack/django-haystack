@@ -112,6 +112,7 @@ class SolrSearchBackendTestCase(TestCase):
         
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], 'index')
+        self.assertEqual(self.sb.search('Indx', spelling_query='indexy')['spelling_suggestion'], 'index')
         
         self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
         results = self.sb.search('Index', facets=['name'])
@@ -181,6 +182,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def test_get_spelling(self):
         self.sq.add_filter('content', 'Indx')
         self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
+        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'index')
 
 
 class LiveSolrSearchQuerySetTestCase(TestCase):

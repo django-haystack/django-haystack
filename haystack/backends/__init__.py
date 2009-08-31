@@ -76,7 +76,7 @@ class BaseSearchBackend(object):
 
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, **kwargs):
+               narrow_queries=None, spelling_query=None, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -247,10 +247,10 @@ class BaseSearchQuery(object):
         
         self.backend = loaded_backend.SearchBackend()
     
-    def run(self):
+    def run(self, spelling_query=None):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        results = self.backend.search(final_query, highlight=self.highlight)
+        results = self.backend.search(final_query, highlight=self.highlight, spelling_query=spelling_query)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
@@ -313,7 +313,7 @@ class BaseSearchQuery(object):
         
         return self._facet_counts
     
-    def get_spelling_suggestion(self):
+    def get_spelling_suggestion(self, preferred_query=None):
         """
         Returns the spelling suggestion received from the backend.
         
@@ -321,7 +321,7 @@ class BaseSearchQuery(object):
         the results.
         """
         if self._spelling_suggestion is None:
-            self.run()
+            self.run(spelling_query=preferred_query)
         
         return self._spelling_suggestion
     

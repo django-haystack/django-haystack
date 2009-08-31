@@ -345,6 +345,7 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.filter(content='Indx')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(sqs.spelling_suggestion(), None)
+        self.assertEqual(sqs.spelling_suggestion('indexy'), None)
     
     def test_raw_search(self):
         self.assertEqual(len(self.bsqs.raw_search('foo')), 0)

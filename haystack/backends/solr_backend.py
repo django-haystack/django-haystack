@@ -75,7 +75,7 @@ class SearchBackend(BaseSearchBackend):
 
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, **kwargs):
+               narrow_queries=None, spelling_query=None, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -106,6 +106,9 @@ class SearchBackend(BaseSearchBackend):
             kwargs['spellcheck'] = 'true'
             kwargs['spellcheck.collate'] = 'true'
             kwargs['spellcheck.count'] = 1
+            
+            if spelling_query:
+                kwargs['spellcheck.q'] = spelling_query
         
         if facets is not None:
             kwargs['facet'] = 'on'
@@ -339,7 +342,7 @@ class SearchQuery(BaseSearchQuery):
         
         return final_query
     
-    def run(self):
+    def run(self, spelling_query=None):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         kwargs = {
@@ -374,6 +377,9 @@ class SearchQuery(BaseSearchQuery):
         
         if self.narrow_queries:
             kwargs['narrow_queries'] = self.narrow_queries
+        
+        if spelling_query:
+            kwargs['spelling_query'] = spelling_query
         
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
