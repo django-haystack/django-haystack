@@ -39,7 +39,7 @@ class SearchBackend(BaseSearchBackend):
 
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, **kwargs):
+               narrow_queries=None, spelling_query=None, **kwargs):
         if query_string == 'content__exact hello AND content__exact world':
             return {
                 'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],

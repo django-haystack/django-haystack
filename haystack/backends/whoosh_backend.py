@@ -182,7 +182,7 @@ class SearchBackend(BaseSearchBackend):
 
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, **kwargs):
+               narrow_queries=None, spelling_query=None, **kwargs):
         if not self.setup_complete:
             self.setup()
         
@@ -279,7 +279,10 @@ class SearchBackend(BaseSearchBackend):
             return self._process_results(raw_results, highlight=highlight, query_string=query_string)
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
-                spelling_suggestion = self.create_spelling_suggestion(query_string)
+                if spelling_query:
+                    spelling_suggestion = self.create_spelling_suggestion(spelling_query)
+                else:
+                    spelling_suggestion = self.create_spelling_suggestion(query_string)
             else:
                 spelling_suggestion = None
             

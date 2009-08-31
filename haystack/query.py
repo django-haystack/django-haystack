@@ -395,7 +395,7 @@ class SearchQuerySet(object):
         clone = self._clone()
         return clone.query.get_facet_counts()
     
-    def spelling_suggestion(self):
+    def spelling_suggestion(self, preferred_query=None):
         """
         Returns the spelling suggestion found by the query.
         
@@ -406,7 +406,7 @@ class SearchQuerySet(object):
         presenting the data.
         """
         clone = self._clone()
-        return clone.query.get_spelling_suggestion()
+        return clone.query.get_spelling_suggestion(preferred_query)
     
     
     # Utility methods.
