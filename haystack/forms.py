@@ -14,7 +14,7 @@ def model_choices(site=None):
 
 
 class SearchForm(forms.Form):
-    q = forms.CharField(required=False)
+    q = forms.CharField(required=False, label='Search')
     
     def __init__(self, *args, **kwargs):
         self.searchqueryset = kwargs.get('searchqueryset', None)
