@@ -1,11 +1,14 @@
-import datetime
+from datetime import timedelta
 import os
-from whoosh.fields import ID, TEXT, KEYWORD, STORED
+import shutil
+from whoosh.fields import TEXT, ID, KEYWORD, STORED
 from whoosh.qparser import QueryParser
 from django.conf import settings
+from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
 from haystack import indexes
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
+from haystack.query import SearchQuerySet
 from haystack import sites
 from core.models import MockModel, AnotherMockModel
 
@@ -54,7 +57,6 @@ class WhooshSearchBackendTestCase(TestCase):
         
         # With the models registered, you get the proper bits.
         import haystack
-        from haystack.sites import SearchSite
         
         # Stow.
         self.old_site = haystack.site
@@ -63,7 +65,7 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sb.setup()
         self.raw_whoosh = self.sb.index
         self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
-        self.raw_whoosh.delete_by_query(q=self.parser.parse('*'))
+        self.sb.delete_index()
         
         self.sample_objs = []
         
@@ -71,17 +73,12 @@ class WhooshSearchBackendTestCase(TestCase):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
-            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            mock.pub_date = date(2009, 2, 25) - timedelta(days=i)
             self.sample_objs.append(mock)
     
     def tearDown(self):
         if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
-        
-            for index_file in index_files:
-                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
-        
-            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
         
         settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
         
@@ -92,6 +89,7 @@ class WhooshSearchBackendTestCase(TestCase):
         super(WhooshSearchBackendTestCase, self).tearDown()
     
     def whoosh_search(self, query):
+        self.raw_whoosh = self.raw_whoosh.refresh()
         searcher = self.raw_whoosh.searcher()
         return searcher.search(self.parser.parse(query))
     
@@ -147,13 +145,13 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('a'), {'hits': 0, 'results': []})
         
         # Possible AttributeError?
-        self.assertEqual(self.sb.search('a b'), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search('a b'), {'hits': 0, 'results': [], 'spelling_suggestion': '', 'facets': {}})
         
         self.assertEqual(self.sb.search('*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*')['results']], [u'3', u'2', u'1'])
         
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
-        self.assertEqual(self.sb.search('Index*', highlight=True)['hits'], 3)
+        self.assertEqual(self.sb.search('index*', highlight=True)['hits'], 3)
         # DRL_FIXME: Uncomment once highlighting works.
         # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
         
@@ -162,16 +160,19 @@ class WhooshSearchBackendTestCase(TestCase):
         
         self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', facets=['name'])
+        results = self.sb.search('index*', facets=['name'])
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
-        results = self.sb.search('Index*', date_facets={'pub_date': {'start_date': datetime.date(2008, 2, 26), 'end_date': datetime.date(2008, 2, 26), 'gap': '/MONTH'}})
+        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
+        results = self.sb.search('Index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
+        results = self.sb.search('index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
         self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
         results = self.sb.search('Index*', query_facets={'name': '[* TO e]'})
+        results = self.sb.search('index*', query_facets={'name': '[* TO e]'})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
@@ -210,10 +211,10 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb._from_python([1, 2, 3]), u'[1, 2, 3]')
         self.assertEqual(self.sb._from_python((1, 2, 3)), u'(1, 2, 3)')
         self.assertEqual(self.sb._from_python({'a': 1, 'c': 3, 'b': 2}), u"{'a': 1, 'c': 3, 'b': 2}")
-        self.assertEqual(self.sb._from_python(datetime.datetime(2009, 5, 9, 16, 14)), u'2009-05-09T16:14:00')
-        self.assertEqual(self.sb._from_python(datetime.datetime(2009, 5, 9, 0, 0)), u'2009-05-09T00:00:00')
-        self.assertEqual(self.sb._from_python(datetime.datetime(1899, 5, 18, 0, 0)), u'1899-05-18T00:00:00')
-        self.assertEqual(self.sb._from_python(datetime.datetime(2009, 5, 18, 1, 16, 30, 250)), u'2009-05-18T01:16:30.000250')
+        self.assertEqual(self.sb._from_python(datetime(2009, 5, 9, 16, 14)), u'2009-05-09T16:14:00')
+        self.assertEqual(self.sb._from_python(datetime(2009, 5, 9, 0, 0)), u'2009-05-09T00:00:00')
+        self.assertEqual(self.sb._from_python(datetime(1899, 5, 18, 0, 0)), u'1899-05-18T00:00:00')
+        self.assertEqual(self.sb._from_python(datetime(2009, 5, 18, 1, 16, 30, 250)), u'2009-05-18T01:16:30') # Sorry, we shed the microseconds.
     
     def test__to_python(self):
         self.assertEqual(self.sb._to_python('abc'), 'abc')
@@ -223,8 +224,30 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb._to_python('[1, 2, 3]'), [1, 2, 3])
         self.assertEqual(self.sb._to_python('(1, 2, 3)'), (1, 2, 3))
         self.assertEqual(self.sb._to_python('{"a": 1, "b": 2, "c": 3}'), {'a': 1, 'c': 3, 'b': 2})
-        self.assertEqual(self.sb._to_python('2009-05-09T16:14:00'), datetime.datetime(2009, 5, 9, 16, 14))
-        self.assertEqual(self.sb._to_python('2009-05-09T00:00:00'), datetime.datetime(2009, 5, 9, 0, 0))
+        self.assertEqual(self.sb._to_python('2009-05-09T16:14:00'), datetime(2009, 5, 9, 16, 14))
+        self.assertEqual(self.sb._to_python('2009-05-09T00:00:00'), datetime(2009, 5, 9, 0, 0))
+        self.assertEqual(self.sb._to_python(None), None)
+    
+    def test_range_queries(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        self.assertEqual(len(self.whoosh_search('[d TO]')), 3)
+        self.assertEqual(len(self.whoosh_search('name:[d TO]')), 3)
+        self.assertEqual(len(self.whoosh_search('Ind* AND name:[d TO]')), 3)
+        self.assertEqual(len(self.whoosh_search('Ind* AND name:[TO c]')), 0)
+    
+    def test_date_queries(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        self.assertEqual(len(self.whoosh_search("pub_date:2009\-02\-24T00\:00\:00")), 1)
+        self.assertEqual(len(self.whoosh_search("pub_date:2009\-08\-30T00\:00\:00")), 0)
+        self.assertEqual(len(self.whoosh_search('Ind* AND pub_date:[TO 2009\-02\-24T00\:00\:00]')), 3)
+    
+    def test_escaped_characters_queries(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        self.assertEqual(len(self.whoosh_search("Indexed\!")), 3)
+        self.assertEqual(len(self.whoosh_search("http\:\/\/www\.example\.com")), 0)
     
     def test_build_schema(self):
         self.site.unregister(MockModel)
@@ -267,7 +290,7 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         self.sb.setup()
         self.raw_whoosh = self.sb.index
         self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
-        self.raw_whoosh.delete_by_query(q=self.parser.parse('*'))
+        self.sb.delete_index()
         
         self.sample_objs = []
         
@@ -275,19 +298,14 @@ class LiveWhooshSearchQueryTestCase(TestCase):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
-            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            mock.pub_date = date(2009, 2, 25) - timedelta(days=i)
             self.sample_objs.append(mock)
         
         self.sq = SearchQuery(backend=self.sb)
     
     def tearDown(self):
         if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
-        
-            for index_file in index_files:
-                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
-        
-            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
         
         settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
         super(LiveWhooshSearchQueryTestCase, self).tearDown()
@@ -297,3 +315,86 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         
         self.sq.add_filter('content', 'Indx')
         self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
+
+
+class LiveWhooshSearchQuerySetTestCase(TestCase):
+    def setUp(self):
+        super(LiveWhooshSearchQuerySetTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        
+        self.site = WhooshSearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.smmi = WhooshMockSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshMockSearchIndex)
+        
+        # Stow.
+        import haystack
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        self.sb.delete_index()
+        
+        self.sample_objs = []
+        
+        for i in xrange(1, 4):
+            mock = MockModel()
+            mock.id = i
+            mock.author = 'daniel%s' % i
+            mock.pub_date = date(2009, 2, 25) - timedelta(days=i)
+            self.sample_objs.append(mock)
+        
+        self.sq = SearchQuery(backend=self.sb)
+        self.sqs = SearchQuerySet(site=self.site)
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        
+        import haystack
+        haystack.site = self.old_site
+        
+        super(LiveWhooshSearchQuerySetTestCase, self).tearDown()
+    
+    def test_various_searchquerysets(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        sqs = self.sqs.filter(content='Index')
+        self.assertEqual(sqs.query.build_query(), u'Index')
+        self.assertEqual(len(sqs), 3)
+        
+        sqs = self.sqs.auto_query('Indexed!')
+        self.assertEqual(sqs.query.build_query(), u'Indexed\\!')
+        self.assertEqual(len(sqs), 3)
+        
+        sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 8, 31))
+        self.assertEqual(sqs.query.build_query(), u'Indexed\\! AND pub_date:[TO 2009\-08\-31T00\:00\:00]')
+        self.assertEqual(len(sqs), 3)
+        
+        sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 23))
+        self.assertEqual(sqs.query.build_query(), u'Indexed\\! AND pub_date:[TO 2009\\-02\\-23T00\\:00\\:00]')
+        self.assertEqual(len(sqs), 2)
+        
+        sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 25)).filter(django_id__in=[1, 2]).exclude(name='daniel1')
+        self.assertEqual(sqs.query.build_query(), u'Indexed\\! AND pub_date:[TO 2009\\-02\\-25T00\\:00\\:00] AND (django_id:"1" OR django_id:"2") NOT name:daniel1')
+        self.assertEqual(len(sqs), 1)
+        
+        sqs = self.sqs.auto_query('re-inker')
+        self.assertEqual(sqs.query.build_query(), u're\\-inker')
+        self.assertEqual(len(sqs), 0)
+        
+        sqs = self.sqs.auto_query('0.7 wire')
+        self.assertEqual(sqs.query.build_query(), u'0\\.7 AND wire')
+        self.assertEqual(len(sqs), 0)
+        
+        sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
+        self.assertEqual(sqs.query.build_query(), u'"bell bronze" AND daler\\-rowney AND pearlescent')
+        self.assertEqual(len(sqs), 0)

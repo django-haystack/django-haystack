@@ -79,19 +79,26 @@ Whoosh
 Official Download Location: http://whoosh.ca/
 
 Whoosh is pure Python, so it's a great option for getting started quickly and
-for development. **As a warning, it is not generally suitable for production
-use due to issues with multiple processes/threads not locking correctly.** For
-now (as of 2009/08/13), it requires a bit of patching (Whoosh version 0.1.21+).
-A forked version that ought to be stable for Haystack use can be found at
-http://github.com/toastdriven/whoosh::
+for development, though it does work for small scale live deployments. With the
+upcoming 0.3.x release (as of 2009/08/31, the ``0.3.0b21`` is suitable for use),
+Whoosh has become much more performant, stable and better tested. You can
+install via PyPI_ via::
+
+    sudo easy_install whoosh
+    # ... or ...
+    sudo pip install whoosh
+
+Alternatively, you can use the following fork that is guaranteed to work with
+Haystack but may be a revision or two behind::
 
     git clone http://github.com/toastdriven/whoosh.git
     cd whoosh
     sudo python setup.py install
 
-As Whoosh gains features and becomes more stable/performant, the hope is to
-eventually defer to the main release and drop the fork entirely. When that
-time comes, this documentation will be updated.
+This fork may eventually disappear entirely once it seems that Whoosh is fully
+stable. When that time comes, this documentation will be updated.
+
+.. _PyPI: http://pypi.python.org/pypi/Whoosh/
 
 
 Xapian

@@ -1,25 +1,30 @@
-import datetime
 import os
 import re
+import shutil
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
+from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
 try:
-    from whoosh import store
+    import whoosh
     from whoosh.analysis import StemmingAnalyzer
     from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
-    import whoosh.index as index
+    from whoosh import index
     from whoosh.qparser import QueryParser
+    from whoosh.filedb.filestore import FileStorage
     from whoosh.spelling import SpellChecker
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
+# Handle minimum requirement.
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 0):
+    raise MissingDependency("The 'whoosh' backend requires version 0.3.0 or greater.")
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
 
@@ -32,7 +37,7 @@ class SearchBackend(BaseSearchBackend):
         'OR',
         'TO',
     )
-
+    
     # Characters reserved by Whoosh for special use.
     # The '\\' must come first, so as not to overwrite the other slash replacements.
     RESERVED_CHARACTERS = (
@@ -58,7 +63,7 @@ class SearchBackend(BaseSearchBackend):
             os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
             new_index = True
         
-        self.storage = store.FileStorage(settings.HAYSTACK_WHOOSH_PATH)
+        self.storage = FileStorage(settings.HAYSTACK_WHOOSH_PATH)
         self.content_field_name, self.schema = self.build_schema(self.site.all_searchfields())
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
         
@@ -66,7 +71,7 @@ class SearchBackend(BaseSearchBackend):
             self.index = index.create_in(settings.HAYSTACK_WHOOSH_PATH, self.schema)
         else:
             try:
-                self.index = index.Index(self.storage, schema=self.schema)
+                self.index = self.storage.open_index(schema=self.schema)
             except index.EmptyIndexError:
                 self.index = index.create_in(settings.HAYSTACK_WHOOSH_PATH, self.schema)
         
@@ -103,11 +108,12 @@ class SearchBackend(BaseSearchBackend):
             raise SearchBackendError("No fields were found in any search_indexes. Please correct this before attempting to search.")
         
         return (content_field_name, Schema(**schema_fields))
-
+    
     def update(self, index, iterable, commit=True):
         if not self.setup_complete:
             self.setup()
         
+        self.index = self.index.refresh()
         writer = self.index.writer()
         
         for obj in iterable:
@@ -132,20 +138,23 @@ class SearchBackend(BaseSearchBackend):
         if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
             sp = SpellChecker(self.storage)
             sp.add_field(self.index, self.content_field_name)
-
+    
     def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
             self.setup()
         
+        self.index = self.index.refresh()
         whoosh_id = self.get_identifier(obj_or_string)
         self.index.delete_by_query(q=self.parser.parse('id:"%s"' % whoosh_id))
         
         # For now, commit no matter what, as we run into locking issues otherwise.
         self.index.commit()
-
+    
     def clear(self, models=[], commit=True):
         if not self.setup_complete:
             self.setup()
+        
+        self.index = self.index.refresh()
         
         if not models:
             self.delete_index()
@@ -164,12 +173,7 @@ class SearchBackend(BaseSearchBackend):
         # Per the Whoosh mailing list, if wiping out everything from the index,
         # it's much more efficient to simply delete the index files.
         if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
-        
-            for index_file in index_files:
-                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
-        
-            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
         
         # Recreate everything.
         self.setup()
@@ -178,8 +182,9 @@ class SearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
         
+        self.index = self.index.refresh()
         self.index.optimize()
-
+    
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, **kwargs):
@@ -245,6 +250,7 @@ class SearchBackend(BaseSearchBackend):
             warnings.warn("Whoosh does not handle query faceting.", Warning, stacklevel=2)
         
         narrowed_results = None
+        self.index = self.index.refresh()
         
         if narrow_queries is not None:
             # Potentially expensive? I don't see another way to do it in Whoosh...
@@ -257,6 +263,8 @@ class SearchBackend(BaseSearchBackend):
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
+        
+        self.index = self.index.refresh()
         
         if self.index.doc_count:
             searcher = self.index.searcher()
@@ -395,10 +403,11 @@ class SearchBackend(BaseSearchBackend):
         
         Code courtesy of pysolr.
         """
-        if isinstance(value, datetime.datetime):
-            value = force_unicode('%s' % value.isoformat())
-        elif isinstance(value, datetime.date):
-            value = force_unicode('%sT00:00:00' % value.isoformat())
+        if hasattr(value, 'strftime'):
+            if hasattr(value, 'hour'):
+                value = force_unicode(value.strftime('%Y-%m-%dT%H:%M:%S'))
+            else:
+                value = force_unicode(value.strftime('%Y-%m-%dT00:00:00'))
         elif isinstance(value, bool):
             if value:
                 value = u'true'
@@ -419,15 +428,16 @@ class SearchBackend(BaseSearchBackend):
         elif value == 'false':
             return False
         
-        possible_datetime = DATETIME_REGEX.search(value)
-        
-        if possible_datetime:
-            date_values = possible_datetime.groupdict()
+        if value:
+            possible_datetime = DATETIME_REGEX.search(value)
             
-            for dk, dv in date_values.items():
-                date_values[dk] = int(dv)
+            if possible_datetime:
+                date_values = possible_datetime.groupdict()
             
-            return datetime.datetime(date_values['year'], date_values['month'], date_values['day'], date_values['hour'], date_values['minute'], date_values['second'])
+                for dk, dv in date_values.items():
+                    date_values[dk] = int(dv)
+            
+                return datetime(date_values['year'], date_values['month'], date_values['day'], date_values['hour'], date_values['minute'], date_values['second'])
         
         try:
             # This is slightly gross but it's hard to tell otherwise what the
@@ -488,20 +498,31 @@ class SearchQuery(BaseSearchQuery):
                 else:
                     filter_types = {
                         'exact': "%s:%s",
-                        'gt': "%s:%s..*",
-                        'gte': "NOT %s:*..%s",
-                        'lt': "%s:*..%s",
-                        'lte': "NOT %s:%s..*",
+                        'gt': "%s:{%s TO}",
+                        'gte': "%s:[%s TO]",
+                        'lt': "%s:{TO %s}",
+                        'lte': "%s:[TO %s]",
                         'startswith': "%s:%s*",
                     }
                     
                     if the_filter.filter_type != 'in':
+                        possible_datetime = DATETIME_REGEX.search(value)
+                        
+                        if possible_datetime:
+                            value = self.clean(value)
+                        
                         query_chunks.append(filter_types[the_filter.filter_type] % (the_filter.field, value))
                     else:
                         in_options = []
                         
                         for possible_value in value:
-                            in_options.append('%s:"%s"' % (the_filter.field, self.backend._from_python(possible_value)))
+                            pv = self.backend._from_python(possible_value)
+                            possible_datetime = DATETIME_REGEX.search(pv)
+                            
+                            if possible_datetime:
+                                pv = self.clean(pv)
+                            
+                            in_options.append('%s:"%s"' % (the_filter.field, pv))
                         
                         query_chunks.append("(%s)" % " OR ".join(in_options))
             
@@ -528,7 +549,7 @@ class SearchQuery(BaseSearchQuery):
         
         return final_query
     
-    def run(self):
+    def run(self, spelling_query=None):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         kwargs = {
@@ -555,6 +576,9 @@ class SearchQuery(BaseSearchQuery):
         
         if self.narrow_queries:
             kwargs['narrow_queries'] = self.narrow_queries
+        
+        if spelling_query:
+            kwargs['spelling_query'] = spelling_query
         
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
