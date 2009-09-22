@@ -230,16 +230,12 @@ class SearchBackend(BaseSearchBackend):
                     sort_by_list.append(order_by[1:])
                     
                     if len(sort_by_list) == 1:
-                        # DRL_TODO: This is the opposite of what I would expect
-                        # but actual testing with Whoosh confirms it. Very odd.
-                        reverse = False
+                        reverse = True
                 else:
                     sort_by_list.append(order_by)
                     
                     if len(sort_by_list) == 1:
-                        # DRL_TODO: This is the opposite of what I would expect
-                        # but actual testing with Whoosh confirms it. Very odd.
-                        reverse = True
+                        reverse = False
                 
             sort_by = sort_by_list[0]
         
