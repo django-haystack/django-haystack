@@ -148,7 +148,7 @@ class SearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         whoosh_id = self.get_identifier(obj_or_string)
-        self.index.delete_by_query(q=self.parser.parse('id:"%s"' % whoosh_id))
+        self.index.delete_by_query(q=self.parser.parse(u'id:"%s"' % whoosh_id))
         
         # For now, commit no matter what, as we run into locking issues otherwise.
         self.index.commit()
@@ -165,9 +165,9 @@ class SearchBackend(BaseSearchBackend):
             models_to_delete = []
             
             for model in models:
-                models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                models_to_delete.append(u"django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
             
-            self.index.delete_by_query(q=self.parser.parse(" OR ".join(models_to_delete)))
+            self.index.delete_by_query(q=self.parser.parse(u" OR ".join(models_to_delete)))
         
         # For now, commit no matter what, as we run into locking issues otherwise.
         self.index.commit()
@@ -201,9 +201,11 @@ class SearchBackend(BaseSearchBackend):
                 'hits': 0,
             }
         
+        query_string = force_unicode(query_string)
+        
         # A one-character query (non-wildcard) gets nabbed by a stopwords
         # filter and should yield zero results.
-        if len(query_string) <= 1 and query_string != '*':
+        if len(query_string) <= 1 and query_string != u'*':
             return {
                 'results': [],
                 'hits': 0,
@@ -256,7 +258,7 @@ class SearchBackend(BaseSearchBackend):
             narrow_searcher = self.index.searcher()
             
             for nq in narrow_queries:
-                recent_narrowed_results = narrow_searcher.search(self.parser.parse(nq))
+                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_unicode(nq)))
                 
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
@@ -265,7 +267,7 @@ class SearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         
-        if self.index.doc_count:
+        if self.index.doc_count():
             searcher = self.index.searcher()
             parsed_query = self.parser.parse(query_string)
             
@@ -460,11 +462,11 @@ class SearchQuery(BaseSearchQuery):
         self.backend = backend or SearchBackend()
     
     def build_query(self):
-        query = ''
+        query = u''
         
         if not self.query_filters:
             # Match all.
-            query = '*'
+            query = u'*'
         else:
             query_chunks = []
             
@@ -529,12 +531,12 @@ class SearchQuery(BaseSearchQuery):
                 # Pull off an undesirable leading "AND" or "OR".
                 del(query_chunks[0])
             
-            query = " ".join(query_chunks)
+            query = u" ".join(query_chunks)
         
         if len(self.models):
             models = ['django_ct:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
             models_clause = ' OR '.join(models)
-            final_query = '(%s) AND (%s)' % (query, models_clause)
+            final_query = u'(%s) AND (%s)' % (query, models_clause)
         else:
             final_query = query
         
@@ -544,7 +546,7 @@ class SearchQuery(BaseSearchQuery):
             for boost_word, boost_value in self.boost.items():
                 boost_list.append("%s^%s" % (boost_word, boost_value))
             
-            final_query = "%s %s" % (final_query, " ".join(boost_list))
+            final_query = u"%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
     

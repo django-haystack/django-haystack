@@ -97,37 +97,37 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         
         # Check what Whoosh thinks is there.
-        self.assertEqual(len(self.whoosh_search('*')), 3)
-        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id': u'3', 'django_ct': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id': u'2', 'django_ct': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}, {'django_id': u'1', 'django_ct': u'core.mockmodel', 'name': u'daniel1', 'text': u'Indexed!\n1', 'pub_date': u'2009-02-24T00:00:00', 'id': u'core.mockmodel.1'}])
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
+        self.assertEqual([dict(doc) for doc in self.whoosh_search(u'*')], [{'django_id': u'3', 'django_ct': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id': u'2', 'django_ct': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}, {'django_id': u'1', 'django_ct': u'core.mockmodel', 'name': u'daniel1', 'text': u'Indexed!\n1', 'pub_date': u'2009-02-24T00:00:00', 'id': u'core.mockmodel.1'}])
     
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         self.sb.remove(self.sample_objs[0])
-        self.assertEqual(len(self.whoosh_search('*')), 2)
-        self.assertEqual([dict(doc) for doc in self.whoosh_search('*')], [{'django_id': u'3', 'django_ct': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id': u'2', 'django_ct': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}])
+        self.assertEqual(len(self.whoosh_search(u'*')), 2)
+        self.assertEqual([dict(doc) for doc in self.whoosh_search(u'*')], [{'django_id': u'3', 'django_ct': u'core.mockmodel', 'name': u'daniel3', 'text': u'Indexed!\n3', 'pub_date': u'2009-02-22T00:00:00', 'id': u'core.mockmodel.3'}, {'django_id': u'2', 'django_ct': u'core.mockmodel', 'name': u'daniel2', 'text': u'Indexed!\n2', 'pub_date': u'2009-02-23T00:00:00', 'id': u'core.mockmodel.2'}])
     
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         self.sb.clear()
         self.raw_whoosh = self.sb.index
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
         
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         self.sb.clear([AnotherMockModel])
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         self.sb.clear([MockModel])
         self.raw_whoosh = self.sb.index
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
         
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         self.sb.clear([AnotherMockModel, MockModel])
         self.raw_whoosh = self.sb.index
@@ -135,44 +135,44 @@ class WhooshSearchBackendTestCase(TestCase):
     
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         # No query string should always yield zero results.
-        self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u''), {'hits': 0, 'results': []})
         
         # A one letter query string gets nabbed by a stopwords filter. Should
         # always yield zero results.
-        self.assertEqual(self.sb.search('a'), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'a'), {'hits': 0, 'results': []})
         
         # Possible AttributeError?
-        self.assertEqual(self.sb.search('a b'), {'hits': 0, 'results': [], 'spelling_suggestion': '', 'facets': {}})
+        self.assertEqual(self.sb.search(u'a b'), {'hits': 0, 'results': [], 'spelling_suggestion': '', 'facets': {}})
         
-        self.assertEqual(self.sb.search('*')['hits'], 3)
-        self.assertEqual([result.pk for result in self.sb.search('*')['results']], [u'3', u'2', u'1'])
+        self.assertEqual(self.sb.search(u'*')['hits'], 3)
+        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'3', u'2', u'1'])
         
-        self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
-        self.assertEqual(self.sb.search('index*', highlight=True)['hits'], 3)
+        self.assertEqual(self.sb.search(u'', highlight=True), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'index*', highlight=True)['hits'], 3)
         # DRL_FIXME: Uncomment once highlighting works.
         # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
         
-        self.assertEqual(self.sb.search('Indx')['hits'], 0)
-        self.assertEqual(self.sb.search('Indx')['spelling_suggestion'], u'index')
+        self.assertEqual(self.sb.search(u'Indx')['hits'], 0)
+        self.assertEqual(self.sb.search(u'Indx')['spelling_suggestion'], u'index')
         
-        self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
-        results = self.sb.search('Index*', facets=['name'])
-        results = self.sb.search('index*', facets=['name'])
+        self.assertEqual(self.sb.search(u'', facets=['name']), {'hits': 0, 'results': []})
+        results = self.sb.search(u'Index*', facets=['name'])
+        results = self.sb.search(u'index*', facets=['name'])
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        self.assertEqual(self.sb.search('', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
-        results = self.sb.search('Index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
-        results = self.sb.search('index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
+        self.assertEqual(self.sb.search(u'', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
+        results = self.sb.search(u'Index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
+        results = self.sb.search(u'index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
-        results = self.sb.search('Index*', query_facets={'name': '[* TO e]'})
-        results = self.sb.search('index*', query_facets={'name': '[* TO e]'})
+        self.assertEqual(self.sb.search(u'', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
+        results = self.sb.search(u'Index*', query_facets={'name': '[* TO e]'})
+        results = self.sb.search(u'index*', query_facets={'name': '[* TO e]'})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
@@ -182,7 +182,7 @@ class WhooshSearchBackendTestCase(TestCase):
     
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search('*')), 3)
+        self.assertEqual(len(self.whoosh_search(u'*')), 3)
         
         # Unsupported by Whoosh. Should see empty results.
         self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
@@ -197,16 +197,16 @@ class WhooshSearchBackendTestCase(TestCase):
     def test_order_by(self):
         self.sb.update(self.smmi, self.sample_objs)
         
-        results = self.sb.search('*', sort_by=['pub_date'])
+        results = self.sb.search(u'*', sort_by=['pub_date'])
         self.assertEqual([result.pk for result in results['results']], [u'3', u'2', u'1'])
         
-        results = self.sb.search('*', sort_by=['-pub_date'])
+        results = self.sb.search(u'*', sort_by=['-pub_date'])
         self.assertEqual([result.pk for result in results['results']], [u'1', u'2', u'3'])
         
-        results = self.sb.search('*', sort_by=['id'])
+        results = self.sb.search(u'*', sort_by=['id'])
         self.assertEqual([result.pk for result in results['results']], [u'1', u'2', u'3'])
         
-        results = self.sb.search('*', sort_by=['-id'])
+        results = self.sb.search(u'*', sort_by=['-id'])
         self.assertEqual([result.pk for result in results['results']], [u'3', u'2', u'1'])
     
     def test__from_python(self):
@@ -237,23 +237,23 @@ class WhooshSearchBackendTestCase(TestCase):
     def test_range_queries(self):
         self.sb.update(self.smmi, self.sample_objs)
         
-        self.assertEqual(len(self.whoosh_search('[d TO]')), 3)
-        self.assertEqual(len(self.whoosh_search('name:[d TO]')), 3)
-        self.assertEqual(len(self.whoosh_search('Ind* AND name:[d TO]')), 3)
-        self.assertEqual(len(self.whoosh_search('Ind* AND name:[TO c]')), 0)
+        self.assertEqual(len(self.whoosh_search(u'[d TO]')), 3)
+        self.assertEqual(len(self.whoosh_search(u'name:[d TO]')), 3)
+        self.assertEqual(len(self.whoosh_search(u'Ind* AND name:[d TO]')), 3)
+        self.assertEqual(len(self.whoosh_search(u'Ind* AND name:[TO c]')), 0)
     
     def test_date_queries(self):
         self.sb.update(self.smmi, self.sample_objs)
         
-        self.assertEqual(len(self.whoosh_search("pub_date:2009\-02\-24T00\:00\:00")), 1)
-        self.assertEqual(len(self.whoosh_search("pub_date:2009\-08\-30T00\:00\:00")), 0)
-        self.assertEqual(len(self.whoosh_search('Ind* AND pub_date:[TO 2009\-02\-24T00\:00\:00]')), 3)
+        self.assertEqual(len(self.whoosh_search(u"pub_date:2009\-02\-24T00\:00\:00")), 1)
+        self.assertEqual(len(self.whoosh_search(u"pub_date:2009\-08\-30T00\:00\:00")), 0)
+        self.assertEqual(len(self.whoosh_search(u'Ind* AND pub_date:[TO 2009\-02\-24T00\:00\:00]')), 3)
     
     def test_escaped_characters_queries(self):
         self.sb.update(self.smmi, self.sample_objs)
         
-        self.assertEqual(len(self.whoosh_search("Indexed\!")), 3)
-        self.assertEqual(len(self.whoosh_search("http\:\/\/www\.example\.com")), 0)
+        self.assertEqual(len(self.whoosh_search(u"Indexed\!")), 3)
+        self.assertEqual(len(self.whoosh_search(u"http\:\/\/www\.example\.com")), 0)
     
     def test_build_schema(self):
         self.site.unregister(MockModel)
@@ -275,8 +275,8 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sb.setup()
         self.sb.update(self.wmtmmi, self.sample_objs)
         
-        self.assertEqual(self.sb.search('*')['hits'], 3)
-        self.assertEqual([result.month for result in self.sb.search('*')['results']], [u'02', u'02', u'02'])
+        self.assertEqual(self.sb.search(u'*')['hits'], 3)
+        self.assertEqual([result.month for result in self.sb.search(u'*')['results']], [u'02', u'02', u'02'])
     
     def test_writable(self):
         if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
@@ -419,3 +419,13 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
         self.assertEqual(sqs.query.build_query(), u'"bell bronze" AND daler\\-rowney AND pearlescent')
         self.assertEqual(len(sqs), 0)
+    
+    def test_all_regression(self):
+        sqs = SearchQuerySet()
+        self.assertEqual([result.pk for result in sqs], [])
+        
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assert_(self.sb.index.doc_count() > 0)
+        
+        sqs = SearchQuerySet()
+        self.assertEqual(len(sqs), 3)
