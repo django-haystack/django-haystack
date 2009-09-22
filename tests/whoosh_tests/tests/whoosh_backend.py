@@ -202,6 +202,12 @@ class WhooshSearchBackendTestCase(TestCase):
         
         results = self.sb.search('*', sort_by=['-pub_date'])
         self.assertEqual([result.pk for result in results['results']], [u'1', u'2', u'3'])
+        
+        results = self.sb.search('*', sort_by=['id'])
+        self.assertEqual([result.pk for result in results['results']], [u'1', u'2', u'3'])
+        
+        results = self.sb.search('*', sort_by=['-id'])
+        self.assertEqual([result.pk for result in results['results']], [u'3', u'2', u'1'])
     
     def test__from_python(self):
         self.assertEqual(self.sb._from_python('abc'), u'abc')
