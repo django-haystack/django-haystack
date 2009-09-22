@@ -14,6 +14,7 @@ setup(
         'haystack.backends',
         'haystack.management',
         'haystack.management.commands'
+        'haystack.templatetags',
     ],
     package_data={
         'haystack': ['templates/search_configuration/*']
