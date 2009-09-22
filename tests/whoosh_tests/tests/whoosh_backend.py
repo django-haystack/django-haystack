@@ -271,6 +271,21 @@ class WhooshSearchBackendTestCase(TestCase):
         
         self.assertEqual(self.sb.search('*')['hits'], 3)
         self.assertEqual([result.month for result in self.sb.search('*')['results']], [u'02', u'02', u'02'])
+    
+    def test_writable(self):
+        if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
+        
+        os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0400)
+        
+        try:
+            self.sb.setup()
+            self.fail()
+        except IOError:
+            # Yay. We failed
+            pass
+        
+        os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0755)
 
 
 class LiveWhooshSearchQueryTestCase(TestCase):

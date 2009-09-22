@@ -63,6 +63,9 @@ class SearchBackend(BaseSearchBackend):
             os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
             new_index = True
         
+        if not os.access(settings.HAYSTACK_WHOOSH_PATH, os.W_OK):
+            raise IOError("The path to your Whoosh index '%s' is not writable for the current user/group." % settings.HAYSTACK_WHOOSH_PATH)
+        
         self.storage = FileStorage(settings.HAYSTACK_WHOOSH_PATH)
         self.content_field_name, self.schema = self.build_schema(self.site.all_searchfields())
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
