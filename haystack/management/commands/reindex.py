@@ -17,9 +17,12 @@ class Command(AppCommand):
             default=DEFAULT_AGE, type='int',
             help='Number of hours back to consider objects new.'
         ),
-        make_option('-b', '--batch-size', action='store', dest='batchsize', 
+        make_option('-b', '--batch-size', action='store', dest='batchsize',
             default=DEFAULT_BATCH_SIZE, type='int',
             help='Number of items to index at once.'
+        ),
+        make_option('-s', '--site', action='store', dest='site',
+            type='string', help='The site object to use when reindexing (like `search_sites.mysite`).'
         ),
     )
     
@@ -42,6 +45,7 @@ class Command(AppCommand):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
+        self.site = options.get('site')
         
         if not apps:
             self.handle_app(None, **options)
@@ -54,8 +58,21 @@ class Command(AppCommand):
         handle_registrations()
         
         from django.db.models import get_models
-        from haystack import site
         from haystack.exceptions import NotRegistered
+        
+        if self.site:
+            path_bits = self.site.split('.')
+            module_name = '.'.join(path_bits[:-1])
+            site_name = path_bits[-1]
+            
+            try:
+                module = __import__(module_name, {}, {}, [''])
+                site = getattr(module, site_name)
+            except (ImportError, NameError):
+                # Fall back to the main site.
+                from haystack import site
+        else:
+            from haystack import site
         
         for model in get_models(app):
             try:
