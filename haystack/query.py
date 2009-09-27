@@ -38,13 +38,14 @@ class SearchQuerySet(object):
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
         
-        if len(data) > REPR_OUTPUT_SIZE:
+        if len(self) > REPR_OUTPUT_SIZE:
             data[-1] = "...(remaining elements truncated)..."
         
         return repr(data)
     
     def __len__(self):
         # This needs to return the actual number of hits, not what's in the cache.
+        # DRL_FIXME: Should we take into account the ignored results here?
         return self.query.get_count()
     
     def __iter__(self):

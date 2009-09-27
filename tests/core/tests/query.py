@@ -236,6 +236,11 @@ class SearchQuerySetTestCase(TestCase):
         
         self.assertEqual(len(self.msqs), 100)
     
+    def test_repr(self):
+        self.assertEqual(repr(self.bsqs), '[]')
+        
+        self.assertEqual(repr(self.msqs), "[<SearchResult: core.MockModel (pk=0)>, <SearchResult: core.MockModel (pk=1)>, <SearchResult: core.MockModel (pk=2)>, <SearchResult: core.MockModel (pk=3)>, <SearchResult: core.MockModel (pk=4)>, <SearchResult: core.MockModel (pk=5)>, <SearchResult: core.MockModel (pk=6)>, <SearchResult: core.MockModel (pk=7)>, <SearchResult: core.MockModel (pk=8)>, <SearchResult: core.MockModel (pk=9)>, <SearchResult: core.MockModel (pk=10)>, <SearchResult: core.MockModel (pk=11)>, <SearchResult: core.MockModel (pk=12)>, <SearchResult: core.MockModel (pk=13)>, <SearchResult: core.MockModel (pk=14)>, <SearchResult: core.MockModel (pk=15)>, <SearchResult: core.MockModel (pk=16)>, <SearchResult: core.MockModel (pk=17)>, <SearchResult: core.MockModel (pk=18)>, '...(remaining elements truncated)...']")
+    
     def test_iter(self):
         # Dummy always returns [].
         self.assertEqual([result for result in self.bsqs.all()], [])
