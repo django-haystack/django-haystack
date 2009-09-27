@@ -226,6 +226,9 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
         self.assertEqual([obj.object.id for obj in sqs], [2, 3])
+        
+        # DRL_FIXME: Expand this test to a much larger dataset to fully test
+        #            additional "pages" of results.
 
 
 class SolrMockModelSearchIndex(indexes.SearchIndex):

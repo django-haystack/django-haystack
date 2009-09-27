@@ -45,8 +45,7 @@ class SearchQuerySet(object):
     
     def __len__(self):
         # This needs to return the actual number of hits, not what's in the cache.
-        # DRL_FIXME: Should we take into account the ignored results here?
-        return self.query.get_count()
+        return self.query.get_count() - self._ignored_result_count
     
     def __iter__(self):
         if self._cache_is_full():
@@ -57,7 +56,7 @@ class SearchQuerySet(object):
     
     def _cache_is_full(self):
         # Use ">=" because it's possible that search results have disappeared.
-        return len(self._result_cache) >= len(self) - self._ignored_result_count
+        return len(self._result_cache) >= len(self)
     
     def _manual_iter(self):
         # If we're here, our cache isn't fully populated.
@@ -120,7 +119,7 @@ class SearchQuerySet(object):
                         # nothing for those objects.
                         loaded_objects[model] = []
         
-        if len(results) < ITERATOR_LOAD_PER_QUERY:
+        if len(results) + len(self._result_cache) < len(self) and len(results) < ITERATOR_LOAD_PER_QUERY:
             self._ignored_result_count += ITERATOR_LOAD_PER_QUERY - len(results)
         
         for result in results:
