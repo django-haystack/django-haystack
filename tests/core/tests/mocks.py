@@ -1,6 +1,6 @@
 from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
-from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.models import SearchResult
 from core.models import MockModel
 
@@ -33,6 +33,7 @@ class MockSearchBackend(BaseSearchBackend):
     def clear(self, models=[], commit=True):
         self.docs = {}
     
+    @log_query
     def search(self, query, highlight=False):
         from haystack import site
         results = []
@@ -63,6 +64,7 @@ class MockSearchBackend(BaseSearchBackend):
 
 
 class MixedMockSearchBackend(MockSearchBackend):
+    @log_query
     def search(self, query, highlight=False):
         result_info = super(MixedMockSearchBackend, self).search(query, highlight)
         result_info['results'] = result_info['results'][:30]

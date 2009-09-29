@@ -183,6 +183,39 @@ class LiveSolrSearchQueryTestCase(TestCase):
         self.sq.add_filter('content', 'Indx')
         self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
         self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'index')
+    
+    def test_log_query(self):
+        from django.conf import settings
+        from haystack import backends
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        
+        # Stow.
+        old_debug = settings.DEBUG
+        settings.DEBUG = False
+        
+        len(self.sq.get_results())
+        self.assertEqual(len(backends.queries), 0)
+        
+        settings.DEBUG = True
+        # Redefine it to clear out the cached results.
+        self.sq = SearchQuery(backend=SearchBackend())
+        self.sq.add_filter('name', 'bar')
+        len(self.sq.get_results())
+        self.assertEqual(len(backends.queries), 1)
+        self.assertEqual(backends.queries[0]['query_string'], 'name:bar')
+        
+        # And again, for good measure.
+        self.sq = SearchQuery(backend=SearchBackend())
+        self.sq.add_filter('name', 'bar')
+        self.sq.add_filter('text', 'moof')
+        len(self.sq.get_results())
+        self.assertEqual(len(backends.queries), 2)
+        self.assertEqual(backends.queries[0]['query_string'], 'name:bar')
+        self.assertEqual(backends.queries[1]['query_string'], u'name:bar AND text:moof')
+        
+        # Restore.
+        settings.DEBUG = old_debug
 
 
 class LiveSolrSearchQuerySetTestCase(TestCase):

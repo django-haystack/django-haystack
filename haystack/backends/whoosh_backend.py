@@ -7,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_unicode
-from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
@@ -188,6 +188,7 @@ class SearchBackend(BaseSearchBackend):
         self.index = self.index.refresh()
         self.index.optimize()
     
+    @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, **kwargs):

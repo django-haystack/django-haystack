@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
+from time import time
+from django.conf import settings
+from django.core import signals
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
@@ -12,6 +15,47 @@ except NameError:
 
 IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
+
+
+# A means to inspect all search queries that have run in the last request.
+queries = []
+
+
+# Per-request, reset the ghetto query log.
+# Probably not extraordinarily thread-safe but should only matter when
+# DEBUG = True.
+def reset_search_queries(**kwargs):
+    global queries
+    queries = []
+
+
+if settings.DEBUG:
+    signals.request_started.connect(reset_search_queries)
+
+
+def log_query(func):
+    """
+    A decorator for pseudo-logging search queries. Used in the ``SearchBackend``
+    to wrap the ``search`` method.
+    """
+    def wrapper(obj, query_string, *args, **kwargs):
+        start = time()
+        
+        try:
+            return func(obj, query_string, **kwargs)
+        finally:
+            stop = time()
+            
+            if settings.DEBUG:
+                global queries
+                queries.append({
+                    'query_string': query_string,
+                    'additional_args': args,
+                    'additional_kwargs': kwargs,
+                    'time': "%.3f" % (stop - start),
+                })
+    
+    return wrapper
 
 
 class BaseSearchBackend(object):
@@ -33,7 +77,7 @@ class BaseSearchBackend(object):
         """
         Get an unique identifier for the object or a string representing the
         object.
-
+        
         If not overridden, uses <app_label>.<object_name>.<pk>.
         """
         if isinstance(obj_or_string, basestring):
@@ -43,7 +87,7 @@ class BaseSearchBackend(object):
             return obj_or_string
         
         return u"%s.%s.%s" % (obj_or_string._meta.app_label, obj_or_string._meta.module_name, obj_or_string._get_pk_val())
-
+    
     def update(self, index, iterable):
         """
         Updates the backend when given a SearchIndex and a collection of
@@ -53,7 +97,7 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
     def remove(self, obj_or_string):
         """
         Removes a document/object from the backend. Can be either a model
@@ -64,7 +108,7 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
     def clear(self, models=[]):
         """
         Clears the backend of all documents/objects for a collection of models.
@@ -73,7 +117,8 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
+    @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, **kwargs):
@@ -91,7 +136,7 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
     def prep_value(self, value):
         """
         Hook to give the backend a chance to prep an attribute value before

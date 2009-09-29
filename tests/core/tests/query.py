@@ -210,6 +210,42 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(clone.start_offset, self.bsq.start_offset)
         self.assertEqual(clone.end_offset, self.bsq.end_offset)
         self.assertEqual(clone.backend, self.bsq.backend)
+    
+    def test_log_query(self):
+        from django.conf import settings
+        from haystack import backends
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        
+        # Stow.
+        old_site = haystack.site
+        old_debug = settings.DEBUG
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+        settings.DEBUG = False
+        
+        msq = MockSearchQuery(backend=MockSearchBackend())
+        self.assertEqual(len(msq.get_results()), 100)
+        self.assertEqual(len(backends.queries), 0)
+        
+        settings.DEBUG = True
+        # Redefine it to clear out the cached results.
+        msq2 = MockSearchQuery(backend=MockSearchBackend())
+        self.assertEqual(len(msq2.get_results()), 100)
+        self.assertEqual(len(backends.queries), 1)
+        self.assertEqual(backends.queries[0]['query_string'], '')
+        
+        msq3 = MockSearchQuery(backend=MockSearchBackend())
+        msq3.add_filter('foo', 'bar')
+        len(msq3.get_results())
+        self.assertEqual(len(backends.queries), 2)
+        self.assertEqual(backends.queries[0]['query_string'], '')
+        self.assertEqual(backends.queries[1]['query_string'], '')
+        
+        # Restore.
+        haystack.site = old_site
+        settings.DEBUG = old_debug
 
 
 class SearchQuerySetTestCase(TestCase):
