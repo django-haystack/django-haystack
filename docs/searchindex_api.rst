@@ -332,9 +332,15 @@ By default, returns True (always reindex).
 ---------------------------
 
 Provides the ability to override how objects get loaded in conjunction
-with ``SearchQuerySet.load_all``. This is useful for post-processing the
+with ``RelatedSearchQuerySet.load_all``. This is useful for post-processing the
 results from the query, enabling things like adding ``select_related`` or
 filtering certain data.
+
+.. warning:
+
+    Utilizing this functionality can have negative performance implications.
+    Please see the section on ``RelatedSearchQuerySet`` within
+    :doc:`searchqueryset_api` for further information.
 
 By default, returns ``all()`` on the model's default manager.
 
@@ -349,12 +355,12 @@ Example::
             # Pull all objects related to the Note in search results.
             return Note.objects.all().select_related()
 
-When searching, the ``SearchQuerySet`` appends on a call to ``in_bulk``, so be
+When searching, the ``RelatedSearchQuerySet`` appends on a call to ``in_bulk``, so be
 sure that the ``QuerySet`` you provide can accommodate this and that the ids
 passed to ``in_bulk`` will map to the model in question.
 
 If you need a specific ``QuerySet`` in one place, you can specify this at the
-``SearchQuerySet`` level using the ``load_all_queryset`` method. See
+``RelatedSearchQuerySet`` level using the ``load_all_queryset`` method. See
 :doc:`searchqueryset_api` for usage.
 
 

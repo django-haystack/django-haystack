@@ -191,7 +191,8 @@ class SearchBackend(BaseSearchBackend):
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, **kwargs):
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         if not self.setup_complete:
             self.setup()
         
@@ -254,6 +255,17 @@ class SearchBackend(BaseSearchBackend):
         narrowed_results = None
         self.index = self.index.refresh()
         
+        if limit_to_registered_models:
+            # Using narrow queries, limit the results to only models registered
+            # with the current site.
+            if narrow_queries is None:
+                narrow_queries = []
+            
+            registered_models = self.build_registered_models_list()
+            
+            if len(registered_models) > 0:
+                narrow_queries.append('django_ct:(%s)' % ' OR '.join(registered_models))
+        
         if narrow_queries is not None:
             # Potentially expensive? I don't see another way to do it in Whoosh...
             narrow_searcher = self.index.searcher()
@@ -279,14 +291,13 @@ class SearchBackend(BaseSearchBackend):
                     'hits': 0,
                 }
             
-            # DRL_TODO: Ignoring offsets for now, as slicing caused issues with pagination.
             raw_results = searcher.search(parsed_query, sortedby=sort_by, reverse=reverse)
             
             # Handle the case where the results have been narrowed.
             if narrowed_results:
                 raw_results.filter(narrowed_results)
             
-            return self._process_results(raw_results, highlight=highlight, query_string=query_string)
+            return self._process_results(raw_results[start_offset:end_offset], highlight=highlight, query_string=query_string)
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
                 if spelling_query:
@@ -550,40 +561,3 @@ class SearchQuery(BaseSearchQuery):
             final_query = u"%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
-    
-    def run(self, spelling_query=None):
-        """Builds and executes the query. Returns a list of search results."""
-        final_query = self.build_query()
-        kwargs = {
-            'start_offset': self.start_offset,
-        }
-        
-        if self.order_by:
-            kwargs['sort_by'] = self.order_by
-        
-        if self.end_offset is not None:
-            kwargs['end_offset'] = self.end_offset - self.start_offset
-        
-        if self.highlight:
-            kwargs['highlight'] = self.highlight
-        
-        if self.facets:
-            kwargs['facets'] = list(self.facets)
-        
-        if self.date_facets:
-            kwargs['date_facets'] = self.date_facets
-        
-        if self.query_facets:
-            kwargs['query_facets'] = self.query_facets
-        
-        if self.narrow_queries:
-            kwargs['narrow_queries'] = self.narrow_queries
-        
-        if spelling_query:
-            kwargs['spelling_query'] = spelling_query
-        
-        results = self.backend.search(final_query, **kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
-        self._facet_counts = results.get('facets', {})
-        self._spelling_suggestion = results.get('spelling_suggestion', None)

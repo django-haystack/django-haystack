@@ -6,6 +6,7 @@ from whoosh.qparser import QueryParser
 from django.conf import settings
 from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
+from haystack import backends
 from haystack import indexes
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
 from haystack.query import SearchQuerySet
@@ -387,6 +388,8 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         
         # Stow.
         import haystack
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
         self.old_site = haystack.site
         haystack.site = self.site
         
@@ -415,6 +418,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         
         import haystack
         haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
         
         super(LiveWhooshSearchQuerySetTestCase, self).tearDown()
     
@@ -462,3 +466,64 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         
         sqs = SearchQuerySet()
         self.assertEqual(len(sqs), 3)
+    
+    def test_iter(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        sqs = self.sqs.auto_query('Indexed!')
+        results = [int(result.pk) for result in sqs]
+        self.assertEqual(results, [3, 2, 1])
+        self.assertEqual(len(backends.queries), 1)
+    
+    def test_slice(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.sqs.auto_query('Indexed!')
+        self.assertEqual([int(result.pk) for result in results[1:3]], [2, 1])
+        self.assertEqual(len(backends.queries), 1)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.sqs.auto_query('Indexed!')
+        self.assertEqual(int(results[0].pk), 3)
+        self.assertEqual(len(backends.queries), 1)
+    
+    def test_manual_iter(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        results = self.sqs.auto_query('Indexed!')
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = [int(result.pk) for result in results._manual_iter()]
+        self.assertEqual(results, [3, 2, 1])
+        self.assertEqual(len(backends.queries), 1)
+    
+    def test_fill_cache(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.sqs.auto_query('Indexed!')
+        self.assertEqual(len(results._result_cache), 0)
+        self.assertEqual(len(backends.queries), 0)
+        results._fill_cache(0, 10)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 3)
+        self.assertEqual(len(backends.queries), 1)
+        results._fill_cache(10, 20)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 3)
+        self.assertEqual(len(backends.queries), 2)
+    
+    def test_cache_is_full(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        self.assertEqual(self.sqs._cache_is_full(), False)
+        results = self.sqs.auto_query('Indexed!')
+        fire_the_iterator_and_fill_cache = [result for result in results]
+        self.assertEqual(results._cache_is_full(), True)
+        self.assertEqual(len(backends.queries), 1)

@@ -17,7 +17,6 @@ class SearchQuerySet(object):
         self._result_count = None
         self._cache_full = False
         self._load_all = False
-        self._load_all_querysets = {}
         self._ignored_result_count = 0
         
         if site is not None:
@@ -44,8 +43,11 @@ class SearchQuerySet(object):
         return repr(data)
     
     def __len__(self):
+        if not self._result_count:
+            self._result_count = self.query.get_count()
+        
         # This needs to return the actual number of hits, not what's in the cache.
-        return self.query.get_count() - self._ignored_result_count
+        return self._result_count - self._ignored_result_count
     
     def __iter__(self):
         if self._cache_is_full():
@@ -55,8 +57,18 @@ class SearchQuerySet(object):
         return self._manual_iter()
     
     def _cache_is_full(self):
-        # Use ">=" because it's possible that search results have disappeared.
-        return len(self._result_cache) >= len(self)
+        if not self.query.has_run():
+            return False
+        
+        if len(self) <= 0:
+            return True
+        
+        try:
+            self._result_cache.index(None)
+            return False
+        except ValueError:
+            # No ``None``s found in the results. Check the length of the cache.
+            return len(self._result_cache) > 0
     
     def _manual_iter(self):
         # If we're here, our cache isn't fully populated.
@@ -64,9 +76,14 @@ class SearchQuerySet(object):
         # Also, this can't be part of the __iter__ method due to Python's rules
         # about generator functions.
         current_position = 0
+        current_cache_max = 0
         
         while True:
-            current_cache_max = len(self._result_cache)
+            if len(self._result_cache) > 0:
+                try:
+                    current_cache_max = self._result_cache.index(None)
+                except ValueError:
+                    current_cache_max = len(self._result_cache)
             
             while current_position < current_cache_max:
                 yield self._result_cache[current_position]
@@ -77,19 +94,32 @@ class SearchQuerySet(object):
             
             # We've run out of results and haven't hit our limit.
             # Fill more of the cache.
-            self._fill_cache()
+            if not self._fill_cache(current_position, current_position + ITERATOR_LOAD_PER_QUERY):
+                raise StopIteration
     
-    def _fill_cache(self):
-        from haystack import site
-        
-        if self._result_cache is None:
-            self._result_cache = []
-        
+    def _fill_cache(self, start, end):
         # Tell the query where to start from and how many we'd like.
-        cache_length = len(self._result_cache)
         self.query._reset()
-        self.query.set_limits(cache_length, cache_length + ITERATOR_LOAD_PER_QUERY)
+        self.query.set_limits(start, end)
         results = self.query.get_results()
+        
+        if len(results) == 0:
+            return False
+        
+        # Setup the full cache now that we know how many results there are.
+        # We need the ``None``s as placeholders to know what parts of the
+        # cache we have/haven't filled.
+        # Using ``None`` like this takes up very little memory. In testing,
+        # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
+        # to be an acceptable loss for consistent and more efficient caching.
+        if len(self._result_cache) == 0:
+            self._result_cache = [None for i in xrange(self.query.get_count())]
+        
+        if start is None:
+            start = 0
+        
+        if end is None:
+            end = self.query.get_count()
         
         # Check if we wish to load all objects.
         if self._load_all:
@@ -104,23 +134,9 @@ class SearchQuerySet(object):
             
             # Load the objects for each model in turn.
             for model in models_pks:
-                if model in self._load_all_querysets:
-                    # Use the overriding queryset.
-                    loaded_objects[model] = self._load_all_querysets[model].in_bulk(models_pks[model])
-                else:
-                    # Check the SearchIndex for the model for an override.
-                    try:
-                        index = site.get_index(model)
-                        qs = index.load_all_queryset()
-                        loaded_objects[model] = qs.in_bulk(models_pks[model])
-                    except NotRegistered:
-                        # The model returned doesn't seem to be registered with
-                        # the current site. We should silently fail and populate
-                        # nothing for those objects.
-                        loaded_objects[model] = []
+                loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
         
-        if len(results) + len(self._result_cache) < len(self) and len(results) < ITERATOR_LOAD_PER_QUERY:
-            self._ignored_result_count += ITERATOR_LOAD_PER_QUERY - len(results)
+        to_cache = []
         
         for result in results:
             if self._load_all:
@@ -138,7 +154,11 @@ class SearchQuerySet(object):
                     self._ignored_result_count += 1
                     continue
             
-            self._result_cache.append(result)
+            to_cache.append(result)
+        
+        # Assign by slice.
+        self._result_cache[start:start + len(to_cache)] = to_cache
+        return True
     
     
     def __getitem__(self, k):
@@ -151,46 +171,35 @@ class SearchQuerySet(object):
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
                     and (k.stop is None or k.stop >= 0))), \
                 "Negative indexing is not supported."
-
-        if self._result_cache is not None:
-            if not self._cache_is_full():
-                # We need check to see if we need to populate more of the cache.
-                if isinstance(k, slice):
-                    if k.stop is not None:
-                        bound = int(k.stop)
-                    else:
-                        bound = None
-                else:
-                    bound = k + 1
-                
-                try:
-                    while len(self._result_cache) < bound and not self._cache_is_full():
-                        self._fill_cache()
-                except StopIteration:
-                    # There's nothing left, even though the bound is higher.
-                    pass
-            
-            return self._result_cache[k]
-
+        
+        # Remember if it's a slice or not. We're going to treat everything as
+        # a slice to simply the logic and will `.pop()` at the end as needed.
         if isinstance(k, slice):
-            qs = self._clone()
-            
-            if k.start is not None:
-                start = int(k.start)
-            else:
-                start = None
+            is_slice = True
+            start = k.start
             
             if k.stop is not None:
-                stop = int(k.stop)
+                bound = int(k.stop)
             else:
-                stop = None
-            
-            qs.query.set_limits(start, stop)
-            return k.step and list(qs)[::k.step] or qs
+                bound = None
+        else:
+            is_slice = False
+            start = k
+            bound = k + 1
         
-        qs = self._clone()
-        qs.query.set_limits(k, k + 1)
-        return list(qs)[0]
+        # We need check to see if we need to populate more of the cache.
+        if len(self._result_cache) <= 0 or (None in self._result_cache[start:bound] and not self._cache_is_full()):
+            try:
+                self._fill_cache(start, bound)
+            except StopIteration:
+                # There's nothing left, even though the bound is higher.
+                pass
+        
+        # Cache should be full enough for our needs.
+        if is_slice:
+            return self._result_cache[start:bound]
+        else:
+            return self._result_cache[start]
     
     
     # Methods that return a SearchQuerySet.
@@ -306,16 +315,9 @@ class SearchQuerySet(object):
         return clone
     
     def load_all_queryset(self, model, queryset):
-        """
-        Allows for specifying a custom ``QuerySet`` that changes how ``load_all``
-        will fetch records for the provided model.
-        
-        This is useful for post-processing the results from the query, enabling
-        things like adding ``select_related`` or filtering certain data.
-        """
-        clone = self._clone()
-        clone._load_all_querysets[model] = queryset
-        return clone
+        # DRL_TODO: Remove before 1.0.
+        from haystack.exceptions import HaystackError
+        raise HaystackError("This method is deprecated. Please use the `RelatedSearchQuerySet` instead.")
     
     def auto_query(self, query_string):
         """
@@ -418,7 +420,6 @@ class SearchQuerySet(object):
         query = self.query._clone()
         clone = klass(site=self.site, query=query)
         clone._load_all = self._load_all
-        clone._load_all_querysets = self._load_all_querysets
         return clone
 
 
@@ -437,4 +438,174 @@ class EmptySearchQuerySet(SearchQuerySet):
     def _clone(self, klass=None):
         clone = super(EmptySearchQuerySet, self)._clone(klass=klass)
         clone._result_cache = []
+        return clone
+
+
+class RelatedSearchQuerySet(SearchQuerySet):
+    """
+    A variant of the SearchQuerySet that can handle `load_all_queryset`s.
+    
+    This is predominantly different in the `_fill_cache` method, as it is
+    far less efficient but needs to fill the cache before it to maintain
+    consistency.
+    """
+    _load_all_querysets = {}
+    _result_cache = []
+    
+    def _cache_is_full(self):
+        return len(self._result_cache) >= len(self)
+    
+    def _manual_iter(self):
+        # If we're here, our cache isn't fully populated.
+        # For efficiency, fill the cache as we go if we run out of results.
+        # Also, this can't be part of the __iter__ method due to Python's rules
+        # about generator functions.
+        current_position = 0
+        current_cache_max = 0
+        
+        while True:
+            current_cache_max = len(self._result_cache)
+            
+            while current_position < current_cache_max:
+                yield self._result_cache[current_position]
+                current_position += 1
+            
+            if self._cache_is_full():
+                raise StopIteration
+            
+            # We've run out of results and haven't hit our limit.
+            # Fill more of the cache.
+            start = current_position + self._ignored_result_count
+            
+            if not self._fill_cache(start, start + ITERATOR_LOAD_PER_QUERY):
+                raise StopIteration
+    
+    def _fill_cache(self, start, end):
+        # Tell the query where to start from and how many we'd like.
+        self.query._reset()
+        self.query.set_limits(start, end)
+        results = self.query.get_results()
+        
+        if len(results) == 0:
+            return False
+        
+        if start is None:
+            start = 0
+        
+        if end is None:
+            end = self.query.get_count()
+        
+        # Check if we wish to load all objects.
+        if self._load_all:
+            original_results = []
+            models_pks = {}
+            loaded_objects = {}
+            
+            # Remember the search position for each result so we don't have to resort later.
+            for result in results:
+                original_results.append(result)
+                models_pks.setdefault(result.model, []).append(result.pk)
+            
+            # Load the objects for each model in turn.
+            for model in models_pks:
+                if model in self._load_all_querysets:
+                    # Use the overriding queryset.
+                    loaded_objects[model] = self._load_all_querysets[model].in_bulk(models_pks[model])
+                else:
+                    # Check the SearchIndex for the model for an override.
+                    try:
+                        index = self.site.get_index(model)
+                        qs = index.load_all_queryset()
+                        loaded_objects[model] = qs.in_bulk(models_pks[model])
+                    except NotRegistered:
+                        # The model returned doesn't seem to be registered with
+                        # the current site. We should silently fail and populate
+                        # nothing for those objects.
+                        loaded_objects[model] = []
+        
+        if len(results) + len(self._result_cache) < len(self) and len(results) < ITERATOR_LOAD_PER_QUERY:
+            self._ignored_result_count += ITERATOR_LOAD_PER_QUERY - len(results)
+        
+        for result in results:
+            if self._load_all:
+                # We have to deal with integer keys being cast from strings; if this
+                # fails we've got a character pk.
+                try:
+                    result.pk = int(result.pk)
+                except ValueError:
+                    pass
+                try:
+                    result._object = loaded_objects[result.model][result.pk]
+                except (KeyError, IndexError):
+                    # The object was either deleted since we indexed or should
+                    # be ignored; fail silently.
+                    self._ignored_result_count += 1
+                    continue
+            
+            self._result_cache.append(result)
+        
+        return True
+    
+    def __getitem__(self, k):
+        """
+        Retrieves an item or slice from the set of results.
+        """
+        if not isinstance(k, (slice, int, long)):
+            raise TypeError
+        assert ((not isinstance(k, slice) and (k >= 0))
+                or (isinstance(k, slice) and (k.start is None or k.start >= 0)
+                    and (k.stop is None or k.stop >= 0))), \
+                "Negative indexing is not supported."
+        
+        # Remember if it's a slice or not. We're going to treat everything as
+        # a slice to simply the logic and will `.pop()` at the end as needed.
+        if isinstance(k, slice):
+            is_slice = True
+            start = k.start
+            
+            if k.stop is not None:
+                bound = int(k.stop)
+            else:
+                bound = None
+        else:
+            is_slice = False
+            start = k
+            bound = k + 1
+        
+        # We need check to see if we need to populate more of the cache.
+        if len(self._result_cache) <= 0 or not self._cache_is_full():
+            try:
+                while len(self._result_cache) < bound and not self._cache_is_full():
+                    current_max = len(self._result_cache) + self._ignored_result_count
+                    self._fill_cache(current_max, current_max + ITERATOR_LOAD_PER_QUERY)
+            except StopIteration:
+                # There's nothing left, even though the bound is higher.
+                pass
+        
+        # Cache should be full enough for our needs.
+        if is_slice:
+            return self._result_cache[start:bound]
+        else:
+            return self._result_cache[start]
+    
+    def load_all_queryset(self, model, queryset):
+        """
+        Allows for specifying a custom ``QuerySet`` that changes how ``load_all``
+        will fetch records for the provided model.
+        
+        This is useful for post-processing the results from the query, enabling
+        things like adding ``select_related`` or filtering certain data.
+        """
+        clone = self._clone()
+        clone._load_all_querysets[model] = queryset
+        return clone
+    
+    def _clone(self, klass=None):
+        if klass is None:
+            klass = self.__class__
+        
+        query = self.query._clone()
+        clone = klass(site=self.site, query=query)
+        clone._load_all = self._load_all
+        clone._load_all_querysets = self._load_all_querysets
         return clone

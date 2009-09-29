@@ -34,13 +34,18 @@ class MockSearchBackend(BaseSearchBackend):
         self.docs = {}
     
     @log_query
-    def search(self, query, highlight=False):
+    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         from haystack import site
         results = []
         hits = len(MOCK_SEARCH_RESULTS)
         indexed_models = site.get_indexed_models()
         
-        for result in MOCK_SEARCH_RESULTS:
+        sliced = MOCK_SEARCH_RESULTS[start_offset:end_offset]
+        
+        for result in sliced:
             model = get_model('core', 'mockmodel')
             
             if model:
@@ -65,15 +70,25 @@ class MockSearchBackend(BaseSearchBackend):
 
 class MixedMockSearchBackend(MockSearchBackend):
     @log_query
-    def search(self, query, highlight=False):
-        result_info = super(MixedMockSearchBackend, self).search(query, highlight)
-        result_info['results'] = result_info['results'][:30]
+    def search(self, query_string, **kwargs):
+        if kwargs.get('end_offset') and kwargs['end_offset'] > 30:
+            kwargs['end_offset'] = 30
+        
+        result_info = super(MixedMockSearchBackend, self).search(query_string, **kwargs)
+        # result_info['results'] = result_info['results'][:30]
         result_info['hits'] = 30
         
-        # Add search results from other models.
-        del(result_info['results'][9]) # MockSearchResult('core', 'AnotherMockModel', 9, .1)
-        del(result_info['results'][13]) # MockSearchResult('core', 'AnotherMockModel', 13, .1)
-        del(result_info['results'][14]) # MockSearchResult('core', 'NonexistentMockModel', 14, .1)
+        # Remove search results from other models.
+        temp_results = []
+        
+        for result in result_info['results']:
+            if not result.pk in (9, 13, 14):
+                # MockSearchResult('core', 'AnotherMockModel', 9, .1)
+                # MockSearchResult('core', 'AnotherMockModel', 13, .1)
+                # MockSearchResult('core', 'NonexistentMockModel', 14, .1)
+                temp_results.append(result)
+        
+        result_info['results'] = temp_results
         
         return result_info
 
@@ -84,14 +99,6 @@ class MockSearchQuery(BaseSearchQuery):
     
     def clean(self, query_fragment):
         return query_fragment
-    
-    def run(self):
-        # To simulate the chunking behavior of a regular search, return a slice
-        # of our results using start/end offset.
-        final_query = self.build_query()
-        results = self.backend.search(final_query)
-        self._results = results['results'][self.start_offset:self.end_offset]
-        self._hit_count = results['hits']
     
     def run_mlt(self):
         # To simulate the chunking behavior of a regular search, return a slice

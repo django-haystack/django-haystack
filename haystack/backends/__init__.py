@@ -42,7 +42,7 @@ def log_query(func):
         start = time()
         
         try:
-            return func(obj, query_string, **kwargs)
+            return func(obj, query_string, *args, **kwargs)
         finally:
             stop = time()
             
@@ -121,7 +121,8 @@ class BaseSearchBackend(object):
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, **kwargs):
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -161,6 +162,22 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError("Subclasses must provide a way to build their schema.")
+    
+    def build_registered_models_list(self):
+        """
+        Builds a list of registered models for searching.
+        
+        The ``search`` method should use this and the ``django_ct`` field to
+        narrow the results (unless the user indicates not to). This helps ignore
+        any results that are not currently registered models and ensures
+        consistent caching.
+        """
+        models = []
+        
+        for model in self.site.get_indexed_models():
+            models.append(u"%s.%s" % (model._meta.app_label, model._meta.module_name))
+        
+        return models
 
 
 # Alias for easy loading within SearchQuery objects.
@@ -292,10 +309,45 @@ class BaseSearchQuery(object):
         
         self.backend = loaded_backend.SearchBackend()
     
+    def has_run(self):
+        """Indicates if any query has been been run."""
+        return None not in (self._results, self._hit_count)
+    
     def run(self, spelling_query=None):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        results = self.backend.search(final_query, highlight=self.highlight, spelling_query=spelling_query)
+        kwargs = {
+            'start_offset': self.start_offset,
+        }
+        
+        if self.order_by:
+            kwargs['sort_by'] = self.order_by
+        
+        if self.end_offset is not None:
+            kwargs['end_offset'] = self.end_offset
+        
+        if self.highlight:
+            kwargs['highlight'] = self.highlight
+        
+        if self.facets:
+            kwargs['facets'] = list(self.facets)
+        
+        if self.date_facets:
+            kwargs['date_facets'] = self.date_facets
+        
+        if self.query_facets:
+            kwargs['query_facets'] = self.query_facets
+        
+        if self.narrow_queries:
+            kwargs['narrow_queries'] = self.narrow_queries
+        
+        if spelling_query:
+            kwargs['spelling_query'] = spelling_query
+        
+        if self.boost:
+            kwargs['boost'] = self.boost
+        
+        results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
