@@ -32,3 +32,12 @@ Using: Xapian
 
 * http://www.trapeze.com/
 * http://www.windmobile.ca/
+
+Eldarion
+--------
+
+Various projects.
+
+Using: Solr
+
+http://eldarion.com/
