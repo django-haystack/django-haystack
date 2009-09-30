@@ -1,6 +1,11 @@
 Sites Using Haystack
 ====================
 
+The following sites are a partial list of people using Haystack. I'm always
+interested in adding more sites, so please find me (``daniellindsley``) via
+IRC or the mailing list thread.
+
+
 LJWorld/Lawrence.com/KUSports
 -----------------------------
 
@@ -14,6 +19,7 @@ Using: Solr
 * http://www.lawrence.com/search/
 * http://www.kusports.com/search/
 
+
 AltWeeklies
 -----------
 
@@ -22,6 +28,7 @@ Providing an API to story aggregation.
 Using: Whoosh
 
 * http://www.northcoastjournal.com/altweeklies/documentation/
+
 
 Trapeze
 -------
@@ -33,6 +40,7 @@ Using: Xapian
 * http://www.trapeze.com/
 * http://www.windmobile.ca/
 
+
 Eldarion
 --------
 
@@ -40,4 +48,24 @@ Various projects.
 
 Using: Solr
 
-http://eldarion.com/
+* http://eldarion.com/
+
+
+Sunlight Labs
+-------------
+
+For general search.
+
+Using: Whoosh & Solr
+
+* http://sunlightlabs.com/
+* http://subsidyscope.com/
+
+
+NASA
+----
+
+For general search on an internal site called SMD Spacebook 1.1.
+
+Using: Solr
+
