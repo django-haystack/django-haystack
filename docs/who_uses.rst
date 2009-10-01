@@ -14,8 +14,8 @@ For all things search-related.
 Using: Solr
 
 * http://www2.ljworld.com/search/
-* http://www2.ljworld.com/search/basic/
 * http://www2.ljworld.com/search/vertical/news.story/
+* http://www2.ljworld.com/marketplace/
 * http://www.lawrence.com/search/
 * http://www.kusports.com/search/
 
