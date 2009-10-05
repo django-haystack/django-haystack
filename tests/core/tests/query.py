@@ -1,9 +1,12 @@
 import datetime
+from django.conf import settings
 from django.test import TestCase
 import haystack
+from haystack import backends
 from haystack.backends import QueryFilter, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
+from haystack.exceptions import HaystackError
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
@@ -210,6 +213,40 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(clone.start_offset, self.bsq.start_offset)
         self.assertEqual(clone.end_offset, self.bsq.end_offset)
         self.assertEqual(clone.backend, self.bsq.backend)
+    
+    def test_log_query(self):
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        
+        # Stow.
+        old_site = haystack.site
+        old_debug = settings.DEBUG
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        haystack.site = test_site
+        settings.DEBUG = False
+        
+        msq = MockSearchQuery(backend=MockSearchBackend())
+        self.assertEqual(len(msq.get_results()), 100)
+        self.assertEqual(len(backends.queries), 0)
+        
+        settings.DEBUG = True
+        # Redefine it to clear out the cached results.
+        msq2 = MockSearchQuery(backend=MockSearchBackend())
+        self.assertEqual(len(msq2.get_results()), 100)
+        self.assertEqual(len(backends.queries), 1)
+        self.assertEqual(backends.queries[0]['query_string'], '')
+        
+        msq3 = MockSearchQuery(backend=MockSearchBackend())
+        msq3.add_filter('foo', 'bar')
+        len(msq3.get_results())
+        self.assertEqual(len(backends.queries), 2)
+        self.assertEqual(backends.queries[0]['query_string'], '')
+        self.assertEqual(backends.queries[1]['query_string'], '')
+        
+        # Restore.
+        haystack.site = old_site
+        settings.DEBUG = old_debug
 
 
 class SearchQuerySetTestCase(TestCase):
@@ -220,14 +257,19 @@ class SearchQuerySetTestCase(TestCase):
         self.mmsqs = SearchQuerySet(query=MockSearchQuery(backend=MixedMockSearchBackend()))
         
         # Stow.
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
         self.old_site = haystack.site
         test_site = SearchSite()
         test_site.register(MockModel)
         haystack.site = test_site
+        
+        backends.reset_search_queries()
     
     def tearDown(self):
         # Restore.
         haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
         super(SearchQuerySetTestCase, self).tearDown()
     
     def test_len(self):
@@ -236,61 +278,107 @@ class SearchQuerySetTestCase(TestCase):
         
         self.assertEqual(len(self.msqs), 100)
     
+    def test_repr(self):
+        self.assertEqual(repr(self.bsqs), '[]')
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        self.assertEqual(repr(self.msqs), "[<SearchResult: core.MockModel (pk=0)>, <SearchResult: core.MockModel (pk=1)>, <SearchResult: core.MockModel (pk=2)>, <SearchResult: core.MockModel (pk=3)>, <SearchResult: core.MockModel (pk=4)>, <SearchResult: core.MockModel (pk=5)>, <SearchResult: core.MockModel (pk=6)>, <SearchResult: core.MockModel (pk=7)>, <SearchResult: core.MockModel (pk=8)>, <SearchResult: core.MockModel (pk=9)>, <SearchResult: core.MockModel (pk=10)>, <SearchResult: core.MockModel (pk=11)>, <SearchResult: core.MockModel (pk=12)>, <SearchResult: core.MockModel (pk=13)>, <SearchResult: core.MockModel (pk=14)>, <SearchResult: core.MockModel (pk=15)>, <SearchResult: core.MockModel (pk=16)>, <SearchResult: core.MockModel (pk=17)>, <SearchResult: core.MockModel (pk=18)>, '...(remaining elements truncated)...']")
+        self.assertEqual(len(backends.queries), 1)
+    
     def test_iter(self):
         # Dummy always returns [].
         self.assertEqual([result for result in self.bsqs.all()], [])
         
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
         msqs = self.msqs.all()
         results = [result for result in msqs]
         self.assertEqual(results, MOCK_SEARCH_RESULTS)
+        self.assertEqual(len(backends.queries), 10)
     
     def test_slice(self):
-        self.assertEqual(self.msqs.all()[1:11], MOCK_SEARCH_RESULTS[1:11])
-        self.assertEqual(self.msqs.all()[50], MOCK_SEARCH_RESULTS[50])
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.msqs.all()
+        self.assertEqual(results[1:11], MOCK_SEARCH_RESULTS[1:11])
+        self.assertEqual(len(backends.queries), 1)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.msqs.all()
+        self.assertEqual(results[50], MOCK_SEARCH_RESULTS[50])
+        self.assertEqual(len(backends.queries), 1)
     
     def test_manual_iter(self):
         results = self.msqs.all()
         
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        
         for offset, result in enumerate(results._manual_iter()):
             self.assertEqual(result, MOCK_SEARCH_RESULTS[offset])
         
+        self.assertEqual(len(backends.queries), 10)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
         # Test to ensure we properly fill the cache, even if we get fewer
         # results back (not in the SearchSite) than the hit count indicates.
         # This will hang indefinitely if broken.
         results = self.mmsqs.all()
-        self.assertEqual([result.pk for result in results._manual_iter()], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        loaded = [result.pk for result in results._manual_iter()]
+        self.assertEqual(loaded, [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        self.assertEqual(len(backends.queries), 8)
     
     def test_fill_cache(self):
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
         results = self.msqs.all()
         self.assertEqual(len(results._result_cache), 0)
-        results._fill_cache()
-        self.assertEqual(len(results._result_cache), 10)
-        results._fill_cache()
-        self.assertEqual(len(results._result_cache), 20)
+        self.assertEqual(len(backends.queries), 0)
+        results._fill_cache(0, 10)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 10)
+        self.assertEqual(len(backends.queries), 1)
+        results._fill_cache(10, 20)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
+        self.assertEqual(len(backends.queries), 2)
         
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
         # Test to ensure we properly fill the cache, even if we get fewer
         # results back (not in the SearchSite) than the hit count indicates.
         results = self.mmsqs.all()
-        self.assertEqual(len(results._result_cache), 0)
-        self.assertEqual([result.pk for result in results._result_cache], [])
-        results._fill_cache()
-        self.assertEqual(len(results._result_cache), 10)
-        self.assertEqual([result.pk for result in results._result_cache], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10])
-        results._fill_cache()
-        self.assertEqual(len(results._result_cache), 20)
-        self.assertEqual([result.pk for result in results._result_cache], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22])
-        results._fill_cache()
-        self.assertEqual(len(results._result_cache), 27)
-        self.assertEqual([result.pk for result in results._result_cache], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 0)
+        self.assertEqual([result.pk for result in results._result_cache if result is not None], [])
+        self.assertEqual(len(backends.queries), 0)
+        results._fill_cache(0, 10)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 9)
+        self.assertEqual([result.pk for result in results._result_cache if result is not None], [0, 1, 2, 3, 4, 5, 6, 7, 8])
+        self.assertEqual(len(backends.queries), 2)
+        results._fill_cache(10, 20)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 17)
+        self.assertEqual([result.pk for result in results._result_cache if result is not None], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19])
+        self.assertEqual(len(backends.queries), 4)
+        results._fill_cache(20, 30)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 27)
+        self.assertEqual([result.pk for result in results._result_cache if result is not None], [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        self.assertEqual(len(backends.queries), 6)
     
     def test_cache_is_full(self):
         # Dummy always has a count of 0 and an empty _result_cache, hence True.
-        self.assertEqual(self.bsqs._cache_is_full(), True)
+        self.assertEqual(self.bsqs._cache_is_full(), False)
+        results = self.bsqs.all()
+        fire_the_iterator_and_fill_cache = [result for result in results]
+        self.assertEqual(results._cache_is_full(), True)
         
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
         self.assertEqual(self.msqs._cache_is_full(), False)
         results = self.msqs.all()
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
+        self.assertEqual(len(backends.queries), 10)
     
     def test_all(self):
         sqs = self.bsqs.all()
@@ -362,11 +450,7 @@ class SearchQuerySetTestCase(TestCase):
     
     def test_load_all_queryset(self):
         sqs = self.msqs.load_all()
-        self.assertEqual(len(sqs._load_all_querysets), 0)
-        
-        sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
-        self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs._load_all_querysets), 1)
+        self.assertRaises(HaystackError, sqs.load_all_queryset, MockModel, MockModel.objects.filter(id__gt=1))
         
         # For full tests, see the solr_backend.
     

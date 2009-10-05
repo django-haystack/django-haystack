@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
-from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.models import SearchResult
@@ -72,10 +72,12 @@ class SearchBackend(BaseSearchBackend):
         
         # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
         self.conn.optimize()
-
+    
+    @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, **kwargs):
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -96,7 +98,7 @@ class SearchBackend(BaseSearchBackend):
             kwargs['start'] = start_offset
         
         if end_offset is not None:
-            kwargs['rows'] = end_offset
+            kwargs['rows'] = end_offset - start_offset
         
         if highlight is True:
             kwargs['hl'] = 'true'
@@ -133,13 +135,26 @@ class SearchBackend(BaseSearchBackend):
             kwargs['facet'] = 'on'
             kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets.items()]
         
+        if limit_to_registered_models:
+            # Using narrow queries, limit the results to only models registered
+            # with the current site.
+            if narrow_queries is None:
+                narrow_queries = []
+            
+            registered_models = self.build_registered_models_list()
+            
+            if len(registered_models) > 0:
+                narrow_queries.append('django_ct:(%s)' % ' OR '.join(registered_models))
+        
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
         
         raw_results = self.conn.search(query_string, **kwargs)
         return self._process_results(raw_results, highlight=highlight)
     
-    def more_like_this(self, model_instance, additional_query_string=None, start_offset=0, end_offset=None, **kwargs):
+    def more_like_this(self, model_instance, additional_query_string=None,
+                       start_offset=0, end_offset=None,
+                       limit_to_registered_models=True, **kwargs):
         index = self.site.get_index(model_instance.__class__)
         field_name = index.get_content_field()
         params = {
@@ -152,8 +167,24 @@ class SearchBackend(BaseSearchBackend):
         if end_offset is not None:
             params['rows'] = end_offset
         
+        narrow_queries = []
+        
+        if limit_to_registered_models:
+            # Using narrow queries, limit the results to only models registered
+            # with the current site.
+            if narrow_queries is None:
+                narrow_queries = []
+            
+            registered_models = self.build_registered_models_list()
+            
+            if len(registered_models) > 0:
+                narrow_queries.append('django_ct:(%s)' % ' OR '.join(registered_models))
+        
         if additional_query_string:
-            params['fq'] = additional_query_string
+            narrow_queries.append(additional_query_string)
+        
+        if narrow_queries:
+            params['fq'] = list(narrow_queries)
         
         raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, **params)
         return self._process_results(raw_results)
@@ -361,7 +392,7 @@ class SearchQuery(BaseSearchQuery):
             kwargs['sort_by'] = ", ".join(order_by_list)
         
         if self.end_offset is not None:
-            kwargs['end_offset'] = self.end_offset - self.start_offset
+            kwargs['end_offset'] = self.end_offset
         
         if self.highlight:
             kwargs['highlight'] = self.highlight

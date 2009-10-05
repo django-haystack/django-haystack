@@ -51,8 +51,8 @@ Clears the backend of all documents/objects for a collection of models.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields='', highlight=False, facets=None, date_facets=None, query_facets=None, narrow_queries=None, spelling_query=None, **kwargs)``
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields='', highlight=False, facets=None, date_facets=None, query_facets=None, narrow_queries=None, spelling_query=None, limit_to_registered_models=True, **kwargs)``
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Takes a query to search on and returns dictionary.
 
@@ -89,3 +89,13 @@ Takes a dictionary of fields and returns schema information.
 
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
+
+``build_registered_models_list(self)``
+--------------------------------------
+
+Builds a list of registered models for searching.
+
+The ``search`` method should use this and the ``django_ct`` field to
+narrow the results (unless the user indicates not to). This helps ignore
+any results that are not currently registered models and ensures
+consistent caching.

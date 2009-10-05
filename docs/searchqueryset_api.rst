@@ -322,26 +322,9 @@ Example::
 ``load_all_queryset(self, model_class, queryset)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Allows for specifying a custom ``QuerySet`` that changes how ``load_all`` will
-fetch records for the provided model. This is useful for post-processing the
-results from the query, enabling things like adding ``select_related`` or
-filtering certain data.
+Deprecated for removal before Haystack 1.0-final.
 
-Example::
-
-    sqs = SearchQuerySet().filter(content='foo').load_all()
-    # For the Entry model, we want to include related models directly associated
-    # with the Entry to save on DB queries.
-    sqs = sqs.load_all_queryset(Entry, Entry.objects.all().select_related(depth=1))
-
-This method chains indefinitely, so you can specify ``QuerySets`` for as many
-models as you wish, one per model. The ``SearchQuerySet`` appends on a call to
-``in_bulk``, so be sure that the ``QuerySet`` you provide can accommodate this
-and that the ids passed to ``in_bulk`` will map to the model in question.
-
-If you need to do this frequently and have one ``QuerySet`` you'd like to apply
-everywhere, you can specify this at the ``SearchIndex`` level using the
-``load_all_queryset`` method. See :doc:`searchindex_api` for usage.
+Please see the docs on ``RelatedSearchQuerySet``.
 
 ``auto_query(self, query_string)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -536,3 +519,53 @@ Example::
 Also included in Haystack is an ``EmptySearchQuerySet`` class. It behaves just
 like ``SearchQuerySet`` but will always return zero results. This is useful for
 places where you want no query to occur or results to be returned.
+
+
+``RelatedSearchQuerySet``
+=========================
+
+Sometimes you need to filter results based on relations in the database that are
+not present in the search index or are difficult to express that way. To this
+end, ``RelatedSearchQuerySet`` allows you to post-process the search results by
+calling ``load_all_queryset``.
+
+.. warning::
+
+    ``RelatedSearchQuerySet`` can have negative performance implications.
+    Because results are excluded based on the database after the search query
+    has been run, you can't guarantee offsets within the cache. Therefore, the
+    entire cache that appears before the offset you request must be filled in
+    order to produce consistent results. On large result sets and at higher
+    slices, this can take time.
+    
+    This is the old behavior of ``SearchQuerySet``, so performance is no worse
+    than the early days of Haystack.
+
+It supports all other methods that the standard ``SearchQuerySet`` does, with
+the addition of the ``load_all_queryset`` method and paying attention to the
+``load_all_queryset`` method of ``SearchIndex`` objects when populating the
+cache.
+
+``load_all_queryset(self, model_class, queryset)``
+--------------------------------------------------
+
+Allows for specifying a custom ``QuerySet`` that changes how ``load_all`` will
+fetch records for the provided model. This is useful for post-processing the
+results from the query, enabling things like adding ``select_related`` or
+filtering certain data.
+
+Example::
+
+    sqs = SearchQuerySet().filter(content='foo').load_all()
+    # For the Entry model, we want to include related models directly associated
+    # with the Entry to save on DB queries.
+    sqs = sqs.load_all_queryset(Entry, Entry.objects.all().select_related(depth=1))
+
+This method chains indefinitely, so you can specify ``QuerySets`` for as many
+models as you wish, one per model. The ``SearchQuerySet`` appends on a call to
+``in_bulk``, so be sure that the ``QuerySet`` you provide can accommodate this
+and that the ids passed to ``in_bulk`` will map to the model in question.
+
+If you need to do this frequently and have one ``QuerySet`` you'd like to apply
+everywhere, you can specify this at the ``SearchIndex`` level using the
+``load_all_queryset`` method. See :doc:`searchindex_api` for usage.

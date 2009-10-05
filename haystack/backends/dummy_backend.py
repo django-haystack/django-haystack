@@ -3,7 +3,7 @@ A fake backend for dummying during tests.
 """
 import datetime
 from django.db import models
-from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import FILTER_SEPARATOR
 from haystack.models import SearchResult
 
@@ -30,16 +30,18 @@ class DummySearchResult(SearchResult):
 class SearchBackend(BaseSearchBackend):
     def update(self, indexer, iterable):
         pass
-
+    
     def remove(self, obj):
         pass
-
+    
     def clear(self, models):
         pass
-
+    
+    @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, **kwargs):
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         if query_string == 'content__exact hello AND content__exact world':
             return {
                 'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],
@@ -50,7 +52,7 @@ class SearchBackend(BaseSearchBackend):
             'results': [],
             'hits': 0,
         }
-
+    
     def prep_value(self, db_field, value):
         return value
     

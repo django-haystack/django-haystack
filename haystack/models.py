@@ -30,13 +30,16 @@ class SearchResult(object):
             if not key in self.__dict__:
                 self.__dict__[key] = value
                 self._additional_fields.append(key)
-
+    
     def __repr__(self):
         return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.model_name, self.pk)
     
+    def __unicode__(self):
+        return force_unicode(self.__repr__())
+    
     def __getattr__(self, attr):
         return self.__dict__.get(attr, None)
-
+    
     def _get_object(self):
         if self._object is None:
             try:

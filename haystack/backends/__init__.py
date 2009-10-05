@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
+from time import time
+from django.conf import settings
+from django.core import signals
 from django.db.models.base import ModelBase
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
@@ -12,6 +15,47 @@ except NameError:
 
 IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
+
+
+# A means to inspect all search queries that have run in the last request.
+queries = []
+
+
+# Per-request, reset the ghetto query log.
+# Probably not extraordinarily thread-safe but should only matter when
+# DEBUG = True.
+def reset_search_queries(**kwargs):
+    global queries
+    queries = []
+
+
+if settings.DEBUG:
+    signals.request_started.connect(reset_search_queries)
+
+
+def log_query(func):
+    """
+    A decorator for pseudo-logging search queries. Used in the ``SearchBackend``
+    to wrap the ``search`` method.
+    """
+    def wrapper(obj, query_string, *args, **kwargs):
+        start = time()
+        
+        try:
+            return func(obj, query_string, *args, **kwargs)
+        finally:
+            stop = time()
+            
+            if settings.DEBUG:
+                global queries
+                queries.append({
+                    'query_string': query_string,
+                    'additional_args': args,
+                    'additional_kwargs': kwargs,
+                    'time': "%.3f" % (stop - start),
+                })
+    
+    return wrapper
 
 
 class BaseSearchBackend(object):
@@ -33,7 +77,7 @@ class BaseSearchBackend(object):
         """
         Get an unique identifier for the object or a string representing the
         object.
-
+        
         If not overridden, uses <app_label>.<object_name>.<pk>.
         """
         if isinstance(obj_or_string, basestring):
@@ -43,7 +87,7 @@ class BaseSearchBackend(object):
             return obj_or_string
         
         return u"%s.%s.%s" % (obj_or_string._meta.app_label, obj_or_string._meta.module_name, obj_or_string._get_pk_val())
-
+    
     def update(self, index, iterable):
         """
         Updates the backend when given a SearchIndex and a collection of
@@ -53,7 +97,7 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
     def remove(self, obj_or_string):
         """
         Removes a document/object from the backend. Can be either a model
@@ -64,7 +108,7 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
     def clear(self, models=[]):
         """
         Clears the backend of all documents/objects for a collection of models.
@@ -73,10 +117,12 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
+    @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, **kwargs):
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -91,7 +137,7 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError
-
+    
     def prep_value(self, value):
         """
         Hook to give the backend a chance to prep an attribute value before
@@ -116,6 +162,22 @@ class BaseSearchBackend(object):
         specific to each one.
         """
         raise NotImplementedError("Subclasses must provide a way to build their schema.")
+    
+    def build_registered_models_list(self):
+        """
+        Builds a list of registered models for searching.
+        
+        The ``search`` method should use this and the ``django_ct`` field to
+        narrow the results (unless the user indicates not to). This helps ignore
+        any results that are not currently registered models and ensures
+        consistent caching.
+        """
+        models = []
+        
+        for model in self.site.get_indexed_models():
+            models.append(u"%s.%s" % (model._meta.app_label, model._meta.module_name))
+        
+        return models
 
 
 # Alias for easy loading within SearchQuery objects.
@@ -247,10 +309,45 @@ class BaseSearchQuery(object):
         
         self.backend = loaded_backend.SearchBackend()
     
+    def has_run(self):
+        """Indicates if any query has been been run."""
+        return None not in (self._results, self._hit_count)
+    
     def run(self, spelling_query=None):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        results = self.backend.search(final_query, highlight=self.highlight, spelling_query=spelling_query)
+        kwargs = {
+            'start_offset': self.start_offset,
+        }
+        
+        if self.order_by:
+            kwargs['sort_by'] = self.order_by
+        
+        if self.end_offset is not None:
+            kwargs['end_offset'] = self.end_offset
+        
+        if self.highlight:
+            kwargs['highlight'] = self.highlight
+        
+        if self.facets:
+            kwargs['facets'] = list(self.facets)
+        
+        if self.date_facets:
+            kwargs['date_facets'] = self.date_facets
+        
+        if self.query_facets:
+            kwargs['query_facets'] = self.query_facets
+        
+        if self.narrow_queries:
+            kwargs['narrow_queries'] = self.narrow_queries
+        
+        if spelling_query:
+            kwargs['spelling_query'] = spelling_query
+        
+        if self.boost:
+            kwargs['boost'] = self.boost
+        
+        results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})

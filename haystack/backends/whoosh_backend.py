@@ -7,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_unicode
-from haystack.backends import BaseSearchBackend, BaseSearchQuery
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
@@ -62,6 +62,9 @@ class SearchBackend(BaseSearchBackend):
         if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
             os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
             new_index = True
+        
+        if not os.access(settings.HAYSTACK_WHOOSH_PATH, os.W_OK):
+            raise IOError("The path to your Whoosh index '%s' is not writable for the current user/group." % settings.HAYSTACK_WHOOSH_PATH)
         
         self.storage = FileStorage(settings.HAYSTACK_WHOOSH_PATH)
         self.content_field_name, self.schema = self.build_schema(self.site.all_searchfields())
@@ -145,7 +148,7 @@ class SearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         whoosh_id = self.get_identifier(obj_or_string)
-        self.index.delete_by_query(q=self.parser.parse('id:"%s"' % whoosh_id))
+        self.index.delete_by_query(q=self.parser.parse(u'id:"%s"' % whoosh_id))
         
         # For now, commit no matter what, as we run into locking issues otherwise.
         self.index.commit()
@@ -162,9 +165,9 @@ class SearchBackend(BaseSearchBackend):
             models_to_delete = []
             
             for model in models:
-                models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                models_to_delete.append(u"django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
             
-            self.index.delete_by_query(q=self.parser.parse(" OR ".join(models_to_delete)))
+            self.index.delete_by_query(q=self.parser.parse(u" OR ".join(models_to_delete)))
         
         # For now, commit no matter what, as we run into locking issues otherwise.
         self.index.commit()
@@ -185,9 +188,11 @@ class SearchBackend(BaseSearchBackend):
         self.index = self.index.refresh()
         self.index.optimize()
     
+    @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, **kwargs):
+               narrow_queries=None, spelling_query=None,
+               limit_to_registered_models=True, **kwargs):
         if not self.setup_complete:
             self.setup()
         
@@ -198,9 +203,11 @@ class SearchBackend(BaseSearchBackend):
                 'hits': 0,
             }
         
+        query_string = force_unicode(query_string)
+        
         # A one-character query (non-wildcard) gets nabbed by a stopwords
         # filter and should yield zero results.
-        if len(query_string) <= 1 and query_string != '*':
+        if len(query_string) <= 1 and query_string != u'*':
             return {
                 'results': [],
                 'hits': 0,
@@ -227,16 +234,12 @@ class SearchBackend(BaseSearchBackend):
                     sort_by_list.append(order_by[1:])
                     
                     if len(sort_by_list) == 1:
-                        # DRL_TODO: This is the opposite of what I would expect
-                        # but actual testing with Whoosh confirms it. Very odd.
-                        reverse = False
+                        reverse = True
                 else:
                     sort_by_list.append(order_by)
                     
                     if len(sort_by_list) == 1:
-                        # DRL_TODO: This is the opposite of what I would expect
-                        # but actual testing with Whoosh confirms it. Very odd.
-                        reverse = True
+                        reverse = False
                 
             sort_by = sort_by_list[0]
         
@@ -252,12 +255,23 @@ class SearchBackend(BaseSearchBackend):
         narrowed_results = None
         self.index = self.index.refresh()
         
+        if limit_to_registered_models:
+            # Using narrow queries, limit the results to only models registered
+            # with the current site.
+            if narrow_queries is None:
+                narrow_queries = []
+            
+            registered_models = self.build_registered_models_list()
+            
+            if len(registered_models) > 0:
+                narrow_queries.append('django_ct:(%s)' % ' OR '.join(registered_models))
+        
         if narrow_queries is not None:
             # Potentially expensive? I don't see another way to do it in Whoosh...
             narrow_searcher = self.index.searcher()
             
             for nq in narrow_queries:
-                recent_narrowed_results = narrow_searcher.search(self.parser.parse(nq))
+                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_unicode(nq)))
                 
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
@@ -266,7 +280,7 @@ class SearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         
-        if self.index.doc_count:
+        if self.index.doc_count():
             searcher = self.index.searcher()
             parsed_query = self.parser.parse(query_string)
             
@@ -277,14 +291,13 @@ class SearchBackend(BaseSearchBackend):
                     'hits': 0,
                 }
             
-            # DRL_TODO: Ignoring offsets for now, as slicing caused issues with pagination.
             raw_results = searcher.search(parsed_query, sortedby=sort_by, reverse=reverse)
             
             # Handle the case where the results have been narrowed.
             if narrowed_results:
                 raw_results.filter(narrowed_results)
             
-            return self._process_results(raw_results, highlight=highlight, query_string=query_string)
+            return self._process_results(raw_results[start_offset:end_offset], highlight=highlight, query_string=query_string)
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
                 if spelling_query:
@@ -461,11 +474,11 @@ class SearchQuery(BaseSearchQuery):
         self.backend = backend or SearchBackend()
     
     def build_query(self):
-        query = ''
+        query = u''
         
         if not self.query_filters:
             # Match all.
-            query = '*'
+            query = u'*'
         else:
             query_chunks = []
             
@@ -530,12 +543,12 @@ class SearchQuery(BaseSearchQuery):
                 # Pull off an undesirable leading "AND" or "OR".
                 del(query_chunks[0])
             
-            query = " ".join(query_chunks)
+            query = u" ".join(query_chunks)
         
         if len(self.models):
             models = ['django_ct:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
             models_clause = ' OR '.join(models)
-            final_query = '(%s) AND (%s)' % (query, models_clause)
+            final_query = u'(%s) AND (%s)' % (query, models_clause)
         else:
             final_query = query
         
@@ -545,43 +558,6 @@ class SearchQuery(BaseSearchQuery):
             for boost_word, boost_value in self.boost.items():
                 boost_list.append("%s^%s" % (boost_word, boost_value))
             
-            final_query = "%s %s" % (final_query, " ".join(boost_list))
+            final_query = u"%s %s" % (final_query, " ".join(boost_list))
         
         return final_query
-    
-    def run(self, spelling_query=None):
-        """Builds and executes the query. Returns a list of search results."""
-        final_query = self.build_query()
-        kwargs = {
-            'start_offset': self.start_offset,
-        }
-        
-        if self.order_by:
-            kwargs['sort_by'] = self.order_by
-        
-        if self.end_offset is not None:
-            kwargs['end_offset'] = self.end_offset - self.start_offset
-        
-        if self.highlight:
-            kwargs['highlight'] = self.highlight
-        
-        if self.facets:
-            kwargs['facets'] = list(self.facets)
-        
-        if self.date_facets:
-            kwargs['date_facets'] = self.date_facets
-        
-        if self.query_facets:
-            kwargs['query_facets'] = self.query_facets
-        
-        if self.narrow_queries:
-            kwargs['narrow_queries'] = self.narrow_queries
-        
-        if spelling_query:
-            kwargs['spelling_query'] = spelling_query
-        
-        results = self.backend.search(final_query, **kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
-        self._facet_counts = results.get('facets', {})
-        self._spelling_suggestion = results.get('spelling_suggestion', None)
