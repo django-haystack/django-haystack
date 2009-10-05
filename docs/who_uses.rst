@@ -69,3 +69,11 @@ For general search on an internal site called SMD Spacebook 1.1.
 
 Using: Solr
 
+
+AllForLocal
+-----------
+
+For general search.
+
+* http://www.allforlocal.com/
+
