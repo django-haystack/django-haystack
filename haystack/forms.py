@@ -1,6 +1,7 @@
 from django import forms
 from django.db import models
 from django.utils.text import capfirst
+from django.utils.translation import ugettext_lazy as _
 import haystack
 from haystack.query import SearchQuerySet
 
@@ -14,7 +15,7 @@ def model_choices(site=None):
 
 
 class SearchForm(forms.Form):
-    q = forms.CharField(required=False, label='Search')
+    q = forms.CharField(required=False, label=_('Search'))
     
     def __init__(self, *args, **kwargs):
         self.searchqueryset = kwargs.get('searchqueryset', None)
@@ -65,7 +66,7 @@ class FacetedSearchForm(SearchForm):
 class ModelSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
         super(ModelSearchForm, self).__init__(*args, **kwargs)
-        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, widget=forms.CheckboxSelectMultiple)
+        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label=_('Search In'), widget=forms.CheckboxSelectMultiple)
 
     def get_models(self):
         """Return an alphabetical list of model classes in the index."""
@@ -84,3 +85,15 @@ class ModelSearchForm(SearchForm):
 class HighlightedModelSearchForm(ModelSearchForm):
     def search(self):
         return super(HighlightedModelSearchForm, self).search().highlight()
+
+
+class FacetedModelSearchForm(ModelSearchForm):
+    selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
+    
+    def search(self):
+        sqs = super(FacetedModelSearchForm, self).search()
+        
+        if self.cleaned_data['selected_facets']:
+            sqs = sqs.narrow(self.cleaned_data['selected_facets'])
+        
+        return sqs.models(*self.get_models())

@@ -466,6 +466,12 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         
         sqs = SearchQuerySet()
         self.assertEqual(len(sqs), 3)
+        self.assertEqual([result.pk for result in sqs], [u'3', u'2', u'1'])
+        
+        try:
+            print SearchQuerySet()
+        except:
+            self.fail()
     
     def test_iter(self):
         self.sb.update(self.smmi, self.sample_objs)
