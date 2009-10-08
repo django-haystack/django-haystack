@@ -12,6 +12,10 @@ from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
 from haystack.query import SearchQuerySet
 from haystack import sites
 from core.models import MockModel, AnotherMockModel
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 class WhooshMockSearchIndex(indexes.SearchIndex):
@@ -177,8 +181,8 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets'], {})
         
-        # self.assertEqual(self.sb.search('', narrow_queries=['name:daniel1']), {'hits': 0, 'results': []})
-        # results = self.sb.search('Index*', narrow_queries=['name:daniel1'])
+        # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
+        # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
         # self.assertEqual(results['hits'], 1)
     
     def test_more_like_this(self):
