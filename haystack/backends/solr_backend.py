@@ -8,6 +8,10 @@ from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.models import SearchResult
 try:
+    set
+except NameError:
+    from sets import Set as set
+try:
     from pysolr import Solr
 except ImportError:
     raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
@@ -139,12 +143,12 @@ class SearchBackend(BaseSearchBackend):
             # Using narrow queries, limit the results to only models registered
             # with the current site.
             if narrow_queries is None:
-                narrow_queries = []
+                narrow_queries = set()
             
             registered_models = self.build_registered_models_list()
             
             if len(registered_models) > 0:
-                narrow_queries.append('django_ct:(%s)' % ' OR '.join(registered_models))
+                narrow_queries.add('django_ct:(%s)' % ' OR '.join(registered_models))
         
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
@@ -167,21 +171,21 @@ class SearchBackend(BaseSearchBackend):
         if end_offset is not None:
             params['rows'] = end_offset
         
-        narrow_queries = []
+        narrow_queries = set()
         
         if limit_to_registered_models:
             # Using narrow queries, limit the results to only models registered
             # with the current site.
             if narrow_queries is None:
-                narrow_queries = []
+                narrow_queries = set()
             
             registered_models = self.build_registered_models_list()
             
             if len(registered_models) > 0:
-                narrow_queries.append('django_ct:(%s)' % ' OR '.join(registered_models))
+                narrow_queries.add('django_ct:(%s)' % ' OR '.join(registered_models))
         
         if additional_query_string:
-            narrow_queries.append(additional_query_string)
+            narrow_queries.add(additional_query_string)
         
         if narrow_queries:
             params['fq'] = list(narrow_queries)
