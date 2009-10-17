@@ -17,6 +17,9 @@ except ImportError:
     raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
 
 
+BACKEND_NAME = 'solr'
+
+
 class SearchBackend(BaseSearchBackend):
     # Word reserved by Solr for special use.
     RESERVED_WORDS = (

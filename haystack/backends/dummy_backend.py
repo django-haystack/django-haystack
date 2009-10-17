@@ -8,6 +8,9 @@ from haystack.constants import FILTER_SEPARATOR
 from haystack.models import SearchResult
 
 
+BACKEND_NAME = 'dummy'
+
+
 class DummySearchResult(SearchResult):
     dm = type('DummyModel', (object,), {})
     

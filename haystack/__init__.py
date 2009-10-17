@@ -17,16 +17,19 @@ if not hasattr(settings, "HAYSTACK_SEARCH_ENGINE"):
 
 
 # Load the search backend.
-def load_backend(backend_name):
+def load_backend(backend_name=None):
+    if not backend_name:
+        backend_name = settings.HAYSTACK_SEARCH_ENGINE
+    
     try:
         # Most of the time, the search backend will be one of the  
         # backends that ships with haystack, so look there first.
-        return __import__('haystack.backends.%s_backend' % settings.HAYSTACK_SEARCH_ENGINE, {}, {}, [''])
+        return __import__('haystack.backends.%s_backend' % backend_name, {}, {}, [''])
     except ImportError, e:
         # If the import failed, we might be looking for a search backend 
         # distributed external to haystack. So we'll try that next.
         try:
-            return __import__('%s_backend' % settings.HAYSTACK_SEARCH_ENGINE, {}, {}, [''])
+            return __import__('%s_backend' % backend_name, {}, {}, [''])
         except ImportError, e_user:
             # The search backend wasn't found. Display a helpful error message
             # listing all possible (built-in) database backends.
@@ -39,9 +42,9 @@ def load_backend(backend_name):
                 and not f.endswith('.pyc')
             ]
             available_backends.sort()
-            if settings.HAYSTACK_SEARCH_ENGINE not in available_backends:
+            if backend_name not in available_backends:
                 raise ImproperlyConfigured, "%r isn't an available search backend. Available options are: %s" % \
-                    (settings.HAYSTACK_SEARCH_ENGINE, ", ".join(map(repr, available_backends)))
+                    (backend_name, ", ".join(map(repr, available_backends)))
             else:
                 raise # If there's some other error, this must be an error in Django itself.
 
