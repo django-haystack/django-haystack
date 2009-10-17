@@ -1,3 +1,5 @@
+.. _ref-views-and_forms:
+
 =============
 Views & Forms
 =============

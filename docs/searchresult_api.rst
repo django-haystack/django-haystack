@@ -1,6 +1,10 @@
+.. _ref-searchresult-api:
+
 ====================
 ``SearchResult`` API
 ====================
+
+.. class:: SearchResult(app_label, model_name, pk, score, **kwargs)
 
 The ``SearchResult`` class provides structure to the results that come back from
 the search index. These objects are what a ``SearchQuerySet`` will return when
@@ -24,13 +28,17 @@ The class exposes the following useful attributes/properties:
 Method Reference
 ================
 
-``content_type(self)``
-----------------------
+``content_type``
+----------------
+
+.. method:: SearchResult.content_type(self)
 
 Returns the content type for the result's model instance.
 
-``get_additional_fields(self)``
--------------------------------
+``get_additional_fields``
+-------------------------
+
+.. method:: SearchResult.get_additional_fields(self)
 
 Returns a dictionary of all of the fields from the raw result.
 
@@ -38,8 +46,10 @@ Useful for serializing results. Only returns what was seen from the
 search engine, so it may have extra fields Haystack's indexes aren't
 aware of.
 
-``get_stored_fields(self)``
----------------------------
+``get_stored_fields``
+---------------------
+
+.. method:: SearchResult.get_stored_fields(self)
 
 Returns a dictionary of all of the stored fields from the SearchIndex.
 

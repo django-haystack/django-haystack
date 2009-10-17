@@ -1,6 +1,10 @@
+.. _ref-searchqueryset-api:
+
 ======================
 ``SearchQuerySet`` API
 ======================
+
+.. class:: SearchQuerySet(site=None, query=None)
 
 The ``SearchQuerySet`` class is designed to make performing a search and iterating
 over its results easy and consistent. For those familiar with Django's ORM
@@ -87,20 +91,26 @@ offset or even slicing the result list.
 Methods That Return A ``SearchQuerySet``
 ----------------------------------------
 
-``all(self):``
-~~~~~~~~~~~~~~
+``all``
+~~~~~~~
+
+.. method:: SearchQuerySet.all(self):
 
 Returns all results for the query. This is largely a no-op (returns an identical
 copy) but useful for denoting exactly what behavior is going on.
 
-``none(self):``
-~~~~~~~~~~~~~~~
+``none``
+~~~~~~~~
+
+.. method:: SearchQuerySet.none(self):
 
 Returns an ``EmptySearchQuerySet`` that behaves like a ``SearchQuerySet`` but
 always yields no results.
 
-``filter(self, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``filter``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.filter(self, **kwargs)
 
 Narrows the search by looking for (and including) certain attributes.
 
@@ -127,8 +137,10 @@ Example::
     # Identical to the previous example.
     SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
 
-``exclude(self, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``exclude``
+~~~~~~~~~~~
+
+.. method:: SearchQuerySet.exclude(self, **kwargs)
 
 Narrows the search by ensuring certain attributes are not included.
 
@@ -136,22 +148,28 @@ Example::
 
     SearchQuerySet().exclude(content='foo')
 
-``filter_and(self, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``filter_and``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.filter_and(self, **kwargs)
 
 Narrows the search by looking for (and including) certain attributes. Join
 behavior in the query is forced to be ``AND``. Used primarily by the ``filter``
 method.
 
-``filter_or(self, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``filter_or``
+~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.filter_or(self, **kwargs)
 
 Narrows the search by looking for (and including) certain attributes. Join
 behavior in the query is forced to be ``OR``. Used primarily by the ``filter``
 method.
 
-``order_by(self, *args)``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+``order_by``
+~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.order_by(self, *args)
 
 Alters the order in which the results should appear. Arguments should be strings
 that map to the attributes/fields within the index. You may specify multiple
@@ -183,16 +201,20 @@ string with a ``-``::
     everything, and from the schema, there is no way to know how a field should
     be treated.
 
-``highlight(self)``
-~~~~~~~~~~~~~~~~~~~
+``highlight``
+~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.highlight(self)
 
 If supported by the backend, the ``SearchResult`` objects returned will include
 a highlighted version of the result::
 
     SearchQuerySet().filter(content='foo').highlight()
 
-``models(self, *models)``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+``models``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.models(self, *models)
 
 Accepts an arbitrary number of Model classes to include in the search. This will
 narrow the search results to only include results from the models specified.
@@ -201,8 +223,10 @@ Example::
 
     SearchQuerySet().filter(content='foo').models(BlogEntry, Comment)
 
-``boost(self, term, boost_value)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``boost``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.boost(self, term, boost_value)
 
 Boosts a certain term of the query. You provide the term to be boosted and the
 value is the amount to boost it by. Boost amounts may be either an integer or a
@@ -212,8 +236,10 @@ Example::
 
     SearchQuerySet().filter(content='foo').boost('bar', 1.5)
 
-``facet(self, field)``
-~~~~~~~~~~~~~~~~~~~~~~
+``facet``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.facet(self, field)
 
 Adds faceting to a query for the provided field. You provide the field (from one
 of the ``SearchIndex`` classes) you like to facet on.
@@ -226,8 +252,10 @@ Example::
     # Count document hits for each author within the index.
     SearchQuerySet().filter(content='foo').facet('author')
 
-``date_facet(self, field, start_date, end_date, gap_by, gap_amount=1)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``date_facet``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.date_facet(self, field, start_date, end_date, gap_by, gap_amount=1)
 
 Adds faceting to a query for the provided field by date. You provide the field
 (from one of the ``SearchIndex`` classes) you like to facet on, a ``start_date``
@@ -247,8 +275,10 @@ Example::
     # Count document hits for each day between 2009-06-07 to 2009-07-07 within the index.
     SearchQuerySet().filter(content='foo').date_facet('pub_date', start_date=datetime.date(2009, 6, 7), end_date=datetime.date(2009, 7, 7), gap_by='day')
 
-``query_facet(self, field, query)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``query_facet``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.query_facet(self, field, query)
 
 Adds faceting to a query for the provided field with a custom query. You provide
 the field (from one of the ``SearchIndex`` classes) you like to facet on and the
@@ -266,8 +296,10 @@ Example::
     # Count document hits for authors that start with 'jo' within the index.
     SearchQuerySet().filter(content='foo').query_facet('author', 'jo*')
 
-``narrow(self, query)``
-~~~~~~~~~~~~~~~~~~~~~~~
+``narrow``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.narrow(self, query)
 
 Pulls a subset of documents from the search engine to search within. This is
 for advanced usage, especially useful when faceting.
@@ -285,8 +317,10 @@ backends. The syntax is entirely dependent on the backend, though most backends
 have a similar syntax for basic fielded queries. No validation/cleansing is
 performed and it is up to the developer to ensure the query's syntax is correct.
 
-``raw_search(self, query_string, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``raw_search``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.raw_search(self, query_string, **kwargs)
 
 Passes a raw query directly to the backend. This is for advanced usage, where
 the desired query can not be expressed via ``SearchQuerySet``.
@@ -306,8 +340,10 @@ should use those ``**kwargs`` for passing that information. Developers should
 be careful to make sure there are no conflicts with the backend's ``search``
 method, as that is called directly.
 
-``load_all(self)``
-~~~~~~~~~~~~~~~~~~
+``load_all``
+~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.load_all(self)
 
 Efficiently populates the objects in the search results. Without using this
 method, DB lookups are done on a per-object basis, resulting in many individual
@@ -319,15 +355,19 @@ Example::
 
     SearchQuerySet().filter(content='foo').load_all()
 
-``load_all_queryset(self, model_class, queryset)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``load_all_queryset``
+~~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.load_all_queryset(self, model_class, queryset)
 
 Deprecated for removal before Haystack 1.0-final.
 
 Please see the docs on ``RelatedSearchQuerySet``.
 
-``auto_query(self, query_string)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``auto_query``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.auto_query(self, query_string)
 
 Performs a best guess constructing the search query.
 
@@ -348,8 +388,10 @@ Example::
 
 This method is somewhat naive but works well enough for simple, common cases.
 
-``more_like_this(self, model_instance)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``more_like_this``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.more_like_this(self, model_instance)
 
 Finds similar results to the object passed in.
 
@@ -377,8 +419,10 @@ Example::
 Methods That Do Not Return A ``SearchQuerySet``
 -----------------------------------------------
 
-``count(self)``
-~~~~~~~~~~~~~~~
+``count``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.count(self)
 
 Returns the total number of matching results.
 
@@ -389,8 +433,10 @@ Example::
 
     SearchQuerySet().filter(content='foo').count()
 
-``best_match(self)``
-~~~~~~~~~~~~~~~~~~~~
+``best_match``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.best_match(self)
 
 Returns the best/top search result that matches the query.
 
@@ -403,8 +449,10 @@ a ``SearchResult`` object that is the best match the search backend found::
     # Identical to:
     foo = SearchQuerySet().filter(content='foo')[0]
 
-``latest(self, date_field)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``latest``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.latest(self, date_field)
 
 Returns the most recent search result that matches the query.
 
@@ -418,8 +466,10 @@ found::
     # Identical to:
     foo = SearchQuerySet().filter(content='foo').order_by('-pub_date')[0]
 
-``facet_counts(self)``
-~~~~~~~~~~~~~~~~~~~~~~
+``facet_counts``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.facet_counts(self)
 
 Returns the facet counts found by the query. This will cause the query to
 execute and should generally be used when presenting the data (template-level).
@@ -455,8 +505,10 @@ Example::
     #     'queries': {}
     # }
 
-``spelling_suggestion(self, preferred_query=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``spelling_suggestion``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.spelling_suggestion(self, preferred_query=None)
 
 Returns the spelling suggestion found by the query.
 
@@ -546,8 +598,10 @@ the addition of the ``load_all_queryset`` method and paying attention to the
 ``load_all_queryset`` method of ``SearchIndex`` objects when populating the
 cache.
 
-``load_all_queryset(self, model_class, queryset)``
---------------------------------------------------
+``load_all_queryset``
+---------------------
+
+.. method:: SearchQuerySet.load_all_queryset(self, model_class, queryset)
 
 Allows for specifying a custom ``QuerySet`` that changes how ``load_all`` will
 fetch records for the provided model. This is useful for post-processing the

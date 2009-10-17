@@ -1,3 +1,5 @@
+.. _ref-tutorial:
+
 =================
 Haystack Tutorial
 =================

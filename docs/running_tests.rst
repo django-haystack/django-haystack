@@ -1,3 +1,5 @@
+.. _ref-running-tests:
+
 =============
 Running Tests
 =============

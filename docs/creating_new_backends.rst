@@ -1,3 +1,5 @@
+.. _ref-creating-new-backends:
+
 =====================
 Creating New Backends
 =====================
