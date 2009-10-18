@@ -553,6 +553,16 @@ The following lookup types are supported:
 These options are similar in function to the way Django's lookup types work.
 The actual behavior of these lookups is backend-specific.
 
+.. warning::
+
+    The ``startswith`` filter is strongly affected by the other ways the engine
+    parses data, especially in regards to stemming (see :doc:`glossary`). This
+    can mean that if the query ends in a vowel or a plural form, it may get
+    stemmed before being evaluated.
+    
+    This is both backend-specific and yet fairly consistent between engines,
+    and may be the cause of sometimes unexpected results.
+
 Example::
 
     SearchQuerySet().filter(content='foo')
