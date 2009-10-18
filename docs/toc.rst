@@ -14,6 +14,7 @@ Table Of Contents
    settings
    faq
    who_uses
+   debugging
    
    best_practices
    faceting

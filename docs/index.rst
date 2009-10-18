@@ -29,6 +29,7 @@ you up and running:
    faq
    who_uses
    installing_search_engines
+   debugging
 
 
 Advanced Uses
