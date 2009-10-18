@@ -479,91 +479,53 @@ class SearchQuery(BaseSearchQuery):
         super(SearchQuery, self).__init__(backend=backend)
         self.backend = backend or SearchBackend()
     
-    def build_query(self):
-        query = u''
+    
+    def build_query_fragment(self, field, filter_type, value):
+        result = ''
         
-        if not self.query_filters:
-            # Match all.
-            query = u'*'
+        if filter_type != 'in':
+            # 'in' is a bit of a special case, as we don't want to
+            # convert a valid list/tuple to string. Defer handling it
+            # until later...
+            value = self.backend._from_python(value)
+        
+        # Check to see if it's a phrase for an exact match.
+        if ' ' in value:
+            value = '"%s"' % value
+        
+        # 'content' is a special reserved word, much like 'pk' in
+        # Django's ORM layer. It indicates 'no special field'.
+        if field == 'content':
+            result = value
         else:
-            query_chunks = []
+            filter_types = {
+                'exact': "%s:%s",
+                'gt': "%s:{%s TO}",
+                'gte': "%s:[%s TO]",
+                'lt': "%s:{TO %s}",
+                'lte': "%s:[TO %s]",
+                'startswith': "%s:%s*",
+            }
             
-            for the_filter in self.query_filters:
-                if the_filter.is_and():
-                    query_chunks.append('AND')
+            if filter_type != 'in':
+                possible_datetime = DATETIME_REGEX.search(value)
                 
-                if the_filter.is_not():
-                    query_chunks.append('NOT')
+                if possible_datetime:
+                    value = self.clean(value)
                 
-                if the_filter.is_or():
-                    query_chunks.append('OR')
+                result = filter_types[filter_type] % (field, value)
+            else:
+                in_options = []
                 
-                value = the_filter.value
-                
-                if the_filter.filter_type != 'in':
-                    # 'in' is a bit of a special case, as we don't want to
-                    # convert a valid list/tuple to string. Defer handling it
-                    # until later...
-                    value = self.backend._from_python(value)
-                
-                # Check to see if it's a phrase for an exact match.
-                if ' ' in value:
-                    value = '"%s"' % value
-                
-                # 'content' is a special reserved word, much like 'pk' in
-                # Django's ORM layer. It indicates 'no special field'.
-                if the_filter.field == 'content':
-                    query_chunks.append(value)
-                else:
-                    filter_types = {
-                        'exact': "%s:%s",
-                        'gt': "%s:{%s TO}",
-                        'gte': "%s:[%s TO]",
-                        'lt': "%s:{TO %s}",
-                        'lte': "%s:[TO %s]",
-                        'startswith': "%s:%s*",
-                    }
+                for possible_value in value:
+                    pv = self.backend._from_python(possible_value)
+                    possible_datetime = DATETIME_REGEX.search(pv)
                     
-                    if the_filter.filter_type != 'in':
-                        possible_datetime = DATETIME_REGEX.search(value)
-                        
-                        if possible_datetime:
-                            value = self.clean(value)
-                        
-                        query_chunks.append(filter_types[the_filter.filter_type] % (the_filter.field, value))
-                    else:
-                        in_options = []
-                        
-                        for possible_value in value:
-                            pv = self.backend._from_python(possible_value)
-                            possible_datetime = DATETIME_REGEX.search(pv)
-                            
-                            if possible_datetime:
-                                pv = self.clean(pv)
-                            
-                            in_options.append('%s:"%s"' % (the_filter.field, pv))
-                        
-                        query_chunks.append("(%s)" % " OR ".join(in_options))
-            
-            if query_chunks[0] in ('AND', 'OR'):
-                # Pull off an undesirable leading "AND" or "OR".
-                del(query_chunks[0])
-            
-            query = u" ".join(query_chunks)
+                    if possible_datetime:
+                        pv = self.clean(pv)
+                    
+                    in_options.append('%s:"%s"' % (field, pv))
+                
+                result = "(%s)" % " OR ".join(in_options)
         
-        if len(self.models):
-            models = ['django_ct:"%s.%s"' % (model._meta.app_label, model._meta.module_name) for model in self.models]
-            models_clause = ' OR '.join(models)
-            final_query = u'(%s) AND (%s)' % (query, models_clause)
-        else:
-            final_query = query
-        
-        if self.boost:
-            boost_list = []
-            
-            for boost_word, boost_value in self.boost.items():
-                boost_list.append("%s^%s" % (boost_word, boost_value))
-            
-            final_query = u"%s %s" % (final_query, " ".join(boost_list))
-        
-        return final_query
+        return result

@@ -25,14 +25,19 @@ Should you need advanced/custom behavior, you can supply your version of
 in your class.
 
 
-Query Filters
-=============
+``SQ`` Objects
+==============
 
-The ``SearchQuery`` object maintains a list of ``QueryFilter`` objects. Each filter
-object supports what field it looks up against, what kind of lookup (i.e. 
-the __'s), what value it's looking for and if it's a AND/OR/NOT. The
-``SearchQuery`` object's "build_query" method should then iterate over that list and 
-convert that to a valid query for the search backend.
+The ``SearchQuery`` object maintains a tree of ``SQ`` objects. Each ``SQ``
+object supports what field it looks up against, what kind of lookup (i.e.
+the __'s), what value it's looking for, if it's a AND/OR/NOT and tracks
+any children it may have. The ``SearchQuery.build_query`` method starts with
+the root of the tree, building part of the final query at each node until
+the full final query is ready for the ``SearchBackend``.
+
+Much like ``django.db.models.Q`` objects, ``SQ`` objects can be passed to
+``SearchQuerySet.filter`` and use the familiar unary operators (``&``, ``|`` and
+``~``) to generate complex parts of the query.
 
 
 Backend-Specific Methods
@@ -40,14 +45,21 @@ Backend-Specific Methods
 
 When implementing a new backend, the following methods will need to be created:
 
-``run``
-~~~~~~~
+``build_query_fragment``
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. method:: SearchQuery.run(self, spelling_query=None)
+.. method:: SearchQuery.build_query_fragment(self, field, filter_type, value)
 
-Builds and executes the query. Returns a list of search results.
+Generates a query fragment from a field, filter type and a value.
 
-Optionally passes along an alternate query for spelling suggestions.
+Must be implemented in backends as this will be highly backend specific.
+
+
+Inheritable Methods
+===================
+
+The following methods have a complete implementation in the base class and
+can largely be used unchanged.
 
 ``build_query``
 ~~~~~~~~~~~~~~~
@@ -56,24 +68,6 @@ Optionally passes along an alternate query for spelling suggestions.
 
 Interprets the collected query metadata and builds the final query to
 be sent to the backend.
-
-This method MUST be implemented by each backend, as it will be highly
-specific to each one.
-
-``run_mlt``
-~~~~~~~~~~~
-
-.. method:: SearchQuery.run_mlt(self)
-
-Executes the More Like This. Returns a list of search results similar
-to the provided document (and optionally query).
-
-
-Inheritable Methods
-===================
-
-The following methods have a complete implementation in the base class and
-can largely be used unchanged.
 
 ``clean``
 ~~~~~~~~~
@@ -84,6 +78,23 @@ Provides a mechanism for sanitizing user input before presenting the
 value to the backend.
 
 A basic (override-able) implementation is provided.
+
+``run``
+~~~~~~~
+
+.. method:: SearchQuery.run(self, spelling_query=None)
+
+Builds and executes the query. Returns a list of search results.
+
+Optionally passes along an alternate query for spelling suggestions.
+
+``run_mlt``
+~~~~~~~~~~~
+
+.. method:: SearchQuery.run_mlt(self)
+
+Executes the More Like This. Returns a list of search results similar
+to the provided document (and optionally query).
 
 ``get_count``
 ~~~~~~~~~~~~~
@@ -114,6 +125,20 @@ Returns the results received from the backend.
 
 If the query has not been run, this will execute the query and store
 the results.
+
+``boost_fragment``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.boost_fragment(self, boost_word, boost_value)
+
+Generates query fragment for boosting a single word/value pair.
+
+``matching_all_fragment``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.matching_all_fragment(self)
+
+Generates the query that matches all documents.
 
 ``add_filter``
 ~~~~~~~~~~~~~~

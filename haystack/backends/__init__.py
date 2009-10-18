@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import re
+from copy import deepcopy
 from time import time
 from django.conf import settings
 from django.core import signals
 from django.db.models.base import ModelBase
+from django.utils import tree
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
@@ -184,34 +186,96 @@ class BaseSearchBackend(object):
 SearchBackend = BaseSearchBackend
 
 
-class QueryFilter(object):
+class SQ(tree.Node):
     """
     Manages an individual condition within a query.
     
     Most often, this will be a lookup to ensure that a certain word or phrase
     appears in the documents being indexed. However, it also supports filtering
     types (such as 'lt', 'gt', 'in' and others) for more complex lookups.
+    
+    This object creates a tree, with children being a list of either more
+    ``SQ`` objects or the expressions/values themselves.
     """
-    def __init__(self, expression, value, use_not=False, use_or=False):
-        self.field, self.filter_type = self.split_expression(expression)
-        self.value = value
+    AND = 'AND'
+    OR = 'OR'
+    default = AND
+    
+    def __init__(self, children=None, connector=None, negated=False, *args, **kwargs):
+        """
+        Constructs a new SQ. If no connector is given, the default will be used.
+        """
+        children = children or []
         
-        if use_not and use_or:
-            raise AttributeError("Query filters can not accept both NOT and OR.")
+        if hasattr(children, 'children'): # if we have a Node-like object turn it into a list
+            children = [children]
         
-        self.use_not = use_not
-        self.use_or = use_or
+        try:
+            children.extend(list(args) + kwargs.items())
+        except AttributeError:
+            raise ValueError("'children' should be None or an list.")
+        
+        super(SQ, self).__init__(children, connector, negated)
+    
+    def add(self, data, connector=None):
+        """
+        Adds a child node. If connector differs from the root then the tree is
+        pushed down a level.
+        
+        data is a tuple of (expression, value)
+        """
+        super(SQ, self).add(data, connector or self.default)
+    
+    def _combine(self, other, conn):
+        if not isinstance(other, SQ):
+            raise TypeError(other)
+        
+        obj = deepcopy(self)
+        obj.add(other, conn)
+        return obj
+    
+    def __or__(self, other):
+        return self._combine(other, self.OR)
+    
+    def __and__(self, other):
+        return self._combine(other, self.AND)
+    
+    def __invert__(self):
+        obj = deepcopy(self)
+        obj.negate()
+        return obj
     
     def __repr__(self):
-        join = 'AND'
+        return '<SQ: %s %s>' % (self.connector, self.as_query_string(self._repr_query_fragment_callback))
+    
+    def _repr_query_fragment_callback(self, field, filter_type, value):
+        return '%s%s%s=%s' % (field, FILTER_SEPARATOR, filter_type, force_unicode(value).encode('utf8'))
+    
+    def as_query_string(self, query_fragment_callback):
+        """
+        Produces a portion of the search query from the current SQ and its
+        children.
+        """
+        result = []
         
-        if self.is_not():
-            join = 'NOT'
+        for child in self.children:
+            if hasattr(child, 'as_query_string'):
+                result.append(child.as_query_string(query_fragment_callback))
+            else:
+                expression, value = child
+                field, filter_type = self.split_expression(expression)
+                result.append(query_fragment_callback(field, filter_type, value))
         
-        if self.is_or():
-            join = 'OR'
+        conn = ' %s ' % self.connector
+        query_string = conn.join(result)
         
-        return '<QueryFilter: %s %s=%s>' % (join, FILTER_SEPARATOR.join((self.field, self.filter_type)), force_unicode(self.value).encode('utf8'))
+        if query_string:
+            if self.negated:
+                query_string = 'NOT (%s)' % query_string
+            elif len(self.children) != 1:
+                query_string = '(%s)' % query_string
+        
+        return query_string
     
     def split_expression(self, expression):
         """Parses an expression and determines the field and filter type."""
@@ -224,49 +288,29 @@ class QueryFilter(object):
             filter_type = parts.pop()
         
         return (field, filter_type)
-    
-    def is_and(self):
-        """
-        A shortcut to determine if the filter is to be attached to the rest
-        of the query using 'AND'.
-        """
-        return not self.use_not and not self.use_or
-    
-    def is_not(self):
-        """
-        A shortcut to determine if the filter is to be attached to the rest
-        of the query using 'NOT'.
-        """
-        return self.use_not
-    
-    def is_or(self):
-        """
-        A shortcut to determine if the filter is to be attached to the rest
-        of the query using 'OR'.
-        """
-        return self.use_or
 
 
 class BaseSearchQuery(object):
     """
     A base class for handling the query itself.
     
-    This class acts as an intermediary between the SearchQuerySet and the
-    search backend itself.
+    This class acts as an intermediary between the ``SearchQuerySet`` and the
+    ``SearchBackend`` itself.
     
-    The SearchQuery object maintains a list of QueryFilter objects. Each filter
-    object supports what field it looks up against, what kind of lookup (i.e. 
-    the __'s), what value it's looking for and if it's a AND/OR/NOT. The
-    SearchQuery's "build_query" method should then iterate over that list and 
-    convert that to a valid query for the search backend.
+    The ``SearchQuery`` object maintains a tree of ``SQ`` objects. Each ``SQ``
+    object supports what field it looks up against, what kind of lookup (i.e.
+    the __'s), what value it's looking for, if it's a AND/OR/NOT and tracks
+    any children it may have. The ``SearchQuery.build_query`` method starts with
+    the root of the tree, building part of the final query at each node until
+    the full final query is ready for the ``SearchBackend``.
     
     Backends should extend this class and provide implementations for
-    ``build_query``, ``clean`` and ``run``. See the ``solr`` backend
-    for an example implementation.
+    ``build_query_fragment``, ``clean`` and ``run``. See the ``solr`` backend for an example
+    implementation.
     """
     
     def __init__(self, backend=None):
-        self.query_filters = []
+        self.query_filter = SQ()
         self.order_by = []
         self.models = set()
         self.boost = {}
@@ -422,18 +466,54 @@ class BaseSearchQuery(object):
         
         return self._spelling_suggestion
     
+    def boost_fragment(self, boost_word, boost_value):
+        """Generates query fragment for boosting a single word/value pair."""
+        return "%s^%s" % (boost_word, boost_value)
     
-    # Methods for backends to implement.
+    def matching_all_fragment(self):
+        """Generates the query that matches all documents."""
+        return '*'
     
     def build_query(self):
         """
         Interprets the collected query metadata and builds the final query to
         be sent to the backend.
-        
-        This method MUST be implemented by each backend, as it will be highly
-        specific to each one.
         """
-        raise NotImplementedError("Subclasses must provide a way to generate the query via the 'build_query' method.")
+        query = self.query_filter.as_query_string(self.build_query_fragment)
+        
+        if not query:
+            # Match all.
+            query = self.matching_all_fragment()
+        
+        if len(self.models):
+            models = ['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
+            models_clause = ' OR '.join(models)
+            final_query = '(%s) AND (%s)' % (query, models_clause)
+        else:
+            final_query = query
+        
+        if self.boost:
+            boost_list = []
+            
+            for boost_word, boost_value in self.boost.items():
+                boost_list.append(self.boost_fragment(boost_word, boost_value))
+            
+            final_query = "%s %s" % (final_query, " ".join(boost_list))
+        
+        return final_query
+    
+    # Methods for backends to implement.
+    
+    def build_query_fragment(self, field, filter_type, value):
+        """
+        Generates a query fragment from a field, filter type and a value.
+        
+        Must be implemented in backends as this will be highly backend specific.
+        """
+        raise NotImplementedError("Subclasses must provide a way to generate query fragments via the 'build_query_fragment' method.")
+    
+    
+    # Standard methods to alter the query.
     
     def clean(self, query_fragment):
         """
@@ -448,7 +528,7 @@ class BaseSearchQuery(object):
         for word in words:
             if word in self.backend.RESERVED_WORDS:
                 word = word.replace(word, word.lower())
-        
+            
             for char in self.backend.RESERVED_CHARACTERS:
                 word = word.replace(char, '\\%s' % char)
             
@@ -456,13 +536,38 @@ class BaseSearchQuery(object):
         
         return ' '.join(cleaned_words)
     
-    
-    # Standard methods to alter the query.
-    
-    def add_filter(self, expression, value, use_not=False, use_or=False):
-        """Narrows the search by requiring certain conditions."""
-        term = QueryFilter(expression, value, use_not, use_or)
-        self.query_filters.append(term)
+    def add_filter(self, query_filter, use_or=False):
+        """
+        Adds a SQ to the current query.
+        """
+        # TODO: consider supporting add_to_query callbacks on q objects
+        if use_or:
+            connector = SQ.OR
+        else:
+            connector = SQ.AND
+        
+        if self.query_filter and query_filter.connector != SQ.AND and len(query_filter) > 1:
+            self.query_filter.start_subtree(connector)
+            subtree = True
+        else:
+            subtree = False
+        
+        for child in query_filter.children:
+            if isinstance(child, tree.Node):
+                self.query_filter.start_subtree(connector)
+                self.add_filter(child)
+                self.query_filter.end_subtree()
+            else:
+                expression, value = child
+                self.query_filter.add((expression, value), connector)
+            
+            connector = query_filter.connector
+        
+        if query_filter.negated:
+            self.query_filter.negate()
+        
+        if subtree:
+            self.query_filter.end_subtree()
     
     def add_order_by(self, field):
         """Orders the search result by a field."""
@@ -484,6 +589,7 @@ class BaseSearchQuery(object):
         """
         if not isinstance(model, ModelBase):
             raise AttributeError('The model being added to the query must derive from Model.')
+        
         self.models.add(model)
     
     def set_limits(self, low=None, high=None):
@@ -565,7 +671,7 @@ class BaseSearchQuery(object):
             klass = self.__class__
         
         clone = klass()
-        clone.query_filters = self.query_filters[:]
+        clone.query_filter = deepcopy(self.query_filter)
         clone.order_by = self.order_by[:]
         clone.models = self.models.copy()
         clone.boost = self.boost.copy()

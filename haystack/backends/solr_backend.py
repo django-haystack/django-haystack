@@ -303,82 +303,46 @@ class SearchQuery(BaseSearchQuery):
     def __init__(self, backend=None):
         super(SearchQuery, self).__init__(backend=backend)
         self.backend = backend or SearchBackend()
-    
-    def build_query(self):
-        query = ''
+
+    def matching_all_fragment(self):
+        return '*:*'
+
+    def build_query_fragment(self, field, filter_type, value):
+        result = ''
         
-        if not self.query_filters:
-            # Match all.
-            query = '*:*'
+        if not isinstance(value, (list, tuple)):
+            # Convert whatever we find to what pysolr wants.
+            value = self.backend.conn._from_python(value)
+        
+        # Check to see if it's a phrase for an exact match.
+        if ' ' in value:
+            value = '"%s"' % value
+        
+        # 'content' is a special reserved word, much like 'pk' in
+        # Django's ORM layer. It indicates 'no special field'.
+        if field == 'content':
+            result = value
         else:
-            query_chunks = []
+            filter_types = {
+                'exact': "%s:%s",
+                'gt': "%s:{%s TO *}",
+                'gte': "%s:[%s TO *]",
+                'lt': "%s:{* TO %s}",
+                'lte': "%s:[* TO %s]",
+                'startswith': "%s:%s*",
+            }
             
-            for the_filter in self.query_filters:
-                if the_filter.is_and():
-                    query_chunks.append('AND')
+            if filter_type != 'in':
+                result = filter_types[filter_type] % (field, value)
+            else:
+                in_options = []
                 
-                if the_filter.is_not():
-                    query_chunks.append('NOT')
+                for possible_value in value:
+                    in_options.append('%s:"%s"' % (field, self.backend.conn._from_python(possible_value)))
                 
-                if the_filter.is_or():
-                    query_chunks.append('OR')
-                
-                value = the_filter.value
-                
-                if not isinstance(value, (list, tuple)):
-                    # Convert whatever we find to what pysolr wants.
-                    value = self.backend.conn._from_python(value)
-                
-                # Check to see if it's a phrase for an exact match.
-                if ' ' in value:
-                    value = '"%s"' % value
-                
-                # 'content' is a special reserved word, much like 'pk' in
-                # Django's ORM layer. It indicates 'no special field'.
-                if the_filter.field == 'content':
-                    query_chunks.append(value)
-                else:
-                    filter_types = {
-                        'exact': "%s:%s",
-                        'gt': "%s:{%s TO *}",
-                        'gte': "%s:[%s TO *]",
-                        'lt': "%s:{* TO %s}",
-                        'lte': "%s:[* TO %s]",
-                        'startswith': "%s:%s*",
-                    }
-                    
-                    if the_filter.filter_type != 'in':
-                        query_chunks.append(filter_types[the_filter.filter_type] % (the_filter.field, value))
-                    else:
-                        in_options = []
-                        
-                        for possible_value in value:
-                            in_options.append('%s:"%s"' % (the_filter.field, self.backend.conn._from_python(possible_value)))
-                        
-                        query_chunks.append("(%s)" % " OR ".join(in_options))
-            
-            if query_chunks[0] in ('AND', 'OR'):
-                # Pull off an undesirable leading "AND" or "OR".
-                del(query_chunks[0])
-            
-            query = " ".join(query_chunks)
+                result = "(%s)" % " OR ".join(in_options)
         
-        if len(self.models):
-            models = ['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
-            models_clause = ' OR '.join(models)
-            final_query = '(%s) AND (%s)' % (query, models_clause)
-        else:
-            final_query = query
-        
-        if self.boost:
-            boost_list = []
-            
-            for boost_word, boost_value in self.boost.items():
-                boost_list.append("%s^%s" % (boost_word, boost_value))
-            
-            final_query = "%s %s" % (final_query, " ".join(boost_list))
-        
-        return final_query
+        return result
     
     def run(self, spelling_query=None):
         """Builds and executes the query. Returns a list of search results."""
