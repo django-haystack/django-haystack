@@ -66,3 +66,32 @@ not running a ``reindex`` to populate your index or having a blank
   back from the search engine or that it's trying to access the associated
   model via the ``{{ result.object.foo }}`` lookup.
 
+
+"LockError: [Errno 17] File exists: '/path/to/whoosh_index/_MAIN_LOCK'"
+=======================================================================
+
+This is a Whoosh-specific traceback. It occurs when the Whoosh engine in one
+process/thread is locks the index files for writing while another process/thread
+tries to access them. This is a common error with Whoosh under any kind of load,
+which is why it's only recommended for small sites or development.
+
+A way to solve this is to subclass ``SearchIndex`` with the following::
+
+    from haystack import indexes
+    
+    class WhooshSearchIndex(indexes.SearchIndex):
+        def _setup_save(self, model):
+            pass
+        
+        def _setup_delete(self, model):
+            pass
+
+Then make all of your ``SearchIndex`` classes inherit from
+``WhooshSearchIndex``. The final step is to set up a cron job that runs
+``./manage.py reindex`` (optionally with ``--age=24``) that runs nightly (or
+however often you need) to refresh the search indexes.
+
+The downside to this is that you lose real-time search. For many people, this
+isn't an issue and this will allow you to scale Whoosh up to a much higher
+traffic. If this is not acceptable, you should investigate either the Solr or
+Xapian backends.
