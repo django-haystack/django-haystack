@@ -47,20 +47,19 @@ not running a ``reindex`` to populate your index or having a blank
 
   >>> from haystack.query import SearchQuerySet
   >>> sqs = SearchQuerySet().all()
-  >>> sqs.count() # Should be > 0. If not, check the above and reindex.
-  
-  >>> sqs[0] # Should get back a ``SearchResult`` object.
-  
-  >>> sqs[0].id # Should get something back like ``myapp.mymodel.1``.
-  
-  >>> sqs[0].text # ... or whatever your ``document=True`` field is.
-  # Should not be blank.
-  # If this is blank, it means that your data isn't making it into the main
-  # field that gets searched. You need to check that the field either has
-  # a template that uses the model data, a ``model_attr`` that pulls data
-  # directly from the model or a ``prepare/prepare_FOO`` method that populates
-  # the data at index time.
+  >>> sqs.count()
 
+* You should get back an integer > 0. If not, check the above and reindex.
+
+  >>> sqs[0] # Should get back a SearchResult object.
+  >>> sqs[0].id # Should get something back like 'myapp.mymodel.1'.
+  >>> sqs[0].text # ... or whatever your document=True field is.
+
+* If you get back either ``u''`` or ``None``, it means that your data isn't
+  making it into the main field that gets searched. You need to check that the
+  field either has a template that uses the model data, a ``model_attr`` that
+  pulls data directly from the model or a ``prepare/prepare_FOO`` method that
+  populates the data at index time.
 * Check the template for your search page and ensure it is looping over the
   results properly. Also ensure that it's either accessing valid fields coming
   back from the search engine or that it's trying to access the associated
