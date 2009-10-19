@@ -1,5 +1,8 @@
-a { background-color: transparent !important; }
+a, a:link, a:hover { background-color: transparent !important; color: #CAECFF; outline-color: transparent !important; text-decoration: underline; }
 dl dt { text-decoration: underline; }
+dl.class dt, dl.method dt { background-color: #444444; padding: 5px; text-decoration: none; }
+tt.descname { font-weight: normal; }
+dl.method dt span.optional { font-weight: normal; }
 div#header { margin-bottom: 0px; }
 div.document, div.related, div.footer { width: 900px; margin: 0 auto; }
 div.document { margin-top: 10px; }

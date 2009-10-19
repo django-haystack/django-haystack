@@ -1,3 +1,5 @@
+.. _ref-who-uses:
+
 Sites Using Haystack
 ====================
 

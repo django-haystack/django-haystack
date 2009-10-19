@@ -1,3 +1,5 @@
+.. _ref-views-and_forms:
+
 =============
 Views & Forms
 =============
@@ -21,6 +23,8 @@ use forms and/or views anywhere within your own code.
 
 Forms
 =====
+
+.. currentmodule:: haystack.forms
 
 ``SearchForm``
 --------------
@@ -111,11 +115,19 @@ filtering. Finally, we simply return the ``SearchQuerySet``.
 Views
 =====
 
-Haystack comes bundled with two views, the ``SearchView`` and the
-``FacetedSearchView``. It uses class-based views for easy extension should you
-need to alter the way a view works. Except in the case of faceting (again, see
-:doc:`faceting`), the ``SearchView`` works interchangeably with all other forms
-provided by Haystack.
+.. currentmodule:: haystack.views
+
+Haystack comes bundled with three views, the class-based views (``SearchView`` &
+``FacetedSearchView``) and a traditional functional view (``basic_search``).
+
+The class-based views provide for easy extension should you need to alter the
+way a view works. Except in the case of faceting (again, see :doc:`faceting`),
+the ``SearchView`` works interchangeably with all other forms provided by
+Haystack.
+
+The functional view provides an example of how Haystack can be used in more
+traditional settings or as an example of how to write a more complex custom
+view. It is also thread-safe.
 
 ``SearchView(template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext)``
 ---------------------------------------------------------------------------------------------------------------------------
@@ -208,6 +220,19 @@ context.
 Generates the actual HttpResponse to send back to the user. It builds the page,
 creates the context and renders the response for all the aforementioned
 processing.
+
+
+``basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None)``
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+The ``basic_search`` tries to provide most of the same functionality as the
+class-based views but resembles a more traditional generic view. It's both a
+working view if you prefer not to use the class-based views as well as a good
+starting point for writing highly custom views.
+
+Since it is all one function, the only means of extension are passing in
+kwargs, similar to the way generic views work.
+
 
 Creating Your Own View
 ----------------------

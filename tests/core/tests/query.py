@@ -3,7 +3,7 @@ from django.conf import settings
 from django.test import TestCase
 import haystack
 from haystack import backends
-from haystack.backends import QueryFilter, BaseSearchQuery
+from haystack.backends import SQ, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
 from haystack.exceptions import HaystackError
@@ -14,12 +14,9 @@ from core.models import MockModel, AnotherMockModel
 from core.tests.mocks import MockSearchQuery, MockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
 
 
-class QueryFilterTestCase(TestCase):
-    def test_not_and_or(self):
-        self.assertRaises(AttributeError, QueryFilter, 'foo', 'bar', use_not=True, use_or=True)
-    
+class SQTestCase(TestCase):
     def test_split_expression(self):
-        qf = QueryFilter('foo', 'bar')
+        qf = SQ(foo='bar')
         
         self.assertEqual(qf.split_expression('foo'), ('foo', 'exact'))
         self.assertEqual(qf.split_expression('foo__exact'), ('foo', 'exact'))
@@ -30,27 +27,28 @@ class QueryFilterTestCase(TestCase):
         self.assertEqual(qf.split_expression('foo__in'), ('foo', 'in'))
         self.assertEqual(qf.split_expression('foo__startswith'), ('foo', 'startswith'))
         
+        # Unrecognized filter. Fall back to exact.
         self.assertEqual(qf.split_expression('foo__moof'), ('foo', 'exact'))
     
-    def test_is_and(self):
-        self.assertEqual(QueryFilter('foo', 'bar').is_and(), True)
-        self.assertEqual(QueryFilter('foo', 'bar', use_not=True).is_and(), False)
-        self.assertEqual(QueryFilter('foo', 'bar', use_or=True).is_and(), False)
-    
-    def test_is_not(self):
-        self.assertEqual(QueryFilter('foo', 'bar').is_not(), False)
-        self.assertEqual(QueryFilter('foo', 'bar', use_not=True).is_not(), True)
-        self.assertEqual(QueryFilter('foo', 'bar', use_or=True).is_not(), False)
-    
-    def test_is_or(self):
-        self.assertEqual(QueryFilter('foo', 'bar').is_or(), False)
-        self.assertEqual(QueryFilter('foo', 'bar', use_not=True).is_or(), False)
-        self.assertEqual(QueryFilter('foo', 'bar', use_or=True).is_or(), True)
-    
     def test_repr(self):
-        self.assertEqual(repr(QueryFilter('foo', 'bar')), '<QueryFilter: AND foo__exact=bar>')
-        self.assertEqual(repr(QueryFilter('foo', 1)), '<QueryFilter: AND foo__exact=1>')
-        self.assertEqual(repr(QueryFilter('foo', datetime.datetime(2009, 5, 12, 23, 17))), '<QueryFilter: AND foo__exact=2009-05-12 23:17:00>')
+        self.assertEqual(repr(SQ(foo='bar')), '<SQ: AND foo__exact=bar>')
+        self.assertEqual(repr(SQ(foo=1)), '<SQ: AND foo__exact=1>')
+        self.assertEqual(repr(SQ(foo=datetime.datetime(2009, 5, 12, 23, 17))), '<SQ: AND foo__exact=2009-05-12 23:17:00>')
+    
+    def test_simple_nesting(self):
+        sq1 = SQ(foo='bar')
+        sq2 = SQ(foo='bar')
+        bigger_sq = SQ(sq1 & sq2)
+        self.assertEqual(repr(bigger_sq), '<SQ: AND (foo__exact=bar AND foo__exact=bar)>')
+        
+        another_bigger_sq = SQ(sq1 | sq2)
+        self.assertEqual(repr(another_bigger_sq), '<SQ: AND (foo__exact=bar OR foo__exact=bar)>')
+        
+        one_more_bigger_sq = SQ(sq1 & ~sq2)
+        self.assertEqual(repr(one_more_bigger_sq), '<SQ: AND (foo__exact=bar AND NOT (foo__exact=bar))>')
+        
+        mega_sq = SQ(bigger_sq & SQ(another_bigger_sq | ~one_more_bigger_sq))
+        self.assertEqual(repr(mega_sq), '<SQ: AND ((foo__exact=bar AND foo__exact=bar) AND ((foo__exact=bar OR foo__exact=bar) OR NOT ((foo__exact=bar AND NOT (foo__exact=bar)))))>')
 
 
 class BaseSearchQueryTestCase(TestCase):
@@ -59,27 +57,30 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq = BaseSearchQuery(backend=DummySearchBackend())
     
     def test_get_count(self):
+        self.bsq.add_filter(SQ(foo='bar'))
         self.assertRaises(NotImplementedError, self.bsq.get_count)
     
     def test_build_query(self):
+        self.bsq.add_filter(SQ(foo='bar'))
         self.assertRaises(NotImplementedError, self.bsq.build_query)
     
     def test_add_filter(self):
-        self.assertEqual(len(self.bsq.query_filters), 0)
+        self.assertEqual(len(self.bsq.query_filter), 0)
         
-        self.bsq.add_filter('foo', 'bar')
-        self.assertEqual(len(self.bsq.query_filters), 1)
+        self.bsq.add_filter(SQ(foo='bar'))
+        self.assertEqual(len(self.bsq.query_filter), 1)
         
-        self.bsq.add_filter('foo__lt', '10')
-        self.assertEqual(len(self.bsq.query_filters), 2)
+        self.bsq.add_filter(SQ(foo__lt='10'))
         
-        self.bsq.add_filter('claris', 'moof', use_not=True)
-        self.assertEqual(len(self.bsq.query_filters), 3)
+        self.bsq.add_filter(~SQ(claris='moof'))
         
-        self.bsq.add_filter('claris', 'moof', use_or=True)
-        self.assertEqual(len(self.bsq.query_filters), 4)
+        self.bsq.add_filter(SQ(claris='moof'), use_or=True)
         
-        self.assertEqual([repr(the_filter) for the_filter in self.bsq.query_filters], ['<QueryFilter: AND foo__exact=bar>', '<QueryFilter: AND foo__lt=10>', '<QueryFilter: NOT claris__exact=moof>', '<QueryFilter: OR claris__exact=moof>'])
+        self.assertEqual(repr(self.bsq.query_filter), '<SQ: OR ((foo__exact=bar AND foo__lt=10 AND NOT (claris__exact=moof)) OR claris__exact=moof)>')
+        
+        self.bsq.add_filter(SQ(claris='moof'))
+
+        self.assertEqual(repr(self.bsq.query_filter), '<SQ: AND (((foo__exact=bar AND foo__lt=10 AND NOT (claris__exact=moof)) OR claris__exact=moof) AND claris__exact=moof)>')
     
     def test_add_order_by(self):
         self.assertEqual(len(self.bsq.order_by), 0)
@@ -184,12 +185,14 @@ class BaseSearchQueryTestCase(TestCase):
         
         # Restore.
         haystack.site = old_site
+
+
     
     def test_clone(self):
-        self.bsq.add_filter('foo', 'bar')
-        self.bsq.add_filter('foo__lt', '10')
-        self.bsq.add_filter('claris', 'moof', use_not=True)
-        self.bsq.add_filter('claris', 'moof', use_or=True)
+        self.bsq.add_filter(SQ(foo='bar'))
+        self.bsq.add_filter(SQ(foo__lt='10'))
+        self.bsq.add_filter(~SQ(claris='moof'))
+        self.bsq.add_filter(SQ(claris='moof'), use_or=True)
         self.bsq.add_order_by('foo')
         self.bsq.add_model(MockModel)
         self.bsq.add_boost('foo', 2)
@@ -201,7 +204,7 @@ class BaseSearchQueryTestCase(TestCase):
         
         clone = self.bsq._clone()
         self.assert_(isinstance(clone, BaseSearchQuery))
-        self.assertEqual(len(clone.query_filters), 4)
+        self.assertEqual(len(clone.query_filter), 2)
         self.assertEqual(len(clone.order_by), 1)
         self.assertEqual(len(clone.models), 1)
         self.assertEqual(len(clone.boost), 1)
@@ -238,7 +241,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(backends.queries[0]['query_string'], '')
         
         msq3 = MockSearchQuery(backend=MockSearchBackend())
-        msq3.add_filter('foo', 'bar')
+        msq3.add_filter(SQ(foo='bar'))
         len(msq3.get_results())
         self.assertEqual(len(backends.queries), 2)
         self.assertEqual(backends.queries[0]['query_string'], '')
@@ -247,6 +250,8 @@ class BaseSearchQueryTestCase(TestCase):
         # Restore.
         haystack.site = old_site
         settings.DEBUG = old_debug
+
+
 
 
 class SearchQuerySetTestCase(TestCase):
@@ -387,12 +392,12 @@ class SearchQuerySetTestCase(TestCase):
     def test_filter(self):
         sqs = self.bsqs.filter(content='foo')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs.query.query_filters), 1)
+        self.assertEqual(len(sqs.query.query_filter), 1)
     
     def test_exclude(self):
         sqs = self.bsqs.exclude(content='foo')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs.query.query_filters), 1)
+        self.assertEqual(len(sqs.query.query_filter), 1)
     
     def test_order_by(self):
         sqs = self.bsqs.order_by('foo')
@@ -437,7 +442,7 @@ class SearchQuerySetTestCase(TestCase):
     
     def test_raw_search(self):
         self.assertEqual(len(self.bsqs.raw_search('foo')), 0)
-        self.assertEqual(len(self.bsqs.raw_search('content__exact hello AND content__exact world')), 1)
+        self.assertEqual(len(self.bsqs.raw_search('(content__exact hello AND content__exact world)')), 1)
     
     def test_load_all(self):
         # If nothing is registered, you get nothing.
@@ -457,23 +462,23 @@ class SearchQuerySetTestCase(TestCase):
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: NOT content__exact=stuff>'])
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=test AND content__exact=search AND NOT (content__exact=stuff))>')
         
         sqs = self.bsqs.auto_query('test "my thing" search -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=my thing>', '<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: NOT content__exact=stuff>'])
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__exact=test AND content__exact=search AND NOT (content__exact=stuff))>')
         
         sqs = self.bsqs.auto_query('test "my thing" search \'moar quotes\' -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=my thing>', '<QueryFilter: AND content__exact=moar quotes>', '<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: NOT content__exact=stuff>'])
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__exact=moar quotes AND content__exact=test AND content__exact=search AND NOT (content__exact=stuff))>')
         
         sqs = self.bsqs.auto_query('test "my thing" search \'moar quotes\' "foo -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=my thing>', '<QueryFilter: AND content__exact=moar quotes>', '<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=search>', '<QueryFilter: AND content__exact="foo>', '<QueryFilter: NOT content__exact=stuff>'])
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__exact=moar quotes AND content__exact=test AND content__exact=search AND content__exact="foo AND NOT (content__exact=stuff))>')
         
         sqs = self.bsqs.auto_query('test - stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual([repr(the_filter) for the_filter in sqs.query.query_filters], ['<QueryFilter: AND content__exact=test>', '<QueryFilter: AND content__exact=->', '<QueryFilter: AND content__exact=stuff>'])
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=test AND content__exact=- AND content__exact=stuff)>')
     
     def test_count(self):
         self.assertEqual(self.bsqs.count(), 0)
@@ -539,12 +544,12 @@ class SearchQuerySetTestCase(TestCase):
     def test_chaining(self):
         sqs = self.bsqs.filter(content='foo')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs.query.query_filters), 1)
+        self.assertEqual(len(sqs.query.query_filter), 1)
         
         # A second instance should inherit none of the changes from above.
         sqs = self.bsqs.filter(content='bar')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs.query.query_filters), 1)
+        self.assertEqual(len(sqs.query.query_filter), 1)
     
     def test_none(self):
         sqs = self.bsqs.none()
@@ -570,3 +575,4 @@ class EmptySearchQuerySetTestCase(TestCase):
         sqs = self.esqs.exclude(content='foo')
         self.assert_(isinstance(sqs, EmptySearchQuerySet))
         self.assertEqual(len(sqs), 0)
+

@@ -1,3 +1,5 @@
+.. _ref-architecture-overview:
+
 =====================
 Architecture Overview
 =====================

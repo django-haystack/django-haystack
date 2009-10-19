@@ -1,6 +1,7 @@
 import re
 from django.conf import settings
 from haystack import backend
+from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotRegistered
 
@@ -212,38 +213,29 @@ class SearchQuerySet(object):
         """Returns all results for the query."""
         return self._clone(klass=EmptySearchQuerySet)
     
-    def filter(self, **kwargs):
+    def filter(self, *args, **kwargs):
         """Narrows the search based on certain attributes and the default operator."""
         if getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR) == 'OR':
-            return self.filter_or(**kwargs)
+            return self.filter_or(*args, **kwargs)
         else:
-            return self.filter_and(**kwargs)
+            return self.filter_and(*args, **kwargs)
     
-    def exclude(self, **kwargs):
+    def exclude(self, *args, **kwargs):
         """Narrows the search by ensuring certain attributes are not included."""
         clone = self._clone()
-        
-        for expression, value in kwargs.items():
-            clone.query.add_filter(expression, value, use_not=True)
-        
+        clone.query.add_filter(~SQ(*args, **kwargs))
         return clone
     
-    def filter_and(self, **kwargs):
+    def filter_and(self, *args, **kwargs):
         """Narrows the search by looking for (and including) certain attributes."""
         clone = self._clone()
-        
-        for expression, value in kwargs.items():
-            clone.query.add_filter(expression, value)
-        
+        clone.query.add_filter(SQ(*args, **kwargs))
         return clone
     
-    def filter_or(self, **kwargs):
+    def filter_or(self, *args, **kwargs):
         """Narrows the search by ensuring certain attributes are not included."""
         clone = self._clone()
-        
-        for expression, value in kwargs.items():
-            clone.query.add_filter(expression, value, use_or=True)
-        
+        clone.query.add_filter(SQ(*args, **kwargs), use_or=True)
         return clone
     
     def order_by(self, *args):

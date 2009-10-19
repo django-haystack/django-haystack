@@ -1,11 +1,12 @@
 """
 A fake backend for dummying during tests.
 """
-import datetime
-from django.db import models
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import FILTER_SEPARATOR
 from haystack.models import SearchResult
+
+
+BACKEND_NAME = 'dummy'
 
 
 class DummySearchResult(SearchResult):
@@ -42,7 +43,7 @@ class SearchBackend(BaseSearchBackend):
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
                limit_to_registered_models=True, **kwargs):
-        if query_string == 'content__exact hello AND content__exact world':
+        if query_string == '(content__exact hello AND content__exact world)':
             return {
                 'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],
                 'hits': 1,
@@ -68,30 +69,15 @@ class SearchQuery(BaseSearchQuery):
         super(SearchQuery, self).__init__(backend=backend)
         self.backend = backend or SearchBackend()
     
-    def build_query(self):
-        filters = []
+    def build_query_fragment(self, field, filter_type, value):
+        result = ''
+        value = str(value)
         
-        for the_filter in self.query_filters:
-            filter_list = []
-            
-            if the_filter.is_and():
-                filter_list.append("AND")
-            elif the_filter.is_not():
-                filter_list.append("NOT")
-            elif the_filter.is_or():
-                filter_list.append("OR")
-            
-            filter_list.append(FILTER_SEPARATOR.join((the_filter.field, the_filter.filter_type)))
-            filter_list.append(the_filter.value)
-            
-            if not len(filters):
-                del(filter_list[0])
-                
-            filters.append(" ".join(filter_list))
+        # Check to see if it's a phrase for an exact match.
+        if ' ' in value:
+            value = '"%s"' % value
         
-        query = " ".join(filters)
-        
-        if self.order_by:
-            query = "%s ORDER BY %s" % (query, ", ".join(self.order_by))
-        
-        return query
+        # 'content' is a special reserved word, much like 'pk' in
+        # Django's ORM layer. It indicates 'no special field'.
+        result = ' '.join([FILTER_SEPARATOR.join((field, filter_type)), value])
+        return result

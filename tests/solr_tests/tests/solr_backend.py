@@ -6,7 +6,7 @@ from haystack import backends
 from haystack import indexes
 from haystack.backends.solr_backend import SearchBackend, SearchQuery
 from haystack.exceptions import HaystackError
-from haystack.query import SearchQuerySet, RelatedSearchQuerySet
+from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel
 try:
@@ -186,7 +186,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
         super(LiveSolrSearchQueryTestCase, self).tearDown()
     
     def test_get_spelling(self):
-        self.sq.add_filter('content', 'Indx')
+        self.sq.add_filter(SQ(content='Indx'))
         self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
         self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'index')
     
@@ -206,19 +206,19 @@ class LiveSolrSearchQueryTestCase(TestCase):
         settings.DEBUG = True
         # Redefine it to clear out the cached results.
         self.sq = SearchQuery(backend=SearchBackend())
-        self.sq.add_filter('name', 'bar')
+        self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
         self.assertEqual(len(backends.queries), 1)
         self.assertEqual(backends.queries[0]['query_string'], 'name:bar')
         
         # And again, for good measure.
         self.sq = SearchQuery(backend=SearchBackend())
-        self.sq.add_filter('name', 'bar')
-        self.sq.add_filter('text', 'moof')
+        self.sq.add_filter(SQ(name='bar'))
+        self.sq.add_filter(SQ(text='moof'))
         len(self.sq.get_results())
         self.assertEqual(len(backends.queries), 2)
         self.assertEqual(backends.queries[0]['query_string'], 'name:bar')
-        self.assertEqual(backends.queries[1]['query_string'], u'name:bar AND text:moof')
+        self.assertEqual(backends.queries[1]['query_string'], u'(name:bar AND text:moof)')
         
         # Restore.
         settings.DEBUG = old_debug
@@ -321,17 +321,17 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
 class SolrMockModelSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(model_attr='foo', document=True)
-    name = indexes.CharField(model_attr='user')
+    name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
 class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True)
-    name = indexes.CharField(model_attr='user')
+    name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
     
     def prepare_text(self, obj):
-        return u"You might be searching for the user %s" % obj.user
+        return u"You might be searching for the user %s" % obj.author
 
 
 class LiveSolrRegressionsTestCase(TestCase):

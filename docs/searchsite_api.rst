@@ -1,6 +1,10 @@
+.. _ref-searchsite-api:
+
 ==================
 ``SearchSite`` API
 ==================
+
+.. class:: SearchSite
 
 The ``SearchSite`` provides a way to collect the ``SearchIndexes`` that are
 relevant to the current site, much like ``ModelAdmins`` in the ``admin`` app.
@@ -66,8 +70,10 @@ Alternatively, you can manually register only the indexes you want.::
 Method Reference
 ================
 
-``register(self, model, index_class=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``register``
+~~~~~~~~~~~~
+
+.. method:: SearchSite.register(self, model, index_class=None)
 
 Registers a model with the site.
 
@@ -76,28 +82,38 @@ The model should be a Model class, not instances.
 If no custom index is provided, a generic SearchIndex will be applied
 to the model.
 
-``unregister(self, model)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``unregister``
+~~~~~~~~~~~~~~
+
+.. method:: SearchSite.unregister(self, model)
 
 Unregisters a model's corresponding index from the site.
 
-``get_index(self, model)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``get_index``
+~~~~~~~~~~~~~
+
+.. method:: SearchSite.get_index(self, model)
 
 Provides the index that's registered for a particular model.
 
-``get_indexes(self)``
-~~~~~~~~~~~~~~~~~~~~~
+``get_indexes``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchSite.get_indexes(self)
 
 Provides a dictionary of all indexes that're being used.
 
-``get_indexed_models(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``get_indexed_models``
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchSite.get_indexed_models(self)
 
 Provides a list of all models being indexed.
 
-``all_searchfields(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``all_searchfields``
+~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchSite.all_searchfields(self)
 
 Builds a dictionary of all fields appearing in any of the `SearchIndex`
 instances registered with a site.
@@ -106,16 +122,20 @@ This is useful when building a schema for an engine. A dictionary is
 returned, with each key being a fieldname and the value being the
 `SearchField` class assigned to it.
 
-``update_object(self, instance)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``update_object``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchSite.update_object(self, instance)
 
 Updates the instance's data in the index.
 
 A shortcut for updating on the instance's index. Errors from `get_index`
 and `update_object` will be allowed to propogate.
 
-``remove_object(self, instance)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``remove_object``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchSite.remove_object(self, instance)
 
 Removes the instance's data in the index.
 

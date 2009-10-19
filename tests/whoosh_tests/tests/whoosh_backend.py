@@ -9,7 +9,7 @@ from django.test import TestCase
 from haystack import backends
 from haystack import indexes
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, SQ
 from haystack import sites
 from core.models import MockModel, AnotherMockModel
 try:
@@ -339,7 +339,7 @@ class LiveWhooshSearchQueryTestCase(TestCase):
     def test_get_spelling(self):
         self.sb.update(self.smmi, self.sample_objs)
         
-        self.sq.add_filter('content', 'Indx')
+        self.sq.add_filter(SQ(content='Indx'))
         self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
     
     def test_log_query(self):
@@ -358,19 +358,19 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         settings.DEBUG = True
         # Redefine it to clear out the cached results.
         self.sq = SearchQuery(backend=self.sb)
-        self.sq.add_filter('name', 'bar')
+        self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
         self.assertEqual(len(backends.queries), 1)
         self.assertEqual(backends.queries[0]['query_string'], 'name:bar')
         
         # And again, for good measure.
         self.sq = SearchQuery(backend=self.sb)
-        self.sq.add_filter('name', 'baz')
-        self.sq.add_filter('text', 'foo')
+        self.sq.add_filter(SQ(name='baz'))
+        self.sq.add_filter(SQ(text='foo'))
         len(self.sq.get_results())
         self.assertEqual(len(backends.queries), 2)
         self.assertEqual(backends.queries[0]['query_string'], 'name:bar')
-        self.assertEqual(backends.queries[1]['query_string'], u'name:baz AND text:foo')
+        self.assertEqual(backends.queries[1]['query_string'], u'(name:baz AND text:foo)')
         
         # Restore.
         settings.DEBUG = old_debug
@@ -438,15 +438,15 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 3)
         
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 8, 31))
-        self.assertEqual(sqs.query.build_query(), u'Indexed\\! AND pub_date:[TO 2009\-08\-31T00\:00\:00]')
+        self.assertEqual(sqs.query.build_query(), u'(Indexed\\! AND pub_date:[TO 2009\-08\-31T00\:00\:00])')
         self.assertEqual(len(sqs), 3)
         
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 23))
-        self.assertEqual(sqs.query.build_query(), u'Indexed\\! AND pub_date:[TO 2009\\-02\\-23T00\\:00\\:00]')
+        self.assertEqual(sqs.query.build_query(), u'(Indexed\\! AND pub_date:[TO 2009\\-02\\-23T00\\:00\\:00])')
         self.assertEqual(len(sqs), 2)
         
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 25)).filter(django_id__in=[1, 2]).exclude(name='daniel1')
-        self.assertEqual(sqs.query.build_query(), u'Indexed\\! AND pub_date:[TO 2009\\-02\\-25T00\\:00\\:00] AND (django_id:"1" OR django_id:"2") NOT name:daniel1')
+        self.assertEqual(sqs.query.build_query(), u'(Indexed\\! AND pub_date:[TO 2009\\-02\\-25T00\\:00\\:00] AND (django_id:"1" OR django_id:"2") AND NOT (name:daniel1))')
         self.assertEqual(len(sqs), 1)
         
         sqs = self.sqs.auto_query('re-inker')
@@ -454,11 +454,11 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 0)
         
         sqs = self.sqs.auto_query('0.7 wire')
-        self.assertEqual(sqs.query.build_query(), u'0\\.7 AND wire')
+        self.assertEqual(sqs.query.build_query(), u'(0\\.7 AND wire)')
         self.assertEqual(len(sqs), 0)
         
         sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
-        self.assertEqual(sqs.query.build_query(), u'"bell bronze" AND daler\\-rowney AND pearlescent')
+        self.assertEqual(sqs.query.build_query(), u'("bell bronze" AND daler\\-rowney AND pearlescent)')
         self.assertEqual(len(sqs), 0)
     
     def test_all_regression(self):
@@ -473,7 +473,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual([result.pk for result in sqs], [u'3', u'2', u'1'])
         
         try:
-            print SearchQuerySet()
+            sqs = repr(SearchQuerySet())
         except:
             self.fail()
     

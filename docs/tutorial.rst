@@ -1,3 +1,5 @@
+.. _ref-tutorial:
+
 =================
 Haystack Tutorial
 =================
@@ -178,8 +180,7 @@ allows you to customize the contents of the field in a way that will mean more
 to the search engine. A sample template for the ``text`` field might look like::
 
     {{ object.title }}
-    Written by {{ object.user.full_name }}
-    
+    {{ object.user.get_full_name }}
     {{ object.body }}
 
 In addition, you may specify other fields to be populated along with the

@@ -1,0 +1,7 @@
+{{ object.full_name }}
+{{ object.breed }}
+{{ object.bio }}
+
+{% for toy in object.toys.all %}
+    {{ toy.name }}
+{% endfor %}

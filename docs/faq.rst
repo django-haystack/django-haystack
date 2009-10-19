@@ -1,3 +1,5 @@
+.. _ref-frequently-asked-questions:
+
 ==============================
 (In)Frequently Asked Questions
 ==============================

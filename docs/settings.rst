@@ -1,3 +1,5 @@
+.. _ref-settings:
+
 =================
 Haystack Settings
 =================

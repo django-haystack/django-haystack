@@ -1,3 +1,5 @@
+.. _ref-installing-search-engines:
+
 =========================
 Installing Search Engines
 =========================

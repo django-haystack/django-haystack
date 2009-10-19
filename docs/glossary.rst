@@ -1,3 +1,5 @@
+.. _ref-glossary:
+
 ========
 Glossary
 ========

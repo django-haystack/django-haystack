@@ -1,8 +1,7 @@
 In Progress
 ===========
 
-* Docs on contributing.
-* Lucene backend.
+* GitHub issues.
 * Formal packaging.
 * Thread-safety (ongoing).
 
@@ -10,14 +9,13 @@ In Progress
 Future
 ======
 
+* Lucene backend.
 * Make schema generation more flexible.
 * Distributed read/write setup?
 * A QueueSearchIndex (add to queue for updating instead of immediately firing update)?
-* ModelIndexes to streamline index setup.
-* Spelling support?
-* A pure Python dummy backend for testing purposes? (Whoosh)
 * SearchManager to be attached to Models?
-* A means to register multiple ModelIndexes with a Model?
+* Move to a ``post_commit`` signal should Django ever add one, to ensure documents
+  are added ONLY after everything saves successfully.
 
 
 Complete
@@ -47,7 +45,7 @@ Complete
 * Tests for backends
 * Good Test Coverage
 * Good Docs
-* Several complete backends   
+* Several complete backends
 * A management command to update (last 24 hours).
 * setup.py
 * Why Haystack/History documentation.
@@ -58,4 +56,8 @@ Complete
 * Docs on backends.
 * Docs on faceting.
 * Docs on forms/views.
-
+* Docs on contributing.
+* ModelIndexes to streamline index setup.
+* Spelling support?
+* A pure Python dummy backend for testing purposes? (Whoosh)
+* A means to register multiple ModelIndexes with a Model?

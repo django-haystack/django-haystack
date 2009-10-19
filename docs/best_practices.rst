@@ -1,3 +1,5 @@
+.. _ref-best-practices:
+
 ==============
 Best Practices
 ==============

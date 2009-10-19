@@ -1,6 +1,10 @@
+.. _ref-searchquery-api:
+
 ===================
 ``SearchQuery`` API
 ===================
+
+.. class:: SearchQuery(backend=None)
 
 The ``SearchQuery`` class acts as an intermediary between ``SearchQuerySet``'s
 abstraction and ``SearchBackend``'s actual search. Given the metadata provided
@@ -21,14 +25,19 @@ Should you need advanced/custom behavior, you can supply your version of
 in your class.
 
 
-Query Filters
-=============
+``SQ`` Objects
+==============
 
-The ``SearchQuery`` object maintains a list of ``QueryFilter`` objects. Each filter
-object supports what field it looks up against, what kind of lookup (i.e. 
-the __'s), what value it's looking for and if it's a AND/OR/NOT. The
-``SearchQuery`` object's "build_query" method should then iterate over that list and 
-convert that to a valid query for the search backend.
+The ``SearchQuery`` object maintains a tree of ``SQ`` objects. Each ``SQ``
+object supports what field it looks up against, what kind of lookup (i.e.
+the __'s), what value it's looking for, if it's a AND/OR/NOT and tracks
+any children it may have. The ``SearchQuery.build_query`` method starts with
+the root of the tree, building part of the final query at each node until
+the full final query is ready for the ``SearchBackend``.
+
+Much like ``django.db.models.Q`` objects, ``SQ`` objects can be passed to
+``SearchQuerySet.filter`` and use the familiar unary operators (``&``, ``|`` and
+``~``) to generate complex parts of the query.
 
 
 Backend-Specific Methods
@@ -36,27 +45,14 @@ Backend-Specific Methods
 
 When implementing a new backend, the following methods will need to be created:
 
-``run(self, spelling_query=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``build_query_fragment``
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Builds and executes the query. Returns a list of search results.
+.. method:: SearchQuery.build_query_fragment(self, field, filter_type, value)
 
-Optionally passes along an alternate query for spelling suggestions.
+Generates a query fragment from a field, filter type and a value.
 
-``build_query(self)``
-~~~~~~~~~~~~~~~~~~~~~
-
-Interprets the collected query metadata and builds the final query to
-be sent to the backend.
-
-This method MUST be implemented by each backend, as it will be highly
-specific to each one.
-
-``run_mlt(self)``
-~~~~~~~~~~~~~~~~~
-
-Executes the More Like This. Returns a list of search results similar
-to the provided document (and optionally query).
+Must be implemented in backends as this will be highly backend specific.
 
 
 Inheritable Methods
@@ -65,112 +61,187 @@ Inheritable Methods
 The following methods have a complete implementation in the base class and
 can largely be used unchanged.
 
-``clean(self, query_fragment)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``build_query``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.build_query(self)
+
+Interprets the collected query metadata and builds the final query to
+be sent to the backend.
+
+``clean``
+~~~~~~~~~
+
+.. method:: SearchQuery.clean(self, query_fragment)
 
 Provides a mechanism for sanitizing user input before presenting the
 value to the backend.
 
 A basic (override-able) implementation is provided.
 
-``get_count(self)``
-~~~~~~~~~~~~~~~~~~~
+``run``
+~~~~~~~
+
+.. method:: SearchQuery.run(self, spelling_query=None)
+
+Builds and executes the query. Returns a list of search results.
+
+Optionally passes along an alternate query for spelling suggestions.
+
+``run_mlt``
+~~~~~~~~~~~
+
+.. method:: SearchQuery.run_mlt(self)
+
+Executes the More Like This. Returns a list of search results similar
+to the provided document (and optionally query).
+
+``get_count``
+~~~~~~~~~~~~~
+
+.. method:: SearchQuery.get_count(self)
 
 Returns the number of results the backend found for the query.
 
 If the query has not been run, this will execute the query and store
 the results.
 
-``get_results(self)``
-~~~~~~~~~~~~~~~~~~~~~
+``get_results``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.get_results(self)
 
 Returns the results received from the backend.
 
 If the query has not been run, this will execute the query and store
 the results.
 
-``get_facet_counts(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``get_facet_counts``
+~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.get_facet_counts(self)
 
 Returns the results received from the backend.
 
 If the query has not been run, this will execute the query and store
 the results.
 
-``add_filter(self, expression, value, use_not=False, use_or=False)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``boost_fragment``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.boost_fragment(self, boost_word, boost_value)
+
+Generates query fragment for boosting a single word/value pair.
+
+``matching_all_fragment``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.matching_all_fragment(self)
+
+Generates the query that matches all documents.
+
+``add_filter``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_filter(self, expression, value, use_not=False, use_or=False)
 
 Narrows the search by requiring certain conditions.
 
-``add_order_by(self, field)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_order_by``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_order_by(self, field)
 
 Orders the search result by a field.
 
-``clear_order_by(self)``
-~~~~~~~~~~~~~~~~~~~~~~~~
+``clear_order_by``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.clear_order_by(self)
 
 Clears out all ordering that has been already added, reverting the
 query to relevancy.
 
-``add_model(self, model)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_model``
+~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_model(self, model)
 
 Restricts the query requiring matches in the given model.
 
 This builds upon previous additions, so you can limit to multiple models
 by chaining this method several times.
 
-``set_limits(self, low=None, high=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``set_limits``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.set_limits(self, low=None, high=None)
 
 Restricts the query by altering either the start, end or both offsets.
 
-``clear_limits(self)``
-~~~~~~~~~~~~~~~~~~~~~~
+``clear_limits``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.clear_limits(self)
 
 Clears any existing limits.
 
-``add_boost(self, term, boost_value)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_boost``
+~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_boost(self, term, boost_value)
 
 Adds a boosted term and the amount to boost it to the query.
 
-``raw_search(self, query_string, **kwargs)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``raw_search``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.raw_search(self, query_string, **kwargs)
 
 Runs a raw query (no parsing) against the backend.
 
 This method does not affect the internal state of the ``SearchQuery`` used
 to build queries. It does however populate the results/hit_count.
 
-``more_like_this(self, model_instance)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``more_like_this``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.more_like_this(self, model_instance)
 
 Allows backends with support for "More Like This" to return results
 similar to the provided instance.
 
-``add_highlight(self)``
-~~~~~~~~~~~~~~~~~~~~~~~
+``add_highlight``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_highlight(self)
 
 Adds highlighting to the search results.
 
-``add_field_facet(self, field)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_field_facet``
+~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_field_facet(self, field)
 
 Adds a regular facet on a field.
 
-``add_date_facet(self, field, start_date, end_date, gap_by, gap_amount)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_date_facet``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_date_facet(self, field, start_date, end_date, gap_by, gap_amount)
 
 Adds a date-based facet on a field.
 
-``add_query_facet(self, field, query)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_query_facet``
+~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_query_facet(self, field, query)
 
 Adds a query facet on a field.
 
-``add_narrow_query(self, query)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``add_narrow_query``
+~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_narrow_query(self, query)
 
 Adds a existing facet on a field.

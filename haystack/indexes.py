@@ -1,4 +1,4 @@
-from django.db.models import signals
+from django.db.models import signals, FieldDoesNotExist
 import haystack
 from haystack.fields import *
 
@@ -58,6 +58,13 @@ class SearchIndex(object):
         for field_name, field in self.fields.items():
             if field.document is True:
                 content_fields.append(field_name)
+            
+            if field.model_attr:
+                try:
+                    model._meta.get_field(field.model_attr)
+                except FieldDoesNotExist:
+                    if not hasattr(model, field.model_attr):
+                        raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (model.__name__, field.model_attr))
         
         if not len(content_fields) == 1:
             raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
@@ -95,7 +102,7 @@ class SearchIndex(object):
             if hasattr(self, "prepare_%s" % field_name):
                 value = getattr(self, "prepare_%s" % field_name)(obj)
                 self.prepared_data[field_name] = value
-        
+    
         # Remove any fields that lack a value and are `null=True`.
         for field_name, field in self.fields.items():
             if field.null is True:
@@ -109,11 +116,11 @@ class SearchIndex(object):
         for field_name, field in self.fields.items():
             if field.document is True:
                 return field_name
-
+    
     def update(self):
         """Update the entire index"""
         self.backend.update(self, self.get_queryset())
-
+    
     def update_object(self, instance, **kwargs):
         """
         Update the index for a single object. Attached to the class's
@@ -122,18 +129,18 @@ class SearchIndex(object):
         # Check to make sure we want to index this first.
         if self.should_update(instance):
             self.backend.update(self, [instance])
-
+    
     def remove_object(self, instance, **kwargs):
         """
         Remove an object from the index. Attached to the class's 
         post-delete hook.
         """
         self.backend.remove(instance)
-
+    
     def clear(self):
         """Clear the entire index."""
         self.backend.clear(models=[self.model])
-
+    
     def reindex(self):
         """Completely clear the index for this model and rebuild it."""
         self.clear()

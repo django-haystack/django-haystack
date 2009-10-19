@@ -1,6 +1,10 @@
+.. _ref-searchindex-api:
+
 ===================
 ``SearchIndex`` API
 ===================
+
+.. class:: SearchIndex(model, backend=None)
 
 The ``SearchIndex`` class allows the application developer a way to provide data to
 the backend in a structured format. Developers familiar with Django's ``Form``
@@ -263,52 +267,70 @@ non-existent), merely an example of how to extend existing fields.
 Method Reference
 ================
 
-``get_queryset(self)``
------------------------
+``get_queryset``
+----------------
+
+.. method:: SearchIndex.get_queryset(self)
 
 Get the default QuerySet to index when doing a full update.
 
 Subclasses can override this method to avoid indexing certain objects.
 
-``prepare(self, obj)``
-----------------------
+``prepare``
+-----------
+
+.. method:: SearchIndex.prepare(self, obj)
 
 Fetches and adds/alters data before indexing.
 
-``get_content_field(self)``
----------------------------
+``get_content_field``
+---------------------
+
+.. method:: SearchIndex.get_content_field(self)
 
 Returns the field that supplies the primary document to be indexed.
 
-``update(self)``
-----------------
+``update``
+----------
+
+.. method:: SearchIndex.update(self)
 
 Update the entire index.
 
-``update_object(self, instance, **kwargs)``
--------------------------------------------
+``update_object``
+-----------------
+
+.. method:: SearchIndex.update_object(self, instance, **kwargs)
 
 Update the index for a single object. Attached to the class's
 post-save hook.
 
-``remove_object(self, instance, **kwargs)``
--------------------------------------------
+``remove_object``
+-----------------
+
+.. method:: SearchIndex.remove_object(self, instance, **kwargs)
 
 Remove an object from the index. Attached to the class's 
 post-delete hook.
 
-``clear(self)``
----------------
+``clear``
+---------
+
+.. method:: SearchIndex.clear(self)
 
 Clear the entire index.
 
-``reindex(self)``
------------------
+``reindex``
+-----------
+
+.. method:: SearchIndex.reindex(self)
 
 Completely clear the index for this model and rebuild it.
 
-``get_updated_field(self)``
----------------------------
+``get_updated_field``
+---------------------
+
+.. method:: SearchIndex.get_updated_field(self)
 
 Get the field name that represents the updated date for the model.
 
@@ -317,8 +339,10 @@ from the ``QuerySet``, enabling you to reindex only recent records. This
 method should either return None (reindex everything always) or a
 string of the ``Model``'s ``DateField``/``DateTimeField`` name.
 
-``should_update(self, instance)``
----------------------------------
+``should_update``
+-----------------
+
+.. method:: SearchIndex.should_update(self, instance)
 
 Determine if an object should be updated in the index.
 
@@ -328,8 +352,10 @@ and return False if it is not to be indexed.
 
 By default, returns True (always reindex).
 
-``load_all_queryset(self)``
----------------------------
+``load_all_queryset``
+---------------------
+
+.. method:: SearchIndex.load_all_queryset(self)
 
 Provides the ability to override how objects get loaded in conjunction
 with ``RelatedSearchQuerySet.load_all``. This is useful for post-processing the

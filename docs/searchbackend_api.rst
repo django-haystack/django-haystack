@@ -1,6 +1,10 @@
+.. _ref-searchbackend-api:
+
 =====================
 ``SearchBackend`` API
 =====================
+
+.. class:: SearchBackend(site=None)
 
 The ``SearchBackend`` class handles interaction directly with the backend. The
 search query it performs is usually fed to it from a ``SearchQuery`` class that
@@ -16,16 +20,20 @@ access this class.
 Method Reference
 ================
 
-``get_identifier(self, obj_or_string)``
----------------------------------------
+``get_identifier``
+------------------
+
+.. method:: SearchBackend.get_identifier(self, obj_or_string)
 
 Get an unique identifier for the object or a string representing the
 object.
 
 If not overridden, uses <app_label>.<object_name>.<pk>.
 
-``update(self, index, iterable)``
----------------------------------
+``update``
+----------
+
+.. method:: SearchBackend.update(self, index, iterable)
 
 Updates the backend when given a ``SearchIndex`` and a collection of
 documents.
@@ -33,8 +41,10 @@ documents.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``remove(self, obj_or_string)``
--------------------------------
+``remove``
+----------
+
+.. method:: SearchBackend.remove(self, obj_or_string)
 
 Removes a document/object from the backend. Can be either a model
 instance or the identifier (i.e. ``app_name.model_name.id``) in the
@@ -43,16 +53,20 @@ event the object no longer exists.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``clear(self, models=[])``
---------------------------
+``clear``
+---------
+
+.. method:: SearchBackend.clear(self, models=[])
 
 Clears the backend of all documents/objects for a collection of models.
 
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields='', highlight=False, facets=None, date_facets=None, query_facets=None, narrow_queries=None, spelling_query=None, limit_to_registered_models=True, **kwargs)``
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``search``
+----------
+
+.. method:: SearchBackend.search(self, query_string, sort_by=None, start_offset=0, end_offset=None, fields='', highlight=False, facets=None, date_facets=None, query_facets=None, narrow_queries=None, spelling_query=None, limit_to_registered_models=True, **kwargs)
 
 Takes a query to search on and returns dictionary.
 
@@ -66,32 +80,40 @@ results the search backend found.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``prep_value(self, value)``
----------------------------
+``prep_value``
+--------------
+
+.. method:: SearchBackend.prep_value(self, value)
 
 Hook to give the backend a chance to prep an attribute value before
 sending it to the search engine.
 
 By default, just force it to unicode.
 
-``more_like_this(self, model_instance)``
-----------------------------------------
+``more_like_this``
+------------------
+
+.. method:: SearchBackend.more_like_this(self, model_instance)
 
 Takes a model object and returns results the backend thinks are similar.
 
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``build_schema(self, fields)``
-------------------------------
+``build_schema``
+----------------
+
+.. method:: SearchBackend.build_schema(self, fields)
 
 Takes a dictionary of fields and returns schema information.
 
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``build_registered_models_list(self)``
---------------------------------------
+``build_registered_models_list``
+--------------------------------
+
+.. method:: SearchBackend.build_registered_models_list(self)
 
 Builds a list of registered models for searching.
 
