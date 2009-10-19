@@ -17,7 +17,7 @@
     "pk": 1,
     "model": "core.mockmodel",
     "fields": {
-      "user": "daniel1",
+      "author": "daniel1",
       "foo": "bar",
       "pub_date": "2009-03-17 06:00:00",
       "tag": 1
@@ -27,7 +27,7 @@
     "pk": 2,
     "model": "core.mockmodel",
     "fields": {
-      "user": "daniel2",
+      "author": "daniel2",
       "foo": "bar",
       "pub_date": "2009-03-17 07:00:00",
       "tag": 1
@@ -37,7 +37,7 @@
     "pk": 3,
     "model": "core.mockmodel",
     "fields": {
-      "user": "daniel3",
+      "author": "daniel3",
       "foo": "bar",
       "pub_date": "2009-03-17 08:00:00",
       "tag": 2

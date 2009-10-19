@@ -321,17 +321,17 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
 class SolrMockModelSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(model_attr='foo', document=True)
-    name = indexes.CharField(model_attr='user')
+    name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
 class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True)
-    name = indexes.CharField(model_attr='user')
+    name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
     
     def prepare_text(self, obj):
-        return u"You might be searching for the user %s" % obj.user
+        return u"You might be searching for the user %s" % obj.author
 
 
 class LiveSolrRegressionsTestCase(TestCase):

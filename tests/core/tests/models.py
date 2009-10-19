@@ -76,7 +76,7 @@ class SearchResultTestCase(TestCase):
         from haystack import indexes
         
         class TestSearchIndex(indexes.SearchIndex):
-            stored = indexes.CharField(model_attr='stored', document=True)
+            stored = indexes.CharField(model_attr='author', document=True)
         
         # Register the index & try again.
         haystack.site.register(MockModel, TestSearchIndex)
