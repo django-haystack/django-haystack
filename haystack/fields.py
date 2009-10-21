@@ -38,7 +38,7 @@ class SearchField(object):
             
             for attr in attrs:
                 if not hasattr(current_object, attr) and not self.null:
-                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (str(current_object), attr))
+                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(current_object), attr))
                 
                 current_object = getattr(current_object, attr)
             
