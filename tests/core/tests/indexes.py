@@ -102,9 +102,6 @@ class SearchIndexTestCase(TestCase):
     
     def test_too_many_contentfields_present(self):
         self.assertRaises(indexes.SearchFieldError, BadSearchIndex2, MockModel, MockSearchBackend())
-
-    def test_invalid_model_attr_present(self):
-        self.assertRaises(indexes.SearchFieldError, BadSearchIndex3, MockModel, MockSearchBackend())
     
     def test_contentfield_present(self):
         try:

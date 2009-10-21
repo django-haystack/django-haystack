@@ -33,7 +33,7 @@ class CharFieldTestCase(TestCase):
         mock.tag = mock_tag
         tag_slug = CharField(model_attr='tag__slug')
         
-        self.assertEqual(tag_slug.prepare(mock), u'')
+        self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
 
 class IntegerFieldTestCase(TestCase):
     def test_init(self):
@@ -55,7 +55,7 @@ class IntegerFieldTestCase(TestCase):
         mock.tag = mock_tag
         tag_count = IntegerField(model_attr='tag__count')
         
-        self.assertEqual(tag_count.prepare(mock), 0)
+        self.assertRaises(SearchFieldError, tag_count.prepare, mock)
         
         # Simulate null=True.
         mock = MockModel()
