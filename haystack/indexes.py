@@ -120,7 +120,7 @@ class SearchIndex(object):
         post-save hook.
         """
         # Check to make sure we want to index this first.
-        if self.should_update(instance):
+        if self.should_update(instance, **kwargs):
             self.backend.update(self, [instance])
     
     def remove_object(self, instance, **kwargs):
@@ -150,7 +150,7 @@ class SearchIndex(object):
         """
         return None
     
-    def should_update(self, instance):
+    def should_update(self, instance, **kwargs):
         """
         Determine if an object should be updated in the index.
         
