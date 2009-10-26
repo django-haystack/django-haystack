@@ -17,13 +17,6 @@ class BadSearchIndex2(indexes.SearchIndex):
     pub_date = indexes.DateTimeField(model_attr='pub_date')
 
 
-class BadSearchIndex3(indexes.SearchIndex):
-    content = indexes.CharField(document=True, use_template=True)
-    author = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateTimeField(model_attr='pub_date')
-    invalid = indexes.CharField(model_attr='invalid')
-
-
 class GoodMockSearchIndex(indexes.SearchIndex):
     content = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='author')

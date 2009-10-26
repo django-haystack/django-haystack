@@ -82,23 +82,15 @@ Official Download Location: http://whoosh.ca/
 
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. With the
-upcoming 0.3.x release (as of 2009/08/31, the ``0.3.0b21`` is suitable for use),
-Whoosh has become much more performant, stable and better tested. You can
-install via PyPI_ via::
+0.3.1+ releases, Whoosh has become much more performant, stable and better
+tested. You can install via PyPI_ via::
 
     sudo easy_install whoosh
     # ... or ...
     sudo pip install whoosh
 
-Alternatively, you can use the following fork that is guaranteed to work with
-Haystack but may be a revision or two behind::
-
-    git clone http://github.com/toastdriven/whoosh.git
-    cd whoosh
-    sudo python setup.py install
-
-This fork may eventually disappear entirely once it seems that Whoosh is fully
-stable. When that time comes, this documentation will be updated.
+Note that, while capable otherwise, the Whoosh backend does not currently
+support "More Like This" or faceting.
 
 .. _PyPI: http://pypi.python.org/pypi/Whoosh/
 
