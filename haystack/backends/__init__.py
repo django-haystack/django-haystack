@@ -4,6 +4,7 @@ from copy import deepcopy
 from time import time
 from django.conf import settings
 from django.core import signals
+from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
@@ -186,7 +187,7 @@ class BaseSearchBackend(object):
 SearchBackend = BaseSearchBackend
 
 
-class SQ(tree.Node):
+class SearchNode(tree.Node):
     """
     Manages an individual condition within a query.
     
@@ -200,50 +201,6 @@ class SQ(tree.Node):
     AND = 'AND'
     OR = 'OR'
     default = AND
-    
-    def __init__(self, children=None, connector=None, negated=False, *args, **kwargs):
-        """
-        Constructs a new SQ. If no connector is given, the default will be used.
-        """
-        children = children or []
-        
-        if hasattr(children, 'children'): # if we have a Node-like object turn it into a list
-            children = [children]
-        
-        try:
-            children.extend(list(args) + kwargs.items())
-        except AttributeError:
-            raise ValueError("'children' should be None or an list.")
-        
-        super(SQ, self).__init__(children, connector, negated)
-    
-    def add(self, data, connector=None):
-        """
-        Adds a child node. If connector differs from the root then the tree is
-        pushed down a level.
-        
-        data is a tuple of (expression, value)
-        """
-        super(SQ, self).add(data, connector or self.default)
-    
-    def _combine(self, other, conn):
-        if not isinstance(other, SQ):
-            raise TypeError(other)
-        
-        obj = deepcopy(self)
-        obj.add(other, conn)
-        return obj
-    
-    def __or__(self, other):
-        return self._combine(other, self.OR)
-    
-    def __and__(self, other):
-        return self._combine(other, self.AND)
-    
-    def __invert__(self):
-        obj = deepcopy(self)
-        obj.negate()
-        return obj
     
     def __repr__(self):
         return '<SQ: %s %s>' % (self.connector, self.as_query_string(self._repr_query_fragment_callback))
@@ -290,6 +247,17 @@ class SQ(tree.Node):
         return (field, filter_type)
 
 
+class SQ(Q, SearchNode):
+    """
+    Manages an individual condition within a query.
+    
+    Most often, this will be a lookup to ensure that a certain word or phrase
+    appears in the documents being indexed. However, it also supports filtering
+    types (such as 'lt', 'gt', 'in' and others) for more complex lookups.
+    """
+    pass
+
+
 class BaseSearchQuery(object):
     """
     A base class for handling the query itself.
@@ -310,7 +278,7 @@ class BaseSearchQuery(object):
     """
     
     def __init__(self, backend=None):
-        self.query_filter = SQ()
+        self.query_filter = SearchNode()
         self.order_by = []
         self.models = set()
         self.boost = {}

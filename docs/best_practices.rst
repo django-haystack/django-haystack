@@ -53,13 +53,13 @@ model and structure it as a document for the search engine to analyze and index.
 Good templates structure the data well and incorporate as much pertinent text
 as possible. This may include additional fields such as titles, author
 information, metadata, tags/categories. Without being artificial, you want to
-construct as context as you can. This doesn't mean you should necessarily
+construct as much context as you can. This doesn't mean you should necessarily
 include every field, but you should include fields that provide good content
 or include terms you think your users may frequently search on.
 
-Unless you have very numbers or dates, neither of these types of data are a
-good fit within templates. They are usually better suited to other fields for
-filtering within a ``SearchQuerySet``.
+Unless you have very unique numbers or dates, neither of these types of data
+are a good fit within templates. They are usually better suited to other
+fields for filtering within a ``SearchQuerySet``.
 
 Additional Fields For Filtering
 -------------------------------

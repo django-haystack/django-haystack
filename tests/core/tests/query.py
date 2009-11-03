@@ -16,19 +16,19 @@ from core.tests.mocks import MockSearchQuery, MockSearchBackend, MixedMockSearch
 
 class SQTestCase(TestCase):
     def test_split_expression(self):
-        qf = SQ(foo='bar')
+        sq = SQ(foo='bar')
         
-        self.assertEqual(qf.split_expression('foo'), ('foo', 'exact'))
-        self.assertEqual(qf.split_expression('foo__exact'), ('foo', 'exact'))
-        self.assertEqual(qf.split_expression('foo__lt'), ('foo', 'lt'))
-        self.assertEqual(qf.split_expression('foo__lte'), ('foo', 'lte'))
-        self.assertEqual(qf.split_expression('foo__gt'), ('foo', 'gt'))
-        self.assertEqual(qf.split_expression('foo__gte'), ('foo', 'gte'))
-        self.assertEqual(qf.split_expression('foo__in'), ('foo', 'in'))
-        self.assertEqual(qf.split_expression('foo__startswith'), ('foo', 'startswith'))
+        self.assertEqual(sq.split_expression('foo'), ('foo', 'exact'))
+        self.assertEqual(sq.split_expression('foo__exact'), ('foo', 'exact'))
+        self.assertEqual(sq.split_expression('foo__lt'), ('foo', 'lt'))
+        self.assertEqual(sq.split_expression('foo__lte'), ('foo', 'lte'))
+        self.assertEqual(sq.split_expression('foo__gt'), ('foo', 'gt'))
+        self.assertEqual(sq.split_expression('foo__gte'), ('foo', 'gte'))
+        self.assertEqual(sq.split_expression('foo__in'), ('foo', 'in'))
+        self.assertEqual(sq.split_expression('foo__startswith'), ('foo', 'startswith'))
         
         # Unrecognized filter. Fall back to exact.
-        self.assertEqual(qf.split_expression('foo__moof'), ('foo', 'exact'))
+        self.assertEqual(sq.split_expression('foo__moof'), ('foo', 'exact'))
     
     def test_repr(self):
         self.assertEqual(repr(SQ(foo='bar')), '<SQ: AND foo__exact=bar>')

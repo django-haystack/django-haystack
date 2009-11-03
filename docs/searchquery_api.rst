@@ -28,16 +28,24 @@ in your class.
 ``SQ`` Objects
 ==============
 
-The ``SearchQuery`` object maintains a tree of ``SQ`` objects. Each ``SQ``
-object supports what field it looks up against, what kind of lookup (i.e.
-the __'s), what value it's looking for, if it's a AND/OR/NOT and tracks
-any children it may have. The ``SearchQuery.build_query`` method starts with
-the root of the tree, building part of the final query at each node until
-the full final query is ready for the ``SearchBackend``.
-
-Much like ``django.db.models.Q`` objects, ``SQ`` objects can be passed to
+For expressing more complex queries, especially involving AND/OR/NOT in
+different combinations, you should use ``SQ`` objects. Like
+``django.db.models.Q`` objects, ``SQ`` objects can be passed to
 ``SearchQuerySet.filter`` and use the familiar unary operators (``&``, ``|`` and
 ``~``) to generate complex parts of the query.
+
+Example::
+
+    from haystack.query import SQ
+    # We want "title: Foo AND (tags:bar OR tags:moof)"
+    sqs = SearchQuerySet().filter(title='Foo').filter(SQ(tags='bar') | SQ(tags='moof'))
+
+Internally, the ``SearchQuery`` object maintains a tree of ``SQ`` objects. Each
+``SQ`` object supports what field it looks up against, what kind of lookup (i.e.
+the ``__`` filters), what value it's looking for, if it's a AND/OR/NOT and
+tracks any children it may have. The ``SearchQuery.build_query`` method starts
+with the root of the tree, building part of the final query at each node until
+the full final query is ready for the ``SearchBackend``.
 
 
 Backend-Specific Methods

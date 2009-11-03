@@ -342,13 +342,18 @@ string of the ``Model``'s ``DateField``/``DateTimeField`` name.
 ``should_update``
 -----------------
 
-.. method:: SearchIndex.should_update(self, instance)
+.. method:: SearchIndex.should_update(self, instance, **kwargs)
 
 Determine if an object should be updated in the index.
 
 It's useful to override this when an object may save frequently and
 cause excessive reindexing. You should check conditions on the instance
 and return False if it is not to be indexed.
+
+The ``kwargs`` passed along to this method can be the same as the ones passed
+by Django when a Model is saved/delete, so it's possible to check if the object
+has been created or not. See ``django.db.models.signals.post_save`` for details
+on what is passed.
 
 By default, returns True (always reindex).
 
