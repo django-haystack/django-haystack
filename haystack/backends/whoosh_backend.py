@@ -303,7 +303,7 @@ class SearchBackend(BaseSearchBackend):
             if narrowed_results:
                 raw_results.filter(narrowed_results)
             
-            return self._process_results(raw_results[start_offset:end_offset], highlight=highlight, query_string=query_string)
+            return self._process_results(raw_results[start_offset:end_offset], highlight=highlight, query_string=query_string, spelling_query=spelling_query)
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
                 if spelling_query:
@@ -326,7 +326,7 @@ class SearchBackend(BaseSearchBackend):
             'hits': 0,
         }
     
-    def _process_results(self, raw_results, highlight=False, query_string=''):
+    def _process_results(self, raw_results, highlight=False, query_string='', spelling_query=None):
         from haystack import site
         results = []
         hits = len(raw_results)
@@ -378,8 +378,11 @@ class SearchBackend(BaseSearchBackend):
             else:
                 hits -= 1
         
-        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
-            spelling_suggestion = self.create_spelling_suggestion(query_string)
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+            if spelling_query:
+                spelling_suggestion = self.create_spelling_suggestion(spelling_query)
+            else:
+                spelling_suggestion = self.create_spelling_suggestion(query_string)
         
         return {
             'results': results,
@@ -391,7 +394,7 @@ class SearchBackend(BaseSearchBackend):
     def create_spelling_suggestion(self, query_string):
         spelling_suggestion = None
         sp = SpellChecker(self.storage)
-        cleaned_query = query_string
+        cleaned_query = force_unicode(query_string)
         
         if not query_string:
             return spelling_suggestion
