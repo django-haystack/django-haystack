@@ -479,6 +479,12 @@ class BaseSearchQuery(object):
         
         return final_query
     
+    def combine(self, rhs, connector=SQ.AND):
+        if connector == SQ.AND:
+            self.add_filter(rhs.query_filter)
+        elif connector == SQ.OR:
+            self.add_filter(rhs.query_filter, use_or=True)
+    
     # Methods for backends to implement.
     
     def build_query_fragment(self, field, filter_type, value):

@@ -358,6 +358,42 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(backends.queries), 3)
+    
+    def test___and__(self):
+        sqs1 = self.sqs.filter(content='foo')
+        sqs2 = self.sqs.filter(content='bar')
+        sqs = sqs1 & sqs2
+        
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filter), 2)
+        self.assertEqual(sqs.query.build_query(), u'(foo AND bar)')
+        
+        # Now for something more complex...
+        sqs3 = self.sqs.exclude(title='moof').filter(SQ(content='foo') | SQ(content='baz'))
+        sqs4 = self.sqs.filter(content='bar')
+        sqs = sqs3 & sqs4
+        
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filter), 3)
+        self.assertEqual(sqs.query.build_query(), u'(NOT (title:moof) AND (foo OR baz) AND bar)')
+    
+    def test___or__(self):
+        sqs1 = self.sqs.filter(content='foo')
+        sqs2 = self.sqs.filter(content='bar')
+        sqs = sqs1 | sqs2
+        
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filter), 2)
+        self.assertEqual(sqs.query.build_query(), u'(foo OR bar)')
+        
+        # Now for something more complex...
+        sqs3 = self.sqs.exclude(title='moof').filter(SQ(content='foo') | SQ(content='baz'))
+        sqs4 = self.sqs.filter(content='bar').models(MockModel)
+        sqs = sqs3 | sqs4
+        
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filter), 2)
+        self.assertEqual(sqs.query.build_query(), u'((NOT (title:moof) AND (foo OR baz)) OR bar)')
 
 
 class SolrMockModelSearchIndex(indexes.SearchIndex):
