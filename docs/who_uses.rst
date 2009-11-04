@@ -79,3 +79,14 @@ For general search.
 
 * http://www.allforlocal.com/
 
+
+HUGE
+----
+
+Various projects.
+
+Using: Solr
+
+* http://hugeinc.com/
+* http://houselogic.com/
+
