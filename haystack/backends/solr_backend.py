@@ -274,9 +274,6 @@ class SearchBackend(BaseSearchBackend):
             if field_class.document is True:
                 content_field_name = field_name
             
-            if field_class.indexed is False:
-                field_data['indexed'] = 'false'
-            
             # DRL_FIXME: Perhaps move to something where, if none of these
             #            checks succeed, call a custom method on the form that
             #            returns, per-backend, the right type of storage?
@@ -293,6 +290,15 @@ class SearchBackend(BaseSearchBackend):
                 field_data['type'] = 'boolean'
             elif isinstance(field_class, MultiValueField):
                 field_data['multi_valued'] = 'true'
+            
+            # Do this last to override `text` fields.
+            if field_class.indexed is False:
+                field_data['indexed'] = 'false'
+                
+                # If it's text and not being indexed, we probably don't want
+                # to do the normal lowercase/tokenize/stemming/etc. dance.
+                if field_data['type'] == 'text':
+                    field_data['type'] = 'string'
             
             schema_fields.append(field_data)
         
