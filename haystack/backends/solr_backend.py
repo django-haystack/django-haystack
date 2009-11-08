@@ -7,6 +7,7 @@ from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.models import SearchResult
+from haystack.utils import get_identifier
 try:
     set
 except NameError:
@@ -50,21 +51,16 @@ class SearchBackend(BaseSearchBackend):
         
         try:
             for obj in iterable:
-                doc = {}
-                doc['id'] = self.get_identifier(obj)
-                doc['django_ct'] = "%s.%s" % (obj._meta.app_label, obj._meta.module_name)
-                doc['django_id'] = force_unicode(obj.pk)
-                doc.update(index.prepare(obj))
-                docs.append(doc)
+                docs.append(index.prepare(obj))
         except UnicodeDecodeError:
             sys.stderr.write("Chunk failed.\n")
         
         self.conn.add(docs, commit=commit)
-
+    
     def remove(self, obj_or_string, commit=True):
-        solr_id = self.get_identifier(obj_or_string)
+        solr_id = get_identifier(obj_or_string)
         self.conn.delete(id=solr_id, commit=commit)
-
+    
     def clear(self, models=[], commit=True):
         if not models:
             # *:* matches all docs in Solr
@@ -193,7 +189,7 @@ class SearchBackend(BaseSearchBackend):
         if narrow_queries:
             params['fq'] = list(narrow_queries)
         
-        raw_results = self.conn.more_like_this("id:%s" % self.get_identifier(model_instance), field_name, **params)
+        raw_results = self.conn.more_like_this("id:%s" % get_identifier(model_instance), field_name, **params)
         return self._process_results(raw_results)
     
     def _process_results(self, raw_results, highlight=False):

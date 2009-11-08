@@ -1,6 +1,8 @@
 from django.db.models import signals
+from django.utils.encoding import force_unicode
 import haystack
 from haystack.fields import *
+from haystack.utils import get_identifier
 
 
 class DeclarativeMetaclass(type):
@@ -86,7 +88,11 @@ class SearchIndex(object):
         """
         Fetches and adds/alters data before indexing.
         """
-        self.prepared_data = {}
+        self.prepared_data = {
+            'id': get_identifier(obj),
+            'django_ct': "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
+            'django_id': force_unicode(obj.pk),
+        }
         
         for field_name, field in self.fields.items():
             self.prepared_data[field_name] = field.prepare(obj)
