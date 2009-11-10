@@ -11,6 +11,7 @@ from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
+from haystack.utils import get_identifier
 try:
     set
 except NameError:
@@ -126,18 +127,13 @@ class SearchBackend(BaseSearchBackend):
         writer = self.index.writer()
         
         for obj in iterable:
-            doc = {}
-            doc['id'] = force_unicode(self.get_identifier(obj))
-            doc['django_ct'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
-            doc['django_id'] = force_unicode(obj.pk)
-            other_data = index.prepare(obj)
+            doc = index.prepare(obj)
             
             # Really make sure it's unicode, because Whoosh won't have it any
             # other way.
-            for key in other_data:
-                other_data[key] = self._from_python(other_data[key])
+            for key in doc:
+                doc[key] = self._from_python(doc[key])
             
-            doc.update(other_data)
             writer.update_document(**doc)
         
         # For now, commit no matter what, as we run into locking issues otherwise.
@@ -153,7 +149,7 @@ class SearchBackend(BaseSearchBackend):
             self.setup()
         
         self.index = self.index.refresh()
-        whoosh_id = self.get_identifier(obj_or_string)
+        whoosh_id = get_identifier(obj_or_string)
         self.index.delete_by_query(q=self.parser.parse(u'id:"%s"' % whoosh_id))
         
         # For now, commit no matter what, as we run into locking issues otherwise.

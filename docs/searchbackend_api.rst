@@ -20,16 +20,6 @@ access this class.
 Method Reference
 ================
 
-``get_identifier``
-------------------
-
-.. method:: SearchBackend.get_identifier(self, obj_or_string)
-
-Get an unique identifier for the object or a string representing the
-object.
-
-If not overridden, uses <app_label>.<object_name>.<pk>.
-
 ``update``
 ----------
 

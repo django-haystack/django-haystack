@@ -2,6 +2,7 @@ from django.db.models.loading import get_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.models import SearchResult
+from haystack.utils import get_identifier
 from core.models import MockModel
 
 
@@ -20,15 +21,11 @@ class MockSearchBackend(BaseSearchBackend):
     
     def update(self, index, iterable, commit=True):
         for obj in iterable:
-            doc = {}
-            doc['id'] = self.get_identifier(obj)
-            doc['django_ct'] = force_unicode("%s.%s" % (obj._meta.app_label, obj._meta.module_name))
-            doc['django_id'] = force_unicode(obj.pk)
-            doc.update(index.prepare(obj))
+            doc = index.prepare(obj)
             self.docs[doc['id']] = doc
 
     def remove(self, obj, commit=True):
-        del(self.docs[self.get_identifier(obj)])
+        del(self.docs[get_identifier(obj)])
 
     def clear(self, models=[], commit=True):
         self.docs = {}
