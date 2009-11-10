@@ -55,7 +55,8 @@ class SearchBackend(BaseSearchBackend):
         except UnicodeDecodeError:
             sys.stderr.write("Chunk failed.\n")
         
-        self.conn.add(docs, commit=commit)
+        if len(docs) > 0:
+            self.conn.add(docs, commit=commit)
     
     def remove(self, obj_or_string, commit=True):
         solr_id = get_identifier(obj_or_string)

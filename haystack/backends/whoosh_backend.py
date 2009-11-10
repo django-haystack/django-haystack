@@ -136,13 +136,14 @@ class SearchBackend(BaseSearchBackend):
             
             writer.update_document(**doc)
         
-        # For now, commit no matter what, as we run into locking issues otherwise.
-        writer.commit()
-        
-        # If spelling support is desired, add to the dictionary.
-        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
-            sp = SpellChecker(self.storage)
-            sp.add_field(self.index, self.content_field_name)
+        if len(iterable) > 0:
+            # For now, commit no matter what, as we run into locking issues otherwise.
+            writer.commit()
+            
+            # If spelling support is desired, add to the dictionary.
+            if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+                sp = SpellChecker(self.storage)
+                sp.add_field(self.index, self.content_field_name)
     
     def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
