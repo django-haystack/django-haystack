@@ -33,9 +33,12 @@ class AllTypesWhooshMockSearchIndex(indexes.BaseSearchIndex):
 
 
 class WhooshMaintainTypeMockSearchIndex(indexes.BaseSearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
+    text = indexes.CharField(document=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def prepare_text(self, obj):
+        return "Indexed!\n%s" % obj.pk
     
     def prepare_month(self, obj):
         return "%02d" % obj.pub_date.month
@@ -288,6 +291,16 @@ class WhooshSearchBackendTestCase(TestCase):
             pass
         
         os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0755)
+    
+    def test_slicing(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        page_1 = self.sb.search(u'*', start_offset=0, end_offset=20)
+        page_2 = self.sb.search(u'*', start_offset=20, end_offset=30)
+        self.assertEqual(len(page_1['results']), 20)
+        self.assertEqual([result.pk for result in page_1['results']], [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4'])
+        self.assertEqual(len(page_2['results']), 3)
+        self.assertEqual([result.pk for result in page_2['results']], [u'3', u'2', u'1'])
 
 
 class LiveWhooshSearchQueryTestCase(TestCase):
