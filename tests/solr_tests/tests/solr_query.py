@@ -9,16 +9,7 @@ from core.models import MockModel, AnotherMockModel
 class SolrSearchQueryTestCase(TestCase):
     def setUp(self):
         super(SolrSearchQueryTestCase, self).setUp()
-        
-        # Stow.
-        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
-        
         self.sq = SearchQuery(backend=SearchBackend())
-    
-    def tearDown(self):
-        settings.HAYSTACK_SOLR_URL = self.old_solr_url
-        super(SolrSearchQueryTestCase, self).tearDown()
     
     def test_build_query_all(self):
         self.assertEqual(self.sq.build_query(), '*:*')

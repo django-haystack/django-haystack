@@ -34,10 +34,6 @@ class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
         
-        # Stow.
-        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
-        
         self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
         self.raw_solr.delete(q='*:*')
         
@@ -64,7 +60,6 @@ class SolrSearchBackendTestCase(TestCase):
     def tearDown(self):
         import haystack
         haystack.site = self.old_site
-        settings.HAYSTACK_SOLR_URL = self.old_solr_url
         super(SolrSearchBackendTestCase, self).tearDown()
     
     def test_update(self):
@@ -171,19 +166,11 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def setUp(self):
         super(LiveSolrSearchQueryTestCase, self).setUp()
         
-        # Stow.
-        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
-        
         self.sq = SearchQuery(backend=SearchBackend())
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():
             mock.save()
-    
-    def tearDown(self):
-        settings.HAYSTACK_SOLR_URL = self.old_solr_url
-        super(LiveSolrSearchQueryTestCase, self).tearDown()
     
     def test_get_spelling(self):
         self.sq.add_filter(SQ(content='Indx'))
@@ -226,7 +213,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
 class LiveSolrSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrSearchQuerySetTestCase, self).setUp()
@@ -335,7 +322,7 @@ class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
 
 
 class LiveSolrRegressionsTestCase(TestCase):
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrRegressionsTestCase, self).setUp()
@@ -385,7 +372,7 @@ class LiveSolrRegressionsTestCase(TestCase):
 
 
 class LiveSolrMoreLikeThisTestCase(TestCase):
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrMoreLikeThisTestCase, self).setUp()
@@ -440,7 +427,7 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
 class LiveSolrRelatedSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the RelatedSearchQuerySet."""
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrRelatedSearchQuerySetTestCase, self).setUp()
