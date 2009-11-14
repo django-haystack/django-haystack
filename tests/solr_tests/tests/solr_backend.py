@@ -1,5 +1,7 @@
 import datetime
+import logging
 import pysolr
+import StringIO
 from django.conf import settings
 from django.test import TestCase
 from haystack import backends
@@ -158,6 +160,58 @@ class SolrSearchBackendTestCase(TestCase):
         
         self.assertEqual(self.sb.search('*:*')['hits'], 3)
         self.assertEqual([result.month for result in self.sb.search('*:*')['results']], [u'02', u'02', u'02'])
+
+
+class CaptureHandler(logging.Handler):
+    logs_seen = []
+    
+    def emit(self, record):
+        CaptureHandler.logs_seen.append(record)
+
+
+class FailedSolrSearchBackendTestCase(TestCase):
+    def test_all_cases(self):
+        self.sample_objs = []
+        
+        for i in xrange(1, 4):
+            mock = MockModel()
+            mock.id = i
+            mock.author = 'daniel%s' % i
+            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            self.sample_objs.append(mock)
+        
+        # Stow.
+        # Point the backend at a URL that doesn't exist so we can watch the
+        # sparks fly.
+        old_solr_url = settings.HAYSTACK_SOLR_URL
+        settings.HAYSTACK_SOLR_URL = "%s/foo/" % settings.HAYSTACK_SOLR_URL
+        cap = CaptureHandler()
+        logging.getLogger('haystack').addHandler(cap)
+        
+        # Setup the rest of the bits.
+        site = SearchSite()
+        site.register(MockModel, SolrMockSearchIndex)
+        sb = SearchBackend(site=site)
+        smmi = SolrMockSearchIndex(MockModel, backend=sb)
+        
+        # Prior to the addition of the try/except bits, these would all fail miserably.
+        self.assertEqual(len(CaptureHandler.logs_seen), 0)
+        sb.update(smmi, self.sample_objs)
+        self.assertEqual(len(CaptureHandler.logs_seen), 1)
+        sb.remove(self.sample_objs[0])
+        self.assertEqual(len(CaptureHandler.logs_seen), 2)
+        sb.search('search')
+        self.assertEqual(len(CaptureHandler.logs_seen), 3)
+        sb.more_like_this(self.sample_objs[0])
+        self.assertEqual(len(CaptureHandler.logs_seen), 4)
+        sb.clear([MockModel])
+        self.assertEqual(len(CaptureHandler.logs_seen), 5)
+        sb.clear()
+        self.assertEqual(len(CaptureHandler.logs_seen), 6)
+        
+        # Restore.
+        settings.HAYSTACK_SOLR_URL = old_solr_url
+        logging.getLogger('haystack').removeHandler(cap)
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
