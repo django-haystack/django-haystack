@@ -24,10 +24,17 @@ You'll need to revise your schema. You can generate this from your application
 ``./manage.py build_solr_schema``. Take the output from that command and place
 it in ``apache-solr-1.3.0/example/solr/conf/schema.xml``. Then restart Solr.
 
-You'll also need a Solr binding, ``pysolr``. The development version can be
-grabbed from GitHub via http://github.com/toastdriven/pysolr/tree/master. In the
-near future, this should be merged into the main ``pysolr`` package and
-distributed via PyPI. Place ``pysolr.py`` somewhere on your ``PYTHONPATH``.
+You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
+distributed via PyPI, is the best version to use. Place ``pysolr.py`` somewhere
+on your ``PYTHONPATH``.
+
+.. note::
+
+    ``pysolr`` has it's own dependencies that aren't covered by Haystack. For
+    best results, you should have an ElementTree variant install (preferably the
+    ``lxml`` variant), ``httplib2`` for timeouts (though it will fall back to
+    ``httplib``) and either the ``json`` module that comes with Python 2.5+ or
+    ``simplejson``.
 
 More Like This
 --------------
