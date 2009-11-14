@@ -28,6 +28,7 @@ Table Of Contents
    
    running_tests
    creating_new_backends
+   utils
 
 
 Indices and tables
