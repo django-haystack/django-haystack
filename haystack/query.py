@@ -293,7 +293,6 @@ class SearchQuerySet(object):
         clone.query.add_narrow_query(query)
         return clone
     
-    # DRL_TODO: Should this prevent other methods (filter/exclude/etc) from working?
     def raw_search(self, query_string, **kwargs):
         """Passes a raw query directly to the backend."""
         clone = self._clone()

@@ -423,6 +423,15 @@ class LiveSolrRegressionsTestCase(TestCase):
         for key, value in id_counts.items():
             if value > 1:
                 self.fail("Result with id '%s' seen more than once in the results." % key)
+    
+    def test_raw_search_breaks_slicing(self):
+        sqs = self.sqs.raw_search('text: search')
+        page_1 = [result.pk for result in sqs[0:10]]
+        page_2 = [result.pk for result in sqs[10:20]]
+        
+        for pk in page_2:
+            if pk in page_1:
+                self.fail("Result with id '%s' seen more than once in the results." % pk)
 
 
 class LiveSolrMoreLikeThisTestCase(TestCase):
