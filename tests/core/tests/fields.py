@@ -27,6 +27,12 @@ class CharFieldTestCase(TestCase):
         
         self.assertEqual(tag_name.prepare(mock), u'primary')
         
+        # Use the default.
+        mock = MockModel()
+        author = CharField(model_attr='author', default='')
+        
+        self.assertEqual(author.prepare(mock), u'')
+        
         # Simulate failed lookups.
         mock_tag = MockTag(name='primary')
         mock = MockModel()
@@ -34,6 +40,25 @@ class CharFieldTestCase(TestCase):
         tag_slug = CharField(model_attr='tag__slug')
         
         self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
+        
+        # Simulate default='foo'.
+        mock = MockModel()
+        default = CharField(default='foo')
+        
+        self.assertEqual(default.prepare(mock), 'foo')
+        
+        # Simulate null=True.
+        mock = MockModel()
+        empty = CharField(null=True)
+        
+        self.assertEqual(empty.prepare(mock), None)
+        
+        mock = MockModel()
+        mock.user = None
+        author = CharField(model_attr='user', null=True)
+        
+        self.assertEqual(author.prepare(mock), None)
+
 
 class IntegerFieldTestCase(TestCase):
     def test_init(self):
@@ -57,12 +82,18 @@ class IntegerFieldTestCase(TestCase):
         
         self.assertRaises(SearchFieldError, tag_count.prepare, mock)
         
+        # Simulate default=1.
+        mock = MockModel()
+        default = IntegerField(default=1)
+        
+        self.assertEqual(default.prepare(mock), 1)
+        
         # Simulate null=True.
         mock = MockModel()
-        mock.pk = None
         pk_none = IntegerField(model_attr='pk', null=True)
         
         self.assertEqual(pk_none.prepare(mock), None)
+
 
 class FloatFieldTestCase(TestCase):
     def test_init(self):
@@ -78,12 +109,18 @@ class FloatFieldTestCase(TestCase):
         
         self.assertEqual(floaty.prepare(mock), 12.5)
         
+        # Simulate default=1.5.
+        mock = MockModel()
+        default = FloatField(default=1.5)
+        
+        self.assertEqual(default.prepare(mock), 1.5)
+        
         # Simulate null=True.
         mock = MockModel()
-        mock.floaty = None
-        floaty_none = FloatField(model_attr='floaty', null=True)
+        floaty_none = FloatField(null=True)
         
         self.assertEqual(floaty_none.prepare(mock), None)
+
 
 class BooleanFieldTestCase(TestCase):
     def test_init(self):
@@ -98,6 +135,19 @@ class BooleanFieldTestCase(TestCase):
         is_active = BooleanField(model_attr='active')
         
         self.assertEqual(is_active.prepare(mock), True)
+        
+        # Simulate default=True.
+        mock = MockModel()
+        default = BooleanField(default=True)
+        
+        self.assertEqual(default.prepare(mock), True)
+        
+        # Simulate null=True.
+        mock = MockModel()
+        booly_none = BooleanField(null=True)
+        
+        self.assertEqual(booly_none.prepare(mock), None)
+
 
 class DateFieldTestCase(TestCase):
     def test_init(self):
@@ -112,6 +162,13 @@ class DateFieldTestCase(TestCase):
         pub_date = DateField(model_attr='pub_date')
         
         self.assertEqual(pub_date.prepare(mock), datetime.date(2009, 2, 13))
+        
+        # Simulate default=datetime.date(2000, 1, 1).
+        mock = MockModel()
+        default = DateField(default=datetime.date(2000, 1, 1))
+        
+        self.assertEqual(default.prepare(mock), datetime.date(2000, 1, 1))
+
 
 class DateTimeFieldTestCase(TestCase):
     def test_init(self):
@@ -126,6 +183,13 @@ class DateTimeFieldTestCase(TestCase):
         pub_date = DateTimeField(model_attr='pub_date')
         
         self.assertEqual(pub_date.prepare(mock), datetime.datetime(2009, 2, 13, 10, 01, 00))
+        
+        # Simulate default=datetime.datetime(2009, 2, 13, 10, 01, 00).
+        mock = MockModel()
+        default = DateTimeField(default=datetime.datetime(2000, 1, 1, 0, 0, 0))
+        
+        self.assertEqual(default.prepare(mock), datetime.datetime(2000, 1, 1, 0, 0, 0))
+
 
 class MultiValueFieldTestCase(TestCase):
     def test_init(self):
@@ -140,6 +204,19 @@ class MultiValueFieldTestCase(TestCase):
         sites = MultiValueField(model_attr='sites')
         
         self.assertEqual(sites.prepare(mock), ['3', '4', '5'])
+        
+        # Simulate default=[1].
+        mock = MockModel()
+        default = MultiValueField(default=[1])
+        
+        self.assertEqual(default.prepare(mock), [1])
+        
+        # Simulate null=True.
+        mock = MockModel()
+        multy_none = MultiValueField(null=True)
+        
+        self.assertEqual(multy_none.prepare(mock), None)
+
 
 class CharFieldWithTemplateTestCase(TestCase):
     def test_init(self):

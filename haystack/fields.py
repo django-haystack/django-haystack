@@ -2,12 +2,16 @@ from django.template import loader, Context
 from haystack.exceptions import SearchFieldError
 
 
+class NOT_PROVIDED:
+    pass
+
+
 # All the SearchFields variants.
 
 class SearchField(object):
     """The base implementation of a search field."""
-    def __init__(self, model_attr=None, use_template=False, template_name=None, 
-                 document=False, indexed=True, stored=True, default=None,
+    def __init__(self, model_attr=None, use_template=False, template_name=None,
+                 document=False, indexed=True, stored=True, default=NOT_PROVIDED,
                  null=False):
         # Track what the index thinks this field is called.
         self.instance_name = None
@@ -19,6 +23,10 @@ class SearchField(object):
         self.stored = stored
         self._default = default
         self.null = null
+    
+    def has_default(self):
+        """Returns a boolean of whether this field has a default value."""
+        return self._default is not NOT_PROVIDED
     
     @property
     def default(self):
@@ -37,17 +45,34 @@ class SearchField(object):
             current_object = obj
             
             for attr in attrs:
-                if not hasattr(current_object, attr) and not self.null:
+                if not hasattr(current_object, attr):
                     raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(current_object), attr))
                 
-                current_object = getattr(current_object, attr)
+                current_object = getattr(current_object, attr, None)
+                
+                if current_object is None:
+                    if self.has_default():
+                        current_object = self._default
+                        # Fall out of the loop, given any further attempts at
+                        # accesses will fail misreably.
+                        break
+                    elif self.null:
+                        current_object = None
+                        # Fall out of the loop, given any further attempts at
+                        # accesses will fail misreably.
+                        break
+                    else:
+                        raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(current_object), attr))
             
             if callable(current_object):
                 return current_object()
             
             return current_object
         
-        return self.default
+        if self.has_default():
+            return self.default
+        else:
+            return None
     
     def prepare_template(self, obj):
         """
@@ -70,102 +95,71 @@ class SearchField(object):
 
 
 class CharField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = ''
-        
-        super(CharField, self).__init__(**kwargs)
-    
     def prepare(self, obj):
         return self.convert(super(CharField, self).prepare(obj))
     
     def convert(self, value):
+        if value is None:
+            return None
+        
         return unicode(value)
 
 
 class IntegerField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = 0
-        
-        super(IntegerField, self).__init__(**kwargs)
-    
     def prepare(self, obj):
-        prepared = super(IntegerField, self).prepare(obj)
-        
-        if prepared is None:
-            return None
-        
-        return self.convert(prepared)
+        return self.convert(super(IntegerField, self).prepare(obj))
     
     def convert(self, value):
+        if value is None:
+            return None
+        
         return int(value)
 
 
 class FloatField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = 0.0
-        
-        super(FloatField, self).__init__(**kwargs)
-    
     def prepare(self, obj):
-        prepared = super(FloatField, self).prepare(obj)
-        
-        if prepared is None:
-            return None
-        
-        return self.convert(prepared)
+        return self.convert(super(FloatField, self).prepare(obj))
     
     def convert(self, value):
+        if value is None:
+            return None
+        
         return float(value)
 
 
 class BooleanField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = False
-        
-        super(BooleanField, self).__init__(**kwargs)
-    
     def prepare(self, obj):
         return self.convert(super(BooleanField, self).prepare(obj))
     
     def convert(self, value):
+        if value is None:
+            return None
+        
         return bool(value)
 
 
 class DateField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = ''
+    def convert(self, value):
+        if value is None:
+            return None
         
-        super(DateField, self).__init__(**kwargs)
-    
-    def prepare(self, obj):
-        return super(DateField, self).prepare(obj)
+        return str(value)
 
 
 class DateTimeField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = ''
+    def convert(self, value):
+        if value is None:
+            return None
         
-        super(DateTimeField, self).__init__(**kwargs)
-    
-    def prepare(self, obj):
-        return super(DateTimeField, self).prepare(obj)
+        return str(value)
 
 
 class MultiValueField(SearchField):
-    def __init__(self, **kwargs):
-        if not 'default' in kwargs:
-            kwargs['default'] = ''
-        
-        super(MultiValueField, self).__init__(**kwargs)
-    
     def prepare(self, obj):
         return self.convert(super(MultiValueField, self).prepare(obj))
     
     def convert(self, value):
+        if value is None:
+            return None
+        
         return list(value)

@@ -110,7 +110,7 @@ class BaseSearchIndex(object):
         # Remove any fields that lack a value and are `null=True`.
         for field_name, field in self.fields.items():
             if field.null is True:
-                if self.prepared_data[field_name] == field.default or self.prepared_data[field_name] is None:
+                if self.prepared_data[field_name] is None:
                     del(self.prepared_data[field_name])
         
         return self.prepared_data
