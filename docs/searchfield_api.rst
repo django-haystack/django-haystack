@@ -62,7 +62,7 @@ Method Reference
 Instantiates a fresh ``SearchField`` instance.
 
 ``has_default``
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. method:: SearchField.has_default(self)
 
