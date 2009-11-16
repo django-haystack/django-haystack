@@ -11,7 +11,9 @@ you're interested in indexing. They are used with ``SearchIndexes``, much like
 ``forms.*Field`` are used within forms or ``models.*Field`` within models.
 
 They provide both the means for storing data in the index, as well as preparing
-the data before it's placed in the index.
+the data before it's placed in the index. Haystack uses all fields from all
+``SearchIndex`` classes to determine what the engine's index schema ought to
+look like.
 
 In practice, you'll likely never actually use the base ``SearchField``, as the
 subclasses are much better at handling real data.
@@ -22,12 +24,12 @@ Subclasses
 
 Included with Haystack are the following field types:
 
-* ``CharField``
-* ``IntegerField``
-* ``FloatField``
 * ``BooleanField``
+* ``CharField``
 * ``DateField``
 * ``DateTimeField``
+* ``FloatField``
+* ``IntegerField``
 * ``MultiValueField``
 
 
@@ -51,25 +53,141 @@ This will hook up those fields with the index and, when updating a ``Model``
 object, pull the relevant data out and prepare it for storage in the index.
 
 
+Field Options
+=============
+
+``default``
+-----------
+
+.. attribute:: SearchField.default
+
+Provides a means for specifying a fallback value in the event that no data is
+found for the field. Can be either a value or a callable.
+
+``document``
+------------
+
+.. attribute:: SearchField.document
+
+A boolean flag that indicates which of the fields in the ``SearchIndex`` ought
+to be the primary field for searching within. Default is ``False``.
+
+.. note::
+
+    Only one field can be marked as the ``document=True`` field, so you should
+    standardize this name and the format of the field between all of your
+    ``SearchIndex`` classes.
+
+``indexed``
+-----------
+
+.. attribute:: SearchField.indexed
+
+A boolean flag for indicating whether or not the the data from this field will
+be searchable within the index. Default is ``True``.
+
+The companion of this option is ``stored``.
+
+``model_attr``
+--------------
+
+.. attribute:: SearchField.model_attr
+
+The ``model_attr`` option is a shortcut for preparing data. Rather than having
+to manually fetch data out of a ``Model``, ``model_attr`` allows you to specify
+a string that will automatically pull data out for you. For example::
+
+    # Automatically looks within the model and populates the field with
+    # the ``last_name`` attribute.
+    author = indexes.CharField(model_attr='last_name')
+
+It also handles callables::
+
+    # On a ``User`` object, pulls the full name as pieced together by the
+    # ``get_full_name`` method.
+    author = indexes.CharField(model_attr='get_full_name')
+
+And can look through relations::
+
+    # Pulls the ``bio`` field from a ``UserProfile`` object that has a
+    # ``OneToOneField`` relationship to a ``User`` object.
+    biography = indexes.CharField(model_attr='user__profile__bio')
+
+``null``
+--------
+
+.. attribute:: SearchField.null
+
+A boolean flag for indicating whether or not it's permissible for the field
+not to contain any data. Default is ``False``.
+
+.. note::
+
+    Unlike Django's database layer, which injects a ``NULL`` into the database
+    when a field is marked nullable, ``null=True`` will actually exclude that
+    field from being included with the document. This more efficient for the
+    search engine to deal with.
+
+``stored``
+----------
+
+.. attribute:: SearchField.stored
+
+A boolean flag for indicating whether or not the data from this field will
+be stored within the index. Default is ``True``.
+
+This is useful for pulling data out of the index along with the search result
+in order to save on hits to the database.
+
+The companion of this option is ``indexed``.
+
+``template_name``
+-----------------
+
+.. attribute:: SearchField.template_name
+
+Allows you to override the name of the template to use when preparing data. By
+default, the data templates for fields are located within your ``TEMPLATE_DIRS``
+under a path like ``search/indexes/{app_label}/{model_name}_{field_name}.txt``.
+This option lets you override that path (though still within ``TEMPLATE_DIRS``).
+
+Example::
+
+    bio = indexes.CharField(use_template=True, template_name='myapp/data/bio.txt')
+
+``use_template``
+----------------
+
+.. attribute:: SearchField.use_template
+
+A boolean flag for indicating whether or not a field should prepare its data
+via a data template or not. Default is False.
+
+Data templates are extremely useful, as they let you easily tie together
+different parts of the ``Model`` (and potentially related models). This leads
+to better search results with very little effort.
+
+
+
 Method Reference
 ================
 
 ``__init__``
-~~~~~~~~~~~~
+------------
 
 .. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, default=NOT_PROVIDED, null=False)
 
 Instantiates a fresh ``SearchField`` instance.
 
 ``has_default``
-~~~~~~~~~~~~~~~
+---------------
 
 .. method:: SearchField.has_default(self)
 
 Returns a boolean of whether this field has a default value.
 
 ``prepare``
-~~~~~~~~~~~
+-----------
 
 .. method:: SearchField.prepare(self, obj)
 
@@ -77,7 +195,7 @@ Takes data from the provided object and prepares it for storage in the
 index.
 
 ``prepare_template``
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 .. method:: SearchField.prepare_template(self, obj)
 
@@ -89,7 +207,7 @@ returns the result of rendering that template. ``object`` will be in
 its context.
 
 ``convert``
-~~~~~~~~~~~~~~~
+-----------
 
 .. method:: SearchField.convert(self, value)
 
