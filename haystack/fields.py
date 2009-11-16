@@ -30,12 +30,17 @@ class SearchField(object):
     
     @property
     def default(self):
+        """Returns the default value for the field."""
         if callable(self._default):
             return self._default()
         
         return self._default
     
     def prepare(self, obj):
+        """
+        Takes data from the provided object and prepares it for storage in the
+        index.
+        """
         # Give priority to a template.
         if self.use_template:
             return self.prepare_template(obj)
@@ -76,11 +81,12 @@ class SearchField(object):
     
     def prepare_template(self, obj):
         """
-        Flatten an object for indexing.
+        Flattens an object for indexing.
         
-        This loads a template, ``search/indexes/{app_label}/{model_name}_{field_name}.txt``,
-        and returns the result of rendering that template. ``object``
-        will be in its context.
+        This loads a template
+        (``search/indexes/{app_label}/{model_name}_{field_name}.txt``) and
+        returns the result of rendering that template. ``object`` will be in
+        its context.
         """
         if self.instance_name is None and self.template_name is None:
             raise SearchFieldError("This field requires either its instance_name variable to be populated or an explicit template_name in order to load the correct template.")
@@ -92,6 +98,15 @@ class SearchField(object):
         
         t = loader.get_template(template_name)
         return t.render(Context({'object': obj}))
+    
+    def convert(self, value):
+        """
+        Handles conversion between the data found and the type of the field.
+        
+        Extending classes should override this method and provide correct
+        data coercion.
+        """
+        return value
 
 
 class CharField(SearchField):

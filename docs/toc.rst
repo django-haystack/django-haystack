@@ -21,6 +21,7 @@ Table Of Contents
    
    searchqueryset_api
    searchindex_api
+   searchfield_api
    searchresult_api
    searchsite_api
    searchquery_api
