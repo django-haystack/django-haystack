@@ -30,7 +30,8 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(object):
+# DRL_FIXME: Before 1.0, this should become ``SearchIndex`` again.
+class BaseSearchIndex(object):
     """
     Base class for building indexes.
     
@@ -65,16 +66,20 @@ class SearchIndex(object):
             raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
     
     def _setup_save(self, model):
-        signals.post_save.connect(self.update_object, sender=model)
+        """A hook for controlling what happens when the registered model is saved."""
+        pass
     
     def _setup_delete(self, model):
-        signals.post_delete.connect(self.remove_object, sender=model)
+        """A hook for controlling what happens when the registered model is deleted."""
+        pass
     
     def _teardown_save(self, model):
-        signals.post_save.disconnect(self.update_object, sender=model)
+        """A hook for removing the behavior when the registered model is saved."""
+        pass
     
     def _teardown_delete(self, model):
-        signals.post_delete.disconnect(self.remove_object, sender=model)
+        """A hook for removing the behavior when the registered model is deleted."""
+        pass
     
     def get_queryset(self):
         """
@@ -105,7 +110,7 @@ class SearchIndex(object):
         # Remove any fields that lack a value and are `null=True`.
         for field_name, field in self.fields.items():
             if field.null is True:
-                if self.prepared_data[field_name] == field.default or self.prepared_data[field_name] is None:
+                if self.prepared_data[field_name] is None:
                     del(self.prepared_data[field_name])
         
         return self.prepared_data
@@ -179,6 +184,25 @@ class SearchIndex(object):
         By default, returns ``all()`` on the model's default manager.
         """
         return self.model._default_manager.all()
+
+
+# DRL_FIXME: Before 1.0, this should become ``RealTimeSearchIndex``.
+class SearchIndex(BaseSearchIndex):
+    """
+    A variant of the ``SearchIndex`` that constantly keeps the index fresh,
+    as opposed to requiring a cron job.
+    """
+    def _setup_save(self, model):
+        signals.post_save.connect(self.update_object, sender=model)
+    
+    def _setup_delete(self, model):
+        signals.post_delete.connect(self.remove_object, sender=model)
+    
+    def _teardown_save(self, model):
+        signals.post_save.disconnect(self.update_object, sender=model)
+    
+    def _teardown_delete(self, model):
+        signals.post_delete.disconnect(self.remove_object, sender=model)
 
 
 class BasicSearchIndex(SearchIndex):

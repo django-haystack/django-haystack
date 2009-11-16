@@ -273,6 +273,8 @@ class BaseSearchQuery(object):
         self.date_facets = {}
         self.query_facets = {}
         self.narrow_queries = set()
+        self._raw_query = None
+        self._raw_query_params = {}
         self._more_like_this = False
         self._mlt_instance = None
         self._results = None
@@ -309,9 +311,8 @@ class BaseSearchQuery(object):
         """Indicates if any query has been been run."""
         return None not in (self._results, self._hit_count)
     
-    def run(self, spelling_query=None):
-        """Builds and executes the query. Returns a list of search results."""
-        final_query = self.build_query()
+    def build_params(self, spelling_query=None):
+        """Generates a list of params to use when searching."""
         kwargs = {
             'start_offset': self.start_offset,
         }
@@ -343,6 +344,13 @@ class BaseSearchQuery(object):
         if self.boost:
             kwargs['boost'] = self.boost
         
+        return kwargs
+    
+    def run(self, spelling_query=None):
+        """Builds and executes the query. Returns a list of search results."""
+        final_query = self.build_query()
+        kwargs = self.build_params(spelling_query=spelling_query)
+        
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
@@ -362,6 +370,17 @@ class BaseSearchQuery(object):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     
+    def run_raw(self):
+        """Executes a raw query. Returns a list of search results."""
+        kwargs = self.build_params()
+        kwargs.update(self._raw_query_params)
+        
+        results = self.backend.search(self._raw_query, **kwargs)
+        self._results = results.get('results', [])
+        self._hit_count = results.get('hits', 0)
+        self._facet_counts = results.get('facets', {})
+        self._spelling_suggestion = results.get('spelling_suggestion', None)
+    
     def get_count(self):
         """
         Returns the number of results the backend found for the query.
@@ -373,6 +392,9 @@ class BaseSearchQuery(object):
             if self._more_like_this:
                 # Special case for MLT.
                 self.run_mlt()
+            elif self._raw_query:
+                # Special case for raw queries.
+                self.run_raw()
             else:
                 self.run()
         
@@ -389,6 +411,9 @@ class BaseSearchQuery(object):
             if self._more_like_this:
                 # Special case for MLT.
                 self.run_mlt()
+            elif self._raw_query:
+                # Special case for raw queries.
+                self.run_raw()
             else:
                 self.run()
         
@@ -564,12 +589,14 @@ class BaseSearchQuery(object):
         """
         Runs a raw query (no parsing) against the backend.
         
-        This method does not affect the internal state of the SearchQuery used
-        to build queries. It does however populate the results/hit_count.
+        This method causes the SearchQuery to ignore the standard query
+        generating facilities, running only what was provided instead.
+        
+        Note that any kwargs passed along will override anything provided
+        to the rest of the ``SearchQuerySet``.
         """
-        results = self.backend.search(query_string, **kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
+        self._raw_query = query_string
+        self._raw_query_params = kwargs
     
     def more_like_this(self, model_instance):
         """
@@ -635,4 +662,6 @@ class BaseSearchQuery(object):
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         clone.backend = self.backend
+        clone._raw_query = self._raw_query
+        clone._raw_query_params = self._raw_query_params
         return clone

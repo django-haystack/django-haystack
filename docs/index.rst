@@ -56,6 +56,7 @@ looking for API documentation and advanced usage as detailed in:
    
    searchqueryset_api
    searchindex_api
+   searchfield_api
    searchresult_api
    searchsite_api
    searchquery_api
@@ -64,6 +65,7 @@ looking for API documentation and advanced usage as detailed in:
    architecture_overview
    backend_support
    settings
+   utils
 
 
 Developing

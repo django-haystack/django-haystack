@@ -21,6 +21,7 @@ Table Of Contents
    
    searchqueryset_api
    searchindex_api
+   searchfield_api
    searchresult_api
    searchsite_api
    searchquery_api
@@ -28,6 +29,7 @@ Table Of Contents
    
    running_tests
    creating_new_backends
+   utils
 
 
 Indices and tables

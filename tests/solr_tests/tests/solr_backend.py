@@ -1,5 +1,7 @@
 import datetime
+import logging
 import pysolr
+import StringIO
 from django.conf import settings
 from django.test import TestCase
 from haystack import backends
@@ -34,10 +36,6 @@ class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
         
-        # Stow.
-        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
-        
         self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
         self.raw_solr.delete(q='*:*')
         
@@ -64,7 +62,6 @@ class SolrSearchBackendTestCase(TestCase):
     def tearDown(self):
         import haystack
         haystack.site = self.old_site
-        settings.HAYSTACK_SOLR_URL = self.old_solr_url
         super(SolrSearchBackendTestCase, self).tearDown()
     
     def test_update(self):
@@ -165,25 +162,69 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual([result.month for result in self.sb.search('*:*')['results']], [u'02', u'02', u'02'])
 
 
+class CaptureHandler(logging.Handler):
+    logs_seen = []
+    
+    def emit(self, record):
+        CaptureHandler.logs_seen.append(record)
+
+
+class FailedSolrSearchBackendTestCase(TestCase):
+    def test_all_cases(self):
+        self.sample_objs = []
+        
+        for i in xrange(1, 4):
+            mock = MockModel()
+            mock.id = i
+            mock.author = 'daniel%s' % i
+            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            self.sample_objs.append(mock)
+        
+        # Stow.
+        # Point the backend at a URL that doesn't exist so we can watch the
+        # sparks fly.
+        old_solr_url = settings.HAYSTACK_SOLR_URL
+        settings.HAYSTACK_SOLR_URL = "%s/foo/" % settings.HAYSTACK_SOLR_URL
+        cap = CaptureHandler()
+        logging.getLogger('haystack').addHandler(cap)
+        
+        # Setup the rest of the bits.
+        site = SearchSite()
+        site.register(MockModel, SolrMockSearchIndex)
+        sb = SearchBackend(site=site)
+        smmi = SolrMockSearchIndex(MockModel, backend=sb)
+        
+        # Prior to the addition of the try/except bits, these would all fail miserably.
+        self.assertEqual(len(CaptureHandler.logs_seen), 0)
+        sb.update(smmi, self.sample_objs)
+        self.assertEqual(len(CaptureHandler.logs_seen), 1)
+        sb.remove(self.sample_objs[0])
+        self.assertEqual(len(CaptureHandler.logs_seen), 2)
+        sb.search('search')
+        self.assertEqual(len(CaptureHandler.logs_seen), 3)
+        sb.more_like_this(self.sample_objs[0])
+        self.assertEqual(len(CaptureHandler.logs_seen), 4)
+        sb.clear([MockModel])
+        self.assertEqual(len(CaptureHandler.logs_seen), 5)
+        sb.clear()
+        self.assertEqual(len(CaptureHandler.logs_seen), 6)
+        
+        # Restore.
+        settings.HAYSTACK_SOLR_URL = old_solr_url
+        logging.getLogger('haystack').removeHandler(cap)
+
+
 class LiveSolrSearchQueryTestCase(TestCase):
     fixtures = ['initial_data.json']
     
     def setUp(self):
         super(LiveSolrSearchQueryTestCase, self).setUp()
         
-        # Stow.
-        self.old_solr_url = getattr(settings, 'HAYSTACK_SOLR_URL', 'http://localhost:9001/solr/test_default')
-        settings.HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/test_default'
-        
         self.sq = SearchQuery(backend=SearchBackend())
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():
             mock.save()
-    
-    def tearDown(self):
-        settings.HAYSTACK_SOLR_URL = self.old_solr_url
-        super(LiveSolrSearchQueryTestCase, self).tearDown()
     
     def test_get_spelling(self):
         self.sq.add_filter(SQ(content='Indx'))
@@ -226,7 +267,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
 class LiveSolrSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrSearchQuerySetTestCase, self).setUp()
@@ -335,7 +376,7 @@ class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
 
 
 class LiveSolrRegressionsTestCase(TestCase):
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrRegressionsTestCase, self).setUp()
@@ -382,10 +423,19 @@ class LiveSolrRegressionsTestCase(TestCase):
         for key, value in id_counts.items():
             if value > 1:
                 self.fail("Result with id '%s' seen more than once in the results." % key)
+    
+    def test_raw_search_breaks_slicing(self):
+        sqs = self.sqs.raw_search('text: search')
+        page_1 = [result.pk for result in sqs[0:10]]
+        page_2 = [result.pk for result in sqs[10:20]]
+        
+        for pk in page_2:
+            if pk in page_1:
+                self.fail("Result with id '%s' seen more than once in the results." % pk)
 
 
 class LiveSolrMoreLikeThisTestCase(TestCase):
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrMoreLikeThisTestCase, self).setUp()
@@ -440,7 +490,7 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
 class LiveSolrRelatedSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the RelatedSearchQuerySet."""
-    fixtures = ['solr_bulk_data.json']
+    fixtures = ['bulk_data.json']
     
     def setUp(self):
         super(LiveSolrRelatedSearchQuerySetTestCase, self).setUp()

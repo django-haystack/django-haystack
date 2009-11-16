@@ -77,6 +77,13 @@ can largely be used unchanged.
 Interprets the collected query metadata and builds the final query to
 be sent to the backend.
 
+``build_params``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.build_params(self, spelling_query=None)
+
+Generates a list of params to use when searching.
+
 ``clean``
 ~~~~~~~~~
 
@@ -103,6 +110,13 @@ Optionally passes along an alternate query for spelling suggestions.
 
 Executes the More Like This. Returns a list of search results similar
 to the provided document (and optionally query).
+
+``run_raw``
+~~~~~~~~~~~
+
+.. method:: SearchQuery.run_raw(self)
+
+Executes a raw query. Returns a list of search results.
 
 ``get_count``
 ~~~~~~~~~~~~~
@@ -208,8 +222,11 @@ Adds a boosted term and the amount to boost it to the query.
 
 Runs a raw query (no parsing) against the backend.
 
-This method does not affect the internal state of the ``SearchQuery`` used
-to build queries. It does however populate the results/hit_count.
+This method causes the SearchQuery to ignore the standard query
+generating facilities, running only what was provided instead.
+
+Note that any kwargs passed along will override anything provided
+to the rest of the ``SearchQuerySet``.
 
 ``more_like_this``
 ~~~~~~~~~~~~~~~~~~

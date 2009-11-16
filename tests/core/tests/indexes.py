@@ -119,7 +119,7 @@ class SearchIndexTestCase(TestCase):
     def test_prepare(self):
         mock = MockModel()
         mock.pk = 20
-        mock.user = 'daniel%s' % mock.id
+        mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
         self.assertEqual(len(self.mi.prepare(mock)), 7)
@@ -230,6 +230,7 @@ class SearchIndexTestCase(TestCase):
     def test_nullable(self):
         mock = MockModel()
         mock.pk = 20
+        mock.author = None
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
         prepared_data = self.cnmi.prepare(mock)

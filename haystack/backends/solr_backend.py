@@ -1,3 +1,4 @@
+import logging
 import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -13,12 +14,17 @@ try:
 except NameError:
     from sets import Set as set
 try:
-    from pysolr import Solr
+    from pysolr import Solr, SolrError
 except ImportError:
     raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
 
 
 BACKEND_NAME = 'solr'
+
+
+class EmptyResults(object):
+    hits = 0
+    docs = []
 
 
 class SearchBackend(BaseSearchBackend):
@@ -45,6 +51,7 @@ class SearchBackend(BaseSearchBackend):
         
         timeout = getattr(settings, 'HAYSTACK_SOLR_TIMEOUT', 10)
         self.conn = Solr(settings.HAYSTACK_SOLR_URL, timeout=timeout)
+        self.log = logging.getLogger('haystack')
     
     def update(self, index, iterable, commit=True):
         docs = []
@@ -55,26 +62,40 @@ class SearchBackend(BaseSearchBackend):
         except UnicodeDecodeError:
             sys.stderr.write("Chunk failed.\n")
         
-        self.conn.add(docs, commit=commit)
+        if len(docs) > 0:
+            try:
+                self.conn.add(docs, commit=commit)
+            except (IOError, SolrError), e:
+                self.log.error("Failed to add documents to Solr: %s", e)
     
     def remove(self, obj_or_string, commit=True):
         solr_id = get_identifier(obj_or_string)
-        self.conn.delete(id=solr_id, commit=commit)
+        
+        try:
+            self.conn.delete(id=solr_id, commit=commit)
+        except (IOError, SolrError), e:
+            self.log.error("Failed to remove document '%s' from Solr: %s", solr_id, e)
     
     def clear(self, models=[], commit=True):
-        if not models:
-            # *:* matches all docs in Solr
-            self.conn.delete(q='*:*', commit=commit)
-        else:
-            models_to_delete = []
+        try:
+            if not models:
+                # *:* matches all docs in Solr
+                self.conn.delete(q='*:*', commit=commit)
+            else:
+                models_to_delete = []
+                
+                for model in models:
+                    models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                
+                self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
             
-            for model in models:
-                models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
-            
-            self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
-        
-        # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
-        self.conn.optimize()
+            # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
+            self.conn.optimize()
+        except (IOError, SolrError), e:
+            if len(models):
+                self.log.error("Failed to clear Solr index of models '%s': %s", ','.join(models_to_delete), e)
+            else:
+                self.log.error("Failed to clear Solr index: %s", e)
     
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
@@ -152,7 +173,12 @@ class SearchBackend(BaseSearchBackend):
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
         
-        raw_results = self.conn.search(query_string, **kwargs)
+        try:
+            raw_results = self.conn.search(query_string, **kwargs)
+        except (IOError, SolrError), e:
+            self.log.error("Failed to query Solr using '%s': %s", query_string, e)
+            raw_results = EmptyResults()
+        
         return self._process_results(raw_results, highlight=highlight)
     
     def more_like_this(self, model_instance, additional_query_string=None,
@@ -189,7 +215,14 @@ class SearchBackend(BaseSearchBackend):
         if narrow_queries:
             params['fq'] = list(narrow_queries)
         
-        raw_results = self.conn.more_like_this("id:%s" % get_identifier(model_instance), field_name, **params)
+        query = "id:%s" % get_identifier(model_instance)
+        
+        try:
+            raw_results = self.conn.more_like_this(query, field_name, **params)
+        except (IOError, SolrError), e:
+            self.log.error("Failed to fetch More Like This from Solr for document '%s': %s", query, e)
+            raw_results = EmptyResults()
+        
         return self._process_results(raw_results)
     
     def _process_results(self, raw_results, highlight=False):

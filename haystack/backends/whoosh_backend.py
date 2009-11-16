@@ -136,13 +136,14 @@ class SearchBackend(BaseSearchBackend):
             
             writer.update_document(**doc)
         
-        # For now, commit no matter what, as we run into locking issues otherwise.
-        writer.commit()
-        
-        # If spelling support is desired, add to the dictionary.
-        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
-            sp = SpellChecker(self.storage)
-            sp.add_field(self.index, self.content_field_name)
+        if len(iterable) > 0:
+            # For now, commit no matter what, as we run into locking issues otherwise.
+            writer.commit()
+            
+            # If spelling support is desired, add to the dictionary.
+            if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+                sp = SpellChecker(self.storage)
+                sp.add_field(self.index, self.content_field_name)
     
     def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
@@ -299,7 +300,7 @@ class SearchBackend(BaseSearchBackend):
             if narrowed_results:
                 raw_results.filter(narrowed_results)
             
-            return self._process_results(raw_results[start_offset:end_offset], highlight=highlight, query_string=query_string, spelling_query=spelling_query)
+            return self._process_results(raw_results, start_offset, end_offset, highlight=highlight, query_string=query_string, spelling_query=spelling_query)
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
                 if spelling_query:
@@ -322,10 +323,15 @@ class SearchBackend(BaseSearchBackend):
             'hits': 0,
         }
     
-    def _process_results(self, raw_results, highlight=False, query_string='', spelling_query=None):
+    def _process_results(self, raw_results, start_offset, end_offset, highlight=False, query_string='', spelling_query=None):
         from haystack import site
         results = []
+        
+        # It's important to grab the hits first before slicing. Otherwise, this
+        # can cause pagination failures.
         hits = len(raw_results)
+        raw_results = raw_results[start_offset:end_offset]
+        
         facets = {}
         spelling_suggestion = None
         indexed_models = site.get_indexed_models()

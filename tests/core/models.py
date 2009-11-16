@@ -14,7 +14,7 @@ class MockModel(models.Model):
     tag = models.ForeignKey(MockTag)
     
     def __unicode__(self):
-        return self.user
+        return self.author
     
     def hello(self):
         return 'World!'
@@ -25,4 +25,4 @@ class AnotherMockModel(models.Model):
     pub_date = models.DateTimeField(default=datetime.datetime.now)
     
     def __unicode__(self):
-        return self.user
+        return self.author
