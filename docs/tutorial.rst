@@ -1,44 +1,78 @@
 .. _ref-tutorial:
 
-=================
-Haystack Tutorial
-=================
+=============================
+Getting Started with Haystack
+=============================
 
-We'll be adding search functionality to a simple application.  Here is
-``myapp/models.py``::
+Search is a topic of ever increasing importance. Users increasing rely on search
+to separate signal from noise and find what they're looking for quickly. In
+addition, search can provide insight into what things are popular (many
+searches), what things are difficult to find on the site and ways you can
+improve the site better.
+
+To this end, Haystack tries to making integrating custom search as easy as
+possible while being flexible/powerful enough to handle more advanced use cases.
+
+Haystack is a reusable app (that is, it relies only on it's own code and focuses
+on providing just search) that plays nicely with both app you control as well as
+third-party apps (such as ``django.contrib.*``) without having to modify the
+sources.
+
+Haystack also does pluggable backends (much like Django's database
+layer), so virtually all of the code you write ought to be portable between
+which ever search engine you choose.
+
+.. note::
+
+    If you hit a stumbling block, there is both a `mailing list`_ and
+    `#haystack on irc.freenode.net`_ to get help.
+
+.. _mailing list: http://groups.google.com/group/django-haystack
+.. _#haystack on irc.freenode.net: irc://irc.freenode.net/haystack
+
+This tutorial assumes that you have a basic familiarity with the various major
+parts of Django (models/forms/views/settings/URLconfs) and tailored to the
+typical use case. There are shortcuts available as well as hooks for much
+more advanced setups, but those will not be covered here.
+
+For example purposes, we'll be adding search functionality to a simple
+note-taking application. Here is ``myapp/models.py``::
 
     from django.db import models
     from django.contrib.auth.models import User
-
-
+    
+    
     class Note(models.Model):
         user = models.ForeignKey(User)
         pub_date = models.DateTimeField()
         title = models.CharField(max_length=200)
         body = models.TextField()
-
+        
         def __unicode__(self):
             return self.title
 
-Initial Setup
--------------
-
-Before starting with Haystack, you will want to choose a search backend to get
-started. There is a quick-start guide to :doc:`installing_search_engines`, though you may
-want to defer to each engine's official instructions.
+Finally, before starting with Haystack, you will want to choose a search
+backend to get started. There is a quick-start guide to
+:doc:`installing_search_engines`, though you may want to defer to each engine's
+official instructions.
 
 
-1. Add Haystack To ``INSTALLED_APPS``
--------------------------------------
+Configuration
+=============
 
-In ``settings.py``, add ``haystack`` to ``INSTALLED_APPS``.
+Add Haystack To ``INSTALLED_APPS``
+----------------------------------
+
+As with most Django applications, you should add Haystack to the
+``INSTALLED_APPS`` within your settings file (usually ``settings.py``).
 
 
-2. Modify Your ``settings.py``
-------------------------------
+Modify Your ``settings.py``
+---------------------------
 
 Within your ``settings.py``, you'll need to add a setting to indicate where your
-site configuration file will live and which backend to use, as well as other settings for that backend.
+site configuration file will live and which backend to use, as well as other
+settings for that backend.
 
 ``HAYSTACK_SITECONF`` is a required settings and should provide a Python import
 path to a file where you keep your ``SearchSite`` configurations in. This will
@@ -47,10 +81,12 @@ be explained in the next step, but for now, add the following settings
 
     HAYSTACK_SITECONF = 'myproject.search_sites'
 
-``HAYSTACK_SEARCH_ENGINE`` is a required setting and should be one of the following:
+``HAYSTACK_SEARCH_ENGINE`` is a required setting and should be one of the
+following:
 
 * ``solr``
 * ``whoosh``
+* ``xapian`` (if you installed ``xapian-haystack``)
 * ``dummy``
 
 Example::
@@ -99,56 +135,51 @@ Example::
     HAYSTACK_XAPIAN_PATH = '/home/xapian/mysite_index'
 
 
-3. Create A ``SearchIndex``
----------------------------
+Create A ``SearchSite``
+-----------------------
 
-Within the empty file you create corresponding to your ``HAYSTACK_SITECONF``,
+Within the empty file you created corresponding to your ``HAYSTACK_SITECONF``,
 add the following code::
 
     import haystack
     haystack.autodiscover()
 
-This will create a default ``SearchIndex`` instance, search through all of your
-INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndexes`` with
-the default ``SearchIndex``.
+This will create a default ``SearchSite`` instance, search through all of your
+INSTALLED_APPS for ``search_indexes.py`` and register all ``SearchIndex``
+classes with the default ``SearchSite``.
 
-If autodiscovery and inclusion of all indexes is not desirable, you can manually
-register models in the following manner::
+.. note::
 
-    from haystack import site
-    
-    site.register(Note)
-
-This registers the model with the default site built into Haystack. The
-model gets registered with a standard ``SearchIndex`` class. If you need to override
-this class and provide additional functionality, you can manually register your
-own indexes like::
-
-    from haystack import site
-    
-    site.register(Note, NoteIndex)
-
-You can also explicitly setup an ``SearchIndex`` as follows::
-
-    from myapp.indexes import NoteIndex
-    from myapp.models import Note
-    from haystack.sites import SearchSite
-    
-    mysite = SearchSite()
-    mysite.register(Note, NoteIndex)
+    You can configure more than one ``SearchSite`` as well as manually
+    registering/unregistering indexes with them. However, these are rarely done
+    in practice and are available for advanced use.
 
 
-4. Creating ``SearchIndexes``
------------------------------
+Handling Data
+=============
 
-Registering indexes in Haystack is very similar to registering models
-and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to
-override the default indexing behavior for your model you can specify your
-own ``SearchIndex`` class.  This is useful for ensuring that future-dated
-or non-live content is not indexed and searchable.
+Creating ``SearchIndexes``
+--------------------------
 
-Our ``Note`` model has a ``pub_date`` field, so let's update our code to
-include our own ``SearchIndex`` to exclude indexing future-dated notes::
+``SearchIndex`` objects are the way Haystack determines what data should be
+placed in the search index and handles the flow of data in. You can think of
+them as being similar to Django ``Models`` or ``Forms`` in that they are
+field-based and manipulate/store data.
+
+You generally create a unique ``SearchIndex`` for each type of ``Model`` you
+wish to index, though you can reuse the same ``SearchIndex`` between different
+models if you take care in doing so and your field names are very standardized.
+
+To use a ``SearchIndex``, you need to register it with the ``Model`` it applies
+to and the ``SearchSite`` it ought to belong to. Registering indexes in Haystack
+is very similar to the way you register models and ``ModelAdmin`` classes with
+the `Django admin site`_.
+
+To build a ``SearchIndex``, all that's necessary is to subclass ``SearchIndex``,
+define the fields you want to store data with and register it.
+
+We'll create the following ``NoteSearchIndex`` to correspond to our ``Note``
+model::
 
     import datetime
     from haystack import indexes
@@ -162,49 +193,52 @@ include our own ``SearchIndex`` to exclude indexing future-dated notes::
         pub_date = indexes.DateTimeField(model_attr='pub_date')
         
         def get_queryset(self):
-            "Used when the entire index for model is updated."
+            """Used when the entire index for model is updated."""
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     
     
     site.register(Note, NoteIndex)
 
-Every custom ``SearchIndex`` requires there be one and only one field with
-``document=True``. This is the primary field that will get passed to the backend
-for indexing. The field needs to have the same fieldname on all ``SearchIndex``
-classes.
+Every ``SearchIndex`` requires there be one (and only one) field with
+``document=True``. This indicates to both Haystack and the search engine about
+which field is the primary field for searching within.
 
+.. warning::
 
-Additionally, if you provide ``use_template=True`` on any fields, you'll then
-need to create a template at ``search/indexes/myapp/note_<fieldname>.txt``. This
-allows you to customize the contents of the field in a way that will mean more
-to the search engine. A sample template for the ``text`` field might look like::
+    When you choose a ``document=True`` field, it should be consistently named
+    across all of your ``SearchIndex`` classes to avoid confusing the backend.
+    The convention is to name this field ``text``.
+    
+    There is nothing special about the ``text`` field name used in all of the
+    examples. It could be anything; you could call it ``pink_polka_dot`` and
+    it won't matter. It's simply a convention to call it ``text``.
+
+Additionally, we're providing ``use_template=True`` on the ``text`` field. This
+allows us to use a data template (rather than error prone concatenation) to
+build the document the search engine will us in searching. You'll need to create
+a new template at ``search/indexes/myapp/note_text.txt`` and place the following
+inside::
 
     {{ object.title }}
     {{ object.user.get_full_name }}
     {{ object.body }}
 
-In addition, you may specify other fields to be populated along with the
-document. In this case, we also index the user who authored the document as
-well as the date the document was published. The variable you assign the
-SearchField to should directly map to the field your search backend is 
-expecting. You instantiate most search fields with a parameter that points to
-the attribute of the object to populate that field with.
+In addition, we added several other fields (``author`` and ``pub_date``). These
+are useful when you want to provide additional filtering options. Haystack comes
+with a variety of ``SearchField`` classes to handle most types of data.
 
-.. note::
-
-    There is nothing special about the ``text`` field name used in all of the
-    examples. It could be anything; you could call it ``pink_polka_dot`` and
-    it won't matter. It's simply a convention to call it ``text``.
-
-The exception to this is the ``TemplateField`` class.
-This take either no arguments or an explicit template name to populate their contents.
-You can find more information about them in the ``SearchIndex`` API reference.
+A common theme is to allow admin users to add future content but have it not
+display on the site until that future date is reached. We specify a custom
+``get_queryset`` method to prevent those future items from being indexed.
 
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/
 
 
-5. Add The ``SearchView`` To Your URLconf
------------------------------------------
+Setting Up The Views
+====================
+
+Add The ``SearchView`` To Your URLconf
+--------------------------------------
 
 Within your URLconf, add the following line::
 
@@ -216,8 +250,8 @@ behavior by passing it any of several keyword arguments or override it entirely
 with your own view.
 
 
-6. Search Template
-------------------
+Search Template
+---------------
 
 Your search template (``search/search.html`` for the default case) will likely
 be very simple. The following is enough to get going (your template/block names
@@ -240,27 +274,51 @@ will likely differ)::
             </table>
             
             {% if page.object_list %}
+                <h3>Results</h3>
+                
                 {% for result in page.object_list %}
                     <p>
-                        {{ result.object.title }}
+                        <a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a>
                     </p>
+                {% empty %}
+                    <p>No results found.</p>
                 {% endfor %}
-            {% else %}
-                <p>No results found.</p>
             {% endif %}
         </form>
     {% endblock %}
 
+Note that the ``page.object_list`` is actually a list of ``SearchResult``
+objects instead of individual models. These objects have all the data returned
+from that record within the search index as well as score. They can also
+directly access the model for the result via ``{{ result.object }}``. So the
+``{{ result.object.title }}`` uses the actual ``Note`` object in the database
+and accesses its ``title`` field.
 
-7. Reindex
-----------
 
-Using ``manage.py``, run the ``reindex`` command to index all of your content.
+Reindex
+-------
+
+The final step, now that you have everything setup, is to put your data in
+from your database into the search index. Haystack ships with a management
+command to make this process easy.
+
+Simply run ``./manage.py reindex``. You'll get some totals of how many models
+were processed and placed in the index.
 
 
 Complete!
----------
+=========
 
-If you visit the search section of your site, you should now be able to enter
-a search query and (provided your database has data in it) receive search
-results back for the query.
+You can now visit the search section of your site, enter a search query and
+receive search results back for the query! Congratulations!
+
+
+What's Next?
+============
+
+This tutorial just scratches the surface of what Haystack provides. The
+``SearchQuerySet`` is the underpinning of all search in Haystack and provides
+a powerful, ``QuerySet``-like API (see :ref:`ref-searchqueryset-api`). You can
+use much more complicated ``SearchForms``/``SearchViews`` to give users a better
+UI (see :ref:`ref-views-and_forms`). And the :ref:`ref-best-practices` provides
+insight into non-obvious or advanced usages of Haystack.
