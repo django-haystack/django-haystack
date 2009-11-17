@@ -57,6 +57,20 @@ class SearchQuerySet(object):
         
         return self._manual_iter()
     
+    def __and__(self, other):
+        if isinstance(other, EmptySearchQuerySet):
+            return other._clone()
+        combined = self._clone()
+        combined.query.combine(other.query, SQ.AND)
+        return combined
+    
+    def __or__(self, other):
+        combined = self._clone()
+        if isinstance(other, EmptySearchQuerySet):
+            return combined
+        combined.query.combine(other.query, SQ.OR)
+        return combined
+    
     def _cache_is_full(self):
         if not self.query.has_run():
             return False

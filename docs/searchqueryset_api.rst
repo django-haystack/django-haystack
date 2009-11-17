@@ -6,9 +6,9 @@
 
 .. class:: SearchQuerySet(site=None, query=None)
 
-The ``SearchQuerySet`` class is designed to make performing a search and iterating
-over its results easy and consistent. For those familiar with Django's ORM
-``QuerySet``, much of the ``SearchQuerySet`` API should feel familiar.
+The ``SearchQuerySet`` class is designed to make performing a search and
+iterating over its results easy and consistent. For those familiar with Django's
+ORM ``QuerySet``, much of the ``SearchQuerySet`` API should feel familiar.
 
 
 Why Follow ``QuerySet``?
@@ -123,9 +123,9 @@ match will be performed on that phrase.
 
 .. warning::
 
-    Any data you pass to ``filter/exclude`` is passed along **unescaped**. If
+    Any data you pass to ``filter`` is passed along **unescaped**. If
     you don't trust the data you're passing along, you should either use
-    ``auto_query`` or use the ``clean`` method on your ``SearchBackend`` to
+    ``auto_query`` or use the ``clean`` method on your ``SearchQuery`` to
     sanitize the data.
 
 Example::
@@ -136,6 +136,10 @@ Example::
     
     # Identical to the previous example.
     SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
+    
+    # To escape user data:
+    sqs = SearchQuerySet()
+    sqs = sqs.filter(title=sqs.query.clean(user_query))
 
 ``exclude``
 ~~~~~~~~~~~
@@ -143,6 +147,13 @@ Example::
 .. method:: SearchQuerySet.exclude(self, **kwargs)
 
 Narrows the search by ensuring certain attributes are not included.
+
+.. warning::
+
+    Any data you pass to ``exclude`` is passed along **unescaped**. If
+    you don't trust the data you're passing along, you should either use
+    ``auto_query`` or use the ``clean`` method on your ``SearchQuery`` to
+    sanitize the data.
 
 Example::
 

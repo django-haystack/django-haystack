@@ -555,6 +555,22 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.none()
         self.assert_(isinstance(sqs, EmptySearchQuerySet))
         self.assertEqual(len(sqs), 0)
+    
+    def test___and__(self):
+        sqs1 = self.bsqs.filter(content='foo')
+        sqs2 = self.bsqs.filter(content='bar')
+        sqs = sqs1 & sqs2
+        
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filter), 2)
+    
+    def test___or__(self):
+        sqs1 = self.bsqs.filter(content='foo')
+        sqs2 = self.bsqs.filter(content='bar')
+        sqs = sqs1 | sqs2
+        
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.query_filter), 2)
 
 
 class EmptySearchQuerySetTestCase(TestCase):
