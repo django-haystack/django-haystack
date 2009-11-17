@@ -34,11 +34,23 @@ different combinations, you should use ``SQ`` objects. Like
 ``SearchQuerySet.filter`` and use the familiar unary operators (``&``, ``|`` and
 ``~``) to generate complex parts of the query.
 
+.. warning::
+
+    Any data you pass to ``SQ`` objects is passed along **unescaped**. If
+    you don't trust the data you're passing along, you should use
+    the ``clean`` method on your ``SearchQuery`` to sanitize the data.
+
 Example::
 
     from haystack.query import SQ
+    
     # We want "title: Foo AND (tags:bar OR tags:moof)"
     sqs = SearchQuerySet().filter(title='Foo').filter(SQ(tags='bar') | SQ(tags='moof'))
+    
+    # To clean user-provided data:
+    sqs = SearchQuerySet()
+    clean_query = sqs.query.clean(user_query)
+    sqs = sqs.filter(SQ(title=clean_query) | SQ(tags=clean_query))
 
 Internally, the ``SearchQuery`` object maintains a tree of ``SQ`` objects. Each
 ``SQ`` object supports what field it looks up against, what kind of lookup (i.e.
