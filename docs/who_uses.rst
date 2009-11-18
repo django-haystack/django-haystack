@@ -90,3 +90,13 @@ Using: Solr
 * http://hugeinc.com/
 * http://houselogic.com/
 
+
+Brick Design
+------------
+
+For search on Explore.
+
+Using: Solr
+
+* http://bricksf.com/
+* http://explore.org/
