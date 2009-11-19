@@ -1,12 +1,22 @@
+import logging
 from django.test import TestCase
 from haystack.models import SearchResult
 from core.models import MockModel
 from core.tests.mocks import MockSearchResult
 
 
+class CaptureHandler(logging.Handler):
+    logs_seen = []
+    
+    def emit(self, record):
+        CaptureHandler.logs_seen.append(record)
+
+
 class SearchResultTestCase(TestCase):
     def setUp(self):
         super(SearchResultTestCase, self).setUp()
+        cap = CaptureHandler()
+        logging.getLogger('haystack').addHandler(cap)
         
         self.no_data = {}
         self.extra_data = {
@@ -87,3 +97,33 @@ class SearchResultTestCase(TestCase):
         
         # Restore.
         haystack.site = old_site
+    
+    def test_missing_object(self):
+        awol1 = SearchResult('core', 'mockmodel', '1000000', 2)
+        self.assertEqual(awol1.app_label, 'core')
+        self.assertEqual(awol1.model_name, 'mockmodel')
+        self.assertEqual(awol1.pk, '1000000')
+        self.assertEqual(awol1.score, 2)
+        
+        awol2 = SearchResult('core', 'yetanothermockmodel', '1000000', 2)
+        self.assertEqual(awol2.app_label, 'core')
+        self.assertEqual(awol2.model_name, 'yetanothermockmodel')
+        self.assertEqual(awol2.pk, '1000000')
+        self.assertEqual(awol2.score, 2)
+        
+        # Failed lookups should fail gracefully.
+        CaptureHandler.logs_seen = []
+        self.assertEqual(awol1.model, MockModel)
+        self.assertEqual(awol1.object, None)
+        self.assertEqual(awol1.verbose_name, u'Mock model')
+        self.assertEqual(awol1.verbose_name_plural, u'Mock models')
+        self.assertEqual(awol1.stored, None)
+        self.assertEqual(len(CaptureHandler.logs_seen), 3)
+        
+        CaptureHandler.logs_seen = []
+        self.assertEqual(awol2.model, None)
+        self.assertEqual(awol2.object, None)
+        self.assertEqual(awol2.verbose_name, u'')
+        self.assertEqual(awol2.verbose_name_plural, u'')
+        self.assertEqual(awol2.stored, None)
+        self.assertEqual(len(CaptureHandler.logs_seen), 9)
