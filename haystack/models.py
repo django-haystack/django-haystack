@@ -1,4 +1,5 @@
 # "Hey, Django! Look at me, I'm an app! For Serious!"
+import logging
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.encoding import force_unicode
@@ -25,6 +26,7 @@ class SearchResult(object):
         self._verbose_name = None
         self._additional_fields = []
         self.stored_fields = None
+        self.log = logging.getLogger('haystack')
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
@@ -42,10 +44,16 @@ class SearchResult(object):
     
     def _get_object(self):
         if self._object is None:
+            if self.model is None:
+                self.log.error("Model could not be found for SearchResult '%s'." % self)
+                return None
+            
             try:
                 self._object = self.model._default_manager.get(pk=self.pk)
             except ObjectDoesNotExist:
+                self.log.error("Object could not be found in database for SearchResult '%s'." % self)
                 self._object = None
+        
         return self._object
     
     def _set_object(self, obj):
@@ -56,6 +64,7 @@ class SearchResult(object):
     def _get_model(self):
         if self._model is None:
             self._model = models.get_model(self.app_label, self.model_name)
+        
         return self._model
     
     def _set_model(self, obj):
@@ -64,17 +73,29 @@ class SearchResult(object):
     model = property(_get_model, _set_model)
     
     def _get_verbose_name(self):
+        if self.model is None:
+            self.log.error("Model could not be found for SearchResult '%s'." % self)
+            return u''
+        
         return force_unicode(capfirst(self.model._meta.verbose_name))
     
     verbose_name = property(_get_verbose_name)
     
     def _get_verbose_name_plural(self):
+        if self.model is None:
+            self.log.error("Model could not be found for SearchResult '%s'." % self)
+            return u''
+        
         return force_unicode(capfirst(self.model._meta.verbose_name_plural))
     
     verbose_name_plural = property(_get_verbose_name_plural)
     
     def content_type(self):
         """Returns the content type for the result's model instance."""
+        if self.model is None:
+            self.log.error("Model could not be found for SearchResult '%s'." % self)
+            return u''
+        
         return unicode(self.model._meta)
     
     def get_additional_fields(self):

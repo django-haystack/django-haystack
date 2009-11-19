@@ -342,7 +342,7 @@ class SearchQuerySet(object):
             query_string = query_string.replace(full_match, '', 1)
             
             exact_match = result.groups()[1]
-            clone = clone.filter(content=exact_match)
+            clone = clone.filter(content=clone.query.clean(exact_match))
             
             # Re-search the string for other exact matches.
             result = quote_regex.search(query_string)
