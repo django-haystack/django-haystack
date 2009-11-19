@@ -394,6 +394,15 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
         self.assertEqual(sqs.query.build_query(), u'((NOT (title:moof) AND (foo OR baz)) OR bar)')
+    
+    def test_auto_query(self):
+        # Ensure bits in exact matches get escaped properly as well.
+        # This will break horrifically if escaping isn't working.
+        sqs = self.sqs.auto_query('"pants:rule"')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__exact=pants\\:rule>')
+        self.assertEqual(sqs.query.build_query(), u'pants\\:rule')
+        self.assertEqual(len(sqs), 0)
 
 
 class SolrMockModelSearchIndex(indexes.SearchIndex):
@@ -475,10 +484,6 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
     
     def setUp(self):
         super(LiveSolrMoreLikeThisTestCase, self).setUp()
-        self.sqs = SearchQuerySet()
-        
-        # Wipe it clean.
-        self.sqs.query.backend.clear()
         
         # With the models registered, you get the proper bits.
         import haystack
@@ -490,6 +495,11 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         test_site.register(MockModel, SolrMockModelSearchIndex)
         test_site.register(AnotherMockModel, SolrAnotherMockModelSearchIndex)
         haystack.site = test_site
+        
+        self.sqs = SearchQuerySet()
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():

@@ -479,6 +479,11 @@ class SearchQuerySetTestCase(TestCase):
         sqs = self.bsqs.auto_query('test - stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=test AND content__exact=- AND content__exact=stuff)>')
+        
+        # Ensure bits in exact matches get escaped properly as well.
+        sqs = self.bsqs.auto_query('"pants:rule"')
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__exact=pants:rule>')
     
     def test_count(self):
         self.assertEqual(self.bsqs.count(), 0)
