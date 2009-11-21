@@ -171,6 +171,10 @@ The most common way to affect a single field's data is to create a
 ``prepare_FOO`` method (where FOO is the name of the field). As a parameter
 to this method, you will receive the instance that is attempting to be indexed.
 
+.. note::
+
+   This method is analogous to Django's ``Form.clean_FOO`` methods.
+
 To keep with our existing example, one use case might be altering the name
 inside the ``author`` field to be "firstname lastname <email>". In this case,
 you might write the following code::
@@ -180,16 +184,44 @@ you might write the following code::
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
         
-        def prepare_author(self, object):
-            return "%s <%s>" % (object.user.get_full_name(), object.user.email)
+        def prepare_author(self, obj):
+            return "%s <%s>" % (obj.user.get_full_name(), obj.user.email)
 
 This method should return a single value (or list/tuple/dict) to populate that
 fields data upon indexing. Note that this method takes priority over whatever
 data may come from the field itself.
 
-.. note::
+Just like ``Form.clean_FOO``, the field's ``prepare`` runs before the
+``prepare_FOO``, allowing you to access ``self.prepared_data``. For example::
 
-   This method is analogous to Django's ``Form.clean_FOO`` methods.
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+        
+        def prepare_author(self, obj):
+            # Say we want last name first, the hard way.
+            author = u''
+            
+            if 'author' in self.prepared_data:
+                name_bits = self.prepared_data['author'].split()
+                author = "%s, %s" % (name_bits[-1], ' '.join(name_bits[:-1]))
+            
+            return author
+
+This method is fully function with ``model_attr``, so if there's no convenient
+way to access the data you want, this is an excellent way to prepare it.
+
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        categories = indexes.MultiValueField()
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+        
+        def prepare_categories(self, obj):
+            # Since we're using a M2M relationship with a complex lookup,
+            # we can prepare the list here.
+            return [category.id for category in obj.category_set.active().order_by('-created')]
 
 
 2. ``prepare(self, object)``
