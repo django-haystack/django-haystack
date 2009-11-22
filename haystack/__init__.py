@@ -1,4 +1,5 @@
 import inspect
+import logging
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -8,6 +9,13 @@ from haystack.sites import site
 __author__ = 'Daniel Lindsley'
 __version__ = (1, 0, 0, 'beta')
 __all__ = ['backend']
+
+
+# Setup default logging.
+log = logging.getLogger('haystack')
+stream = logging.StreamHandler()
+stream.setLevel(logging.INFO)
+log.addHandler(stream)
 
 
 if not hasattr(settings, "HAYSTACK_SITECONF"):

@@ -187,6 +187,8 @@ class FailedSolrSearchBackendTestCase(TestCase):
         settings.HAYSTACK_SOLR_URL = "%s/foo/" % settings.HAYSTACK_SOLR_URL
         cap = CaptureHandler()
         logging.getLogger('haystack').addHandler(cap)
+        import haystack
+        logging.getLogger('haystack').removeHandler(haystack.stream)
         
         # Setup the rest of the bits.
         site = SearchSite()
@@ -212,6 +214,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
         # Restore.
         settings.HAYSTACK_SOLR_URL = old_solr_url
         logging.getLogger('haystack').removeHandler(cap)
+        logging.getLogger('haystack').addHandler(haystack.stream)
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
