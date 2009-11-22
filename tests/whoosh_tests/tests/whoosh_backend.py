@@ -18,13 +18,13 @@ except NameError:
     from sets import Set as set
 
 
-class WhooshMockSearchIndex(indexes.BaseSearchIndex):
+class WhooshMockSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
-class AllTypesWhooshMockSearchIndex(indexes.BaseSearchIndex):
+class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -32,7 +32,7 @@ class AllTypesWhooshMockSearchIndex(indexes.BaseSearchIndex):
     seen_count = indexes.IntegerField(indexed=False)
 
 
-class WhooshMaintainTypeMockSearchIndex(indexes.BaseSearchIndex):
+class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -543,7 +543,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(backends.queries), 1)
 
 
-class WhooshRoundTripSearchIndex(indexes.BaseSearchIndex):
+class WhooshRoundTripSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, default='')
     name = indexes.CharField()
     is_active = indexes.BooleanField()

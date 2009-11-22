@@ -8,7 +8,7 @@ from haystack.sites import SearchSite
 from core.models import MockModel
 
 
-class MLTSearchIndex(indexes.SearchIndex):
+class MLTSearchIndex(indexes.RealTimeSearchIndex):
     text = indexes.CharField(document=True, model_attr='foo')
 
 

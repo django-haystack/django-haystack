@@ -17,13 +17,13 @@ except NameError:
     from sets import Set as set
 
 
-class SolrMockSearchIndex(indexes.SearchIndex):
+class SolrMockSearchIndex(indexes.RealTimeSearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
-class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex):
+class SolrMaintainTypeMockSearchIndex(indexes.RealTimeSearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -405,13 +405,13 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 0)
 
 
-class SolrMockModelSearchIndex(indexes.SearchIndex):
+class SolrMockModelSearchIndex(indexes.RealTimeSearchIndex):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
-class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
+class SolrAnotherMockModelSearchIndex(indexes.RealTimeSearchIndex):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -534,7 +534,7 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.assertEqual([result.pk for result in alt_mlt_with_models], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])
 
 
-class SolrRoundTripSearchIndex(indexes.SearchIndex):
+class SolrRoundTripSearchIndex(indexes.RealTimeSearchIndex):
     text = indexes.CharField(document=True, default='')
     name = indexes.CharField()
     is_active = indexes.BooleanField()
