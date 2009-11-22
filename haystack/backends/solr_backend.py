@@ -3,6 +3,7 @@ import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
+from django.db.models.sql.query import get_proxied_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.exceptions import MissingDependency, MoreLikeThisError
@@ -184,7 +185,13 @@ class SearchBackend(BaseSearchBackend):
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
                        limit_to_registered_models=True, **kwargs):
-        index = self.site.get_index(model_instance.__class__)
+        # Handle deferred models.
+        if hasattr(model_instance, '_deferred') and model_instance._deferred:
+            model_klass = get_proxied_model(model_instance._meta)
+        else:
+            model_klass = type(model_instance)
+        
+        index = self.site.get_index(model_klass)
         field_name = index.get_content_field()
         params = {
             'fl': '*,score',
