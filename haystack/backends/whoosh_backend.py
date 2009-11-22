@@ -100,7 +100,10 @@ class SearchBackend(BaseSearchBackend):
         
         for field_name, field_class in fields.items():
             if isinstance(field_class, MultiValueField):
-                schema_fields[field_name] = KEYWORD(stored=True, commas=True, scorable=True)
+                if field_class.indexed is False:
+                    schema_fields[field_name] = KEYWORD(stored=True, commas=True)
+                else:
+                    schema_fields[field_name] = KEYWORD(stored=True, commas=True, scorable=True)
             elif isinstance(field_class, (DateField, DateTimeField, IntegerField, FloatField, BooleanField)):
                 if field_class.indexed is False:
                     schema_fields[field_name] = STORED
