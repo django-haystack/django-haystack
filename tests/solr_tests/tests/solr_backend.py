@@ -643,10 +643,13 @@ class LiveSolrRelatedSearchQuerySetTestCase(TestCase):
         settings.DEBUG = True
         self.old_site = haystack.site
         test_site = SearchSite()
-        test_site.register(MockModel)
+        test_site.register(MockModel, SolrMockModelSearchIndex)
         haystack.site = test_site
         
         self.rsqs = RelatedSearchQuerySet()
+        
+        # Wipe it clean.
+        self.rsqs.query.backend.clear()
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():
@@ -673,6 +676,12 @@ class LiveSolrRelatedSearchQuerySetTestCase(TestCase):
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
         self.assertEqual([obj.object.id for obj in sqs], range(2, 24))
+        
+        sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=10))
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs._load_all_querysets), 1)
+        self.assertEqual([obj.object.id for obj in sqs], range(11, 24))
+        self.assertEqual([obj.object.id for obj in sqs[10:20]], [21, 22, 23])
     
     def test_iter(self):
         backends.reset_search_queries()
@@ -693,6 +702,12 @@ class LiveSolrRelatedSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(backends.queries), 0)
         results = self.rsqs.all()
         self.assertEqual(int(results[21].pk), 22)
+        self.assertEqual(len(backends.queries), 4)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.rsqs.all()
+        self.assertEqual([int(result.pk) for result in results[20:30]], [21, 22, 23])
         self.assertEqual(len(backends.queries), 4)
     
     def test_manual_iter(self):
