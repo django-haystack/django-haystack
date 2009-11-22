@@ -534,6 +534,88 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.assertEqual([result.pk for result in alt_mlt_with_models], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])
 
 
+class SolrRoundTripSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, default='')
+    name = indexes.CharField()
+    is_active = indexes.BooleanField()
+    post_count = indexes.IntegerField()
+    average_rating = indexes.FloatField()
+    pub_date = indexes.DateField()
+    created = indexes.DateTimeField()
+    tags = indexes.MultiValueField()
+    sites = indexes.MultiValueField()
+    
+    def prepare(self, obj):
+        prepped = super(SolrRoundTripSearchIndex, self).prepare(obj)
+        prepped.update({
+            'text': 'This is some example text.',
+            'name': 'Mister Pants',
+            'is_active': True,
+            'post_count': 25,
+            'average_rating': 3.6,
+            'pub_date': datetime.date(2009, 11, 21),
+            'created': datetime.datetime(2009, 11, 21, 21, 31, 00),
+            'tags': ['staff', 'outdoor', 'activist', 'scientist'],
+            'sites': [3, 5, 1],
+        })
+        return prepped
+
+
+class LiveSolrRoundTripTestCase(TestCase):
+    def setUp(self):
+        super(LiveSolrRoundTripTestCase, self).setUp()
+        
+        # With the models registered, you get the proper bits.
+        import haystack
+        from haystack.sites import SearchSite
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel, SolrRoundTripSearchIndex)
+        haystack.site = test_site
+        
+        self.sqs = SearchQuerySet()
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Fake indexing.
+        sb = SearchBackend(site=test_site)
+        srtsi = SolrRoundTripSearchIndex(MockModel)
+        mock = MockModel()
+        mock.id = 1
+        sb.update(srtsi, [mock])
+    
+    def tearDown(self):
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        super(LiveSolrRoundTripTestCase, self).tearDown()
+    
+    def test_round_trip(self):
+        results = self.sqs.filter(id='core.mockmodel.1')
+        
+        # Sanity check.
+        self.assertEqual(results.count(), 1)
+        
+        # Check the individual fields.
+        result = results[0]
+        self.assertEqual(result.id, 'core.mockmodel.1')
+        self.assertEqual(result.text, 'This is some example text.')
+        self.assertEqual(result.name, 'Mister Pants')
+        self.assertEqual(result.is_active, True)
+        self.assertEqual(result.post_count, 25)
+        self.assertEqual(result.average_rating, 3.6)
+        self.assertEqual(result.pub_date, datetime.date(2009, 11, 21))
+        self.assertEqual(result.created, datetime.datetime(2009, 11, 21, 21, 31, 00))
+        self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
+        self.assertEqual(result.sites, [3, 5, 1])
+
+
 class LiveSolrRelatedSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the RelatedSearchQuerySet."""
     fixtures = ['bulk_data.json']

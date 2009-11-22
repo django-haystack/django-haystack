@@ -100,7 +100,7 @@ class SearchBackend(BaseSearchBackend):
         
         for field_name, field_class in fields.items():
             if isinstance(field_class, MultiValueField):
-                schema_fields[field_name] = KEYWORD(stored=True, commas=True)
+                schema_fields[field_name] = KEYWORD(stored=True, commas=True, scorable=True)
             elif isinstance(field_class, (DateField, DateTimeField, IntegerField, FloatField, BooleanField)):
                 if field_class.indexed is False:
                     schema_fields[field_name] = STORED
@@ -348,7 +348,11 @@ class SearchBackend(BaseSearchBackend):
                     string_key = str(key)
                     
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
-                        additional_fields[string_key] = index.fields[string_key].convert(value)
+                        # Special-cased due to the nature of KEYWORD fields.
+                        if isinstance(index.fields[string_key], MultiValueField):
+                            additional_fields[string_key] = value.split(',')
+                        else:
+                            additional_fields[string_key] = index.fields[string_key].convert(value)
                     else:
                         additional_fields[string_key] = self._to_python(value)
                 
@@ -361,12 +365,10 @@ class SearchBackend(BaseSearchBackend):
                     sa = analysis.StemmingAnalyzer()
                     terms = [term.replace('*', '') for term in query_string.split()]
                     
-                    # DRL_FIXME: Highlighting doesn't seem to work properly in testing.
                     additional_fields['highlighted'] = {
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
                 
-                # Requires Whoosh 0.1.20+.
                 if hasattr(raw_results, 'score'):
                     score = raw_results.score(doc_offset)
                 else:
@@ -437,6 +439,8 @@ class SearchBackend(BaseSearchBackend):
                 value = u'true'
             else:
                 value = u'false'
+        elif isinstance(value, (list, tuple)):
+            value = u','.join([force_unicode(v) for v in value])
         else:
             value = force_unicode(value)
         return value

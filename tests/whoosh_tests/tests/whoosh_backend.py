@@ -213,8 +213,8 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb._from_python(1), u'1')
         self.assertEqual(self.sb._from_python(2653), u'2653')
         self.assertEqual(self.sb._from_python(25.5), u'25.5')
-        self.assertEqual(self.sb._from_python([1, 2, 3]), u'[1, 2, 3]')
-        self.assertEqual(self.sb._from_python((1, 2, 3)), u'(1, 2, 3)')
+        self.assertEqual(self.sb._from_python([1, 2, 3]), u'1,2,3')
+        self.assertEqual(self.sb._from_python((1, 2, 3)), u'1,2,3')
         self.assertEqual(self.sb._from_python({'a': 1, 'c': 3, 'b': 2}), u"{'a': 1, 'c': 3, 'b': 2}")
         self.assertEqual(self.sb._from_python(datetime(2009, 5, 9, 16, 14)), u'2009-05-09T16:14:00')
         self.assertEqual(self.sb._from_python(datetime(2009, 5, 9, 0, 0)), u'2009-05-09T00:00:00')
@@ -541,3 +541,98 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(backends.queries), 1)
+
+
+class WhooshRoundTripSearchIndex(indexes.BaseSearchIndex):
+    text = indexes.CharField(document=True, default='')
+    name = indexes.CharField()
+    is_active = indexes.BooleanField()
+    post_count = indexes.IntegerField()
+    average_rating = indexes.FloatField()
+    pub_date = indexes.DateField()
+    created = indexes.DateTimeField()
+    tags = indexes.MultiValueField()
+    sites = indexes.MultiValueField()
+    
+    def prepare(self, obj):
+        prepped = super(WhooshRoundTripSearchIndex, self).prepare(obj)
+        prepped.update({
+            'text': 'This is some example text.',
+            'name': 'Mister Pants',
+            'is_active': True,
+            'post_count': 25,
+            'average_rating': 3.6,
+            'pub_date': date(2009, 11, 21),
+            'created': datetime(2009, 11, 21, 21, 31, 00),
+            'tags': ['staff', 'outdoor', 'activist', 'scientist'],
+            'sites': [3, 5, 1],
+        })
+        return prepped
+
+
+class LiveWhooshRoundTripTestCase(TestCase):
+    def setUp(self):
+        super(LiveWhooshRoundTripTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        
+        self.site = SearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.wrtsi = WhooshRoundTripSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshRoundTripSearchIndex)
+        
+        # Stow.
+        import haystack
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        self.sb.delete_index()
+        
+        self.sqs = SearchQuerySet(site=self.site)
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Fake indexing.
+        mock = MockModel()
+        mock.id = 1
+        self.sb.update(self.wrtsi, [mock])
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        
+        import haystack
+        haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
+        
+        super(LiveWhooshRoundTripTestCase, self).tearDown()
+    
+    def test_round_trip(self):
+        results = self.sqs.filter(id='core.mockmodel.1')
+        
+        # Sanity check.
+        self.assertEqual(results.count(), 1)
+        
+        # Check the individual fields.
+        result = results[0]
+        self.assertEqual(result.id, 'core.mockmodel.1')
+        self.assertEqual(result.text, 'This is some example text.')
+        self.assertEqual(result.name, 'Mister Pants')
+        self.assertEqual(result.is_active, True)
+        self.assertEqual(result.post_count, 25)
+        self.assertEqual(result.average_rating, 3.6)
+        self.assertEqual(result.pub_date, date(2009, 11, 21))
+        self.assertEqual(result.created, datetime(2009, 11, 21, 21, 31, 00))
+        self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
+        self.assertEqual(result.sites, [u'3', u'5', u'1'])

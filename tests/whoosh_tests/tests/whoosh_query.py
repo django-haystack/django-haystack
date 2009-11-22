@@ -109,4 +109,4 @@ class WhooshSearchQueryTestCase(TestCase):
     
     def test_build_query_with_sequence_and_filter_not_in(self):
         self.sq.add_filter(SQ(id__exact=[1, 2, 3]))
-        self.assertEqual(self.sq.build_query(), u'id:"[1, 2, 3]"')
+        self.assertEqual(self.sq.build_query(), u'id:1,2,3')
