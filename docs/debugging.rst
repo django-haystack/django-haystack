@@ -35,14 +35,14 @@ This problem usually occurs when first adding Haystack to your project.
 =====================================
 
 Several issues can cause no results to be found. Most commonly it is either
-not running a ``reindex`` to populate your index or having a blank
+not running a ``rebuild_index`` to populate your index or having a blank
 ``document=True`` field, resulting in no content for the engine to search on.
 
 * Do you have a ``search_sites.py`` that runs ``haystack.autodiscover``?
 * Have you registered your models with the main ``haystack.site`` (usually
   within your ``search_indexes.py``)?
 * Do you have data in your database?
-* Have you run a ``./manage.py reindex`` to index all of your content?
+* Have you run a ``./manage.py rebuild_index`` to index all of your content?
 * Start a Django shell (``./manage.py shell``) and try::
 
   >>> from haystack.query import SearchQuerySet
@@ -71,24 +71,25 @@ not running a ``reindex`` to populate your index or having a blank
 
 This is a Whoosh-specific traceback. It occurs when the Whoosh engine in one
 process/thread is locks the index files for writing while another process/thread
-tries to access them. This is a common error with Whoosh under any kind of load,
-which is why it's only recommended for small sites or development.
+tries to access them. This is a common error when using ``RealTimeSearchIndex``
+with Whoosh under any kind of load, which is why it's only recommended for
+small sites or development.
 
-A way to solve this is to subclass ``SearchIndex`` with the following::
+A way to solve this is to subclass ``SearchIndex`` instead::
 
     from haystack import indexes
     
-    class WhooshSearchIndex(indexes.SearchIndex):
-        def _setup_save(self, model):
-            pass
-        
-        def _setup_delete(self, model):
-            pass
+    # Change from:
+    # 
+    #   class MySearchIndex(indexes.RealTimeSearchIndex):
+    # 
+    # to:
+    class MySearchIndex(indexes.SearchIndex):
+        ...
 
-Then make all of your ``SearchIndex`` classes inherit from
-``WhooshSearchIndex``. The final step is to set up a cron job that runs
-``./manage.py reindex`` (optionally with ``--age=24``) that runs nightly (or
-however often you need) to refresh the search indexes.
+The final step is to set up a cron job that runs
+``./manage.py rebuild_index`` (optionally with ``--age=24``) that runs nightly
+(or however often you need) to refresh the search indexes.
 
 The downside to this is that you lose real-time search. For many people, this
 isn't an issue and this will allow you to scale Whoosh up to a much higher

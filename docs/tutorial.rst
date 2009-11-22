@@ -302,8 +302,8 @@ The final step, now that you have everything setup, is to put your data in
 from your database into the search index. Haystack ships with a management
 command to make this process easy.
 
-Simply run ``./manage.py reindex``. You'll get some totals of how many models
-were processed and placed in the index.
+Simply run ``./manage.py rebuild_index``. You'll get some totals of how many
+models were processed and placed in the index.
 
 
 Complete!

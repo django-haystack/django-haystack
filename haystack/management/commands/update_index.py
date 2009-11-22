@@ -11,7 +11,7 @@ DEFAULT_AGE = None
 
 
 class Command(AppCommand):
-    help = "Reindex the given app(s)."
+    help = "Freshens the index for the given app(s)."
     option_list = AppCommand.option_list + (
         make_option('-a', '--age', action='store', dest='age',
             default=DEFAULT_AGE, type='int',
