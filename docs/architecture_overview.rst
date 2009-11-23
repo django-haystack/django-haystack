@@ -44,8 +44,8 @@ Implemented per-backend.
 * Method for performing the actual query
 
 
-``IndexSite``
--------------
+``SearchSite``
+--------------
 
 One main implementation.
 
