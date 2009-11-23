@@ -42,6 +42,7 @@ you may want to include in your application.
    :maxdepth: 1
    
    best_practices
+   highlighting
    faceting
 
 

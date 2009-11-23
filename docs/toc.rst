@@ -17,6 +17,7 @@ Table Of Contents
    debugging
    
    best_practices
+   highlighting
    faceting
    
    searchqueryset_api
