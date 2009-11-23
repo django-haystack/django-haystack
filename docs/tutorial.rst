@@ -179,7 +179,10 @@ To build a ``SearchIndex``, all that's necessary is to subclass ``SearchIndex``,
 define the fields you want to store data with and register it.
 
 We'll create the following ``NoteSearchIndex`` to correspond to our ``Note``
-model::
+model. This code generally goes in a ``search_indexes.py`` file within the app
+it applies to, though that is not required. This allows
+``haystack.autodiscover()`` to automatically pick it up. The
+``NoteSearchIndex`` should look like::
 
     import datetime
     from haystack import indexes
