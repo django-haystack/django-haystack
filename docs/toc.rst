@@ -9,6 +9,7 @@ Table Of Contents
    glossary
    views_and_forms
    templatetags
+   management_commands
    architecture_overview
    backend_support
    installing_search_engines

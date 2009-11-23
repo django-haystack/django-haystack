@@ -9,6 +9,10 @@ class Command(NoArgsCommand):
         # Cause the default site to load.
         from haystack import site
         
-        index_count = len(site.get_indexed_models())
+        indexed = site.get_indexed_models()
+        index_count = len(indexed)
         print "Loaded URLconf to initialize SearchSite..."
         print "Main site registered %s index(es)." % index_count
+        
+        for index in indexed:
+            print "  - %s" % index

@@ -27,6 +27,7 @@ you up and running:
    views_and_forms
    templatetags
    glossary
+   management_commands
    faq
    who_uses
    installing_search_engines
