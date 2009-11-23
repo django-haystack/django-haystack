@@ -28,8 +28,8 @@ except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 1):
-    raise MissingDependency("The 'whoosh' backend requires version 0.3.1 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 5):
+    raise MissingDependency("The 'whoosh' backend requires version 0.3.5 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
