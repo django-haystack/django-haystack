@@ -1,9 +1,14 @@
+import re
+from django.utils import datetime_safe
 from django.template import loader, Context
 from haystack.exceptions import SearchFieldError
 
 
 class NOT_PROVIDED:
     pass
+
+
+DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|\s+)(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}).*?$')
 
 
 # All the SearchFields variants.
@@ -158,7 +163,16 @@ class DateField(SearchField):
         if value is None:
             return None
         
-        return str(value)
+        if isinstance(value, basestring):
+            match = DATETIME_REGEX.search(value)
+            
+            if match:
+                data = match.groupdict()
+                return datetime_safe.date(int(data['year']), int(data['month']), int(data['day']))
+            else:
+                raise SearchFieldError("Date provided to '%s' field doesn't appear to be a valid date string: '%s'" % (self.instance_name, value))
+        
+        return value
 
 
 class DateTimeField(SearchField):
@@ -166,7 +180,16 @@ class DateTimeField(SearchField):
         if value is None:
             return None
         
-        return str(value)
+        if isinstance(value, basestring):
+            match = DATETIME_REGEX.search(value)
+            
+            if match:
+                data = match.groupdict()
+                return datetime_safe.datetime(int(data['year']), int(data['month']), int(data['day']), int(data['hour']), int(data['minute']), int(data['second']))
+            else:
+                raise SearchFieldError("Datetime provided to '%s' field doesn't appear to be a valid datetime string: '%s'" % (self.instance_name, value))
+        
+        return value
 
 
 class MultiValueField(SearchField):

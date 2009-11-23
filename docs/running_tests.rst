@@ -16,7 +16,7 @@ bugfixes/modifications), here are the steps to getting them running::
 
     cd django-haystack/tests
     export PYTHONPATH=`pwd`
-    django-admin.py test --settings=settings
+    django-admin.py test core --settings=settings
 
 ``Haystack`` is maintained with all tests passing at all times, so if you
 receive any errors during testing, please check your setup and file a report if

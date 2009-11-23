@@ -30,8 +30,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-# DRL_FIXME: Before 1.0, this should become ``SearchIndex`` again.
-class BaseSearchIndex(object):
+class SearchIndex(object):
     """
     Base class for building indexes.
     
@@ -186,8 +185,7 @@ class BaseSearchIndex(object):
         return self.model._default_manager.all()
 
 
-# DRL_FIXME: Before 1.0, this should become ``RealTimeSearchIndex``.
-class SearchIndex(BaseSearchIndex):
+class RealTimeSearchIndex(SearchIndex):
     """
     A variant of the ``SearchIndex`` that constantly keeps the index fresh,
     as opposed to requiring a cron job.

@@ -179,3 +179,20 @@ An example::
     HAYSTACK_BATCH_SIZE = 100
 
 The default is 1000 models per commit.
+
+
+``HAYSTACK_CUSTOM_HIGHLIGHTER``
+===============================
+
+**Optional**
+
+This setting allows you to specify your own custom ``Highlighter``
+implementation for use with the ``{% highlight %}`` template tag. It should be
+the full path to the class.
+
+An example::
+
+    HAYSTACK_CUSTOM_HIGHLIGHTER = 'myapp.utils.BorkHighlighter'
+
+No default is provided. Haystack automatically falls back to the default
+implementation.

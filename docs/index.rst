@@ -25,7 +25,9 @@ you up and running:
    :maxdepth: 1
    
    views_and_forms
+   templatetags
    glossary
+   management_commands
    faq
    who_uses
    installing_search_engines
@@ -42,6 +44,7 @@ you may want to include in your application.
    :maxdepth: 1
    
    best_practices
+   highlighting
    faceting
 
 

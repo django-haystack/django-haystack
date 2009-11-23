@@ -8,6 +8,8 @@ Table Of Contents
    tutorial
    glossary
    views_and_forms
+   templatetags
+   management_commands
    architecture_overview
    backend_support
    installing_search_engines
@@ -17,6 +19,7 @@ Table Of Contents
    debugging
    
    best_practices
+   highlighting
    faceting
    
    searchqueryset_api

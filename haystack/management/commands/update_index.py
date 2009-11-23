@@ -11,7 +11,7 @@ DEFAULT_AGE = None
 
 
 class Command(AppCommand):
-    help = "Reindex the given app(s)."
+    help = "Freshens the index for the given app(s)."
     option_list = AppCommand.option_list + (
         make_option('-a', '--age', action='store', dest='age',
             default=DEFAULT_AGE, type='int',
@@ -54,9 +54,7 @@ class Command(AppCommand):
     
     def handle_app(self, app, **options):
         # Cause the default site to load.
-        from haystack import handle_registrations
-        handle_registrations()
-        
+        from haystack import site
         from django.db.models import get_models
         from haystack.exceptions import NotRegistered
         
@@ -69,10 +67,7 @@ class Command(AppCommand):
                 module = __import__(module_name, {}, {}, [''])
                 site = getattr(module, site_name)
             except (ImportError, NameError):
-                # Fall back to the main site.
-                from haystack import site
-        else:
-            from haystack import site
+                pass
         
         for model in get_models(app):
             try:

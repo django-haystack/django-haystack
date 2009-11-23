@@ -622,7 +622,7 @@ cache.
 ``load_all_queryset``
 ---------------------
 
-.. method:: SearchQuerySet.load_all_queryset(self, model_class, queryset)
+.. method:: RelatedSearchQuerySet.load_all_queryset(self, model_class, queryset)
 
 Allows for specifying a custom ``QuerySet`` that changes how ``load_all`` will
 fetch records for the provided model. This is useful for post-processing the
@@ -631,7 +631,7 @@ filtering certain data.
 
 Example::
 
-    sqs = SearchQuerySet().filter(content='foo').load_all()
+    sqs = RelatedSearchQuerySet().filter(content='foo').load_all()
     # For the Entry model, we want to include related models directly associated
     # with the Entry to save on DB queries.
     sqs = sqs.load_all_queryset(Entry, Entry.objects.all().select_related(depth=1))

@@ -25,8 +25,8 @@ You'll need to revise your schema. You can generate this from your application
 it in ``apache-solr-1.3.0/example/solr/conf/schema.xml``. Then restart Solr.
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
-distributed via PyPI, is the best version to use. Place ``pysolr.py`` somewhere
-on your ``PYTHONPATH``.
+distributed via PyPI, is the best version to use (2.0.9+). Place ``pysolr.py``
+somewhere on your ``PYTHONPATH``.
 
 .. note::
 
@@ -90,7 +90,8 @@ Official Download Location: http://whoosh.ca/
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. With the
 0.3.1+ releases, Whoosh has become much more performant, stable and better
-tested. You can install via PyPI_ via::
+tested. The current recommended version is 0.3.5+. You can install via PyPI_
+using::
 
     sudo easy_install whoosh
     # ... or ...
