@@ -8,6 +8,7 @@ Table Of Contents
    tutorial
    glossary
    views_and_forms
+   templatetags
    architecture_overview
    backend_support
    installing_search_engines

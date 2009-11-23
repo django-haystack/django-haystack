@@ -17,7 +17,7 @@ about speed and will only ever be using one backend,
 
 Use of ``SearchQuerySet.highlight`` is documented in the
 :doc:`searchqueryset_api` documentation and the ``{% highlight %}`` tag is
-covered in the :doc:``templatetags`` documentation, so the rest of this material
+covered in the :doc:`templatetags` documentation, so the rest of this material
 will cover the ``Highlighter`` implementation.
 
 

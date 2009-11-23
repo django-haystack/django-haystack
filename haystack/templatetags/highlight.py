@@ -7,12 +7,12 @@ register = template.Library()
 
 
 class HighlightNode(template.Node):
-    def __init__(self, text_block, query, html_tag=None, css_class=None, max_words=None):
+    def __init__(self, text_block, query, html_tag=None, css_class=None, max_length=None):
         self.text_block = template.Variable(text_block)
         self.query = template.Variable(query)
         self.html_tag = html_tag
         self.css_class = css_class
-        self.max_words = max_words
+        self.max_length = max_length
         
         if html_tag is not None:
             self.html_tag = template.Variable(html_tag)
@@ -20,8 +20,8 @@ class HighlightNode(template.Node):
         if css_class is not None:
             self.css_class = template.Variable(css_class)
         
-        if max_words is not None:
-            self.max_words = template.Variable(max_words)
+        if max_length is not None:
+            self.max_length = template.Variable(max_length)
     
     def render(self, context):
         text_block = self.text_block.resolve(context)
@@ -34,8 +34,8 @@ class HighlightNode(template.Node):
         if self.css_class is not None:
             kwargs['css_class'] = self.css_class.resolve(context)
         
-        if self.max_words is not None:
-            kwargs['max_words'] = self.max_words.resolve(context)
+        if self.max_length is not None:
+            kwargs['max_length'] = self.max_length.resolve(context)
         
         # Handle a user-defined highlighting function.
         if hasattr(settings, 'HAYSTACK_CUSTOM_HIGHLIGHTER') and settings.HAYSTACK_CUSTOM_HIGHLIGHTER:
@@ -60,24 +60,25 @@ class HighlightNode(template.Node):
 def highlight(parser, token):
     """
     Takes a block of text and highlights words from a provided query within that
-    block of text. Optionally accepts an argument to provide the CSS class to
-    wrap highlighted word in.
+    block of text. Optionally accepts arguments to provide the HTML tag to wrap 
+    highlighted word in, a CSS class to use with the tag and a maximum length of
+    the blurb in characters.
     
     Syntax::
     
-        {% highlight <text_block> with <query> [class "class_name"] [tag "span"] [max_words 200] %}
+        {% highlight <text_block> with <query> [class "class_name"] [tag "span"] [max_length 200] %}
     
     Example::
     
         # Highlight summary with default behavior.
         {% highlight result.summary with request.query %}
         
-        # Highlight summary but wrap highlighted words with a span and the
+        # Highlight summary but wrap highlighted words with a div and the
         # following CSS class.
-        {% highlight result.summary with request.query tag "span" class "highlight_me_please" %}
+        {% highlight result.summary with request.query tag "div" class "highlight_me_please" %}
         
-        # Highlight summary but only show 40 words.
-        {% highlight result.summary with request.query max_words 40 %}
+        # Highlight summary but only show 40 characters.
+        {% highlight result.summary with request.query max_length 40 %}
     """
     bits = token.split_contents()
     tag_name = bits[0]
@@ -105,7 +106,7 @@ def highlight(parser, token):
         if bit == 'html_tag':
             kwargs['html_tag'] = arg_bits.next()
         
-        if bit == 'max_words':
-            kwargs['max_words'] = arg_bits.next()
+        if bit == 'max_length':
+            kwargs['max_length'] = arg_bits.next()
     
     return HighlightNode(text_block, query, **kwargs)

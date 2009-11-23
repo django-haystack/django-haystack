@@ -25,6 +25,7 @@ you up and running:
    :maxdepth: 1
    
    views_and_forms
+   templatetags
    glossary
    faq
    who_uses
