@@ -106,10 +106,6 @@ def handle_registrations(*args, **kwargs):
     This makes it possible for scripts/management commands that affect models
     but know nothing of Haystack to keep the index up to date.
     """
-    # DRL_TODO: Some day, Django may feature a way to iterate over models without
-    #           loading everything (partial load). When that comes, we'll need a
-    #           version check here.
-    
     # This is a little dirty but we need to run the code that follows only
     # once, no matter how many times the main Haystack module is imported.
     # We'll look through the stack to see if we appear anywhere and simply
@@ -119,13 +115,6 @@ def handle_registrations(*args, **kwargs):
     for stack_info in stack[1:]:
         if 'handle_registrations' in stack_info[3]:
             return
-    
-    from django.db import models
-    
-    # Force the AppCache to populate. We need it loaded to be able to
-    # register using the generated Model classes, which are only fully there
-    # after the cache is loaded.
-    models.loading.cache.get_apps()
     
     # Pull in the config file, causing any SearchSite initialization code to
     # execute.
