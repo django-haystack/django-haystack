@@ -54,9 +54,7 @@ class Command(AppCommand):
     
     def handle_app(self, app, **options):
         # Cause the default site to load.
-        from haystack import handle_registrations
-        handle_registrations()
-        
+        from haystack import site
         from django.db.models import get_models
         from haystack.exceptions import NotRegistered
         
@@ -69,10 +67,7 @@ class Command(AppCommand):
                 module = __import__(module_name, {}, {}, [''])
                 site = getattr(module, site_name)
             except (ImportError, NameError):
-                # Fall back to the main site.
-                from haystack import site
-        else:
-            from haystack import site
+                pass
         
         for model in get_models(app):
             try:
