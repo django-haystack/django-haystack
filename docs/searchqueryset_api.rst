@@ -220,7 +220,9 @@ string with a ``-``::
 If supported by the backend, the ``SearchResult`` objects returned will include
 a highlighted version of the result::
 
-    SearchQuerySet().filter(content='foo').highlight()
+    sqs = SearchQuerySet().filter(content='foo').highlight()
+    result = sqs[0]
+    result.highlighted['text'][0] # u'Two computer scientists walk into a bar. The bartender says "<em>Foo</em>!".'
 
 ``models``
 ~~~~~~~~~~
