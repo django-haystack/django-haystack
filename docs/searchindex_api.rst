@@ -296,7 +296,7 @@ non-existent), merely an example of how to extend existing fields.
    This method is analagous to Django's ``Field.clean`` methods.
 
 
-Method Reference
+``Search Index``
 ================
 
 ``get_queryset``
@@ -427,8 +427,29 @@ If you need a specific ``QuerySet`` in one place, you can specify this at the
 :doc:`searchqueryset_api` for usage.
 
 
-ModelSearchIndex
-================
+``RealTimeSearchIndex``
+=======================
+
+The ``RealTimeSearchIndex`` provides all the same functionality as the standard
+``SearchIndex``. However, in addition, it connects to the
+``post_save``/``post_delete`` signals of the model it's registered with.
+
+This means that anytime a model is saved or deleted, it's automatically and
+immediately updated in the search index, yielding real-time search.
+
+.. warning::
+
+    Not all backends deal well with the kind of document churn that can result
+    from using the ``RealTimeSearchIndex``. Solr is the only one that handles
+    it gracefully.
+    
+    Additionally, this will add more overhead in terms of CPU usage, so you
+    should be sure to accommodate for this and should have appropriate monitoring
+    in place.
+
+
+``ModelSearchIndex``
+====================
 
 The ``ModelSearchIndex`` class allows for automatic generation of a
 ``SearchIndex`` based on the fields of the model assigned to it.
