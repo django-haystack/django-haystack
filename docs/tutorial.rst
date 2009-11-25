@@ -308,6 +308,20 @@ command to make this process easy.
 Simply run ``./manage.py rebuild_index``. You'll get some totals of how many
 models were processed and placed in the index.
 
+.. note::
+
+    Using the standard ``SearchIndex``, your search index content is only
+    updated whenever you run either ``./manage.py update_index`` or start
+    afresh with ``./manage.py rebuild_index``.
+    
+    You should cron up a ``./manage.py update_index`` job at whatever interval
+    works best for your site (using ``--age=<num_hours>`` reduces the number of
+    things to update).
+    
+    Alternatively, if you have low traffic and/or your search engine can handle
+    it, the ``RealTimeSearchIndex`` automatically handles updates/deletes
+    for you.
+
 
 Complete!
 =========
