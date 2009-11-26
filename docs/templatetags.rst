@@ -21,7 +21,7 @@ and 200 characters for the excerpt.
 
 Syntax::
 
-    {% highlight <text_block> with <query> [class "class_name"] [tag "span"] [max_length 200] %}
+    {% highlight <text_block> with <query> [css_class "class_name"] [html_tag "span"] [max_length 200] %}
 
 Example::
 
@@ -30,7 +30,7 @@ Example::
     
     # Highlight summary but wrap highlighted words with a div and the
     # following CSS class.
-    {% highlight result.summary with request.query tag "div" class "highlight_me_please" %}
+    {% highlight result.summary with request.query html_tag "div" class "highlight_me_please" %}
     
     # Highlight summary but only show 40 words.
     {% highlight result.summary with request.query max_length 40 %}

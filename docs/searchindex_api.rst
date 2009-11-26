@@ -140,6 +140,43 @@ And finally, in ``search/search.html``::
     {% endfor %}
 
 
+Keeping The Index Fresh
+=======================
+
+There are several approaches to keeping the search index in sync with your
+database. None are more correct than the others and depending the traffic you
+see, the churn rate of your data and what concerns are important to you
+(CPU load, how recent, et cetera).
+
+The conventional method is to use ``SearchIndex`` in combination with cron
+jobs. Running a ``./manage.py update_index`` every couple hours will keep your
+data in sync within that timeframe and will handle the updates in a very
+efficient batch. Additionally, Whoosh (and to a lesser extent Xapian) behave
+better when using this approach.
+
+Another option is to use ``RealTimeSearchIndex``, which uses Django's signals
+to immediately update the index any time a model is saved/deleted. This
+yields a much more current search index at the expense of being fairly
+inefficient. Solr is the only backend that handles this well under load, and
+even then, you should make sure you have the server capacity to spare.
+
+A third option is to develop a custom ``QueueSearchIndex`` that, much like
+``RealTimeSearchIndex``, uses Django's signals to enqueue messages for
+updates/deletes. Then writing a management command to consume these messages
+in batches, yielding a nice compromise between the previous two options.
+
+.. note::
+
+    Haystack doesn't ship with a ``QueueSearchIndex`` largely because there is
+    such a diversity of lightweight queuing options and that they tend to
+    polarize developers. Queuing is outside of Haystack's goals (provide good,
+    powerful search) and, as such, is left to the developer.
+    
+    Additionally, the implementation is relatively trivial in that you simply
+    extend the same four methods as ``RealTimeSearchIndex`` and simply add
+    messages to the queue of choice.
+
+
 Advanced Data Preparation
 =========================
 
@@ -296,7 +333,7 @@ non-existent), merely an example of how to extend existing fields.
    This method is analagous to Django's ``Field.clean`` methods.
 
 
-Method Reference
+``Search Index``
 ================
 
 ``get_queryset``
@@ -427,8 +464,29 @@ If you need a specific ``QuerySet`` in one place, you can specify this at the
 :doc:`searchqueryset_api` for usage.
 
 
-ModelSearchIndex
-================
+``RealTimeSearchIndex``
+=======================
+
+The ``RealTimeSearchIndex`` provides all the same functionality as the standard
+``SearchIndex``. However, in addition, it connects to the
+``post_save``/``post_delete`` signals of the model it's registered with.
+
+This means that anytime a model is saved or deleted, it's automatically and
+immediately updated in the search index, yielding real-time search.
+
+.. warning::
+
+    Not all backends deal well with the kind of document churn that can result
+    from using the ``RealTimeSearchIndex``. Solr is the only one that handles
+    it gracefully.
+    
+    Additionally, this will add more overhead in terms of CPU usage, so you
+    should be sure to accommodate for this and should have appropriate monitoring
+    in place.
+
+
+``ModelSearchIndex``
+====================
 
 The ``ModelSearchIndex`` class allows for automatic generation of a
 ``SearchIndex`` based on the fields of the model assigned to it.

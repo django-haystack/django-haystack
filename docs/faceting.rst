@@ -39,20 +39,38 @@ installation. The same setup from the :doc:`tutorial` applies here.
 ------------------------------------------
 
 Determining what you want to facet on isn't always easy. For our purposes,
-we'll facet on the ``author`` field. For this, on the ``SearchQuerySet``, we
-use the ``facet`` method to setup the facet and the ``facet_counts`` method
-to retrieve back the counts seen.
+we'll facet on the ``author`` field.
+
+If the data in the fields you're faceting on is complex, you may want to
+consider duplicating fields you'll be faceting on and marking them as
+``indexed=False``. So to modify our existing example::
+
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        author_exact = indexes.CharField(model_attr='user', indexed=False)
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+
+This informs the backend that no post-processing is to be done on the data
+(such as lowercase/stemming/tokenizing/etc.), allowing the faceting to be
+more exact. Duplication is suggested so that those fields are still searchable
+in the standard ways, so if all you're using a given field for faceting, no
+duplication is needed.
+
+To pull faceting information out of the index, we'll use the
+``SearchQuerySet.facet`` method to setup the facet and the
+``SearchQuerySet.facet_counts`` method to retrieve back the counts seen.
 
 Experimenting in a shell (``./manage.py shell``) is a good way to get a feel
 for what various facets might look like::
 
     >>> from haystack.query import SearchQuerySet
-    >>> sqs = SearchQuerySet().facet('author')
+    >>> sqs = SearchQuerySet().facet('author_exact')
     >>> sqs.facet_counts()
     {
         'dates': {},
         'fields': {
-            'author': [
+            'author_exact': [
                 ('john', 4),
                 ('daniel', 2),
                 ('sally', 1),
@@ -64,9 +82,9 @@ for what various facets might look like::
 
 As you can see, we get back a dictionary which provides access to the three
 types of facets available: ``fields``, ``dates`` and ``queries``. Since we only
-faceted on the ``author`` field, only the ``fields`` key has any data associated
-with it. In this case, we have a corpus of eight documents with four unique
-authors.
+faceted on the ``author_exact`` field, only the ``fields`` key has any data
+associated with it. In this case, we have a corpus of eight documents with four
+unique authors.
 
 .. note::
     Facets are chainable, like most ``SearchQuerySet`` methods. However, unlike
@@ -99,7 +117,7 @@ URLconf should resemble::
     from haystack.views import FacetedSearchView
     
     
-    sqs = SearchQuerySet().facet('author')
+    sqs = SearchQuerySet().facet('author_exact')
      
     
     urlpatterns = patterns('haystack.views',
@@ -136,10 +154,10 @@ might look like this::
     
         <div>
             <dl>
-                {% if facets.fields.author %}
+                {% if facets.fields.author_exact %}
                     <dt>Author</dt>
                     {# Provide only the top 5 authors #}
-                    {% for author in facets.fields.author|slice:":5" %}
+                    {% for author in facets.fields.author_exact|slice:":5" %}
                         <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
                     {% endfor %}
                 {% else %}
@@ -162,8 +180,8 @@ might look like this::
     {% endif %}
 
 Displaying the facets is a matter of looping through the facets you want and
-providing the UI to suit. The ``author.0`` is the facet text from the backend
-and the ``author.1`` is the facet count.
+providing the UI to suit. The ``author_exact.0`` is the facet text from the backend
+and the ``author_exact.1`` is the facet count.
 
 4. Narrowing The Search
 -----------------------

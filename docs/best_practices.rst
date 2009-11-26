@@ -133,10 +133,21 @@ your ``SearchIndex`` as the HTML result.
     query for each type of model with ``load_all=True``.
 
 
+Real-Time Search
+================
+
+If your site sees heavy search traffic and up-to-date information is very important,
+Haystack provides a way to constantly keep your index up to date. By using the
+``RealTimeSearchIndex`` class instead of the ``SearchIndex`` class, Haystack will
+automatically update the index whenever a model is saved/deleted.
+
+You can find more information within the :doc:`searchindex_api` documentation.
+
+
 Use Of A Queue For A Better User Experience
 ===========================================
 
-By default, when an indexed model is saved, Haystack immediately tries to merge
+By default, you have to manually reindex content, Haystack immediately tries to merge
 it into the search index. If you have a write-heavy site, this could mean your
 search engine may spend most of its time churning on constant merges. If you can 
 afford a small delay between when a model is saved and when it appears in the 

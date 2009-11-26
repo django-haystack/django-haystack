@@ -179,7 +179,10 @@ To build a ``SearchIndex``, all that's necessary is to subclass ``SearchIndex``,
 define the fields you want to store data with and register it.
 
 We'll create the following ``NoteSearchIndex`` to correspond to our ``Note``
-model::
+model. This code generally goes in a ``search_indexes.py`` file within the app
+it applies to, though that is not required. This allows
+``haystack.autodiscover()`` to automatically pick it up. The
+``NoteSearchIndex`` should look like::
 
     import datetime
     from haystack import indexes
@@ -304,6 +307,20 @@ command to make this process easy.
 
 Simply run ``./manage.py rebuild_index``. You'll get some totals of how many
 models were processed and placed in the index.
+
+.. note::
+
+    Using the standard ``SearchIndex``, your search index content is only
+    updated whenever you run either ``./manage.py update_index`` or start
+    afresh with ``./manage.py rebuild_index``.
+    
+    You should cron up a ``./manage.py update_index`` job at whatever interval
+    works best for your site (using ``--age=<num_hours>`` reduces the number of
+    things to update).
+    
+    Alternatively, if you have low traffic and/or your search engine can handle
+    it, the ``RealTimeSearchIndex`` automatically handles updates/deletes
+    for you.
 
 
 Complete!
