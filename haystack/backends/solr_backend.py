@@ -3,7 +3,6 @@ import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
-from django.db.models.sql.query import get_proxied_model
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.exceptions import MissingDependency, MoreLikeThisError
@@ -14,6 +13,11 @@ try:
     set
 except NameError:
     from sets import Set as set
+try:
+    from django.db.models.sql.query import get_proxied_model
+except ImportError:
+    # Likely on Django 1.0
+    get_proxied_model = None
 try:
     from pysolr import Solr, SolrError
 except ImportError:
@@ -186,7 +190,7 @@ class SearchBackend(BaseSearchBackend):
                        start_offset=0, end_offset=None,
                        limit_to_registered_models=True, **kwargs):
         # Handle deferred models.
-        if hasattr(model_instance, '_deferred') and model_instance._deferred:
+        if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
             model_klass = get_proxied_model(model_instance._meta)
         else:
             model_klass = type(model_instance)
