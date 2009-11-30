@@ -5,3 +5,4 @@ _build
 *.egg-info
 dist
 build
+MANIFEST
