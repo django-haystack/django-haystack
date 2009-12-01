@@ -7,7 +7,7 @@ from haystack.sites import site
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (1, 0, 1, 'final')
+__version__ = (1, 1, 0, 'alpha')
 __all__ = ['backend']
 
 
