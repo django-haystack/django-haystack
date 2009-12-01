@@ -37,13 +37,15 @@ class SearchForm(forms.Form):
         super(SearchForm, self).__init__(*args, **kwargs)
     
     def search(self):
-        self.clean()
-        sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
-        
-        if self.load_all:
-            sqs = sqs.load_all()
-        
-        return sqs
+        if self.is_valid():
+            sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
+            
+            if self.load_all:
+                sqs = sqs.load_all()
+            
+            return sqs
+        else:
+            return []
 
 
 class HighlightedSearchForm(SearchForm):

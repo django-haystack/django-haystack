@@ -7,7 +7,7 @@ from haystack.sites import site
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (1, 0, 0, 'rc1')
+__version__ = (1, 1, 0, 'alpha')
 __all__ = ['backend']
 
 
@@ -97,7 +97,7 @@ def autodiscover():
         # to bubble up.
         __import__("%s.search_indexes" % app)
 
-# Make sure the site gets loaded.
+
 def handle_registrations(*args, **kwargs):
     """
     Ensures that any configuration of the SearchSite(s) are handled when
@@ -106,6 +106,13 @@ def handle_registrations(*args, **kwargs):
     This makes it possible for scripts/management commands that affect models
     but know nothing of Haystack to keep the index up to date.
     """
+    if not getattr(settings, 'HAYSTACK_ENABLE_REGISTRATIONS', True):
+        # If the user really wants to disable this, they can, possibly at their
+        # own expense. This is generally only required in cases where other
+        # apps generate import errors and requires extra work on the user's
+        # part to make things work.
+        return
+    
     # This is a little dirty but we need to run the code that follows only
     # once, no matter how many times the main Haystack module is imported.
     # We'll look through the stack to see if we appear anywhere and simply

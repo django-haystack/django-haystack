@@ -62,7 +62,7 @@ the attribute of the object to populate that field with.
             'entry': self.sample_entry,
             'query': 'field',
         }
-        self.assertEqual(self.render(template, context), u'...<div class="foo">Field</div> to should directly map to the <div class="foo">field</div> your search backend is\nexpecting. You instantiate most search <div class="foo">field</div>s with a parameter that points to\nthe attribute of the object to populate that <div class="foo">field</div> with.\n')
+        self.assertEqual(self.render(template, context), u'...<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing...')
     
     def test_custom(self):
         # Stow.

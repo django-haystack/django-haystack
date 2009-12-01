@@ -196,3 +196,31 @@ An example::
 
 No default is provided. Haystack automatically falls back to the default
 implementation.
+
+
+``HAYSTACK_ENABLE_REGISTRATIONS``
+=================================
+
+**Optional**
+
+This setting allows you to control whether or not Haystack will manage it's own
+registrations at start-up. It should be a boolean.
+
+An example::
+
+    HAYSTACK_ENABLE_REGISTRATIONS = False
+
+Default is ``True``.
+
+.. warning::
+
+    Setting this to ``False`` prevents Haystack from doing any imports, which
+    means that no ``SearchIndex`` classes will get registered, no signals will
+    get hooked up and any use of ``SearchQuerySet`` without further work will
+    yield no results. You can manually import your ``SearchIndex`` classes in
+    other files (like your views or elsewhere). In short, Haystack will still
+    be available but essentially in an un-initialized state.
+    
+    You should ONLY use this setting if you're using another third-party
+    application that causes tracebacks/import errors when used in conjunction
+    with Haystack.
