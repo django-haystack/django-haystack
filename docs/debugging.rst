@@ -95,3 +95,29 @@ The downside to this is that you lose real-time search. For many people, this
 isn't an issue and this will allow you to scale Whoosh up to a much higher
 traffic. If this is not acceptable, you should investigate either the Solr or
 Xapian backends.
+
+
+"Import errors on start-up mentioning 'handle_registrations'"
+=============================================================
+
+When initializing, Haystack attempts to import and register all of the
+``SearchIndex`` classes you've setup. As a by-product of this, especially in
+conjunction with third-party apps that attempt to do similar types of imports,
+it's possible (though rare) to get a traceback very early in the start-up
+process, usually mentioning ``handle_registrations``.
+
+If this is the case, Haystack provides an advanced setting
+(``HAYSTACK_ENABLE_REGISTRATIONS`` - :doc:`settings`) to disable this importing
+behavior and allow your applications to function.
+
+As a note of caution, setting ``HAYSTACK_ENABLE_REGISTRATIONS = False`` in your
+settings causes Haystack to be left in an uninitialized state. This means that
+none of your ``SearchIndex`` classes will be registered and all attempts to use
+``SearchQuerySet`` will yield no results. To continue using Haystack, you'll
+need to manually import your ``search_indexes.py`` files, either in your
+``models.py`` or ``views.py`` files (or something similar). Additionally, any
+use at the console/management commands may also require similar imports.
+
+Finally, should this occur to you, it would be appreciated if you could report
+the issue and the app(s) you're using that are causing the issue in conjunction
+with Haystack on either the mailing list or on the GitHub issue tracker.
