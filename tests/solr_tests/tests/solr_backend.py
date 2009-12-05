@@ -223,7 +223,12 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def setUp(self):
         super(LiveSolrSearchQueryTestCase, self).setUp()
         
-        self.sq = SearchQuery(backend=SearchBackend())
+        site = SearchSite()
+        site.register(MockModel, SolrMockSearchIndex)
+        sb = SearchBackend(site=site)
+        smmi = SolrMockSearchIndex(MockModel, backend=sb)
+        
+        self.sq = SearchQuery(backend=sb)
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():
