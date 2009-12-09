@@ -103,10 +103,20 @@ Using: Solr
 
 
 Winding Road
----------------
+------------
 
 For general search.
 
 Using: Solr
 
 * http://www.windingroad.com/
+
+
+Reddit
+------
+
+For Reddit Gifts.
+
+Using: Whoosh
+
+* http://redditgifts.com/
