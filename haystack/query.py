@@ -444,6 +444,12 @@ class EmptySearchQuerySet(SearchQuerySet):
         clone = super(EmptySearchQuerySet, self)._clone(klass=klass)
         clone._result_cache = []
         return clone
+    
+    def __getitem__(self, k):
+        if isinstance(k, slice):
+            return []
+        else:
+            raise IndexError("'EmptySearchQuerySet' have no results to access.")
 
 
 class RelatedSearchQuerySet(SearchQuerySet):

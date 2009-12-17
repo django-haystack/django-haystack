@@ -596,4 +596,16 @@ class EmptySearchQuerySetTestCase(TestCase):
         sqs = self.esqs.exclude(content='foo')
         self.assert_(isinstance(sqs, EmptySearchQuerySet))
         self.assertEqual(len(sqs), 0)
+    
+    def test_slice(self):
+        sqs = self.esqs.filter(content='foo')
+        self.assert_(isinstance(sqs, EmptySearchQuerySet))
+        self.assertEqual(len(sqs), 0)
+        self.assertEqual(sqs[:10], [])
+        
+        try:
+            sqs[4]
+            self.fail()
+        except IndexError:
+            pass
 
