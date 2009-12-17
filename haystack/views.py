@@ -4,6 +4,7 @@ from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from haystack.forms import ModelSearchForm
+from haystack.query import EmptySearchQuerySet
 
 
 RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
@@ -13,7 +14,7 @@ class SearchView(object):
     template = 'search/search.html'
     extra_context = {}
     query = ''
-    results = []
+    results = EmptySearchQuerySet()
     request = None
     form = None
     
@@ -72,7 +73,7 @@ class SearchView(object):
         if self.query:
             return self.form.search()
         
-        return []
+        return EmptySearchQuerySet()
     
     def build_page(self):
         """
@@ -122,12 +123,7 @@ class FacetedSearchView(SearchView):
     
     def extra_context(self):
         extra = super(FacetedSearchView, self).extra_context()
-        
-        if self.results == []:
-            extra['facets'] = self.form.search().facet_counts()
-        else:
-            extra['facets'] = self.results.facet_counts()
-        
+        extra['facets'] = self.results.facet_counts()
         return extra
 
 
@@ -153,7 +149,7 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
           The query received by the form.
     """
     query = ''
-    results = []
+    results = EmptySearchQuerySet()
     
     if request.GET.get('q'):
         form = form_class(request.GET, searchqueryset=searchqueryset, load_all=load_all)

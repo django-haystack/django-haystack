@@ -3,7 +3,9 @@ from django.conf import settings
 from django.test import TestCase
 import haystack
 from haystack.forms import model_choices, ModelSearchForm
+from haystack.query import EmptySearchQuerySet
 from haystack.sites import SearchSite
+from haystack.views import SearchView, FacetedSearchView
 from core.models import MockModel, AnotherMockModel
 
 
@@ -40,6 +42,10 @@ class SearchViewTestCase(TestCase):
     def test_invalid_page(self):
         response = self.client.get(reverse('haystack_search'), {'q': 'hello world', 'page': '165233'})
         self.assertEqual(response.status_code, 404)
+    
+    def test_empty_results(self):
+        sv = SearchView()
+        self.assert_(isinstance(sv.get_results(), EmptySearchQuerySet))
 
 
 class FacetedSearchViewTestCase(TestCase):
@@ -65,6 +71,10 @@ class FacetedSearchViewTestCase(TestCase):
         response = self.client.get(reverse('haystack_faceted_search'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['facets'], {})
+    
+    def test_empty_results(self):
+        fsv = FacetedSearchView()
+        self.assert_(isinstance(fsv.get_results(), EmptySearchQuerySet))
 
 
 class BasicSearchViewTestCase(TestCase):
