@@ -276,7 +276,7 @@ will likely differ)::
                 </tr>
             </table>
             
-            {% if page.object_list %}
+            {% if query %}
                 <h3>Results</h3>
                 
                 {% for result in page.object_list %}
@@ -286,6 +286,8 @@ will likely differ)::
                 {% empty %}
                     <p>No results found.</p>
                 {% endfor %}
+            {% else %}
+                {# Show some example queries to run, maybe query syntax, something else? #}
             {% endif %}
         </form>
     {% endblock %}
