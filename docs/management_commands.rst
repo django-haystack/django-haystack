@@ -11,11 +11,16 @@ easier.
 ``clear_index``
 ===============
 
-The ``clear_index`` command wipes out your entire search index. It accepts no
-arguments. Use with caution.
+The ``clear_index`` command wipes out your entire search index. Use with
+caution. In addition to the standard management command options, it accepts the
+following arguments::
 
-This is an **INTERACTIVE** command and assumes that you do **NOT** wish to
-delete the entire index.
+    ``--noinput``:
+        If provided, the interactive prompts are skipped and the index is
+        uncerimoniously wiped out.
+
+By default, this is an **INTERACTIVE** command and assumes that you do **NOT**
+wish to delete the entire index.
 
 
 ``update_index``
