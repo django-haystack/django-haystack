@@ -55,8 +55,10 @@ which is useful when debugging.
 ``rebuild_index``
 =================
 
-A shortcut for ``clear_index`` followed by ``update_index``. It accepts no
-arguments. For when you really, really want a completely rebuilt index.
+A shortcut for ``clear_index`` followed by ``update_index``. It accepts any/all
+of the arguments you can pass to either ``clear_index`` or ``update_index``.
+
+For when you really, really want a completely rebuilt index.
 
 
 ``build_solr_schema``

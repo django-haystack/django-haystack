@@ -12,7 +12,7 @@ DEFAULT_AGE = None
 
 class Command(AppCommand):
     help = "Freshens the index for the given app(s)."
-    option_list = AppCommand.option_list + (
+    base_options = (
         make_option('-a', '--age', action='store', dest='age',
             default=DEFAULT_AGE, type='int',
             help='Number of hours back to consider objects new.'
@@ -25,6 +25,7 @@ class Command(AppCommand):
             type='string', help='The site object to use when reindexing (like `search_sites.mysite`).'
         ),
     )
+    option_list = AppCommand.option_list + base_options
     
     # Django 1.0.X compatibility.
     verbosity_present = False

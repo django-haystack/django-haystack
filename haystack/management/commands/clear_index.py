@@ -5,11 +5,12 @@ from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     help = "Clears out the search index completely."
-    option_list = BaseCommand.option_list + (
+    base_options = (
         make_option('--noinput', action='store_false', dest='interactive', default=True,
             help='If provided, no prompts will be issued to the user and the data will be wiped out.'
         ),
     )
+    option_list = BaseCommand.option_list + base_options
     
     def handle(self, **options):
         """Clears out the search index completely."""
