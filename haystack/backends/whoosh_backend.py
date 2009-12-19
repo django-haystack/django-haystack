@@ -333,13 +333,14 @@ class SearchBackend(BaseSearchBackend):
         # It's important to grab the hits first before slicing. Otherwise, this
         # can cause pagination failures.
         hits = len(raw_results)
-        raw_results = raw_results[start_offset:end_offset]
+        sliced_results = raw_results[start_offset:end_offset]
         
         facets = {}
         spelling_suggestion = None
         indexed_models = site.get_indexed_models()
         
-        for doc_offset, raw_result in enumerate(raw_results):
+        for doc_offset, raw_result in enumerate(sliced_results):
+            score = raw_results.score(doc_offset + start_offset) or 0
             raw_result = dict(raw_result)
             app_label, model_name = raw_result['django_ct'].split('.')
             additional_fields = {}
@@ -371,14 +372,6 @@ class SearchBackend(BaseSearchBackend):
                     additional_fields['highlighted'] = {
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
-                
-                if hasattr(raw_results, 'score'):
-                    score = raw_results.score(doc_offset)
-                else:
-                    score = None
-                
-                if score is None:
-                    score = 0
                 
                 result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
                 results.append(result)
