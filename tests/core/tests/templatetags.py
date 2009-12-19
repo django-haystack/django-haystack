@@ -63,6 +63,17 @@ the attribute of the object to populate that field with.
             'query': 'field',
         }
         self.assertEqual(self.render(template, context), u'...<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing...')
+        
+        template = """{% load highlight %}{% highlight entry with query html_tag "div" css_class "foo" max_length 100 %}"""
+        context = {
+            'entry': self.sample_entry,
+            'query': 'Haystack',
+        }
+        self.assertEqual(self.render(template, context), u'...<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y...')
+        
+        template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx foo bbxxxxx foo" with "foo" max_length 5 html_tag "span" %}"""
+        context = {}
+        self.assertEqual(self.render(template, context), u'...<span class="highlighted">foo</span> b...')
     
     def test_custom(self):
         # Stow.

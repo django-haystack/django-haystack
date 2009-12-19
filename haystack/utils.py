@@ -108,6 +108,10 @@ class Highlighter(object):
         # counting the number of found offsets (-1 to fit in the window).
         highest_density = 0
         
+        if words_found[:-1][0] > self.max_length:
+            best_start = words_found[:-1][0]
+            best_end = best_start + self.max_length
+        
         for count, start in enumerate(words_found[:-1]):
             current_density = 1
             
