@@ -301,6 +301,16 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual([result.pk for result in page_1['results']], [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4'])
         self.assertEqual(len(page_2['results']), 3)
         self.assertEqual([result.pk for result in page_2['results']], [u'3', u'2', u'1'])
+    
+    def test_scoring(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        page_1 = self.sb.search(u'index', start_offset=0, end_offset=20)
+        page_2 = self.sb.search(u'index', start_offset=20, end_offset=30)
+        self.assertEqual(len(page_1['results']), 20)
+        self.assertEqual(["%0.2f" % result.score for result in page_1['results']], ['0.51', '0.51', '0.51', '0.51', '0.51', '0.51', '0.51', '0.51', '0.51', '0.40', '0.40', '0.40', '0.40', '0.40', '0.40', '0.40', '0.40', '0.40', '0.40', '0.40'])
+        self.assertEqual(len(page_2['results']), 3)
+        self.assertEqual(["%0.2f" % result.score for result in page_2['results']], ['0.40', '0.40', '0.40'])
 
 
 class LiveWhooshSearchQueryTestCase(TestCase):
