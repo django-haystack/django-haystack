@@ -6,7 +6,7 @@ from haystack import backends
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
-from haystack.exceptions import HaystackError
+from haystack.exceptions import HaystackError, FacetingError
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
@@ -513,6 +513,12 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs2.query.facets), 2)
     
     def test_date_facets(self):
+        try:
+            sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='smarblaph')
+            self.fail()
+        except FacetingError, e:
+            self.assertEqual(str(e), "The gap_by ('smarblaph') must be one of the following: year, month, day, hour, minute, second.")
+        
         sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.date_facets), 1)
