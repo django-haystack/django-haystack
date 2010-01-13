@@ -1,6 +1,5 @@
 from django.db.models import signals
 from django.utils.encoding import force_unicode
-import haystack
 from haystack.fields import *
 from haystack.utils import get_identifier
 
@@ -53,7 +52,13 @@ class SearchIndex(object):
     
     def __init__(self, model, backend=None):
         self.model = model
-        self.backend = backend or haystack.backend.SearchBackend()
+        
+        if backend:
+            self.backend = backend
+        else:
+            import haystack
+            self.backend = haystack.backend.SearchBackend()
+        
         self.prepared_data = None
         content_fields = []
         
@@ -288,7 +293,13 @@ class ModelSearchIndex(SearchIndex):
     
     def __init__(self, model, backend=None):
         self.model = model
-        self.backend = backend or haystack.backend.SearchBackend()
+        
+        if backend:
+            self.backend = backend
+        else:
+            import haystack
+            self.backend = haystack.backend.SearchBackend()
+        
         self.prepared_data = None
         content_fields = []
         
