@@ -32,3 +32,4 @@ Thanks to
     * Alex Gaynor (alex) for help with handling deferred models with More Like This.
     * RobertGawron for a patch to the Highlighter.
     * Simon Willison (simonw) for various proposals and patches.
+    * Ben Firshman (bfirsh) for faceting improvements and suggestions.

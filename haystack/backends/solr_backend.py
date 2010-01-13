@@ -162,7 +162,7 @@ class SearchBackend(BaseSearchBackend):
         
         if query_facets is not None:
             kwargs['facet'] = 'on'
-            kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets.items()]
+            kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets]
         
         if limit_to_registered_models:
             # Using narrow queries, limit the results to only models registered

@@ -160,10 +160,13 @@ class BaseSearchQueryTestCase(TestCase):
     
     def test_add_query_facet(self):
         self.bsq.add_query_facet('foo', 'bar')
-        self.assertEqual(self.bsq.query_facets, {'foo': 'bar'})
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar')])
         
         self.bsq.add_query_facet('moof', 'baz')
-        self.assertEqual(self.bsq.query_facets, {'foo': 'bar', 'moof': 'baz'})
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz')])
+        
+        self.bsq.add_query_facet('foo', 'baz')
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz'), ('foo', 'baz')])
     
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
@@ -535,6 +538,11 @@ class SearchQuerySetTestCase(TestCase):
         sqs2 = self.bsqs.query_facet('foo', '[bar TO *]').query_facet('bar', '[100 TO 499]')
         self.assert_(isinstance(sqs2, SearchQuerySet))
         self.assertEqual(len(sqs2.query.query_facets), 2)
+        
+        # Test multiple query facets on a single field
+        sqs3 = self.bsqs.query_facet('foo', '[bar TO *]').query_facet('bar', '[100 TO 499]').query_facet('foo', '[1000 TO 1499]')
+        self.assert_(isinstance(sqs3, SearchQuerySet))
+        self.assertEqual(len(sqs3.query.query_facets), 3)
     
     def test_narrow(self):
         sqs = self.bsqs.narrow('foo:moof')

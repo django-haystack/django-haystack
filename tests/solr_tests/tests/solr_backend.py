@@ -128,8 +128,8 @@ class SolrSearchBackendTestCase(TestCase):
         # DRL_TODO: Correct output but no counts. Another case of needing better test data?
         # self.assertEqual(results['facets']['dates']['pub_date'], {'end': '2008-02-26T00:00:00Z', 'gap': '/MONTH'})
         
-        self.assertEqual(self.sb.search('', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
-        results = self.sb.search('Index', query_facets={'name': '[* TO e]'})
+        self.assertEqual(self.sb.search('', query_facets=[('name', '[* TO e]')]), {'hits': 0, 'results': []})
+        results = self.sb.search('Index', query_facets=[('name', '[* TO e]')])
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {'name:[* TO e]': 3})
         
