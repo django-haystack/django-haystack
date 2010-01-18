@@ -16,16 +16,19 @@ try:
     set
 except NameError:
     from sets import Set as set
+
 try:
     import whoosh
-    from whoosh.analysis import StemmingAnalyzer
-    from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
-    from whoosh import index
-    from whoosh.qparser import QueryParser
-    from whoosh.filedb.filestore import FileStorage
-    from whoosh.spelling import SpellChecker
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
+
+# Bubble up the correct error.
+from whoosh.analysis import StemmingAnalyzer
+from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
+from whoosh import index
+from whoosh.qparser import QueryParser
+from whoosh.filedb.filestore import FileStorage
+from whoosh.spelling import SpellChecker
 
 # Handle minimum requirement.
 if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 5):
