@@ -346,9 +346,13 @@ class SearchBackend(BaseSearchBackend):
 
 
 class SearchQuery(BaseSearchQuery):
-    def __init__(self, backend=None):
+    def __init__(self, site=None, backend=None):
         super(SearchQuery, self).__init__(backend=backend)
-        self.backend = backend or SearchBackend()
+        
+        if backend is not None:
+            self.backend = backend
+        else:
+            self.backend = SearchBackend(site=site)
 
     def matching_all_fragment(self):
         return '*:*'

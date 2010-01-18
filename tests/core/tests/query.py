@@ -188,8 +188,6 @@ class BaseSearchQueryTestCase(TestCase):
         
         # Restore.
         haystack.site = old_site
-
-
     
     def test_clone(self):
         self.bsq.add_filter(SQ(foo='bar'))
@@ -253,8 +251,14 @@ class BaseSearchQueryTestCase(TestCase):
         # Restore.
         haystack.site = old_site
         settings.DEBUG = old_debug
-
-
+    
+    def test_regression_site_kwarg(self):
+        # Stow.
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        
+        msq = MockSearchQuery(site=test_site)
+        self.assertEqual(msq.backend.site.get_indexed_models(), [MockModel])
 
 
 class SearchQuerySetTestCase(TestCase):
@@ -590,6 +594,14 @@ class SearchQuerySetTestCase(TestCase):
         
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
+    
+    def test_regression_site_kwarg(self):
+        mock_index_site = SearchSite()
+        mock_index_site.register(MockModel)
+        mock_index_site.register(AnotherMockModel)
+        
+        bsqs = SearchQuerySet(site=mock_index_site)
+        self.assertEqual(bsqs.query.backend.site.get_indexed_models(), [MockModel, AnotherMockModel])
 
 
 class EmptySearchQuerySetTestCase(TestCase):

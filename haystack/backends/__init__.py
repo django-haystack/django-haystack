@@ -261,7 +261,7 @@ class BaseSearchQuery(object):
     implementation.
     """
     
-    def __init__(self, backend=None):
+    def __init__(self, site=None, backend=None):
         self.query_filter = SearchNode()
         self.order_by = []
         self.models = set()
@@ -281,7 +281,11 @@ class BaseSearchQuery(object):
         self._hit_count = None
         self._facet_counts = None
         self._spelling_suggestion = None
-        self.backend = backend or SearchBackend()
+        
+        if backend is not None:
+            self.backend = backend
+        else:
+            self.backend = SearchBackend(site=site)
     
     def __str__(self):
         return self.build_query()

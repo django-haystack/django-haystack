@@ -13,7 +13,11 @@ class SearchQuerySet(object):
     Supports chaining (a la QuerySet) to narrow the search.
     """
     def __init__(self, site=None, query=None):
-        self.query = query or backend.SearchQuery()
+        if query is not None:
+            self.query = query
+        else:
+            self.query = backend.SearchQuery(site=site)
+        
         self._result_cache = []
         self._result_count = None
         self._cache_full = False

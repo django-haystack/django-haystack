@@ -33,3 +33,4 @@ Thanks to
     * RobertGawron for a patch to the Highlighter.
     * Simon Willison (simonw) for various proposals and patches.
     * Ben Firshman (bfirsh) for faceting improvements and suggestions.
+    * Peter Bengtsson for a patch regarding passing a customized site.
