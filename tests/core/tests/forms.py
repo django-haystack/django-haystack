@@ -1,6 +1,7 @@
 from django.test import TestCase
 from haystack.forms import ModelSearchForm, model_choices
-from haystack import sites
+import haystack
+from haystack.sites import SearchSite
 from haystack.query import SearchQuerySet
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
@@ -15,13 +16,13 @@ class ModelSearchFormTestCase(TestCase):
         mock_index_site.register(AnotherMockModel)
         
         # Stow.
-        self.old_site = sites.site
+        self.old_site = haystack.site
         sites.site = mock_index_site
         
         self.sqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()), site=mock_index_site)
     
     def tearDown(self):
-        sites.site = self.old_site
+        haystack.site = self.old_site
         super(ModelSearchFormTestCase, self).tearDown()
     
     def test_models_regression_1(self):
