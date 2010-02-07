@@ -495,6 +495,15 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         except:
             self.fail()
     
+    def test_regression_space_query(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assert_(self.sb.index.doc_count() > 0)
+        
+        sqs = SearchQuerySet().auto_query(" ")
+        self.assertEqual(len(sqs), 3)
+        sqs = SearchQuerySet().filter(content=" ")
+        self.assertEqual(len(sqs), 0)
+    
     def test_iter(self):
         self.sb.update(self.smmi, self.sample_objs)
         
