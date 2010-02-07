@@ -135,7 +135,7 @@ And finally, in ``search/search.html``::
     
     {% for result in page.object_list %}
         <div class="search_result">
-            {{ result.rendered }}
+            {{ result.rendered|safe }}
         </div>
     {% endfor %}
 
