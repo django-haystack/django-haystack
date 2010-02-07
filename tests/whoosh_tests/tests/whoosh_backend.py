@@ -474,6 +474,10 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
         self.assertEqual(sqs.query.build_query(), u'("bell bronze" AND daler\\-rowney AND pearlescent)')
         self.assertEqual(len(sqs), 0)
+        
+        sqs = self.sqs.models(MockModel)
+        self.assertEqual(sqs.query.build_query(), u'django_ct:core.mockmodel')
+        self.assertEqual(len(sqs), 3)
     
     def test_all_regression(self):
         sqs = SearchQuerySet()
