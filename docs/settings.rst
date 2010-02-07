@@ -57,6 +57,7 @@ Valid options are::
 
     HAYSTACK_SEARCH_ENGINE = 'solr'
     HAYSTACK_SEARCH_ENGINE = 'whoosh'
+    HAYSTACK_SEARCH_ENGINE = 'xapian'
     HAYSTACK_SEARCH_ENGINE = 'dummy'
 
 No default is provided.
