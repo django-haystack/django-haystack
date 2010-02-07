@@ -12,6 +12,10 @@ from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel
 from core.tests.mocks import MockSearchQuery, MockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 class SQTestCase(TestCase):
@@ -601,7 +605,7 @@ class SearchQuerySetTestCase(TestCase):
         mock_index_site.register(AnotherMockModel)
         
         bsqs = SearchQuerySet(site=mock_index_site)
-        self.assertEqual(bsqs.query.backend.site.get_indexed_models(), [MockModel, AnotherMockModel])
+        self.assertEqual(set(bsqs.query.backend.site.get_indexed_models()), set([MockModel, AnotherMockModel]))
 
 
 class EmptySearchQuerySetTestCase(TestCase):
@@ -634,4 +638,10 @@ class EmptySearchQuerySetTestCase(TestCase):
             self.fail()
         except IndexError:
             pass
-
+    
+    def test_dictionary_lookup(self):
+        """
+        Ensure doing a dictionary lookup raises a TypeError so
+        EmptySearchQuerySets can be used in templates.
+        """
+        self.assertRaises(TypeError, lambda: self.esqs['count'])
