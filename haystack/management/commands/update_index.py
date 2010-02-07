@@ -49,9 +49,20 @@ class Command(AppCommand):
         self.site = options.get('site')
         
         if not apps:
-            self.handle_app(None, **options)
-        else:
-            return super(Command, self).handle(*apps, **options)
+            from django.db.models import get_app
+            # Do all, in an INSTALLED_APPS sorted order.
+            apps = []
+            
+            for app in settings.INSTALLED_APPS:
+                try:
+                    app_label = app.split('.')[-1]
+                    loaded_app = get_app(app_label)
+                    apps.append(app_label)
+                except:
+                    # No models, no problem.
+                    pass
+            
+        return super(Command, self).handle(*apps, **options)
     
     def handle_app(self, app, **options):
         # Cause the default site to load.
