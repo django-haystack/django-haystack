@@ -26,10 +26,10 @@ class SearchView(object):
         
         if template:
             self.template = template
-
+    
     def __name__(self):
         return "SearchView"
-
+    
     def __call__(self, request):
         """
         Generates the actual response to the search.

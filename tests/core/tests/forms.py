@@ -11,13 +11,13 @@ from core.models import MockModel, AnotherMockModel
 class ModelSearchFormTestCase(TestCase):
     def setUp(self):
         super(ModelSearchFormTestCase, self).setUp()
-        mock_index_site = sites.SearchSite()
+        mock_index_site = SearchSite()
         mock_index_site.register(MockModel)
         mock_index_site.register(AnotherMockModel)
         
         # Stow.
         self.old_site = haystack.site
-        sites.site = mock_index_site
+        haystack.site = mock_index_site
         
         self.sqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()), site=mock_index_site)
     
@@ -40,7 +40,7 @@ class ModelSearchFormTestCase(TestCase):
         self.assertEqual(len(sqs_with_models.query.models), 2)
     
     def test_model_choices(self):
-        mis = sites.SearchSite()
+        mis = SearchSite()
         mis.register(MockModel)
         mis.register(AnotherMockModel)
         self.assertEqual(len(model_choices(site=mis)), 2)
