@@ -36,13 +36,13 @@ class SearchIndex(object):
     An example might look like this::
     
         import datetime
-        from haystack import indexes
+        from haystack.indexes import *
         from myapp.models import Note
         
-        class NoteIndex(indexes.SearchIndex):
-            text = indexes.CharField(document=True, use_template=True)
-            author = indexes.CharField(model_attr='user')
-            pub_date = indexes.DateTimeField(model_attr='pub_date')
+        class NoteIndex(SearchIndex):
+            text = CharField(document=True, use_template=True)
+            author = CharField(model_attr='user')
+            pub_date = DateTimeField(model_attr='pub_date')
             
             def get_queryset(self):
                 return super(NoteIndex, self).get_queryset().filter(pub_date__lte=datetime.datetime.now())

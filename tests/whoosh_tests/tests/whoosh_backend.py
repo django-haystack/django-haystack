@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
 from haystack import backends
-from haystack import indexes
+from haystack.indexes import *
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
 from haystack.query import SearchQuerySet, SQ
 from haystack.sites import SearchSite
@@ -18,24 +18,24 @@ except NameError:
     from sets import Set as set
 
 
-class WhooshMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+class WhooshMockSearchIndex(SearchIndex):
+    text = CharField(document=True, use_template=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
 
 
-class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author', indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
-    sites = indexes.MultiValueField()
-    seen_count = indexes.IntegerField(indexed=False)
+class AllTypesWhooshMockSearchIndex(SearchIndex):
+    text = CharField(document=True, use_template=True)
+    name = CharField(model_attr='author', indexed=False)
+    pub_date = DateField(model_attr='pub_date')
+    sites = MultiValueField()
+    seen_count = IntegerField(indexed=False)
 
 
-class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True)
-    month = indexes.CharField(indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+class WhooshMaintainTypeMockSearchIndex(SearchIndex):
+    text = CharField(document=True)
+    month = CharField(indexed=False)
+    pub_date = DateField(model_attr='pub_date')
     
     def prepare_text(self, obj):
         return "Indexed!\n%s" % obj.pk
@@ -553,16 +553,16 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(backends.queries), 1)
 
 
-class WhooshRoundTripSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, default='')
-    name = indexes.CharField()
-    is_active = indexes.BooleanField()
-    post_count = indexes.IntegerField()
-    average_rating = indexes.FloatField()
-    pub_date = indexes.DateField()
-    created = indexes.DateTimeField()
-    tags = indexes.MultiValueField()
-    sites = indexes.MultiValueField()
+class WhooshRoundTripSearchIndex(SearchIndex):
+    text = CharField(document=True, default='')
+    name = CharField()
+    is_active = BooleanField()
+    post_count = IntegerField()
+    average_rating = FloatField()
+    pub_date = DateField()
+    created = DateTimeField()
+    tags = MultiValueField()
+    sites = MultiValueField()
     
     def prepare(self, obj):
         prepped = super(WhooshRoundTripSearchIndex, self).prepare(obj)

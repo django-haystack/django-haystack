@@ -83,10 +83,10 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(self.extra_data_sr.get_stored_fields(), {})
         self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(), {})
         
-        from haystack import indexes
+        from haystack.indexes import SearchIndex, CharField
         
-        class TestSearchIndex(indexes.SearchIndex):
-            stored = indexes.CharField(model_attr='author', document=True)
+        class TestSearchIndex(SearchIndex):
+            stored = CharField(model_attr='author', document=True)
         
         # Register the index & try again.
         haystack.site.register(MockModel, TestSearchIndex)

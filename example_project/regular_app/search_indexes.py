@@ -1,4 +1,4 @@
-from haystack import indexes
+from haystack.indexes import *
 from haystack import site
 from regular_app.models import Dog
 
@@ -6,16 +6,16 @@ from regular_app.models import Dog
 # More typical usage involves creating a subclassed `SearchIndex`. This will
 # provide more control over how data is indexed, generally resulting in better
 # search.
-class DogIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
+class DogIndex(RealTimeSearchIndex):
+    text = CharField(document=True, use_template=True)
     # We can pull data straight out of the model via `model_attr`.
-    breed = indexes.CharField(model_attr='breed')
+    breed = CharField(model_attr='breed')
     # Note that callables are also OK to use.
-    name = indexes.CharField(model_attr='full_name')
-    bio = indexes.CharField(model_attr='name')
-    birth_date = indexes.DateField(model_attr='birth_date')
+    name = CharField(model_attr='full_name')
+    bio = CharField(model_attr='name')
+    birth_date = DateField(model_attr='birth_date')
     # Note that we can't assign an attribute here. We'll manually prepare it instead.
-    toys = indexes.MultiValueField()
+    toys = MultiValueField()
     
     def get_queryset(self):
         return Dog.objects.filter(public=True)

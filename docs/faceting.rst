@@ -45,11 +45,11 @@ If the data in the fields you're faceting on is complex, you may want to
 consider duplicating fields you'll be faceting on and marking them as
 ``indexed=False``. So to modify our existing example::
 
-    class NoteIndex(indexes.SearchIndex):
-        text = indexes.CharField(document=True, use_template=True)
-        author = indexes.CharField(model_attr='user')
-        author_exact = indexes.CharField(model_attr='user', indexed=False)
-        pub_date = indexes.DateTimeField(model_attr='pub_date')
+    class NoteIndex(SearchIndex):
+        text = CharField(document=True, use_template=True)
+        author = CharField(model_attr='user')
+        author_exact = CharField(model_attr='user', indexed=False)
+        pub_date = DateTimeField(model_attr='pub_date')
 
 This informs the backend that no post-processing is to be done on the data
 (such as lowercase/stemming/tokenizing/etc.), allowing the faceting to be

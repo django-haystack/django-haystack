@@ -4,7 +4,7 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from haystack import backends
-from haystack import indexes
+from haystack.indexes import *
 from haystack.backends.solr_backend import SearchBackend, SearchQuery
 from haystack.exceptions import HaystackError
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
@@ -23,46 +23,46 @@ def clear_solr_index():
     raw_solr.delete(q='*:*')
 
 
-class SolrMockSearchIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+class SolrMockSearchIndex(RealTimeSearchIndex):
+    text = CharField(document=True, use_template=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
 
 
-class SolrMaintainTypeMockSearchIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    month = indexes.CharField(indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+class SolrMaintainTypeMockSearchIndex(RealTimeSearchIndex):
+    text = CharField(document=True, use_template=True)
+    month = CharField(indexed=False)
+    pub_date = DateField(model_attr='pub_date')
     
     def prepare_month(self, obj):
         return "%02d" % obj.pub_date.month
 
 
-class SolrMockModelSearchIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(model_attr='foo', document=True)
-    name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+class SolrMockModelSearchIndex(RealTimeSearchIndex):
+    text = CharField(model_attr='foo', document=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
 
 
-class SolrAnotherMockModelSearchIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(document=True)
-    name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+class SolrAnotherMockModelSearchIndex(RealTimeSearchIndex):
+    text = CharField(document=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
     
     def prepare_text(self, obj):
         return u"You might be searching for the user %s" % obj.author
 
 
-class SolrRoundTripSearchIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(document=True, default='')
-    name = indexes.CharField()
-    is_active = indexes.BooleanField()
-    post_count = indexes.IntegerField()
-    average_rating = indexes.FloatField()
-    pub_date = indexes.DateField()
-    created = indexes.DateTimeField()
-    tags = indexes.MultiValueField()
-    sites = indexes.MultiValueField()
+class SolrRoundTripSearchIndex(RealTimeSearchIndex):
+    text = CharField(document=True, default='')
+    name = CharField()
+    is_active = BooleanField()
+    post_count = IntegerField()
+    average_rating = FloatField()
+    pub_date = DateField()
+    created = DateTimeField()
+    tags = MultiValueField()
+    sites = MultiValueField()
     
     def prepare(self, obj):
         prepped = super(SolrRoundTripSearchIndex, self).prepare(obj)
