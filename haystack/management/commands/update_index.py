@@ -4,6 +4,10 @@ from django.conf import settings
 from django.core.management.base import AppCommand, CommandError
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+try:
+    from django.utils import importlib
+except ImportError:
+    from haystack.utils import importlib
 
 
 DEFAULT_BATCH_SIZE = getattr(settings, 'HAYSTACK_BATCH_SIZE', 1000)
@@ -76,7 +80,7 @@ class Command(AppCommand):
             site_name = path_bits[-1]
             
             try:
-                module = __import__(module_name, {}, {}, [''])
+                module = importlib.import_module(module_name)
                 site = getattr(module, site_name)
             except (ImportError, NameError):
                 pass

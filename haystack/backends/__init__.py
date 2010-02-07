@@ -14,6 +14,10 @@ try:
     set
 except NameError:
     from sets import Set as set
+try:
+    from django.utils import importlib
+except ImportError:
+    from haystack.utils import importlib
 
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
@@ -305,7 +309,7 @@ class BaseSearchQuery(object):
         self.__dict__.update(obj_dict)
         
         try:
-            loaded_backend = __import__(backend_used)
+            loaded_backend = importlib.import_module(backend_used)
         except ImportError:
             raise SearchBackendError("The backend this query was pickled with '%s.SearchBackend' could not be loaded." % backend_used)
         
