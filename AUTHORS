@@ -34,3 +34,4 @@ Thanks to
     * Simon Willison (simonw) for various proposals and patches.
     * Ben Firshman (bfirsh) for faceting improvements and suggestions.
     * Peter Bengtsson for a patch regarding passing a customized site.
+    * Sam Bull (osirius) for a patch regarding initial data on SearchForms.

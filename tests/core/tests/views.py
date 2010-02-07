@@ -1,13 +1,18 @@
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django import forms
+from django.http import HttpRequest
 from django.test import TestCase
 import haystack
-from haystack.forms import model_choices, ModelSearchForm
+from haystack.forms import model_choices, SearchForm, ModelSearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.sites import SearchSite
 from haystack.views import SearchView, FacetedSearchView
 from core.models import MockModel, AnotherMockModel
 
+
+class InitialedSearchForm(SearchForm):
+    q = forms.CharField(initial='Search for...', required=False, label='Search')
 
 class SearchViewTestCase(TestCase):
     def setUp(self):
@@ -46,6 +51,14 @@ class SearchViewTestCase(TestCase):
     def test_empty_results(self):
         sv = SearchView()
         self.assert_(isinstance(sv.get_results(), EmptySearchQuerySet))
+    
+    def test_initial_data(self):
+        sv = SearchView(form_class=InitialedSearchForm)
+        sv.request = HttpRequest()
+        form = sv.build_form()
+        self.assert_(isinstance(form, InitialedSearchForm))
+        self.assertEqual(form.fields['q'].initial, 'Search for...')
+        self.assertEqual(form.as_p(), u'<p><label for="id_q">Search:</label> <input type="text" name="q" value="Search for..." id="id_q" /></p>')
 
 
 class FacetedSearchViewTestCase(TestCase):
