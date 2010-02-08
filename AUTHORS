@@ -35,6 +35,6 @@ Thanks to
     * Ben Firshman (bfirsh) for faceting improvements and suggestions.
     * Peter Bengtsson for a patch regarding passing a customized site.
     * Sam Bull (osirius) for a patch regarding initial data on SearchForms.
-    * ricobl for a patch regarding Whoosh and fetching all documents of a certain model type.
+    * slai for a patch regarding Whoosh and fetching all documents of a certain model type.
     * alanwj for a patch regarding Whoosh and empty MultiValueFields.
     * alanzoppa for a patch regarding highlighting.
