@@ -357,7 +357,10 @@ class SearchBackend(BaseSearchBackend):
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         # Special-cased due to the nature of KEYWORD fields.
                         if isinstance(index.fields[string_key], MultiValueField):
-                            additional_fields[string_key] = value.split(',')
+                            if value is None:
+                                additional_fields[string_key] = []
+                            else:
+                                additional_fields[string_key] = value.split(',')
                         else:
                             additional_fields[string_key] = index.fields[string_key].convert(value)
                     else:

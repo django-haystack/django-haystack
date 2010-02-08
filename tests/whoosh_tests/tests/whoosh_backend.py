@@ -576,6 +576,8 @@ class WhooshRoundTripSearchIndex(SearchIndex):
     created = DateTimeField()
     tags = MultiValueField()
     sites = MultiValueField()
+    # For a regression involving lists with nothing in them.
+    empty_list = MultiValueField()
     
     def prepare(self, obj):
         prepped = super(WhooshRoundTripSearchIndex, self).prepare(obj)
@@ -589,6 +591,7 @@ class WhooshRoundTripSearchIndex(SearchIndex):
             'created': datetime(2009, 11, 21, 21, 31, 00),
             'tags': ['staff', 'outdoor', 'activist', 'scientist'],
             'sites': [3, 5, 1],
+            'empty_list': [],
         })
         return prepped
 
@@ -659,3 +662,4 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.assertEqual(result.created, datetime(2009, 11, 21, 21, 31, 00))
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [u'3', u'5', u'1'])
+        self.assertEqual(result.empty_list, [])
