@@ -663,3 +663,69 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [u'3', u'5', u'1'])
         self.assertEqual(result.empty_list, [])
+
+
+class LiveWhooshRamStorageTestCase(TestCase):
+    def setUp(self):
+        super(LiveWhooshRamStorageTestCase, self).setUp()
+        
+        # Stow.
+        self.old_whoosh_storage = getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file')
+        settings.HAYSTACK_WHOOSH_STORAGE = 'ram'
+        
+        self.site = SearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.wrtsi = WhooshRoundTripSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshRoundTripSearchIndex)
+        
+        # Stow.
+        import haystack
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        
+        self.sqs = SearchQuerySet(site=self.site)
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Fake indexing.
+        mock = MockModel()
+        mock.id = 1
+        self.sb.update(self.wrtsi, [mock])
+    
+    def tearDown(self):
+        self.sqs.query.backend.clear()
+        
+        settings.HAYSTACK_WHOOSH_STORAGE = self.old_whoosh_storage
+        
+        import haystack
+        haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
+        
+        super(LiveWhooshRamStorageTestCase, self).tearDown()
+    
+    def test_ram_storage(self):
+        results = self.sqs.filter(id='core.mockmodel.1')
+        
+        # Sanity check.
+        self.assertEqual(results.count(), 1)
+        
+        # Check the individual fields.
+        result = results[0]
+        self.assertEqual(result.id, 'core.mockmodel.1')
+        self.assertEqual(result.text, 'This is some example text.')
+        self.assertEqual(result.name, 'Mister Pants')
+        self.assertEqual(result.is_active, True)
+        self.assertEqual(result.post_count, 25)
+        self.assertEqual(result.average_rating, 3.6)
+        self.assertEqual(result.pub_date, date(2009, 11, 21))
+        self.assertEqual(result.created, datetime(2009, 11, 21, 21, 31, 00))
+        self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
+        self.assertEqual(result.sites, [u'3', u'5', u'1'])
+        self.assertEqual(result.empty_list, [])
