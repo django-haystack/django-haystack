@@ -305,14 +305,14 @@ class SearchBackend(BaseSearchBackend):
         
         for field_name, field_class in fields.items():
             field_data = {
-                'field_name': field_name,
+                'field_name': field_class.index_fieldname,
                 'type': 'text',
                 'indexed': 'true',
                 'multi_valued': 'false',
             }
             
             if field_class.document is True:
-                content_field_name = field_name
+                content_field_name = field_class.index_fieldname
             
             # DRL_FIXME: Perhaps move to something where, if none of these
             #            checks succeed, call a custom method on the form that

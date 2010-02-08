@@ -120,19 +120,19 @@ class SearchBackend(BaseSearchBackend):
         for field_name, field_class in fields.items():
             if isinstance(field_class, MultiValueField):
                 if field_class.indexed is False:
-                    schema_fields[field_name] = KEYWORD(stored=True, commas=True)
+                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True)
                 else:
-                    schema_fields[field_name] = KEYWORD(stored=True, commas=True, scorable=True)
+                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True, scorable=True)
             elif isinstance(field_class, (DateField, DateTimeField, IntegerField, FloatField, BooleanField)):
                 if field_class.indexed is False:
-                    schema_fields[field_name] = STORED
+                    schema_fields[field_class.index_fieldname] = STORED
                 else:
-                    schema_fields[field_name] = ID(stored=True)
+                    schema_fields[field_class.index_fieldname] = ID(stored=True)
             else:
-                schema_fields[field_name] = TEXT(stored=True, analyzer=StemmingAnalyzer())
+                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             
             if field_class.document is True:
-                content_field_name = field_name
+                content_field_name = field_class.index_fieldname
         
         # Fail more gracefully than relying on the backend to die if no fields
         # are found.

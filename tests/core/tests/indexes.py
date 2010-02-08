@@ -53,6 +53,12 @@ class GoodNullableMockSearchIndex(SearchIndex):
     author = CharField(model_attr='author', null=True)
 
 
+class GoodOverriddenFieldNameMockSearchIndex(SearchIndex):
+    content = CharField(document=True, use_template=True, index_fieldname='more_content')
+    author = CharField(model_attr='author', index_fieldname='name_s')
+    hello = CharField(model_attr='hello')
+
+
 class SearchIndexTestCase(TestCase):
     def setUp(self):
         super(SearchIndexTestCase, self).setUp()
@@ -153,6 +159,18 @@ class SearchIndexTestCase(TestCase):
         self.assertEqual(len(self.cmi.prepare(mock)), 9)
         self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
         self.assertEqual(self.cmi.prepared_data['hello'], u'World!')
+    
+    def test_custom_index_fieldname(self):
+        mock = MockModel()
+        mock.pk = 20
+        mock.author = 'daniel%s' % mock.id
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        
+        cofnmi = GoodOverriddenFieldNameMockSearchIndex(MockModel, backend=self.msb)
+        self.assertEqual(len(cofnmi.prepare(mock)), 6)
+        self.assertEqual(sorted(cofnmi.prepare(mock).keys()), ['django_ct', 'django_id', 'hello', 'id', 'more_content', 'name_s'])
+        self.assertEqual(cofnmi.prepared_data['name_s'], u'daniel20')
+        self.assertEqual(cofnmi.get_content_field(), 'more_content')
     
     def test_get_content_field(self):
         self.assertEqual(self.mi.get_content_field(), 'content')

@@ -24,7 +24,7 @@ class DeclarativeMetaclass(type):
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
                 field = attrs.pop(field_name)
-                field.instance_name = field_name
+                field.set_instance_name(field_name)
                 attrs['fields'][field_name] = field
         
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
@@ -105,18 +105,20 @@ class SearchIndex(object):
         }
         
         for field_name, field in self.fields.items():
-            self.prepared_data[field_name] = field.prepare(obj)
+            # Use the possibly overridden name, which will default to the
+            # variable name of the field.
+            self.prepared_data[field.index_fieldname] = field.prepare(obj)
         
         for field_name, field in self.fields.items():
             if hasattr(self, "prepare_%s" % field_name):
                 value = getattr(self, "prepare_%s" % field_name)(obj)
-                self.prepared_data[field_name] = value
+                self.prepared_data[field.index_fieldname] = value
         
         # Remove any fields that lack a value and are `null=True`.
         for field_name, field in self.fields.items():
             if field.null is True:
-                if self.prepared_data[field_name] is None:
-                    del(self.prepared_data[field_name])
+                if self.prepared_data[field.index_fieldname] is None:
+                    del(self.prepared_data[field.index_fieldname])
         
         return self.prepared_data
     
@@ -124,7 +126,7 @@ class SearchIndex(object):
         """Returns the field that supplies the primary document to be indexed."""
         for field_name, field in self.fields.items():
             if field.document is True:
-                return field_name
+                return field.index_fieldname
     
     def update(self):
         """Update the entire index"""

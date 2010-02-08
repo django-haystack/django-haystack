@@ -88,6 +88,18 @@ be searchable within the index. Default is ``True``.
 
 The companion of this option is ``stored``.
 
+``index_fieldname``
+-------------------
+
+.. attribute:: SearchField.index_fieldname
+
+The ``index_fieldname`` option allows you to force the name of the field in the
+index. This does not change how Haystack refers to the field. This is useful
+when using Solr's dynamic attributes or when integrating with other external
+software.
+
+Default is variable name of the field within the ``SearchIndex``.
+
 ``model_attr``
 --------------
 
