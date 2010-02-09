@@ -38,7 +38,7 @@ master_doc = 'toc'
 
 # General information about the project.
 project = u'Haystack'
-copyright = u'2009, Daniel Lindsley'
+copyright = u'2009-2010, Daniel Lindsley'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

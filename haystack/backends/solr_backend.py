@@ -162,7 +162,7 @@ class SearchBackend(BaseSearchBackend):
         
         if query_facets is not None:
             kwargs['facet'] = 'on'
-            kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets.items()]
+            kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets]
         
         if limit_to_registered_models:
             # Using narrow queries, limit the results to only models registered
@@ -305,14 +305,14 @@ class SearchBackend(BaseSearchBackend):
         
         for field_name, field_class in fields.items():
             field_data = {
-                'field_name': field_name,
+                'field_name': field_class.index_fieldname,
                 'type': 'text',
                 'indexed': 'true',
                 'multi_valued': 'false',
             }
             
             if field_class.document is True:
-                content_field_name = field_name
+                content_field_name = field_class.index_fieldname
             
             # DRL_FIXME: Perhaps move to something where, if none of these
             #            checks succeed, call a custom method on the form that
@@ -346,9 +346,13 @@ class SearchBackend(BaseSearchBackend):
 
 
 class SearchQuery(BaseSearchQuery):
-    def __init__(self, backend=None):
+    def __init__(self, site=None, backend=None):
         super(SearchQuery, self).__init__(backend=backend)
-        self.backend = backend or SearchBackend()
+        
+        if backend is not None:
+            self.backend = backend
+        else:
+            self.backend = SearchBackend(site=site)
 
     def matching_all_fragment(self):
         return '*:*'

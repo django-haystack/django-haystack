@@ -88,6 +88,20 @@ class HighlighterTestCase(TestCase):
         self.assertEqual(highlighter.render_html({'content': [151], 'detection': [42]}, 42, 242), '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
         
         self.assertEqual(highlighter.render_html({'content': [151], 'detection': [42]}, 42, 200), '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes no...')
+        
+        # Regression for repetition in the regular expression.
+        highlighter = Highlighter('i++')
+        highlighter.text_block = 'Foo is i++ in most cases.'
+        self.assertEqual(highlighter.render_html({'i++': [7]}, 0, 200), 'Foo is <span class="highlighted">i++</span> in most cases.')
+        highlighter = Highlighter('i**')
+        highlighter.text_block = 'Foo is i** in most cases.'
+        self.assertEqual(highlighter.render_html({'i**': [7]}, 0, 200), 'Foo is <span class="highlighted">i**</span> in most cases.')
+        highlighter = Highlighter('i..')
+        highlighter.text_block = 'Foo is i.. in most cases.'
+        self.assertEqual(highlighter.render_html({'i..': [7]}, 0, 200), 'Foo is <span class="highlighted">i..</span> in most cases.')
+        highlighter = Highlighter('i??')
+        highlighter.text_block = 'Foo is i?? in most cases.'
+        self.assertEqual(highlighter.render_html({'i??': [7]}, 0, 200), 'Foo is <span class="highlighted">i??</span> in most cases.')
     
     def test_highlight(self):
         highlighter = Highlighter('this test')

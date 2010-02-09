@@ -1,6 +1,10 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django import template
+try:
+    from django.utils import importlib
+except ImportError:
+    from haystack.utils import importlib
 
 
 register = template.Library()
@@ -43,7 +47,7 @@ class HighlightNode(template.Node):
             try:
                 path_bits = settings.HAYSTACK_CUSTOM_HIGHLIGHTER.split('.')
                 highlighter_path, highlighter_classname = '.'.join(path_bits[:-1]), path_bits[-1]
-                highlighter_module = __import__(highlighter_path, {}, {}, [''])
+                highlighter_module = importlib.import_module(highlighter_path)
                 highlighter_class = getattr(highlighter_module, highlighter_classname)
             except (ImportError, AttributeError), e:
                 raise ImproperlyConfigured("The highlighter '%s' could not be imported: %s" % (settings.HAYSTACK_CUSTOM_HIGHLIGHTER, e))

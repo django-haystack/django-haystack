@@ -14,6 +14,10 @@ try:
     set
 except NameError:
     from sets import Set as set
+try:
+    from django.utils import importlib
+except ImportError:
+    from haystack.utils import importlib
 
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
@@ -96,7 +100,7 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
     
-    def clear(self, models=[]):
+    def clear(self, models=[], commit=True):
         """
         Clears the backend of all documents/objects for a collection of models.
         
@@ -261,7 +265,7 @@ class BaseSearchQuery(object):
     implementation.
     """
     
-    def __init__(self, backend=None):
+    def __init__(self, site=None, backend=None):
         self.query_filter = SearchNode()
         self.order_by = []
         self.models = set()
@@ -271,7 +275,7 @@ class BaseSearchQuery(object):
         self.highlight = False
         self.facets = set()
         self.date_facets = {}
-        self.query_facets = {}
+        self.query_facets = []
         self.narrow_queries = set()
         self._raw_query = None
         self._raw_query_params = {}
@@ -281,7 +285,11 @@ class BaseSearchQuery(object):
         self._hit_count = None
         self._facet_counts = None
         self._spelling_suggestion = None
-        self.backend = backend or SearchBackend()
+        
+        if backend is not None:
+            self.backend = backend
+        else:
+            self.backend = SearchBackend(site=site)
     
     def __str__(self):
         return self.build_query()
@@ -301,7 +309,7 @@ class BaseSearchQuery(object):
         self.__dict__.update(obj_dict)
         
         try:
-            loaded_backend = __import__(backend_used)
+            loaded_backend = importlib.import_module(backend_used)
         except ImportError:
             raise SearchBackendError("The backend this query was pickled with '%s.SearchBackend' could not be loaded." % backend_used)
         
@@ -465,7 +473,11 @@ class BaseSearchQuery(object):
         if len(self.models):
             models = ['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
             models_clause = ' OR '.join(models)
-            final_query = '(%s) AND (%s)' % (query, models_clause)
+            
+            if query != self.matching_all_fragment():
+                final_query = '(%s) AND (%s)' % (query, models_clause)
+            else:
+                final_query = models_clause
         else:
             final_query = query
         
@@ -623,7 +635,7 @@ class BaseSearchQuery(object):
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
         if not gap_by in VALID_GAPS:
-            raise FacetingError("The gap_by ('%s') must be one of the following: %s." (gap_by, ', '.join(VALID_GAPS)))
+            raise FacetingError("The gap_by ('%s') must be one of the following: %s." % (gap_by, ', '.join(VALID_GAPS)))
         
         details = {
             'start_date': start_date,
@@ -635,7 +647,7 @@ class BaseSearchQuery(object):
     
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
-        self.query_facets[field] = query
+        self.query_facets.append((field, query))
     
     def add_narrow_query(self, query):
         """Adds a existing facet on a field."""
@@ -663,7 +675,7 @@ class BaseSearchQuery(object):
         clone.highlight = self.highlight
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()
-        clone.query_facets = self.query_facets.copy()
+        clone.query_facets = self.query_facets[:]
         clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset

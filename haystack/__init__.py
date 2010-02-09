@@ -4,6 +4,10 @@ import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from haystack.sites import site
+try:
+    from django.utils import importlib
+except ImportError:
+    from haystack.utils import importlib
 
 
 __author__ = 'Daniel Lindsley'
@@ -32,12 +36,12 @@ def load_backend(backend_name=None):
     try:
         # Most of the time, the search backend will be one of the  
         # backends that ships with haystack, so look there first.
-        return __import__('haystack.backends.%s_backend' % backend_name, {}, {}, [''])
+        return importlib.import_module('haystack.backends.%s_backend' % backend_name)
     except ImportError, e:
         # If the import failed, we might be looking for a search backend 
         # distributed external to haystack. So we'll try that next.
         try:
-            return __import__('%s_backend' % backend_name, {}, {}, [''])
+            return importlib.import_module('%s_backend' % backend_name)
         except ImportError, e_user:
             # The search backend wasn't found. Display a helpful error message
             # listing all possible (built-in) database backends.
@@ -80,7 +84,7 @@ def autodiscover():
         # fails silently -- apps that do weird things with __path__ might
         # need to roll their own index registration.
         try:
-            app_path = __import__(app, {}, {}, [app.split('.')[-1]]).__path__
+            app_path = importlib.import_module(app).__path__
         except AttributeError:
             continue
         
@@ -95,7 +99,7 @@ def autodiscover():
         
         # Step 3: import the app's search_index file. If this has errors we want them
         # to bubble up.
-        __import__("%s.search_indexes" % app)
+        importlib.import_module("%s.search_indexes" % app)
 
 
 def handle_registrations(*args, **kwargs):
@@ -125,7 +129,7 @@ def handle_registrations(*args, **kwargs):
     
     # Pull in the config file, causing any SearchSite initialization code to
     # execute.
-    search_sites_conf = __import__(settings.HAYSTACK_SITECONF)
+    search_sites_conf = importlib.import_module(settings.HAYSTACK_SITECONF)
 
 
 handle_registrations()

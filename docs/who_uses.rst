@@ -120,3 +120,13 @@ For Reddit Gifts.
 Using: Whoosh
 
 * http://redditgifts.com/
+
+
+Pegasus News
+------------
+
+For general search.
+
+Using: Xapian
+
+* http://www.pegasusnews.com/

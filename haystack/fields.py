@@ -17,7 +17,7 @@ class SearchField(object):
     """The base implementation of a search field."""
     def __init__(self, model_attr=None, use_template=False, template_name=None,
                  document=False, indexed=True, stored=True, default=NOT_PROVIDED,
-                 null=False):
+                 null=False, index_fieldname=None):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -28,6 +28,15 @@ class SearchField(object):
         self.stored = stored
         self._default = default
         self.null = null
+        self.index_fieldname = index_fieldname
+        
+        self.set_instance_name(None)
+    
+    def set_instance_name(self, instance_name):
+        self.instance_name = instance_name
+        
+        if self.index_fieldname is None:
+            self.index_fieldname = self.instance_name
     
     def has_default(self):
         """Returns a boolean of whether this field has a default value."""

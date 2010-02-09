@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import threading
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -16,16 +17,19 @@ try:
     set
 except NameError:
     from sets import Set as set
+
 try:
     import whoosh
-    from whoosh.analysis import StemmingAnalyzer
-    from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
-    from whoosh import index
-    from whoosh.qparser import QueryParser
-    from whoosh.filedb.filestore import FileStorage
-    from whoosh.spelling import SpellChecker
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
+
+# Bubble up the correct error.
+from whoosh.analysis import StemmingAnalyzer
+from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
+from whoosh import index
+from whoosh.qparser import QueryParser
+from whoosh.filedb.filestore import FileStorage, RamStorage
+from whoosh.spelling import SpellChecker
 
 # Handle minimum requirement.
 if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 5):
@@ -34,6 +38,8 @@ if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 5):
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
 BACKEND_NAME = 'whoosh'
+LOCALS = threading.local()
+LOCALS.RAM_STORE = None
 
 
 class SearchBackend(BaseSearchBackend):
@@ -55,8 +61,12 @@ class SearchBackend(BaseSearchBackend):
     def __init__(self, site=None):
         super(SearchBackend, self).__init__(site)
         self.setup_complete = False
+        self.use_file_storage = True
         
-        if not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
+        if getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file') != 'file':
+            self.use_file_storage = False
+        
+        if self.use_file_storage and not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_WHOOSH_PATH in your settings.')
     
     def setup(self):
@@ -66,24 +76,33 @@ class SearchBackend(BaseSearchBackend):
         new_index = False
         
         # Make sure the index is there.
-        if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+        if self.use_file_storage and not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
             os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
             new_index = True
         
-        if not os.access(settings.HAYSTACK_WHOOSH_PATH, os.W_OK):
+        if self.use_file_storage and not os.access(settings.HAYSTACK_WHOOSH_PATH, os.W_OK):
             raise IOError("The path to your Whoosh index '%s' is not writable for the current user/group." % settings.HAYSTACK_WHOOSH_PATH)
         
-        self.storage = FileStorage(settings.HAYSTACK_WHOOSH_PATH)
+        if self.use_file_storage:
+            self.storage = FileStorage(settings.HAYSTACK_WHOOSH_PATH)
+        else:
+            global LOCALS
+            
+            if LOCALS.RAM_STORE is None:
+                LOCALS.RAM_STORE = RamStorage()
+            
+            self.storage = LOCALS.RAM_STORE
+        
         self.content_field_name, self.schema = self.build_schema(self.site.all_searchfields())
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
         
         if new_index is True:
-            self.index = index.create_in(settings.HAYSTACK_WHOOSH_PATH, self.schema)
+            self.index = self.storage.create_index(self.schema)
         else:
             try:
                 self.index = self.storage.open_index(schema=self.schema)
             except index.EmptyIndexError:
-                self.index = index.create_in(settings.HAYSTACK_WHOOSH_PATH, self.schema)
+                self.index = self.storage.create_index(self.schema)
         
         self.setup_complete = True
     
@@ -101,19 +120,19 @@ class SearchBackend(BaseSearchBackend):
         for field_name, field_class in fields.items():
             if isinstance(field_class, MultiValueField):
                 if field_class.indexed is False:
-                    schema_fields[field_name] = KEYWORD(stored=True, commas=True)
+                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True)
                 else:
-                    schema_fields[field_name] = KEYWORD(stored=True, commas=True, scorable=True)
+                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True, scorable=True)
             elif isinstance(field_class, (DateField, DateTimeField, IntegerField, FloatField, BooleanField)):
                 if field_class.indexed is False:
-                    schema_fields[field_name] = STORED
+                    schema_fields[field_class.index_fieldname] = STORED
                 else:
-                    schema_fields[field_name] = ID(stored=True)
+                    schema_fields[field_class.index_fieldname] = ID(stored=True)
             else:
-                schema_fields[field_name] = TEXT(stored=True, analyzer=StemmingAnalyzer())
+                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             
             if field_class.document is True:
-                content_field_name = field_name
+                content_field_name = field_class.index_fieldname
         
         # Fail more gracefully than relying on the backend to die if no fields
         # are found.
@@ -181,7 +200,7 @@ class SearchBackend(BaseSearchBackend):
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
         # it's much more efficient to simply delete the index files.
-        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+        if self.use_file_storage and os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
             shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
         
         # Recreate everything.
@@ -354,7 +373,10 @@ class SearchBackend(BaseSearchBackend):
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         # Special-cased due to the nature of KEYWORD fields.
                         if isinstance(index.fields[string_key], MultiValueField):
-                            additional_fields[string_key] = value.split(',')
+                            if value is None:
+                                additional_fields[string_key] = []
+                            else:
+                                additional_fields[string_key] = value.split(',')
                         else:
                             additional_fields[string_key] = index.fields[string_key].convert(value)
                     else:
@@ -480,9 +502,13 @@ class SearchBackend(BaseSearchBackend):
 
 
 class SearchQuery(BaseSearchQuery):
-    def __init__(self, backend=None):
+    def __init__(self, site=None, backend=None):
         super(SearchQuery, self).__init__(backend=backend)
-        self.backend = backend or SearchBackend()
+        
+        if backend is not None:
+            self.backend = backend
+        else:
+            self.backend = SearchBackend(site=site)
     
     
     def build_query_fragment(self, field, filter_type, value):

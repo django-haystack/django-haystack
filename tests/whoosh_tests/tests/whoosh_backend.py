@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
 from haystack import backends
-from haystack import indexes
+from haystack.indexes import *
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
 from haystack.query import SearchQuerySet, SQ
 from haystack.sites import SearchSite
@@ -18,24 +18,24 @@ except NameError:
     from sets import Set as set
 
 
-class WhooshMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+class WhooshMockSearchIndex(SearchIndex):
+    text = CharField(document=True, use_template=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
 
 
-class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author', indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
-    sites = indexes.MultiValueField()
-    seen_count = indexes.IntegerField(indexed=False)
+class AllTypesWhooshMockSearchIndex(SearchIndex):
+    text = CharField(document=True, use_template=True)
+    name = CharField(model_attr='author', indexed=False)
+    pub_date = DateField(model_attr='pub_date')
+    sites = MultiValueField()
+    seen_count = IntegerField(indexed=False)
 
 
-class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True)
-    month = indexes.CharField(indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+class WhooshMaintainTypeMockSearchIndex(SearchIndex):
+    text = CharField(document=True)
+    month = CharField(indexed=False)
+    pub_date = DateField(model_attr='pub_date')
     
     def prepare_text(self, obj):
         return "Indexed!\n%s" % obj.pk
@@ -474,6 +474,10 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
         self.assertEqual(sqs.query.build_query(), u'("bell bronze" AND daler\\-rowney AND pearlescent)')
         self.assertEqual(len(sqs), 0)
+        
+        sqs = self.sqs.models(MockModel)
+        self.assertEqual(sqs.query.build_query(), u'django_ct:core.mockmodel')
+        self.assertEqual(len(sqs), 3)
     
     def test_all_regression(self):
         sqs = SearchQuerySet()
@@ -490,6 +494,15 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
             sqs = repr(SearchQuerySet())
         except:
             self.fail()
+    
+    def test_regression_space_query(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assert_(self.sb.index.doc_count() > 0)
+        
+        sqs = SearchQuerySet().auto_query(" ")
+        self.assertEqual(len(sqs), 3)
+        sqs = SearchQuerySet().filter(content=" ")
+        self.assertEqual(len(sqs), 0)
     
     def test_iter(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -553,16 +566,18 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(backends.queries), 1)
 
 
-class WhooshRoundTripSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, default='')
-    name = indexes.CharField()
-    is_active = indexes.BooleanField()
-    post_count = indexes.IntegerField()
-    average_rating = indexes.FloatField()
-    pub_date = indexes.DateField()
-    created = indexes.DateTimeField()
-    tags = indexes.MultiValueField()
-    sites = indexes.MultiValueField()
+class WhooshRoundTripSearchIndex(SearchIndex):
+    text = CharField(document=True, default='')
+    name = CharField()
+    is_active = BooleanField()
+    post_count = IntegerField()
+    average_rating = FloatField()
+    pub_date = DateField()
+    created = DateTimeField()
+    tags = MultiValueField()
+    sites = MultiValueField()
+    # For a regression involving lists with nothing in them.
+    empty_list = MultiValueField()
     
     def prepare(self, obj):
         prepped = super(WhooshRoundTripSearchIndex, self).prepare(obj)
@@ -576,6 +591,7 @@ class WhooshRoundTripSearchIndex(indexes.SearchIndex):
             'created': datetime(2009, 11, 21, 21, 31, 00),
             'tags': ['staff', 'outdoor', 'activist', 'scientist'],
             'sites': [3, 5, 1],
+            'empty_list': [],
         })
         return prepped
 
@@ -646,3 +662,70 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.assertEqual(result.created, datetime(2009, 11, 21, 21, 31, 00))
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [u'3', u'5', u'1'])
+        self.assertEqual(result.empty_list, [])
+
+
+class LiveWhooshRamStorageTestCase(TestCase):
+    def setUp(self):
+        super(LiveWhooshRamStorageTestCase, self).setUp()
+        
+        # Stow.
+        self.old_whoosh_storage = getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file')
+        settings.HAYSTACK_WHOOSH_STORAGE = 'ram'
+        
+        self.site = SearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.wrtsi = WhooshRoundTripSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshRoundTripSearchIndex)
+        
+        # Stow.
+        import haystack
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        
+        self.sqs = SearchQuerySet(site=self.site)
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        # Fake indexing.
+        mock = MockModel()
+        mock.id = 1
+        self.sb.update(self.wrtsi, [mock])
+    
+    def tearDown(self):
+        self.sqs.query.backend.clear()
+        
+        settings.HAYSTACK_WHOOSH_STORAGE = self.old_whoosh_storage
+        
+        import haystack
+        haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
+        
+        super(LiveWhooshRamStorageTestCase, self).tearDown()
+    
+    def test_ram_storage(self):
+        results = self.sqs.filter(id='core.mockmodel.1')
+        
+        # Sanity check.
+        self.assertEqual(results.count(), 1)
+        
+        # Check the individual fields.
+        result = results[0]
+        self.assertEqual(result.id, 'core.mockmodel.1')
+        self.assertEqual(result.text, 'This is some example text.')
+        self.assertEqual(result.name, 'Mister Pants')
+        self.assertEqual(result.is_active, True)
+        self.assertEqual(result.post_count, 25)
+        self.assertEqual(result.average_rating, 3.6)
+        self.assertEqual(result.pub_date, date(2009, 11, 21))
+        self.assertEqual(result.created, datetime(2009, 11, 21, 21, 31, 00))
+        self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
+        self.assertEqual(result.sites, [u'3', u'5', u'1'])
+        self.assertEqual(result.empty_list, [])

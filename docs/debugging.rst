@@ -77,14 +77,14 @@ small sites or development.
 
 A way to solve this is to subclass ``SearchIndex`` instead::
 
-    from haystack import indexes
+    from haystack.indexes import *
     
     # Change from:
     # 
-    #   class MySearchIndex(indexes.RealTimeSearchIndex):
+    #   class MySearchIndex(RealTimeSearchIndex):
     # 
     # to:
-    class MySearchIndex(indexes.SearchIndex):
+    class MySearchIndex(SearchIndex):
         ...
 
 The final step is to set up a cron job that runs

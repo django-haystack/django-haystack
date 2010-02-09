@@ -2,14 +2,14 @@ import pysolr
 from django.conf import settings
 from django.template import Template, Context
 from django.test import TestCase
-from haystack import indexes
+from haystack.indexes import *
 from haystack.backends.solr_backend import SearchBackend
 from haystack.sites import SearchSite
 from core.models import MockModel
 
 
-class MLTSearchIndex(indexes.RealTimeSearchIndex):
-    text = indexes.CharField(document=True, model_attr='foo')
+class MLTSearchIndex(RealTimeSearchIndex):
+    text = CharField(document=True, model_attr='foo')
 
 
 class MoreLikeThisTagTestCase(TestCase):

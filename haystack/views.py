@@ -26,10 +26,10 @@ class SearchView(object):
         
         if template:
             self.template = template
-
+    
     def __name__(self):
         return "SearchView"
-
+    
     def __call__(self, request):
         """
         Generates the actual response to the search.
@@ -48,10 +48,18 @@ class SearchView(object):
         """
         Instantiates the form the class should use to process the search query.
         """
-        if self.searchqueryset is None:
-            return self.form_class(self.request.GET, load_all=self.load_all)
+        data = None
+        kwargs = {
+            'load_all': self.load_all,
+        }
         
-        return self.form_class(self.request.GET, searchqueryset=self.searchqueryset, load_all=self.load_all)
+        if len(self.request.GET):
+            data = self.request.GET
+        
+        if self.searchqueryset is not None:
+            kwargs['searchqueryset'] = self.searchqueryset
+        
+        return self.form_class(data, **kwargs)
     
     def get_query(self):
         """

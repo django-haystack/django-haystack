@@ -2,7 +2,7 @@ Primary Authors:
 
     * Daniel Lindsley
     * Matt Croydon (some documentation, sanity checks and the sweet name)
-    * Travis Cline (the original SQ implementation)
+    * Travis Cline (the original SQ implementation, improvements to ModelSearchIndex)
 
 
 Thanks to
@@ -31,3 +31,10 @@ Thanks to
     * Kyle MacFarlane for various patches.
     * Alex Gaynor (alex) for help with handling deferred models with More Like This.
     * RobertGawron for a patch to the Highlighter.
+    * Simon Willison (simonw) for various proposals and patches.
+    * Ben Firshman (bfirsh) for faceting improvements and suggestions.
+    * Peter Bengtsson for a patch regarding passing a customized site.
+    * Sam Bull (osirius) for a patch regarding initial data on SearchForms.
+    * slai for a patch regarding Whoosh and fetching all documents of a certain model type.
+    * alanwj for a patch regarding Whoosh and empty MultiValueFields.
+    * alanzoppa for a patch regarding highlighting.

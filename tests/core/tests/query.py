@@ -6,12 +6,16 @@ from haystack import backends
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
-from haystack.exceptions import HaystackError
+from haystack.exceptions import HaystackError, FacetingError
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel
 from core.tests.mocks import MockSearchQuery, MockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 class SQTestCase(TestCase):
@@ -160,10 +164,13 @@ class BaseSearchQueryTestCase(TestCase):
     
     def test_add_query_facet(self):
         self.bsq.add_query_facet('foo', 'bar')
-        self.assertEqual(self.bsq.query_facets, {'foo': 'bar'})
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar')])
         
         self.bsq.add_query_facet('moof', 'baz')
-        self.assertEqual(self.bsq.query_facets, {'foo': 'bar', 'moof': 'baz'})
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz')])
+        
+        self.bsq.add_query_facet('foo', 'baz')
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz'), ('foo', 'baz')])
     
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
@@ -185,8 +192,6 @@ class BaseSearchQueryTestCase(TestCase):
         
         # Restore.
         haystack.site = old_site
-
-
     
     def test_clone(self):
         self.bsq.add_filter(SQ(foo='bar'))
@@ -250,8 +255,14 @@ class BaseSearchQueryTestCase(TestCase):
         # Restore.
         haystack.site = old_site
         settings.DEBUG = old_debug
-
-
+    
+    def test_regression_site_kwarg(self):
+        # Stow.
+        test_site = SearchSite()
+        test_site.register(MockModel)
+        
+        msq = MockSearchQuery(site=test_site)
+        self.assertEqual(msq.backend.site.get_indexed_models(), [MockModel])
 
 
 class SearchQuerySetTestCase(TestCase):
@@ -513,6 +524,12 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs2.query.facets), 2)
     
     def test_date_facets(self):
+        try:
+            sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='smarblaph')
+            self.fail()
+        except FacetingError, e:
+            self.assertEqual(str(e), "The gap_by ('smarblaph') must be one of the following: year, month, day, hour, minute, second.")
+        
         sqs = self.bsqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month')
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.date_facets), 1)
@@ -529,6 +546,11 @@ class SearchQuerySetTestCase(TestCase):
         sqs2 = self.bsqs.query_facet('foo', '[bar TO *]').query_facet('bar', '[100 TO 499]')
         self.assert_(isinstance(sqs2, SearchQuerySet))
         self.assertEqual(len(sqs2.query.query_facets), 2)
+        
+        # Test multiple query facets on a single field
+        sqs3 = self.bsqs.query_facet('foo', '[bar TO *]').query_facet('bar', '[100 TO 499]').query_facet('foo', '[1000 TO 1499]')
+        self.assert_(isinstance(sqs3, SearchQuerySet))
+        self.assertEqual(len(sqs3.query.query_facets), 3)
     
     def test_narrow(self):
         sqs = self.bsqs.narrow('foo:moof')
@@ -576,6 +598,14 @@ class SearchQuerySetTestCase(TestCase):
         
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
+    
+    def test_regression_site_kwarg(self):
+        mock_index_site = SearchSite()
+        mock_index_site.register(MockModel)
+        mock_index_site.register(AnotherMockModel)
+        
+        bsqs = SearchQuerySet(site=mock_index_site)
+        self.assertEqual(set(bsqs.query.backend.site.get_indexed_models()), set([MockModel, AnotherMockModel]))
 
 
 class EmptySearchQuerySetTestCase(TestCase):
@@ -608,4 +638,10 @@ class EmptySearchQuerySetTestCase(TestCase):
             self.fail()
         except IndexError:
             pass
-
+    
+    def test_dictionary_lookup(self):
+        """
+        Ensure doing a dictionary lookup raises a TypeError so
+        EmptySearchQuerySets can be used in templates.
+        """
+        self.assertRaises(TypeError, lambda: self.esqs['count'])

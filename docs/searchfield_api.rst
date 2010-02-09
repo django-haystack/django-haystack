@@ -41,13 +41,13 @@ within a ``SearchIndex``. You use them in a declarative manner, just like
 fields in ``django.forms.Form`` or ``django.db.models.Model`` objects. For
 example::
 
-    from haystack import indexes
+    from haystack.indexes import *
     
     
-    class NoteIndex(indexes.SearchIndex):
-        text = indexes.CharField(document=True, use_template=True)
-        author = indexes.CharField(model_attr='user')
-        pub_date = indexes.DateTimeField(model_attr='pub_date')
+    class NoteIndex(SearchIndex):
+        text = CharField(document=True, use_template=True)
+        author = CharField(model_attr='user')
+        pub_date = DateTimeField(model_attr='pub_date')
 
 This will hook up those fields with the index and, when updating a ``Model``
 object, pull the relevant data out and prepare it for storage in the index.
@@ -88,6 +88,18 @@ be searchable within the index. Default is ``True``.
 
 The companion of this option is ``stored``.
 
+``index_fieldname``
+-------------------
+
+.. attribute:: SearchField.index_fieldname
+
+The ``index_fieldname`` option allows you to force the name of the field in the
+index. This does not change how Haystack refers to the field. This is useful
+when using Solr's dynamic attributes or when integrating with other external
+software.
+
+Default is variable name of the field within the ``SearchIndex``.
+
 ``model_attr``
 --------------
 
@@ -99,19 +111,19 @@ a string that will automatically pull data out for you. For example::
 
     # Automatically looks within the model and populates the field with
     # the ``last_name`` attribute.
-    author = indexes.CharField(model_attr='last_name')
+    author = CharField(model_attr='last_name')
 
 It also handles callables::
 
     # On a ``User`` object, pulls the full name as pieced together by the
     # ``get_full_name`` method.
-    author = indexes.CharField(model_attr='get_full_name')
+    author = CharField(model_attr='get_full_name')
 
 And can look through relations::
 
     # Pulls the ``bio`` field from a ``UserProfile`` object that has a
     # ``OneToOneField`` relationship to a ``User`` object.
-    biography = indexes.CharField(model_attr='user__profile__bio')
+    biography = CharField(model_attr='user__profile__bio')
 
 ``null``
 --------
@@ -153,7 +165,7 @@ This option lets you override that path (though still within ``TEMPLATE_DIRS``).
 
 Example::
 
-    bio = indexes.CharField(use_template=True, template_name='myapp/data/bio.txt')
+    bio = CharField(use_template=True, template_name='myapp/data/bio.txt')
 
 ``use_template``
 ----------------

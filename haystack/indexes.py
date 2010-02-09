@@ -1,6 +1,6 @@
+import copy
 from django.db.models import signals
 from django.utils.encoding import force_unicode
-import haystack
 from haystack.fields import *
 from haystack.utils import get_identifier
 
@@ -24,7 +24,7 @@ class DeclarativeMetaclass(type):
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
                 field = attrs.pop(field_name)
-                field.instance_name = field_name
+                field.set_instance_name(field_name)
                 attrs['fields'][field_name] = field
         
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
@@ -37,13 +37,13 @@ class SearchIndex(object):
     An example might look like this::
     
         import datetime
-        from haystack import indexes
+        from haystack.indexes import *
         from myapp.models import Note
         
-        class NoteIndex(indexes.SearchIndex):
-            text = indexes.CharField(document=True, use_template=True)
-            author = indexes.CharField(model_attr='user')
-            pub_date = indexes.DateTimeField(model_attr='pub_date')
+        class NoteIndex(SearchIndex):
+            text = CharField(document=True, use_template=True)
+            author = CharField(model_attr='user')
+            pub_date = DateTimeField(model_attr='pub_date')
             
             def get_queryset(self):
                 return super(NoteIndex, self).get_queryset().filter(pub_date__lte=datetime.datetime.now())
@@ -53,7 +53,13 @@ class SearchIndex(object):
     
     def __init__(self, model, backend=None):
         self.model = model
-        self.backend = backend or haystack.backend.SearchBackend()
+        
+        if backend:
+            self.backend = backend
+        else:
+            import haystack
+            self.backend = haystack.backend.SearchBackend()
+        
         self.prepared_data = None
         content_fields = []
         
@@ -99,18 +105,20 @@ class SearchIndex(object):
         }
         
         for field_name, field in self.fields.items():
-            self.prepared_data[field_name] = field.prepare(obj)
+            # Use the possibly overridden name, which will default to the
+            # variable name of the field.
+            self.prepared_data[field.index_fieldname] = field.prepare(obj)
         
         for field_name, field in self.fields.items():
             if hasattr(self, "prepare_%s" % field_name):
                 value = getattr(self, "prepare_%s" % field_name)(obj)
-                self.prepared_data[field_name] = value
+                self.prepared_data[field.index_fieldname] = value
         
         # Remove any fields that lack a value and are `null=True`.
         for field_name, field in self.fields.items():
             if field.null is True:
-                if self.prepared_data[field_name] is None:
-                    del(self.prepared_data[field_name])
+                if self.prepared_data[field.index_fieldname] is None:
+                    del(self.prepared_data[field.index_fieldname])
         
         return self.prepared_data
     
@@ -118,7 +126,7 @@ class SearchIndex(object):
         """Returns the field that supplies the primary document to be indexed."""
         for field_name, field in self.fields.items():
             if field.document is True:
-                return field_name
+                return field.index_fieldname
     
     def update(self):
         """Update the entire index"""
@@ -211,63 +219,25 @@ class BasicSearchIndex(SearchIndex):
 # Begin ModelSearchIndexes
 
 
-def fields_for_searchindex(model, existing_fields, fields=None, excludes=None):
+def index_field_from_django_field(f, default=CharField):
     """
-    Used by the `ModelSearchIndex` class to generate a field list by
-    introspecting the model.
+    Returns the Haystack field type that would likely be associated with each
+    Django type.
     """
-    final_fields = {}
+    result = default
     
-    if fields is None:
-        fields = []
+    if f.get_internal_type() in ('DateField', 'DateTimeField'):
+        result = DateTimeField
+    elif f.get_internal_type() in ('BooleanField', 'NullBooleanField'):
+        result = BooleanField
+    elif f.get_internal_type() in ('CommaSeparatedIntegerField',):
+        result = MultiValueField
+    elif f.get_internal_type() in ('DecimalField', 'FloatField'):
+        result = FloatField
+    elif f.get_internal_type() in ('IntegerField', 'PositiveIntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField'):
+        result = FloatField
     
-    if excludes is None:
-        excludes = []
-    
-    for f in model._meta.fields:
-        if f.name in existing_fields:
-            continue
-        
-        if fields and f.name not in fields:
-            continue
-        
-        if excludes and f.name in excludes:
-            continue
-        
-        # Skip reserved fieldnames from Haystack.
-        if f.name in ('id', 'django_ct', 'django_id', 'content', 'text'):
-            continue
-        
-        # Ignore certain fields (AutoField, related fields).
-        if f.primary_key or getattr(f, 'rel'):
-            continue
-        
-        if f.get_internal_type() in ('DateField', 'DateTimeField'):
-            index_field_class = DateTimeField
-        elif f.get_internal_type() in ('BooleanField', 'NullBooleanField'):
-            index_field_class = BooleanField
-        elif f.get_internal_type() in ('CommaSeparatedIntegerField',):
-            index_field_class = MultiValueField
-        elif f.get_internal_type() in ('DecimalField', 'FloatField'):
-            index_field_class = FloatField
-        elif f.get_internal_type() in ('IntegerField', 'PositiveIntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField'):
-            index_field_class = FloatField
-        else:
-            index_field_class = CharField
-        
-        kwargs = {
-            'model_attr': f.name,
-        }
-        
-        if f.null is True:
-            kwargs['null'] = True
-        
-        if f.has_default():
-            kwargs['default'] = f.default
-        
-        final_fields[f.name] = index_field_class(**kwargs)
-    
-    return final_fields
+    return result
 
 
 class ModelSearchIndex(SearchIndex):
@@ -285,12 +255,21 @@ class ModelSearchIndex(SearchIndex):
     At this time, it does not handle related fields.
     """
     text = CharField(document=True, use_template=True)
+    # list of reserved field names
+    fields_to_skip = ('id', 'django_ct', 'django_id', 'content', 'text')
     
-    def __init__(self, model, backend=None):
+    def __init__(self, model, backend=None, extra_field_kwargs=None):
         self.model = model
-        self.backend = backend or haystack.backend.SearchBackend()
+        
+        if backend:
+            self.backend = backend
+        else:
+            import haystack
+            self.backend = haystack.backend.SearchBackend()
+        
         self.prepared_data = None
         content_fields = []
+        self.extra_field_kwargs = extra_field_kwargs or {}
         
         # Introspect the model, adding/removing fields as needed.
         # Adds/Excludes should happen only if the fields are not already
@@ -298,17 +277,11 @@ class ModelSearchIndex(SearchIndex):
         self._meta = getattr(self, 'Meta', None)
         
         if self._meta:
-            fields = []
-            excludes = []
-            
-            if getattr(self._meta, 'fields', None):
-                fields = self._meta.fields
-            
-            if getattr(self._meta, 'excludes', None):
-                excludes = self._meta.excludes
+            fields = getattr(self._meta, 'fields', [])
+            excludes = getattr(self._meta, 'excludes', [])
             
             # Add in the new fields.
-            self.fields.update(fields_for_searchindex(self.model, self.fields, fields, excludes))
+            self.fields.update(self.get_fields(fields, excludes))
         
         for field_name, field in self.fields.items():
             if field.document is True:
@@ -316,3 +289,60 @@ class ModelSearchIndex(SearchIndex):
         
         if not len(content_fields) == 1:
             raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
+    
+    def should_skip_field(self, field):
+        """
+        Given a Django model field, return if it should be included in the
+        contributed SearchFields.
+        """
+        # Skip fields in skip list
+        if field.name in self.fields_to_skip:
+            return True
+        
+        # Ignore certain fields (AutoField, related fields).
+        if field.primary_key or getattr(field, 'rel'):
+            return True
+        
+        return False
+    
+    def get_fields(self, fields=None, excludes=None):
+        """
+        Given any explicit fields to include and fields to exclude, add
+        additional fields based on the associated model.
+        """
+        final_fields = {}
+        fields = fields or []
+        excludes = excludes or []
+        
+        for f in self.model._meta.fields:
+            # If the field name is already present, skip
+            if f.name in self.fields:
+                continue
+            
+            # If field is not present in explicit field listing, skip
+            if fields and f.name not in fields:
+                continue
+            
+            # If field is in exclude list, skip
+            if excludes and f.name in excludes:
+                continue
+            
+            if self.should_skip_field(f):
+                continue
+            
+            index_field_class = index_field_from_django_field(f)
+            
+            kwargs = copy.copy(self.extra_field_kwargs)
+            kwargs.update({
+                'model_attr': f.name,
+            })
+            
+            if f.null is True:
+                kwargs['null'] = True
+            
+            if f.has_default():
+                kwargs['default'] = f.default
+            
+            final_fields[f.name] = index_field_class(**kwargs)
+        
+        return final_fields

@@ -135,6 +135,9 @@ class Highlighter(object):
         highlighted_chunk = self.text_block[start_offset:end_offset]
         
         for word in self.query_words:
+            for special_char in ('+', '*', '.', '?'):
+                word = word.replace(special_char, '\%s' % special_char)
+            
             word_re = re.compile("(%s)" % word, re.I)
             
             if self.css_class:
