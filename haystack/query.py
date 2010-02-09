@@ -323,11 +323,6 @@ class SearchQuerySet(object):
         clone._load_all = True
         return clone
     
-    def load_all_queryset(self, model, queryset):
-        # DRL_TODO: Remove before 1.0.
-        from haystack.exceptions import HaystackError
-        raise HaystackError("This method is deprecated. Please use the `RelatedSearchQuerySet` instead.")
-    
     def auto_query(self, query_string):
         """
         Performs a best guess constructing the search query.
