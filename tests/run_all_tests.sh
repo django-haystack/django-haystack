@@ -3,6 +3,10 @@ echo "** CORE **"
 django-admin.py test core --settings=settings
 echo ""
 
+echo "** SIMPLE **"
+django-admin.py test simple_tests --settings=simple_settings
+echo ""
+
 echo "** SOLR **"
 django-admin.py test solr_tests --settings=solr_settings
 echo ""

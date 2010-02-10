@@ -3,6 +3,7 @@ Primary Authors:
     * Daniel Lindsley
     * Matt Croydon (some documentation, sanity checks and the sweet name)
     * Travis Cline (the original SQ implementation, improvements to ModelSearchIndex)
+    * David Sauve (notanumber) for the Xapian backend, the simple backend and various patches.
 
 
 Thanks to
@@ -23,7 +24,6 @@ Thanks to
     * JoeGermuska for various patches.
     * SmileyChris for various patches.
     * sk1p for various patches.
-    * David Sauve (notanumber) for the Xapian backend and various patches.
     * Ryszard Szopa (ryszard) for various patches.
     * Patryk Zawadzki (patrys) for various patches and feedback.
     * Frank Wiles for documentation patches.
