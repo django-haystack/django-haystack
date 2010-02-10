@@ -276,6 +276,12 @@ class FieldsWithOverrideModelSearchIndex(ModelSearchIndex):
     
     class Meta:
         fields = ['author', 'foo']
+    
+    def get_index_fieldname(self, f):
+        if f.name == 'author':
+            return 'author_bar'
+        else:
+            return f.name
 
 
 class ModelSearchIndexTestCase(TestCase):
@@ -292,6 +298,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.assert_('foo' in self.bmsi.fields)
         self.assert_(isinstance(self.bmsi.fields['foo'], CharField))
         self.assertEqual(self.bmsi.fields['foo'].null, False)
+        self.assertEqual(self.bmsi.fields['foo'].index_fieldname, 'foo')
         self.assert_('author' in self.bmsi.fields)
         self.assert_(isinstance(self.bmsi.fields['author'], CharField))
         self.assertEqual(self.bmsi.fields['author'].null, False)
@@ -327,3 +334,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.assert_(isinstance(self.fwomsi.fields['foo'], IntegerField))
         self.assert_('text' in self.fwomsi.fields)
         self.assert_(isinstance(self.fwomsi.fields['text'], CharField))
+    
+    def test_overriding_field_name_with_get_index_fieldname(self):
+        self.assert_(self.fwomsi.fields['foo'].index_fieldname, 'foo')
+        self.assert_(self.fwomsi.fields['author'].index_fieldname, 'author_bar')

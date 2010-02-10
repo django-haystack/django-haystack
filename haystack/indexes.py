@@ -305,6 +305,12 @@ class ModelSearchIndex(SearchIndex):
         
         return False
     
+    def get_index_fieldname(self, f):
+        """
+        Given a Django field, return the appropriate index fieldname.
+        """
+        return f.name
+    
     def get_fields(self, fields=None, excludes=None):
         """
         Given any explicit fields to include and fields to exclude, add
@@ -344,5 +350,6 @@ class ModelSearchIndex(SearchIndex):
                 kwargs['default'] = f.default
             
             final_fields[f.name] = index_field_class(**kwargs)
+            final_fields[f.name].set_instance_name(self.get_index_fieldname(f))
         
         return final_fields
