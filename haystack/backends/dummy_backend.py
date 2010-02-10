@@ -29,13 +29,13 @@ class DummySearchResult(SearchResult):
 
 
 class SearchBackend(BaseSearchBackend):
-    def update(self, indexer, iterable):
+    def update(self, indexer, iterable, commit=True):
         pass
     
-    def remove(self, obj):
+    def remove(self, obj, commit=True):
         pass
     
-    def clear(self, models):
+    def clear(self, models=[], commit=True):
         pass
     
     @log_query
@@ -57,7 +57,9 @@ class SearchBackend(BaseSearchBackend):
     def prep_value(self, db_field, value):
         return value
     
-    def more_like_this(self, model_instance, additional_query_string=None):
+    def more_like_this(self, model_instance, additional_query_string=None,
+                       start_offset=0, end_offset=None,
+                       limit_to_registered_models=True, **kwargs):
         return {
             'results': [],
             'hits': 0

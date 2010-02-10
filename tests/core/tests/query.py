@@ -464,12 +464,6 @@ class SearchQuerySetTestCase(TestCase):
         
         # For full tests, see the solr_backend.
     
-    def test_load_all_queryset(self):
-        sqs = self.msqs.load_all()
-        self.assertRaises(HaystackError, sqs.load_all_queryset, MockModel, MockModel.objects.filter(id__gt=1))
-        
-        # For full tests, see the solr_backend.
-    
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
