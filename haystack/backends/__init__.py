@@ -363,7 +363,7 @@ class BaseSearchQuery(object):
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
-        self._facet_counts = results.get('facets', {})
+        self._facet_counts = self.post_process_facets(results)
         self._spelling_suggestion = results.get('spelling_suggestion', None)
     
     def run_mlt(self):
@@ -657,6 +657,25 @@ class BaseSearchQuery(object):
         Generally used in conjunction with faceting.
         """
         self.narrow_queries.add(query)
+    
+    def post_process_facets(self, results):
+        # Handle renaming the facet fields. Undecorate and all that.
+        revised_facets = {}
+        
+        for facet_type, field_details in results.get('facets', {}).items():
+            temp_facets = {}
+            
+            for field, field_facets in field_details.items():
+                fieldname = field
+                
+                if fieldname.endswith('_exact'):
+                    fieldname = fieldname[:-6]
+                
+                temp_facets[fieldname] = field_facets
+            
+            revised_facets[facet_type] = temp_facets
+        
+        return revised_facets
     
     def _reset(self):
         """

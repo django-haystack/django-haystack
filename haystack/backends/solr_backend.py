@@ -450,25 +450,6 @@ class SearchQuery(BaseSearchQuery):
         self._facet_counts = self.post_process_facets(results)
         self._spelling_suggestion = results.get('spelling_suggestion', None)
     
-    def post_process_facets(self, results):
-        # Handle renaming the facet fields. Undecorate and all that.
-        revised_facets = {}
-        
-        for facet_type, field_details in results.get('facets', {}).items():
-            temp_facets = {}
-            
-            for field, field_facets in field_details.items():
-                fieldname = field
-                
-                if fieldname.endswith('_exact'):
-                    fieldname = fieldname[:-6]
-                
-                temp_facets[fieldname] = field_facets
-            
-            revised_facets[facet_type] = temp_facets
-        
-        return revised_facets
-    
     def run_mlt(self):
         """Builds and executes the query. Returns a list of search results."""
         if self._more_like_this is False or self._mlt_instance is None:
