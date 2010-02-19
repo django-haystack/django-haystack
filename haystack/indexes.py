@@ -2,7 +2,7 @@ import copy
 from django.db.models import signals
 from django.utils.encoding import force_unicode
 from haystack.fields import *
-from haystack.utils import get_identifier
+from haystack.utils import get_identifier, get_facet_field_name
 
 
 class DeclarativeMetaclass(type):
@@ -119,6 +119,11 @@ class SearchIndex(object):
             if field.null is True:
                 if self.prepared_data[field.index_fieldname] is None:
                     del(self.prepared_data[field.index_fieldname])
+        
+        # Duplicate data for faceted fields.
+        for field_name, field in self.fields.items():
+            if field.faceted is True:
+                self.prepared_data[get_facet_field_name(field.index_fieldname)] = self.prepared_data[field.index_fieldname]
         
         return self.prepared_data
     

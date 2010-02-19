@@ -16,8 +16,8 @@ DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|
 class SearchField(object):
     """The base implementation of a search field."""
     def __init__(self, model_attr=None, use_template=False, template_name=None,
-                 document=False, indexed=True, stored=True, default=NOT_PROVIDED,
-                 null=False, index_fieldname=None):
+                 document=False, indexed=True, stored=True, faceted=False,
+                 default=NOT_PROVIDED, null=False, index_fieldname=None):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -26,6 +26,7 @@ class SearchField(object):
         self.document = document
         self.indexed = indexed
         self.stored = stored
+        self.faceted = faceted
         self._default = default
         self.null = null
         self.index_fieldname = index_fieldname

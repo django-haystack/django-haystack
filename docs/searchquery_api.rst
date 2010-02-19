@@ -281,4 +281,6 @@ Adds a query facet on a field.
 
 .. method:: SearchQuery.add_narrow_query(self, query)
 
-Adds a existing facet on a field.
+Narrows a search to a subset of all documents per the query.
+
+Generally used in conjunction with faceting.

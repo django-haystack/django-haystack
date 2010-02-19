@@ -25,6 +25,10 @@ def get_identifier(obj_or_string):
     return u"%s.%s.%s" % (obj_or_string._meta.app_label, obj_or_string._meta.module_name, obj_or_string._get_pk_val())
 
 
+def get_facet_field_name(fieldname):
+    return "%s_exact" % fieldname
+
+
 class Highlighter(object):
     css_class = 'highlighted'
     html_tag = 'span'

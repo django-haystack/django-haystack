@@ -10,6 +10,7 @@ from django.utils import tree
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
+from haystack.utils import get_facet_field_name
 try:
     set
 except NameError:
@@ -630,7 +631,7 @@ class BaseSearchQuery(object):
     
     def add_field_facet(self, field):
         """Adds a regular facet on a field."""
-        self.facets.add(field)
+        self.facets.add(get_facet_field_name(field))
     
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
@@ -643,14 +644,18 @@ class BaseSearchQuery(object):
             'gap_by': gap_by,
             'gap_amount': gap_amount,
         }
-        self.date_facets[field] = details
+        self.date_facets[get_facet_field_name(field)] = details
     
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
-        self.query_facets.append((field, query))
+        self.query_facets.append((get_facet_field_name(field), query))
     
     def add_narrow_query(self, query):
-        """Adds a existing facet on a field."""
+        """
+        Narrows a search to a subset of all documents per the query.
+        
+        Generally used in conjunction with faceting.
+        """
         self.narrow_queries.add(query)
     
     def _reset(self):

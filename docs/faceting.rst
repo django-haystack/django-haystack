@@ -41,21 +41,24 @@ installation. The same setup from the :doc:`tutorial` applies here.
 Determining what you want to facet on isn't always easy. For our purposes,
 we'll facet on the ``author`` field.
 
-If the data in the fields you're faceting on is complex, you may want to
-consider duplicating fields you'll be faceting on and marking them as
-``indexed=False``. So to modify our existing example::
+In order to facet effectively, the search engine should store both a standard
+representation of your data as well as exact version to facet on. This is
+generally accomplished by duplicating the field and storing it via two
+different types. Duplication is suggested so that those fields are still
+searchable in the standard ways.
+
+To inform Haystack of this, you simply pass along a ``faceted=True`` parameter
+on the field(s) you wish to facet on. So to modify our existing example::
 
     class NoteIndex(SearchIndex):
         text = CharField(document=True, use_template=True)
-        author = CharField(model_attr='user')
-        author_exact = CharField(model_attr='user', indexed=False)
+        author = CharField(model_attr='user', faceted=True)
         pub_date = DateTimeField(model_attr='pub_date')
 
-This informs the backend that no post-processing is to be done on the data
-(such as lowercase/stemming/tokenizing/etc.), allowing the faceting to be
-more exact. Duplication is suggested so that those fields are still searchable
-in the standard ways, so if all you're using a given field for faceting, no
-duplication is needed.
+Haystack quietly handles all of the backend details for you, creating a similar
+field to the type you specified with ``_exact`` appended. Our example would now
+have both a ``author`` and ``author_exact`` field, though this is largely an
+implementation detail.
 
 To pull faceting information out of the index, we'll use the
 ``SearchQuerySet.facet`` method to setup the facet and the
@@ -65,12 +68,12 @@ Experimenting in a shell (``./manage.py shell``) is a good way to get a feel
 for what various facets might look like::
 
     >>> from haystack.query import SearchQuerySet
-    >>> sqs = SearchQuerySet().facet('author_exact')
+    >>> sqs = SearchQuerySet().facet('author')
     >>> sqs.facet_counts()
     {
         'dates': {},
         'fields': {
-            'author_exact': [
+            'author': [
                 ('john', 4),
                 ('daniel', 2),
                 ('sally', 1),
@@ -80,9 +83,16 @@ for what various facets might look like::
         'queries': {}
     }
 
+.. note::
+
+    Note that, despite the duplication of fields, you should provide the
+    regular name of the field when faceting. Haystack will intelligently
+    handle the underlying details and mapping.
+
 As you can see, we get back a dictionary which provides access to the three
 types of facets available: ``fields``, ``dates`` and ``queries``. Since we only
-faceted on the ``author_exact`` field, only the ``fields`` key has any data
+faceted on the ``author`` field (which actually facets on the ``author_exact``
+field managed by Haystack), only the ``fields`` key has any data
 associated with it. In this case, we have a corpus of eight documents with four
 unique authors.
 
@@ -154,10 +164,10 @@ might look like this::
     
         <div>
             <dl>
-                {% if facets.fields.author_exact %}
+                {% if facets.fields.author %}
                     <dt>Author</dt>
                     {# Provide only the top 5 authors #}
-                    {% for author in facets.fields.author_exact|slice:":5" %}
+                    {% for author in facets.fields.author|slice:":5" %}
                         <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
                     {% endfor %}
                 {% else %}
@@ -190,6 +200,36 @@ We've also set ourselves up for the last bit, the drill-down aspect. By
 appending on the ``selected_facets`` to the URLs, we're informing the
 ``FacetedSearchForm`` that we want to narrow our results to only those
 containing the author we provided.
+
+For a concrete example, if the facets on author come back as::
+
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('john', 4),
+                ('daniel', 2),
+                ('sally', 1),
+                ('terry', 1),
+            ],
+        },
+        'queries': {}
+    }
+
+You should present a list similar to::
+
+    <ul>
+        <li><a href="/search/?q=Haystack&selected_facets=author_exact:john">john</a> (4)</li>
+        <li><a href="/search/?q=Haystack&selected_facets=author_exact:daniel">daniel</a> (2)</li>
+        <li><a href="/search/?q=Haystack&selected_facets=author_exact:sally">sally</a> (1)</li>
+        <li><a href="/search/?q=Haystack&selected_facets=author_exact:terry">terry</a> (1)</li>
+    </ul>
+
+.. warning::
+
+    Haystack can automatically handle most details around faceting. However,
+    since ``selected_facets`` is passed directly to narrow, it must use the
+    duplicated field name. Improvements to this are planned but incomplete.
 
 This is simply the default behavior but it is possible to override or provide
 your own form which does additional processing. You could also write your own

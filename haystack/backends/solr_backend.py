@@ -8,7 +8,7 @@ from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.models import SearchResult
-from haystack.utils import get_identifier
+from haystack.utils import get_identifier, get_facet_field_name
 try:
     set
 except NameError:
@@ -341,6 +341,17 @@ class SearchBackend(BaseSearchBackend):
                     field_data['type'] = 'string'
             
             schema_fields.append(field_data)
+            
+            if field_class.faceted is True:
+                # Duplicate the field.
+                faceted_field = field_data.copy()
+                faceted_field['field_name'] = get_facet_field_name(faceted_field['field_name'])
+                
+                # If it's text, it ought to be a string.
+                if faceted_field['type'] == 'text':
+                    faceted_field['type'] = 'string'
+                
+                schema_fields.append(faceted_field)
         
         return (content_field_name, schema_fields)
 
@@ -436,8 +447,27 @@ class SearchQuery(BaseSearchQuery):
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
-        self._facet_counts = results.get('facets', {})
+        self._facet_counts = self.post_process_facets(results)
         self._spelling_suggestion = results.get('spelling_suggestion', None)
+    
+    def post_process_facets(self, results):
+        # Handle renaming the facet fields. Undecorate and all that.
+        revised_facets = {}
+        
+        for facet_type, field_details in results.get('facets', {}).items():
+            temp_facets = {}
+            
+            for field, field_facets in field_details.items():
+                fieldname = field
+                
+                if fieldname.endswith('_exact'):
+                    fieldname = fieldname[:-6]
+                
+                temp_facets[fieldname] = field_facets
+            
+            revised_facets[facet_type] = temp_facets
+        
+        return revised_facets
     
     def run_mlt(self):
         """Builds and executes the query. Returns a list of search results."""
