@@ -70,6 +70,12 @@ be useful from either a UI perspective (a better advanced search form) or from a
 developer standpoint (section-dependent search, off-loading certain tasks to
 search, et cetera).
 
+.. warning::
+
+    Haystack reserves the following field names for internal use: ``id``,
+    ``django_ct``, ``django_id`` & ``content``. The ``name`` & ``type`` names
+    used to be reserved but no longer are.
+
 
 Significance Of ``document=True``
 ---------------------------------
