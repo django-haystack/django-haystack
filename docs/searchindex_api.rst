@@ -339,6 +339,23 @@ non-existent), merely an example of how to extend existing fields.
    This method is analagous to Django's ``Field.clean`` methods.
 
 
+Adding New Fields
+=================
+
+If you have an existing ``SearchIndex`` and you add a new field to it, Haystack
+will add this new data on any updates it sees after that point. However, this
+will not populate the existing data you already have.
+
+In order for the data to be picked up, you will need to run ``./manage.py
+rebuild_index``. This will cause all backends to rebuild the existing data
+already present in the quickest and most efficient way.
+
+.. note::
+
+    With the Solr backend, you'll also have to add to the appropriate
+    ``schema.xml`` for your configuration before running the ``rebuild_index``.
+
+
 ``Search Index``
 ================
 
