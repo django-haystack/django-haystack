@@ -90,7 +90,7 @@ Official Download Location: http://whoosh.ca/
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. With the
 0.3.1+ releases, Whoosh has become much more performant, stable and better
-tested. The current recommended version is 0.3.5+. You can install via PyPI_
+tested. The current recommended version is 0.3.15+. You can install via PyPI_
 using::
 
     sudo easy_install whoosh
