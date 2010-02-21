@@ -83,7 +83,9 @@ class SearchQuery(BaseSearchQuery):
         if ' ' in value:
             value = '"%s"' % value
         
+        index_fieldname = self.backend.site.get_index_fieldname(field)
+        
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
-        result = ' '.join([FILTER_SEPARATOR.join((field, filter_type)), value])
+        result = ' '.join([FILTER_SEPARATOR.join((index_fieldname, filter_type)), value])
         return result

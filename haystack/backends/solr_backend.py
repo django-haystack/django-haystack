@@ -379,6 +379,8 @@ class SearchQuery(BaseSearchQuery):
         if ' ' in value:
             value = '"%s"' % value
         
+        index_fieldname = self.backend.site.get_index_fieldname(field)
+        
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
         if field == 'content':
@@ -394,12 +396,12 @@ class SearchQuery(BaseSearchQuery):
             }
             
             if filter_type != 'in':
-                result = filter_types[filter_type] % (field, value)
+                result = filter_types[filter_type] % (index_fieldname, value)
             else:
                 in_options = []
                 
                 for possible_value in value:
-                    in_options.append('%s:"%s"' % (field, self.backend.conn._from_python(possible_value)))
+                    in_options.append('%s:"%s"' % (index_fieldname, self.backend.conn._from_python(possible_value)))
                 
                 result = "(%s)" % " OR ".join(in_options)
         
