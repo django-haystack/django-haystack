@@ -38,7 +38,7 @@ class SearchSite(object):
             from haystack.indexes import BasicSearchIndex
             index_class = BasicSearchIndex
         
-        if not isinstance(model, ModelBase):
+        if not hasattr(model, '_meta'):
             raise AttributeError('The model being registered must derive from Model.')
         
         if model in self._registry:
