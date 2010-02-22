@@ -121,8 +121,13 @@ class SearchView(object):
             'paginator': paginator,
         }
         context.update(self.extra_context())
-        
         return render_to_response(self.template, context, context_instance=self.context_class(self.request))
+
+
+def search_view_factory(view_class=SearchView, *args, **kwargs):
+    def search_view(request):
+        return view_class(*args, **kwargs)(request)
+    return search_view
 
 
 class FacetedSearchView(SearchView):
