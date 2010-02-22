@@ -101,35 +101,31 @@ class WhooshSearchBackendTestCase(TestCase):
     
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+        self.assertEqual(self.sb.index.doc_count(), 23)
         
         self.sb.remove(self.sample_objs[0])
-        self.assertEqual(len(self.whoosh_search(u'*')), 22)
-        self.assertEqual([dict(doc)['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.23', u'core.mockmodel.22', u'core.mockmodel.21', u'core.mockmodel.20', u'core.mockmodel.19', u'core.mockmodel.18', u'core.mockmodel.17', u'core.mockmodel.16', u'core.mockmodel.15', u'core.mockmodel.14', u'core.mockmodel.13', u'core.mockmodel.12', u'core.mockmodel.11', u'core.mockmodel.10', u'core.mockmodel.9', u'core.mockmodel.8', u'core.mockmodel.7', u'core.mockmodel.6', u'core.mockmodel.5', u'core.mockmodel.4', u'core.mockmodel.3', u'core.mockmodel.2'])
+        self.assertEqual(self.sb.index.doc_count(), 22)
     
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+        self.assertEqual(self.sb.index.doc_count(), 23)
         
         self.sb.clear()
-        self.raw_whoosh = self.sb.index
-        self.assertEqual(self.raw_whoosh.doc_count(), 0)
+        self.assertEqual(self.sb.index.doc_count(), 0)
         
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+        self.assertEqual(self.sb.index.doc_count(), 23)
         
         self.sb.clear([AnotherMockModel])
-        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+        self.assertEqual(self.sb.index.doc_count(), 23)
         
         self.sb.clear([MockModel])
-        self.raw_whoosh = self.sb.index
-        self.assertEqual(self.raw_whoosh.doc_count(), 0)
+        self.assertEqual(self.sb.index.doc_count(), 0)
         
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+        self.assertEqual(self.sb.index.doc_count(), 23)
         
         self.sb.clear([AnotherMockModel, MockModel])
-        self.raw_whoosh = self.sb.index
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
     
     def test_search(self):
