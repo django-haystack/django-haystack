@@ -14,28 +14,32 @@ class MoreLikeThisNode(template.Node):
         self.limit = int(limit)
     
     def render(self, context):
-        model_instance = self.model.resolve(context)
-        sqs = SearchQuerySet()
-        
-        if not self.for_types is None:
-            intermediate = template.Variable(self.for_types)
-            for_types = intermediate.resolve(context).split(',')
-            search_models = []
+        try:
+            model_instance = self.model.resolve(context)
+            sqs = SearchQuerySet()
             
-            for model in for_types:
-                model_class = models.get_model(*model.split('.'))
+            if not self.for_types is None:
+                intermediate = template.Variable(self.for_types)
+                for_types = intermediate.resolve(context).split(',')
+                search_models = []
                 
-                if model_class:
-                    search_models.append(model_class)
+                for model in for_types:
+                    model_class = models.get_model(*model.split('.'))
+                    
+                    if model_class:
+                        search_models.append(model_class)
+                
+                sqs = sqs.models(*search_models)
             
-            sqs = sqs.models(*search_models)
+            sqs = sqs.more_like_this(model_instance)
+            
+            if not self.limit is None:
+                sqs = sqs[:self.limit]
+            
+            context[self.varname] = sqs
+        except:
+            pass
         
-        sqs = sqs.more_like_this(model_instance)
-        
-        if not self.limit is None:
-            sqs = sqs[:self.limit]
-        
-        context[self.varname] = sqs
         return ''
 
 
