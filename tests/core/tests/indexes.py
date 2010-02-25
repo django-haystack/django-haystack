@@ -137,8 +137,11 @@ class SearchIndexTestCase(TestCase):
         mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.cmi.prepare(mock)), 10)
-        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        self.assertEqual(len(self.cmi.prepare(mock)), 9)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        
+        self.assertEqual(len(self.cmi.full_prepare(mock)), 10)
+        self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
     
     def test_custom_prepare_author(self):
         mock = MockModel()
@@ -146,8 +149,11 @@ class SearchIndexTestCase(TestCase):
         mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.cmi.prepare(mock)), 10)
-        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        self.assertEqual(len(self.cmi.prepare(mock)), 9)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        
+        self.assertEqual(len(self.cmi.full_prepare(mock)), 10)
+        self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
         self.assertEqual(self.cmi.prepared_data['author'], "Hi, I'm daniel20")
         self.assertEqual(self.cmi.prepared_data['author_exact'], "Hi, I'm daniel20")
     
@@ -157,8 +163,11 @@ class SearchIndexTestCase(TestCase):
         mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.cmi.prepare(mock)), 10)
-        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        self.assertEqual(len(self.cmi.prepare(mock)), 9)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        
+        self.assertEqual(len(self.cmi.full_prepare(mock)), 10)
+        self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
         self.assertEqual(self.cmi.prepared_data['hello'], u'World!')
     
     def test_custom_index_fieldname(self):

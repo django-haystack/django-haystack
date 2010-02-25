@@ -120,6 +120,11 @@ class SearchIndex(object):
                 if self.prepared_data[field.index_fieldname] is None:
                     del(self.prepared_data[field.index_fieldname])
         
+        return self.prepared_data
+    
+    def full_prepare(self, obj):
+        self.prepared_data = self.prepare(obj)
+        
         # Duplicate data for faceted fields.
         for field_name, field in self.fields.items():
             if field.faceted is True:

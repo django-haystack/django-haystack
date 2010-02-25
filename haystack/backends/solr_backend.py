@@ -63,7 +63,7 @@ class SearchBackend(BaseSearchBackend):
         
         try:
             for obj in iterable:
-                docs.append(index.prepare(obj))
+                docs.append(index.full_prepare(obj))
         except UnicodeDecodeError:
             sys.stderr.write("Chunk failed.\n")
         

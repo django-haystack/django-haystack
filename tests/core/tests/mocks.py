@@ -22,7 +22,7 @@ class MockSearchBackend(BaseSearchBackend):
     
     def update(self, index, iterable, commit=True):
         for obj in iterable:
-            doc = index.prepare(obj)
+            doc = index.full_prepare(obj)
             self.docs[doc['id']] = doc
 
     def remove(self, obj, commit=True):
