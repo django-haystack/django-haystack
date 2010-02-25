@@ -25,7 +25,7 @@ def clear_solr_index():
 
 class SolrMockSearchIndex(RealTimeSearchIndex):
     text = CharField(document=True, use_template=True)
-    name = CharField(model_attr='author')
+    name = CharField(model_attr='author', faceted=True)
     pub_date = DateField(model_attr='pub_date')
 
 
@@ -118,7 +118,35 @@ class SolrSearchBackendTestCase(TestCase):
         
         # Check what Solr thinks is there.
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
-        self.assertEqual(self.raw_solr.search('*:*').docs, [{'django_id': '1', 'django_ct': 'core.mockmodel', 'name': 'daniel1', 'text': 'Indexed!\n1', 'pub_date': '2009-02-24T00:00:00Z', 'id': 'core.mockmodel.1'}, {'django_id': '2', 'django_ct': 'core.mockmodel', 'name': 'daniel2', 'text': 'Indexed!\n2', 'pub_date': '2009-02-23T00:00:00Z', 'id': 'core.mockmodel.2'}, {'django_id': '3', 'django_ct': 'core.mockmodel', 'name': 'daniel3', 'text': 'Indexed!\n3', 'pub_date': '2009-02-22T00:00:00Z', 'id': 'core.mockmodel.3'}])
+        self.assertEqual(self.raw_solr.search('*:*').docs, [
+            {
+                'django_id': '1',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel1',
+                'name_exact': 'daniel1',
+                'text': 'Indexed!\n1',
+                'pub_date': '2009-02-24T00:00:00Z',
+                'id': 'core.mockmodel.1'
+            },
+            {
+                'django_id': '2',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel2',
+                'name_exact': 'daniel2',
+                'text': 'Indexed!\n2',
+                'pub_date': '2009-02-23T00:00:00Z',
+                'id': 'core.mockmodel.2'
+            },
+            {
+                'django_id': '3',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel3',
+                'name_exact': 'daniel3',
+                'text': 'Indexed!\n3',
+                'pub_date': '2009-02-22T00:00:00Z',
+                'id': 'core.mockmodel.3'
+            }
+        ])
     
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -126,7 +154,26 @@ class SolrSearchBackendTestCase(TestCase):
         
         self.sb.remove(self.sample_objs[0])
         self.assertEqual(self.raw_solr.search('*:*').hits, 2)
-        self.assertEqual(self.raw_solr.search('*:*').docs, [{'django_id': '2', 'django_ct': 'core.mockmodel', 'name': 'daniel2', 'text': 'Indexed!\n2', 'pub_date': '2009-02-23T00:00:00Z', 'id': 'core.mockmodel.2'}, {'django_id': '3', 'django_ct': 'core.mockmodel', 'name': 'daniel3', 'text': 'Indexed!\n3', 'pub_date': '2009-02-22T00:00:00Z', 'id': 'core.mockmodel.3'}])
+        self.assertEqual(self.raw_solr.search('*:*').docs, [
+            {
+                'django_id': '2',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel2',
+                'name_exact': 'daniel2',
+                'text': 'Indexed!\n2',
+                'pub_date': '2009-02-23T00:00:00Z',
+                'id': 'core.mockmodel.2'
+            },
+            {
+                'django_id': '3',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel3',
+                'name_exact': 'daniel3',
+                'text': 'Indexed!\n3',
+                'pub_date': '2009-02-22T00:00:00Z',
+                'id': 'core.mockmodel.3'
+            }
+        ])
     
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -198,8 +245,33 @@ class SolrSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         (content_field_name, fields) = self.sb.build_schema(self.site.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(fields), 3)
-        self.assertEqual(fields, [{'indexed': 'true', 'type': 'text', 'field_name': 'text', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'date', 'field_name': 'pub_date', 'multi_valued': 'false'}, {'indexed': 'true', 'type': 'text', 'field_name': 'name', 'multi_valued': 'false'}])
+        self.assertEqual(len(fields), 4)
+        self.assertEqual(fields, [
+            {
+                'indexed': 'true',
+                'type': 'text',
+                'field_name': 'text',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'field_name': 'pub_date',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'text',
+                'field_name': 'name',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'string',
+                'field_name': 'name_exact',
+                'multi_valued': 'false'
+            }
+        ])
     
     def test_verify_type(self):
         import haystack
@@ -376,10 +448,6 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assert_(len(sqs) > 0)
         self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the default indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
-    
-    def test_load_all_queryset(self):
-        sqs = self.sqs.load_all()
-        self.assertRaises(HaystackError, sqs.load_all_queryset, MockModel, MockModel.objects.filter(id__gt=1))
     
     def test_iter(self):
         backends.reset_search_queries()

@@ -31,7 +31,7 @@ class AltGoodMockSearchIndex(GoodMockSearchIndex):
 
 class GoodCustomMockSearchIndex(SearchIndex):
     content = CharField(document=True, use_template=True)
-    author = CharField(model_attr='author')
+    author = CharField(model_attr='author', faceted=True)
     pub_date = DateTimeField(model_attr='pub_date')
     extra = CharField(indexed=False, use_template=True)
     hello = CharField(model_attr='hello')
@@ -139,6 +139,9 @@ class SearchIndexTestCase(TestCase):
         
         self.assertEqual(len(self.cmi.prepare(mock)), 9)
         self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        
+        self.assertEqual(len(self.cmi.full_prepare(mock)), 10)
+        self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
     
     def test_custom_prepare_author(self):
         mock = MockModel()
@@ -148,7 +151,11 @@ class SearchIndexTestCase(TestCase):
         
         self.assertEqual(len(self.cmi.prepare(mock)), 9)
         self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        
+        self.assertEqual(len(self.cmi.full_prepare(mock)), 10)
+        self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
         self.assertEqual(self.cmi.prepared_data['author'], "Hi, I'm daniel20")
+        self.assertEqual(self.cmi.prepared_data['author_exact'], "Hi, I'm daniel20")
     
     def test_custom_model_attr(self):
         mock = MockModel()
@@ -158,6 +165,9 @@ class SearchIndexTestCase(TestCase):
         
         self.assertEqual(len(self.cmi.prepare(mock)), 9)
         self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        
+        self.assertEqual(len(self.cmi.full_prepare(mock)), 10)
+        self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
         self.assertEqual(self.cmi.prepared_data['hello'], u'World!')
     
     def test_custom_index_fieldname(self):
@@ -276,6 +286,12 @@ class FieldsWithOverrideModelSearchIndex(ModelSearchIndex):
     
     class Meta:
         fields = ['author', 'foo']
+    
+    def get_index_fieldname(self, f):
+        if f.name == 'author':
+            return 'author_bar'
+        else:
+            return f.name
 
 
 class ModelSearchIndexTestCase(TestCase):
@@ -292,6 +308,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.assert_('foo' in self.bmsi.fields)
         self.assert_(isinstance(self.bmsi.fields['foo'], CharField))
         self.assertEqual(self.bmsi.fields['foo'].null, False)
+        self.assertEqual(self.bmsi.fields['foo'].index_fieldname, 'foo')
         self.assert_('author' in self.bmsi.fields)
         self.assert_(isinstance(self.bmsi.fields['author'], CharField))
         self.assertEqual(self.bmsi.fields['author'].null, False)
@@ -327,3 +344,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.assert_(isinstance(self.fwomsi.fields['foo'], IntegerField))
         self.assert_('text' in self.fwomsi.fields)
         self.assert_(isinstance(self.fwomsi.fields['text'], CharField))
+    
+    def test_overriding_field_name_with_get_index_fieldname(self):
+        self.assert_(self.fwomsi.fields['foo'].index_fieldname, 'foo')
+        self.assert_(self.fwomsi.fields['author'].index_fieldname, 'author_bar')

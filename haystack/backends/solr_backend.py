@@ -8,7 +8,7 @@ from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.models import SearchResult
-from haystack.utils import get_identifier
+from haystack.utils import get_identifier, get_facet_field_name
 try:
     set
 except NameError:
@@ -63,7 +63,7 @@ class SearchBackend(BaseSearchBackend):
         
         try:
             for obj in iterable:
-                docs.append(index.prepare(obj))
+                docs.append(index.full_prepare(obj))
         except UnicodeDecodeError:
             sys.stderr.write("Chunk failed.\n")
         
@@ -148,17 +148,18 @@ class SearchBackend(BaseSearchBackend):
         if date_facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.date'] = date_facets.keys()
+            kwargs['facet.date.other'] = 'none'
             
             for key, value in date_facets.items():
-                # Date-based facets in Solr kinda suck.
                 kwargs["f.%s.facet.date.start" % key] = self.conn._from_python(value.get('start_date'))
                 kwargs["f.%s.facet.date.end" % key] = self.conn._from_python(value.get('end_date'))
-                gap_string = value.get('gap_by').upper()
+                gap_by_string = value.get('gap_by').upper()
+                gap_string = "%d%s" % (value.get('gap_amount'), gap_by_string)
                 
                 if value.get('gap_amount') != 1:
-                    gap_string = "%d%sS" % (value.get('gap_amount'), gap_string)
+                    gap_string += "S"
                 
-                kwargs["f.%s.facet.date.gap" % key] = "/%s" % gap_string
+                kwargs["f.%s.facet.date.gap" % key] = '+%s/%s' % (gap_string, gap_by_string)
         
         if query_facets is not None:
             kwargs['facet'] = 'on'
@@ -341,6 +342,17 @@ class SearchBackend(BaseSearchBackend):
                     field_data['type'] = 'string'
             
             schema_fields.append(field_data)
+            
+            if field_class.faceted is True:
+                # Duplicate the field.
+                faceted_field = field_data.copy()
+                faceted_field['field_name'] = get_facet_field_name(faceted_field['field_name'])
+                
+                # If it's text, it ought to be a string.
+                if faceted_field['type'] == 'text':
+                    faceted_field['type'] = 'string'
+                
+                schema_fields.append(faceted_field)
         
         return (content_field_name, schema_fields)
 
@@ -368,6 +380,8 @@ class SearchQuery(BaseSearchQuery):
         if ' ' in value:
             value = '"%s"' % value
         
+        index_fieldname = self.backend.site.get_index_fieldname(field)
+        
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
         if field == 'content':
@@ -383,12 +397,12 @@ class SearchQuery(BaseSearchQuery):
             }
             
             if filter_type != 'in':
-                result = filter_types[filter_type] % (field, value)
+                result = filter_types[filter_type] % (index_fieldname, value)
             else:
                 in_options = []
                 
                 for possible_value in value:
-                    in_options.append('%s:"%s"' % (field, self.backend.conn._from_python(possible_value)))
+                    in_options.append('%s:"%s"' % (index_fieldname, self.backend.conn._from_python(possible_value)))
                 
                 result = "(%s)" % " OR ".join(in_options)
         
@@ -436,7 +450,7 @@ class SearchQuery(BaseSearchQuery):
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
-        self._facet_counts = results.get('facets', {})
+        self._facet_counts = self.post_process_facets(results)
         self._spelling_suggestion = results.get('spelling_suggestion', None)
     
     def run_mlt(self):

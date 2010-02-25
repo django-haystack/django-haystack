@@ -24,6 +24,7 @@ class SearchSite(object):
     
     def __init__(self):
         self._registry = {}
+        self._field_mapping = None
     
     def register(self, model, index_class=None):
         """
@@ -38,7 +39,7 @@ class SearchSite(object):
             from haystack.indexes import BasicSearchIndex
             index_class = BasicSearchIndex
         
-        if not isinstance(model, ModelBase):
+        if not hasattr(model, '_meta'):
             raise AttributeError('The model being registered must derive from Model.')
         
         if model in self._registry:
@@ -108,6 +109,38 @@ class SearchSite(object):
                 fields[field_name] = field_object
         
         return fields
+    
+    def get_index_fieldname(self, fieldname):
+        """
+        Returns the actual name of the field in the index.
+        
+        If not found, returns the fieldname provided.
+        
+        This is useful because it handles the case where a ``index_fieldname``
+        was provided, allowing the user to use the variable name from their
+        ``SearchIndex`` instead of having to remember & use the overridden
+        name.
+        """
+        if self._field_mapping is None:
+            self._field_mapping = self._build_field_mapping()
+        
+        # Return what was provided as a fallback instead of an IndexError.
+        return self._field_mapping.get(fieldname, fieldname)
+    
+    def _build_field_mapping(self):
+        mapping = {}
+        
+        for model, index in self.get_indexes().items():
+            for field_name, field_object in index.fields.items():
+                if field_name in mapping:
+                    # We've already seen this field in the list. Check to ensure
+                    # it uses the same index_fieldname as the previous mention.
+                    if field_object.index_fieldname != mapping[field_name]:
+                        raise SearchFieldError("All uses of the '%s' field need to use the same 'index_fieldname' attribute." % field_name)
+                    
+                mapping[field_name] = field_object.index_fieldname
+        
+        return mapping
     
     def update_object(self, instance):
         """

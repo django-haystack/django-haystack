@@ -112,7 +112,7 @@ always yields no results.
 
 .. method:: SearchQuerySet.filter(self, **kwargs)
 
-Narrows the search by looking for (and including) certain attributes.
+Filters the search by looking for (and including) certain attributes.
 
 The lookup parameters (``**kwargs``) should follow the `Field lookups`_ below.
 If you specify more than one pair, they will be joined in the query according to
@@ -325,10 +325,21 @@ Example::
     # Using a fielded search where the recipe's title contains 'smoothie', find all recipes published before 2009.
     SearchQuerySet().narrow('title:smoothie').filter(pub_date__lte=datetime.datetime(2009, 1, 1))
 
-Please note that this is, generally speaking, not necessarily portable between
-backends. The syntax is entirely dependent on the backend, though most backends
-have a similar syntax for basic fielded queries. No validation/cleansing is
-performed and it is up to the developer to ensure the query's syntax is correct.
+By using ``narrow``, you can create drill-down interfaces for faceting by
+applying ``narrow`` calls for each facet that gets selected.
+
+This method is different from ``SearchQuerySet.filter()`` in that it does not
+affect the query sent to the engine. It pre-limits the document set being
+searched. Generally speaking, if you're in doubt of whether to use
+``filter`` or ``narrow``, use ``filter``.
+
+.. note::
+
+    This method is, generally speaking, not necessarily portable between
+    backends. The syntax is entirely dependent on the backend, though most
+    backends have a similar syntax for basic fielded queries. No
+    validation/cleansing is performed and it is up to the developer to ensure
+    the query's syntax is correct.
 
 ``raw_search``
 ~~~~~~~~~~~~~~

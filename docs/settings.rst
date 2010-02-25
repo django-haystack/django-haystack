@@ -164,6 +164,20 @@ Examples::
 The default is 'file'.
 
 
+``HAYSTACK_WHOOSH_POST_LIMIT``
+==============================
+
+**Optional**
+
+This setting controls how large of a document Whoosh will accept when writing.
+
+Examples::
+
+    HAYSTACK_WHOOSH_POST_LIMIT = 256 * 1024 * 1024
+
+The default is 128 * 1024 * 1024.
+
+
 ``HAYSTACK_XAPIAN_PATH``
 ========================
 

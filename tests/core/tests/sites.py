@@ -25,8 +25,20 @@ class FakeSearchIndex(BasicSearchIndex):
         return True
 
 
-class InvalidSeachIndex(SearchIndex):
+class InvalidSearchIndex(SearchIndex):
     document = CharField(document=True)
+
+
+class ValidSearchIndex(SearchIndex):
+    text = CharField(document=True)
+    author = CharField(index_fieldname='name')
+    title = CharField()
+
+
+class AlternateValidSearchIndex(SearchIndex):
+    text = CharField(document=True)
+    author = CharField()
+    title = CharField()
 
 
 class SearchSiteTestCase(TestCase):
@@ -93,8 +105,27 @@ class SearchSiteTestCase(TestCase):
         self.assertEqual(fields['text'].use_template, True)
         
         self.site.unregister(AnotherMockModel)
-        self.site.register(AnotherMockModel, InvalidSeachIndex)
+        self.site.register(AnotherMockModel, InvalidSearchIndex)
         self.assertRaises(SearchFieldError, self.site.all_searchfields)
+    
+    def test_get_index_fieldname(self):
+        self.assertEqual(self.site._field_mapping, None)
+        
+        self.site.register(MockModel, ValidSearchIndex)
+        self.site.register(AnotherMockModel)
+        field = self.site.get_index_fieldname('text')
+        self.assertEqual(self.site._field_mapping, {'text': 'text', 'title': 'title', 'author': 'name'})
+        self.assertEqual(self.site.get_index_fieldname('text'), 'text')
+        self.assertEqual(self.site.get_index_fieldname('author'), 'name')
+        self.assertEqual(self.site.get_index_fieldname('title'), 'title')
+        
+        # Reset the internal state to test the invalid case.
+        self.site._field_mapping = None
+        self.assertEqual(self.site._field_mapping, None)
+        
+        self.site.unregister(AnotherMockModel)
+        self.site.register(AnotherMockModel, AlternateValidSearchIndex)
+        self.assertRaises(SearchFieldError, self.site.get_index_fieldname, 'text')
     
     def test_update_object(self):
         self.site.register(MockModel, FakeSearchIndex)

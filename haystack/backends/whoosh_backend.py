@@ -30,10 +30,11 @@ from whoosh import index
 from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.spelling import SpellChecker
+from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 5):
-    raise MissingDependency("The 'whoosh' backend requires version 0.3.5 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 15):
+    raise MissingDependency("The 'whoosh' backend requires version 0.3.15 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -62,6 +63,7 @@ class SearchBackend(BaseSearchBackend):
         super(SearchBackend, self).__init__(site)
         self.setup_complete = False
         self.use_file_storage = True
+        self.post_limit = getattr(settings, 'HAYSTACK_WHOOSH_POST_LIMIT', 128 * 1024 * 1024)
         
         if getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file') != 'file':
             self.use_file_storage = False
@@ -146,10 +148,10 @@ class SearchBackend(BaseSearchBackend):
             self.setup()
         
         self.index = self.index.refresh()
-        writer = self.index.writer()
+        writer = AsyncWriter(self.index.writer, postlimit=self.post_limit)
         
         for obj in iterable:
-            doc = index.prepare(obj)
+            doc = index.full_prepare(obj)
             
             # Really make sure it's unicode, because Whoosh won't have it any
             # other way.
@@ -526,6 +528,8 @@ class SearchQuery(BaseSearchQuery):
         if ' ' in value:
             value = '"%s"' % value
         
+        index_fieldname = self.backend.site.get_index_fieldname(field)
+        
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
         if field == 'content':
@@ -546,7 +550,7 @@ class SearchQuery(BaseSearchQuery):
                 if possible_datetime:
                     value = self.clean(value)
                 
-                result = filter_types[filter_type] % (field, value)
+                result = filter_types[filter_type] % (index_fieldname, value)
             else:
                 in_options = []
                 
@@ -557,7 +561,7 @@ class SearchQuery(BaseSearchQuery):
                     if possible_datetime:
                         pv = self.clean(pv)
                     
-                    in_options.append('%s:"%s"' % (field, pv))
+                    in_options.append('%s:"%s"' % (index_fieldname, pv))
                 
                 result = "(%s)" % " OR ".join(in_options)
         

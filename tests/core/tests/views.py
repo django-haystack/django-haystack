@@ -1,3 +1,5 @@
+from threading import Thread
+import Queue
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django import forms
@@ -7,12 +9,13 @@ import haystack
 from haystack.forms import model_choices, SearchForm, ModelSearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.sites import SearchSite
-from haystack.views import SearchView, FacetedSearchView
+from haystack.views import SearchView, FacetedSearchView, search_view_factory
 from core.models import MockModel, AnotherMockModel
 
 
 class InitialedSearchForm(SearchForm):
     q = forms.CharField(initial='Search for...', required=False, label='Search')
+
 
 class SearchViewTestCase(TestCase):
     def setUp(self):
@@ -59,6 +62,42 @@ class SearchViewTestCase(TestCase):
         self.assert_(isinstance(form, InitialedSearchForm))
         self.assertEqual(form.fields['q'].initial, 'Search for...')
         self.assertEqual(form.as_p(), u'<p><label for="id_q">Search:</label> <input type="text" name="q" value="Search for..." id="id_q" /></p>')
+    
+    def test_thread_safety(self):
+        exceptions = []
+        
+        def threaded_view(queue, view, request):
+            import time; time.sleep(2)
+            try:
+                inst = view(request)
+                queue.put(request.GET['name'])
+            except Exception, e:
+                exceptions.append(e)
+                raise
+        
+        class ThreadedSearchView(SearchView):
+            def __call__(self, request):
+                print "Name: %s" % request.GET['name']
+                return super(ThreadedSearchView, self).__call__(request)
+        
+        view = search_view_factory(view_class=ThreadedSearchView)
+        queue = Queue.Queue()
+        request_1 = HttpRequest()
+        request_1.GET = {'name': 'foo'}
+        request_2 = HttpRequest()
+        request_2.GET = {'name': 'bar'}
+        
+        th1 = Thread(target=threaded_view, args=(queue, view, request_1))
+        th2 = Thread(target=threaded_view, args=(queue, view, request_2))
+        
+        th1.start()
+        th2.start()
+        th1.join()
+        th2.join()
+        
+        foo = queue.get()
+        bar = queue.get()
+        self.assertNotEqual(foo, bar)
 
 
 class FacetedSearchViewTestCase(TestCase):
