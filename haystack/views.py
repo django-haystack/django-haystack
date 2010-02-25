@@ -44,7 +44,7 @@ class SearchView(object):
         
         return self.create_response()
     
-    def build_form(self):
+    def build_form(self, form_kwargs=None):
         """
         Instantiates the form the class should use to process the search query.
         """
@@ -52,6 +52,8 @@ class SearchView(object):
         kwargs = {
             'load_all': self.load_all,
         }
+        if form_kwargs:
+            kwargs.update(form_kwargs)
         
         if len(self.request.GET):
             data = self.request.GET
