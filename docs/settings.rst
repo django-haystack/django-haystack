@@ -258,3 +258,24 @@ Default is ``True``.
     You should ONLY use this setting if you're using another third-party
     application that causes tracebacks/import errors when used in conjunction
     with Haystack.
+
+
+``HAYSTACK_ITERATOR_LOAD_PER_QUERY``
+====================================
+
+**Optional**
+
+This setting controls the number of results that are pulled at once when
+iterating through a ``SearchQuerySet``. If you generally consume large portions
+at a time, you can bump this up for better performance.
+
+.. note::
+
+    This is not used in the case of a slice on a ``SearchQuerySet``, which
+    already overrides the number of results pulled at once.
+
+An example::
+
+    HAYSTACK_ITERATOR_LOAD_PER_QUERY = 100
+
+The default is 10 results at a time.
