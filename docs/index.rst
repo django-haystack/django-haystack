@@ -30,6 +30,7 @@ you up and running:
    management_commands
    faq
    who_uses
+   other_apps
    installing_search_engines
    debugging
 
