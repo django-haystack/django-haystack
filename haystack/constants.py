@@ -1,5 +1,7 @@
+from django.conf import settings
+
 # Default operator. Valid options are AND/OR.
-DEFAULT_OPERATOR = 'AND'
+DEFAULT_OPERATOR = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', 'AND')
 
 # Valid expression extensions.
 VALID_FILTERS = set(['exact', 'gt', 'gte', 'lt', 'lte', 'in', 'startswith'])
@@ -9,4 +11,4 @@ FILTER_SEPARATOR = '__'
 REPR_OUTPUT_SIZE = 20
 
 # Number of SearchResults to load at a time.
-ITERATOR_LOAD_PER_QUERY = 10
+ITERATOR_LOAD_PER_QUERY = getattr(settings, 'HAYSTACK_ITERATOR_LOAD_PER_QUERY', 10)

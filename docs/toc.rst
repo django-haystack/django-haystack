@@ -16,6 +16,7 @@ Table Of Contents
    settings
    faq
    who_uses
+   other_apps
    debugging
    
    best_practices

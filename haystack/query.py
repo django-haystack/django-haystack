@@ -233,7 +233,7 @@ class SearchQuerySet(object):
     
     def filter(self, *args, **kwargs):
         """Narrows the search based on certain attributes and the default operator."""
-        if getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', DEFAULT_OPERATOR) == 'OR':
+        if DEFAULT_OPERATOR == 'OR':
             return self.filter_or(*args, **kwargs)
         else:
             return self.filter_and(*args, **kwargs)
