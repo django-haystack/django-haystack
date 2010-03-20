@@ -9,11 +9,9 @@ Supported Backends
 ==================
 
 * Solr_
-* Lucene_
 * Whoosh_
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Lucene: http://lucene.apache.org/java/
 .. _Whoosh: http://whoosh.ca/
 
 
@@ -34,16 +32,6 @@ Solr
 * Highlighting
 * Requires: pysolr (2.0.9+) + Solr 1.3+
 
-Lucene
-------
-
-* Full SearchQuerySet support
-* Automatic query building
-* Term Boosting
-* Stored (non-indexed) fields
-* Highlighting
-* Requires: pylucene
-
 Whoosh
 ------
 
@@ -61,8 +49,6 @@ Whoosh
 | Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
 +================+========================+=====================+================+============+==========+===============+==============+
 | Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
-| Lucene         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Whoosh         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
