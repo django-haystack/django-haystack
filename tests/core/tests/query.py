@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from django.conf import settings
 from django.test import TestCase
@@ -263,6 +264,11 @@ class BaseSearchQueryTestCase(TestCase):
         
         msq = MockSearchQuery(site=test_site)
         self.assertEqual(msq.backend.site.get_indexed_models(), [MockModel])
+    
+    def test_regression_dummy_unicode(self):
+        dsq = DummySearchQuery(backend=DummySearchBackend())
+        self.assertEqual(dsq.build_query_fragment('foo', 'exact', 'bar'), 'foo__exact bar')
+        self.assertEqual(dsq.build_query_fragment('foo', 'exact', u'☃'), u'foo__exact ☃')
 
 
 class SearchQuerySetTestCase(TestCase):
