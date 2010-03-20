@@ -142,3 +142,13 @@ For general search.
 Using: Xapian
 
 * http://www.rampframe.com/
+
+
+Forkinit
+--------
+
+For general search, model-specific search and suggestions via MLT.
+
+Using: Solr
+
+* http://forkinit.com/
