@@ -132,3 +132,13 @@ For general search.
 Using: Xapian
 
 * http://www.pegasusnews.com/
+
+
+Rampframe
+---------
+
+For general search.
+
+Using: Xapian
+
+* http://www.rampframe.com/
