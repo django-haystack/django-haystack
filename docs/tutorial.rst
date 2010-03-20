@@ -316,6 +316,14 @@ The final step, now that you have everything setup, is to put your data in
 from your database into the search index. Haystack ships with a management
 command to make this process easy.
 
+.. note::
+
+    If you're using the Solr backend, you have an extra step. Solr's
+    configuration is XML-based, so you'll need to manually regenerate the
+    schema. You should run
+    ``./manage.py build_solr_schema`` first, drop the XML output in your
+    Solr's ``schema.xml`` file and restart your Solr server.
+
 Simply run ``./manage.py rebuild_index``. You'll get some totals of how many
 models were processed and placed in the index.
 
