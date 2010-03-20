@@ -1,4 +1,5 @@
 import re
+import warnings
 from django.conf import settings
 from haystack import backend
 from haystack.backends import SQ
@@ -276,8 +277,10 @@ class SearchQuerySet(object):
         clone = self._clone()
         
         for model in models:
-            if model in self.site.get_indexed_models():
-                clone.query.add_model(model)
+            if not model in self.site.get_indexed_models():
+                warnings.warn('The model %r is not registered for search.' % model)
+            
+            clone.query.add_model(model)
         
         return clone
     

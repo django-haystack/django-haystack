@@ -7,7 +7,7 @@ from haystack import backends
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
-from haystack.exceptions import HaystackError, FacetingError
+from haystack.exceptions import HaystackError, FacetingError, NotRegistered
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
@@ -439,6 +439,12 @@ class SearchQuerySetTestCase(TestCase):
         sqs = bsqs.models(MockModel, AnotherMockModel)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.models), 2)
+        
+        # This will produce a warning.
+        mock_index_site.unregister(AnotherMockModel)
+        sqs = bsqs.models(AnotherMockModel)
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.models), 1)
     
     def test_boost(self):
         sqs = self.bsqs.boost('foo', 10)
