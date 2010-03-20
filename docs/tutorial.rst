@@ -10,7 +10,7 @@ addition, search can provide insight into what things are popular (many
 searches), what things are difficult to find on the site and ways you can
 improve the site better.
 
-To this end, Haystack tries to making integrating custom search as easy as
+To this end, Haystack tries to make integrating custom search as easy as
 possible while being flexible/powerful enough to handle more advanced use cases.
 
 Haystack is a reusable app (that is, it relies only on it's own code and focuses
