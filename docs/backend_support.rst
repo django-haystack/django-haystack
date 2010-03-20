@@ -30,7 +30,7 @@ Solr
 * Faceting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: pysolr (2.0.9+) + Solr 1.3+
+* Requires: pysolr (2.0.9+) & Solr 1.3+
 
 Whoosh
 ------
@@ -42,7 +42,7 @@ Whoosh
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: whoosh
+* Requires: whoosh (0.3.15+)
 
 
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+

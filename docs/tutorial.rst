@@ -87,6 +87,7 @@ following:
 * ``solr``
 * ``whoosh``
 * ``xapian`` (if you installed ``xapian-haystack``)
+* ``simple``
 * ``dummy``
 
 Example::
@@ -133,6 +134,14 @@ it out of a place your webserver may serve documents out of apply.
 Example::
 
     HAYSTACK_XAPIAN_PATH = '/home/xapian/mysite_index'
+
+
+Simple
+~~~~~~
+
+The ``simple`` backend using very basic matching via the database itself. It's
+not recommended for production use but is more useful than the ``dummy`` backend
+in that it will return results. No extra settings are needed.
 
 
 Create A ``SearchSite``
