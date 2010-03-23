@@ -1,9 +1,4 @@
-from django.db.models.base import ModelBase
 from haystack.exceptions import AlreadyRegistered, NotRegistered, SearchFieldError
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 
 class SearchSite(object):
@@ -85,28 +80,34 @@ class SearchSite(object):
         instances registered with a site.
         
         This is useful when building a schema for an engine. A dictionary is
-        returned, with each key being a fieldname and the value being the
-        `SearchField` class assigned to it.
+        returned, with each key being a fieldname (or index_fieldname) and the
+        value being the `SearchField` class assigned to it.
         """
         content_field_name = ''
         fields = {}
-        field_names = set()
         
         for model, index in self.get_indexes().items():
             for field_name, field_object in index.fields.items():
-                if field_name in field_names:
-                    # We've already got this field in the list. Skip.
-                    continue
-                
-                field_names.add(field_name)
-                
                 if field_object.document is True:
-                    if content_field_name != '' and content_field_name != field_name:
+                    if content_field_name != '' and content_field_name != field_object.index_fieldname:
                         raise SearchFieldError("All SearchIndex fields with 'document=True' must use the same fieldname.")
                     
-                    content_field_name = field_name
+                    content_field_name = field_object.index_fieldname
                 
-                fields[field_name] = field_object
+                if not field_object.index_fieldname in fields:
+                    fields[field_object.index_fieldname] = field_object
+                else:
+                    # We've already got this field in the list. Ensure that
+                    # what we hand back is a superset of all options that
+                    # affect the schema.
+                    if field_object.indexed is True:
+                        fields[field_object.index_fieldname].indexed = True
+                    
+                    if field_object.stored is True:
+                        fields[field_object.index_fieldname].stored = True
+                    
+                    if field_object.faceted is True:
+                        fields[field_object.index_fieldname].faceted = True
         
         return fields
     

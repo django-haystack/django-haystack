@@ -119,8 +119,8 @@ Builds a dictionary of all fields appearing in any of the `SearchIndex`
 instances registered with a site.
 
 This is useful when building a schema for an engine. A dictionary is
-returned, with each key being a fieldname and the value being the
-`SearchField` class assigned to it.
+returned, with each key being a fieldname (or index_fieldname) and the
+value being the `SearchField` class assigned to it.
 
 ``update_object``
 ~~~~~~~~~~~~~~~~~
