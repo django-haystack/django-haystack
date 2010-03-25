@@ -1,17 +1,19 @@
 from django.test import TestCase
-from haystack.utils import get_identifier, Highlighter
+from haystack.utils import get_identifier, get_facet_field_name, Highlighter
 from core.models import MockModel
 
 
 class GetIdentifierTestCase(TestCase):
+    def test_get_facet_field_name(self):
+        self.assertEqual(get_facet_field_name('id'), 'id')
+        self.assertEqual(get_facet_field_name('django_id'), 'django_id')
+        self.assertEqual(get_facet_field_name('django_ct'), 'django_ct')
+        self.assertEqual(get_facet_field_name('author'), 'author_exact')
+        self.assertEqual(get_facet_field_name('author_exact'), 'author_exact_exact')
+
+
+class GetFacetFieldNameTestCase(TestCase):
     def test_get_identifier(self):
-        # Various invalid identifiers.
-        self.assertRaises(AttributeError, get_identifier, 'core')
-        self.assertRaises(AttributeError, get_identifier, 'core.mockmodel')
-        self.assertRaises(AttributeError, get_identifier, 'core.mockmodel.foo')
-        self.assertRaises(AttributeError, get_identifier, 'core-app.mockmodel.1')
-        
-        # Valid string identifier.
         self.assertEqual(get_identifier('core.mockmodel.1'), 'core.mockmodel.1')
         
         # Valid object.

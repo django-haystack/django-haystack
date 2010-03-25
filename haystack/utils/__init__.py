@@ -26,6 +26,9 @@ def get_identifier(obj_or_string):
 
 
 def get_facet_field_name(fieldname):
+    if fieldname in ['id', 'django_id', 'django_ct']:
+        return fieldname
+    
     return "%s_exact" % fieldname
 
 
