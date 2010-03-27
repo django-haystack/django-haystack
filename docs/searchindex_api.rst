@@ -253,7 +253,7 @@ Just like ``Form.clean_FOO``, the field's ``prepare`` runs before the
             return author
 
 This method is fully function with ``model_attr``, so if there's no convenient
-way to access the data you want, this is an excellent way to prepare it.
+way to access the data you want, this is an excellent way to prepare it::
 
     class NoteIndex(SearchIndex):
         text = CharField(document=True, use_template=True)

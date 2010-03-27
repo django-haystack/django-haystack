@@ -1,6 +1,7 @@
 """
 A fake backend for dummying during tests.
 """
+from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import FILTER_SEPARATOR
 from haystack.models import SearchResult
@@ -77,7 +78,7 @@ class SearchQuery(BaseSearchQuery):
     
     def build_query_fragment(self, field, filter_type, value):
         result = ''
-        value = str(value)
+        value = force_unicode(value)
         
         # Check to see if it's a phrase for an exact match.
         if ' ' in value:

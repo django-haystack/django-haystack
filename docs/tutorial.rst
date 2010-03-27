@@ -10,7 +10,7 @@ addition, search can provide insight into what things are popular (many
 searches), what things are difficult to find on the site and ways you can
 improve the site better.
 
-To this end, Haystack tries to making integrating custom search as easy as
+To this end, Haystack tries to make integrating custom search as easy as
 possible while being flexible/powerful enough to handle more advanced use cases.
 
 Haystack is a reusable app (that is, it relies only on it's own code and focuses
@@ -87,6 +87,7 @@ following:
 * ``solr``
 * ``whoosh``
 * ``xapian`` (if you installed ``xapian-haystack``)
+* ``simple``
 * ``dummy``
 
 Example::
@@ -133,6 +134,14 @@ it out of a place your webserver may serve documents out of apply.
 Example::
 
     HAYSTACK_XAPIAN_PATH = '/home/xapian/mysite_index'
+
+
+Simple
+~~~~~~
+
+The ``simple`` backend using very basic matching via the database itself. It's
+not recommended for production use but is more useful than the ``dummy`` backend
+in that it will return results. No extra settings are needed.
 
 
 Create A ``SearchSite``
@@ -306,6 +315,14 @@ Reindex
 The final step, now that you have everything setup, is to put your data in
 from your database into the search index. Haystack ships with a management
 command to make this process easy.
+
+.. note::
+
+    If you're using the Solr backend, you have an extra step. Solr's
+    configuration is XML-based, so you'll need to manually regenerate the
+    schema. You should run
+    ``./manage.py build_solr_schema`` first, drop the XML output in your
+    Solr's ``schema.xml`` file and restart your Solr server.
 
 Simply run ``./manage.py rebuild_index``. You'll get some totals of how many
 models were processed and placed in the index.

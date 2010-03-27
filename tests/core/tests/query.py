@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from django.conf import settings
 from django.test import TestCase
@@ -6,7 +7,7 @@ from haystack import backends
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
-from haystack.exceptions import HaystackError, FacetingError
+from haystack.exceptions import HaystackError, FacetingError, NotRegistered
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
@@ -263,6 +264,11 @@ class BaseSearchQueryTestCase(TestCase):
         
         msq = MockSearchQuery(site=test_site)
         self.assertEqual(msq.backend.site.get_indexed_models(), [MockModel])
+    
+    def test_regression_dummy_unicode(self):
+        dsq = DummySearchQuery(backend=DummySearchBackend())
+        self.assertEqual(dsq.build_query_fragment('foo', 'exact', 'bar'), 'foo__exact bar')
+        self.assertEqual(dsq.build_query_fragment('foo', 'exact', u'☃'), u'foo__exact ☃')
 
 
 class SearchQuerySetTestCase(TestCase):
@@ -433,6 +439,12 @@ class SearchQuerySetTestCase(TestCase):
         sqs = bsqs.models(MockModel, AnotherMockModel)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.models), 2)
+        
+        # This will produce a warning.
+        mock_index_site.unregister(AnotherMockModel)
+        sqs = bsqs.models(AnotherMockModel)
+        self.assert_(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.models), 1)
     
     def test_boost(self):
         sqs = self.bsqs.boost('foo', 10)
