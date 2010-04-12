@@ -127,7 +127,7 @@ URLconf should resemble::
     from haystack.views import FacetedSearchView
     
     
-    sqs = SearchQuerySet().facet('author_exact')
+    sqs = SearchQuerySet().facet('author')
      
     
     urlpatterns = patterns('haystack.views',
