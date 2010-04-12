@@ -50,7 +50,7 @@ class GoodCustomMockSearchIndex(SearchIndex):
 
 class GoodNullableMockSearchIndex(SearchIndex):
     content = CharField(document=True, use_template=True)
-    author = CharField(model_attr='author', null=True)
+    author = CharField(model_attr='author', null=True, faceted=True)
 
 
 class GoodOverriddenFieldNameMockSearchIndex(SearchIndex):
@@ -262,6 +262,10 @@ class SearchIndexTestCase(TestCase):
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
         prepared_data = self.cnmi.prepare(mock)
+        self.assertEqual(len(prepared_data), 4)
+        self.assertEqual(sorted(prepared_data.keys()), ['content', 'django_ct', 'django_id', 'id'])
+        
+        prepared_data = self.cnmi.full_prepare(mock)
         self.assertEqual(len(prepared_data), 4)
         self.assertEqual(sorted(prepared_data.keys()), ['content', 'django_ct', 'django_id', 'id'])
 
