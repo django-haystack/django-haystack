@@ -338,6 +338,12 @@ performed and it is up to the developer to ensure the query's syntax is correct.
 Passes a raw query directly to the backend. This is for advanced usage, where
 the desired query can not be expressed via ``SearchQuerySet``.
 
+.. warning::
+
+    Unlike many of the other methods on ``SearchQuerySet``, this method does
+    not chain by default (depends on the backend). Any other attributes on the
+    ``SearchQuerySet`` are ignored and only the provided query is run.
+
 Example::
 
     # In the case of Solr... (this example could be expressed with SearchQuerySet)
