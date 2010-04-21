@@ -92,7 +92,7 @@ An example::
 
     HAYSTACK_INCLUDE_SPELLING = True
 
-Works for the ``solr`` and ``whoosh`` backends.
+Works for the ``solr``, ``xapian``, and ``whoosh`` backends.
 
 
 ``HAYSTACK_SOLR_URL``
