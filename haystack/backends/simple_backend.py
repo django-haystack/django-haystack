@@ -21,7 +21,7 @@ if settings.DEBUG:
     ch.setLevel(logging.WARNING)
     ch.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 
-    logger = logging.getLogger('haystack.dummy_backend')
+    logger = logging.getLogger('haystack.simple_backend')
     logger.setLevel(logging.WARNING)
     logger.addHandler(NullHandler())
     logger.addHandler(ch)
