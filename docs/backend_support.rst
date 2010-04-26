@@ -10,9 +10,11 @@ Supported Backends
 
 * Solr_
 * Whoosh_
+* Xapian_
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Whoosh: http://whoosh.ca/
+.. _Xapian: http://xapian.org/
 
 
 Backend Capabilities
@@ -44,6 +46,21 @@ Whoosh
 * Highlighting
 * Requires: whoosh (0.3.15+)
 
+Xapian
+------
+
+**Complete & available as a third-party download.**
+
+* Full SearchQuerySet support
+* Automatic query building
+* "More Like This" functionality
+* Term Boosting
+* Faceting
+* Stored (non-indexed) fields
+* Highlighting
+* Requires: Xapian 1.0.5+ & python-xapian 1.0.5+
+* Backend can be downloaded here: `xapian-haystack <http://github.com/notanumber/xapian-haystack/>`_
+
 
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
@@ -51,6 +68,8 @@ Whoosh
 | Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Whoosh         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
++----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
+| Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes (plugin) |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 
 
@@ -61,27 +80,12 @@ The following are search backends that would be nice to have in Haystack but are
 licensed in a way that prevents them from being officially bundled. If the
 community expresses interest in any of these, there may be future development.
 
-* Xapian_
 * Sphinx_
 * `Hyper Estraier`_
 
-.. _Xapian: http://xapian.org/
 .. _Sphinx: http://www.sphinxsearch.com/
 .. _Hyper Estraier: http://hyperestraier.sourceforge.net/
 
-Xapian
-------
-
-**Complete but not included with Haystack.**
-
-* Full SearchQuerySet support
-* Automatic query building
-* Term Boosting
-* "More Like This" functionality
-* Faceting
-* Stored (non-indexed) fields
-* Highlighting
-* Requires: xapian bindings included with Xapian
 
 Sphinx
 ------
@@ -105,8 +109,6 @@ Hyper Estraier
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
 +================+========================+=====================+================+============+==========+===============+==============+
-| Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes (plugin) |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Sphinx         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
 | Hyper Estraier | Yes                    | Yes                 | Yes            | No         | No       | No            | Yes (plugin) |

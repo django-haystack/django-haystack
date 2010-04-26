@@ -128,8 +128,9 @@ package for it). Installation looks like::
     make
     sudo make install
 
-Xapian is a supported backend but is not included in Haystack proper due to
-licensing. You can download the source from
+Xapian is a third-party supported backend. It is not included in Haystack
+proper due to licensing. To use it, you need both Haystack itself as well as
+``xapian-haystack``. You can download the source from
 http://github.com/notanumber/xapian-haystack/tree/master. Installation
 instructions can be found on that page as well. The backend, written
 by David Sauve (notanumber), fully implements the `SearchQuerySet` API and is
