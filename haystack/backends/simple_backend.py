@@ -1,5 +1,5 @@
 """
-A fake backend for dummying during tests.
+A very basic, ORM-based backend for simple search during tests.
 """
 from django.conf import settings
 from django.db.models import Q
@@ -7,7 +7,7 @@ from haystack.backends import BaseSearchBackend, BaseSearchQuery, SearchNode, lo
 from haystack.models import SearchResult
 
 
-BACKEND_NAME = 'dummy'
+BACKEND_NAME = 'simple'
 
 
 if settings.DEBUG:
@@ -21,7 +21,7 @@ if settings.DEBUG:
     ch.setLevel(logging.WARNING)
     ch.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 
-    logger = logging.getLogger('haystack.dummy_backend')
+    logger = logging.getLogger('haystack.simple_backend')
     logger.setLevel(logging.WARNING)
     logger.addHandler(NullHandler())
     logger.addHandler(ch)
