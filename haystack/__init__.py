@@ -30,15 +30,33 @@ if not hasattr(settings, "HAYSTACK_SEARCH_ENGINE"):
 
 # Load the search backend.
 def load_backend(backend_name=None):
+    """
+    Loads a backend for interacting with the search engine.
+    
+    Optionally accepts a ``backend_name``. If provided, it should be a string
+    of one of the following (built-in) options::
+    
+      * solr
+      * xapian
+      * whoosh
+      * simple
+      * dummy
+    
+    If you've implemented a custom backend, you can provide the "short" portion
+    of the name (before the ``_backend``) and Haystack will attempt to load
+    that backend instead.
+    
+    If not provided, the ``HAYSTACK_SEARCH_ENGINE`` setting is used.
+    """
     if not backend_name:
         backend_name = settings.HAYSTACK_SEARCH_ENGINE
     
     try:
-        # Most of the time, the search backend will be one of the  
+        # Most of the time, the search backend will be one of the
         # backends that ships with haystack, so look there first.
         return importlib.import_module('haystack.backends.%s_backend' % backend_name)
     except ImportError, e:
-        # If the import failed, we might be looking for a search backend 
+        # If the import failed, we might be looking for a search backend
         # distributed external to haystack. So we'll try that next.
         try:
             return importlib.import_module('%s_backend' % backend_name)
