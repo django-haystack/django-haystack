@@ -26,12 +26,15 @@ class SearchResult(object):
         self._verbose_name = None
         self._additional_fields = []
         self.stored_fields = None
-        self.log = logging.getLogger('haystack')
+        self.log = self._get_log()
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
                 self.__dict__[key] = value
                 self._additional_fields.append(key)
+    
+    def _get_log(self):
+        return logging.getLogger('haystack')
     
     def __repr__(self):
         return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.model_name, self.pk)
@@ -40,6 +43,9 @@ class SearchResult(object):
         return force_unicode(self.__repr__())
     
     def __getattr__(self, attr):
+        if attr == '__getnewargs__':
+            raise AttributeError
+        
         return self.__dict__.get(attr, None)
     
     def _get_object(self):
@@ -139,3 +145,21 @@ class SearchResult(object):
                     self._stored_fields[fieldname] = getattr(self, fieldname, u'')
         
         return self._stored_fields
+    
+    def __getstate__(self):
+        """
+        Returns a dictionary representing the ``SearchResult`` in order to
+        make it pickleable.
+        """
+        # The ``log`` is excluded because, under the hood, ``logging`` uses
+        # ``threading.Lock``, which doesn't pickle well.
+        ret_dict = self.__dict__.copy()
+        del(ret_dict['log'])
+        return ret_dict
+    
+    def __setstate__(self, d):
+        """
+        Updates the object's attributes according to data passed by pickle.
+        """
+        self.__dict__.update(d)
+        self.log = self._get_log()
