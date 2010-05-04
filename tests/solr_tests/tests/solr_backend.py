@@ -250,25 +250,29 @@ class SolrSearchBackendTestCase(TestCase):
             {
                 'indexed': 'true',
                 'type': 'text',
+                'stored': 'true',
                 'field_name': 'text',
                 'multi_valued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'date',
+                'stored': 'true',
                 'field_name': 'pub_date',
                 'multi_valued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'text',
+                'stored': 'true',
                 'field_name': 'name',
                 'multi_valued': 'false'
             },
             {
                 'indexed': 'true',
-                'type': 'string',
                 'field_name': 'name_exact',
+                'stored': 'true',
+                'type': 'string',
                 'multi_valued': 'false'
             }
         ])

@@ -309,6 +309,7 @@ class SearchBackend(BaseSearchBackend):
                 'field_name': field_class.index_fieldname,
                 'type': 'text',
                 'indexed': 'true',
+                'stored': 'true',
                 'multi_valued': 'false',
             }
             
@@ -331,6 +332,9 @@ class SearchBackend(BaseSearchBackend):
                 field_data['type'] = 'boolean'
             elif isinstance(field_class, MultiValueField):
                 field_data['multi_valued'] = 'true'
+            
+            if field_class.stored is False:
+                field_data['stored'] = 'false'
             
             # Do this last to override `text` fields.
             if field_class.indexed is False:
