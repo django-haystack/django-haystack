@@ -232,6 +232,22 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
         results = self.sb.search('Index', narrow_queries=set(['name:daniel1']))
         self.assertEqual(results['hits'], 1)
+        
+        # Check the use of ``limit_to_registered_models``.
+        self.assertEqual(self.sb.search('', limit_to_registered_models=False), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search('*:*', limit_to_registered_models=False)['hits'], 3)
+        self.assertEqual([result.pk for result in self.sb.search('*:*', limit_to_registered_models=False)['results']], ['1', '2', '3'])
+        
+        # Stow.
+        old_limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
+        settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = False
+        
+        self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search('*:*')['hits'], 3)
+        self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], ['1', '2', '3'])
+        
+        # Restore.
+        settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
     
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)

@@ -280,3 +280,22 @@ An example::
     HAYSTACK_ITERATOR_LOAD_PER_QUERY = 100
 
 The default is 10 results at a time.
+
+
+``HAYSTACK_LIMIT_TO_REGISTERED_MODELS``
+=======================================
+
+**Optional**
+
+This setting allows you to control whether or not Haystack will limit the
+search results seen to just the models registered. It should be a boolean.
+
+If your search index is never used for anything other than the models
+registered with Haystack, you can turn this off and get a small to moderate
+performance boost.
+
+An example::
+
+    HAYSTACK_LIMIT_TO_REGISTERED_MODELS = False
+
+Default is ``True``.
