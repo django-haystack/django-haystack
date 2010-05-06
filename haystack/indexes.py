@@ -127,7 +127,7 @@ class SearchIndex(object):
         
         # Duplicate data for faceted fields.
         for field_name, field in self.fields.items():
-            if field.faceted is True:
+            if field.faceted is True and field.index_fieldname in self.prepared_data:
                 self.prepared_data[get_facet_field_name(field.index_fieldname)] = self.prepared_data[field.index_fieldname]
         
         return self.prepared_data

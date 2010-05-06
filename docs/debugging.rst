@@ -121,3 +121,16 @@ use at the console/management commands may also require similar imports.
 Finally, should this occur to you, it would be appreciated if you could report
 the issue and the app(s) you're using that are causing the issue in conjunction
 with Haystack on either the mailing list or on the GitHub issue tracker.
+
+
+"Failed to add documents to Solr: [Reason: None]"
+=================================================
+
+This is a Solr-specific traceback. It generally occurs when there is an error
+with your ``HAYSTACK_SOLR_URL``. Since Solr acts as a webservice, you should
+test the URL in your web browser. If you receive an error, you may need to
+change your URL.
+
+This can also be caused when using old versions of pysolr (2.0.9 and before),
+using httplib2 and including a trailing slash in your ``HAYSTACK_SOLR_URL``.
+Please upgrade your version of pysolr.

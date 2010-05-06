@@ -78,7 +78,7 @@
     <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
     
 {% for field in fields %}
-    <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="true" multiValued="{{ field.multi_valued }}" />
+    <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />
 {% endfor %}
   </fields>
 

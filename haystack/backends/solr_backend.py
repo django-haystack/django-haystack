@@ -106,7 +106,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=True, **kwargs):
+               limit_to_registered_models=None, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -165,6 +165,9 @@ class SearchBackend(BaseSearchBackend):
             kwargs['facet'] = 'on'
             kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets]
         
+        if limit_to_registered_models is None:
+            limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
+        
         if limit_to_registered_models:
             # Using narrow queries, limit the results to only models registered
             # with the current site.
@@ -189,7 +192,7 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=True, **kwargs):
+                       limit_to_registered_models=None, **kwargs):
         # Handle deferred models.
         if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
             model_klass = get_proxied_model(model_instance._meta)
@@ -209,6 +212,9 @@ class SearchBackend(BaseSearchBackend):
             params['rows'] = end_offset
         
         narrow_queries = set()
+        
+        if limit_to_registered_models is None:
+            limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
         
         if limit_to_registered_models:
             # Using narrow queries, limit the results to only models registered
@@ -309,6 +315,7 @@ class SearchBackend(BaseSearchBackend):
                 'field_name': field_class.index_fieldname,
                 'type': 'text',
                 'indexed': 'true',
+                'stored': 'true',
                 'multi_valued': 'false',
             }
             
@@ -331,6 +338,9 @@ class SearchBackend(BaseSearchBackend):
                 field_data['type'] = 'boolean'
             elif isinstance(field_class, MultiValueField):
                 field_data['multi_valued'] = 'true'
+            
+            if field_class.stored is False:
+                field_data['stored'] = 'false'
             
             # Do this last to override `text` fields.
             if field_class.indexed is False:

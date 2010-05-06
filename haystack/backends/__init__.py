@@ -114,7 +114,7 @@ class BaseSearchBackend(object):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=True, **kwargs):
+               limit_to_registered_models=None, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         

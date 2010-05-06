@@ -39,3 +39,4 @@ Thanks to
     * alanwj for a patch regarding Whoosh and empty MultiValueFields.
     * alanzoppa for a patch regarding highlighting.
     * piquadrat for a patch regarding the more_like_this template tag.
+    * dedsm for a patch regarding the pickling of SearchResult objects.

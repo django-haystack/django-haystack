@@ -174,6 +174,22 @@ class WhooshSearchBackendTestCase(TestCase):
         # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
         # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
         # self.assertEqual(results['hits'], 1)
+        
+        # Check the use of ``limit_to_registered_models``.
+        self.assertEqual(self.sb.search(u'', limit_to_registered_models=False), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'*', limit_to_registered_models=False)['hits'], 23)
+        self.assertEqual([result.pk for result in self.sb.search(u'*', limit_to_registered_models=False)['results']], [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'2', u'1'])
+        
+        # Stow.
+        old_limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
+        settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = False
+        
+        self.assertEqual(self.sb.search(u''), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'*')['hits'], 23)
+        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'2', u'1'])
+        
+        # Restore.
+        settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
     
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)

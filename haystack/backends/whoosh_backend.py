@@ -219,7 +219,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=True, **kwargs):
+               limit_to_registered_models=None, **kwargs):
         if not self.setup_complete:
             self.setup()
         
@@ -282,6 +282,9 @@ class SearchBackend(BaseSearchBackend):
         narrowed_results = None
         self.index = self.index.refresh()
         
+        if limit_to_registered_models is None:
+            limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
+        
         if limit_to_registered_models:
             # Using narrow queries, limit the results to only models registered
             # with the current site.
@@ -342,7 +345,7 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=True, **kwargs):
+                       limit_to_registered_models=None, **kwargs):
         warnings.warn("Whoosh does not handle More Like This.", Warning, stacklevel=2)
         return {
             'results': [],

@@ -1,5 +1,5 @@
 """
-A fake backend for dummying during tests.
+A very basic, ORM-based backend for simple search during tests.
 """
 from django.conf import settings
 from django.db.models import Q
@@ -7,7 +7,7 @@ from haystack.backends import BaseSearchBackend, BaseSearchQuery, SearchNode, lo
 from haystack.models import SearchResult
 
 
-BACKEND_NAME = 'dummy'
+BACKEND_NAME = 'simple'
 
 
 if settings.DEBUG:
@@ -47,7 +47,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=True, **kwargs):
+               limit_to_registered_models=None, **kwargs):
         hits = 0
         results = []
         
@@ -74,7 +74,7 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=True, **kwargs):
+                       limit_to_registered_models=None, **kwargs):
         return {
             'results': [],
             'hits': 0

@@ -1,4 +1,5 @@
 import logging
+import pickle
 from django.test import TestCase
 from haystack.models import SearchResult
 from core.models import MockModel
@@ -127,3 +128,13 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
         self.assertEqual(len(CaptureHandler.logs_seen), 9)
+    
+    def test_pickling(self):
+        pickle_me_1 = SearchResult('core', 'mockmodel', '1000000', 2)
+        picklicious = pickle.dumps(pickle_me_1)
+        
+        pickle_me_2 = pickle.loads(picklicious)
+        self.assertEqual(pickle_me_1.app_label, pickle_me_2.app_label)
+        self.assertEqual(pickle_me_1.model_name, pickle_me_2.model_name)
+        self.assertEqual(pickle_me_1.pk, pickle_me_2.pk)
+        self.assertEqual(pickle_me_1.score, pickle_me_2.score)
