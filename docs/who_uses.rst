@@ -152,3 +152,14 @@ For general search, model-specific search and suggestions via MLT.
 Using: Solr
 
 * http://forkinit.com/
+
+
+Structured Abstraction
+----------------------
+
+For general search.
+
+Using: Xapian
+
+* http://www.structuredabstraction.com/
+* http://www.delivergood.org/
