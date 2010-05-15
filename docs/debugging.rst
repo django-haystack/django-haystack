@@ -106,7 +106,17 @@ conjunction with third-party apps that attempt to do similar types of imports,
 it's possible (though rare) to get a traceback very early in the start-up
 process, usually mentioning ``handle_registrations``.
 
-If this is the case, Haystack provides an advanced setting
+There are typically three possible causes for this error:
+
+    * A syntax/import error in a file included by the ``search_indexes.py`` file
+    * A circular import
+    * Another app causing models to load early
+
+The first two causes can be debugged by dropping an
+``import pdb; pdb.set_trace()`` at the top of the ``search_indexes.py`` where
+the error is occurring and stepping through to see the real error.
+
+If neither of those is the case, Haystack provides an advanced setting
 (``HAYSTACK_ENABLE_REGISTRATIONS`` - :doc:`settings`) to disable this importing
 behavior and allow your applications to function.
 
