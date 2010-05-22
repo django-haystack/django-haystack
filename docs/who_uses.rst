@@ -163,3 +163,13 @@ Using: Xapian
 
 * http://www.structuredabstraction.com/
 * http://www.delivergood.org/
+
+
+CustomMade
+----------
+
+For general search.
+
+Using: Solr
+
+* http://www.custommade.com/
