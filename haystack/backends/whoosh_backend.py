@@ -204,6 +204,8 @@ class SearchBackend(BaseSearchBackend):
         # it's much more efficient to simply delete the index files.
         if self.use_file_storage and os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
             shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        elif not self.use_file_storage:
+            self.storage.clean()
         
         # Recreate everything.
         self.setup()
