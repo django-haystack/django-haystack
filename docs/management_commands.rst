@@ -18,6 +18,8 @@ following arguments::
     ``--noinput``:
         If provided, the interactive prompts are skipped and the index is
         uncerimoniously wiped out.
+    ``--verbosity``:
+        Accepted but ignored.
 
 By default, this is an **INTERACTIVE** command and assumes that you do **NOT**
 wish to delete the entire index.
@@ -39,9 +41,14 @@ arguments::
         Number of items to index at once. Default is 1000.
     ``--site``:
         The site object to use when reindexing (like `search_sites.mysite`).
-
-Using ``--verbosity=2`` with this command shows individual batches being sent,
-which is useful when debugging.
+    ``--verbosity``:
+        If provided, dumps out more information about what's being done.
+        
+          * ``0`` = No output
+          * ``1`` = Minimal output describing what models were indexed
+            and how many records.
+          * ``2`` = Full output, including everything from ``1`` plus output
+            on each batch that is indexed, which is useful when debugging.
 
 .. note::
 
@@ -56,7 +63,27 @@ which is useful when debugging.
 =================
 
 A shortcut for ``clear_index`` followed by ``update_index``. It accepts any/all
-of the arguments you can pass to either ``clear_index`` or ``update_index``.
+of the arguments of the following arguments::
+
+    ``--age``:
+        Number of hours back to consider objects new. Useful for nightly
+        reindexes (``--age=24``). Requires ``SearchIndexes`` to implement
+        the ``get_updated_field`` method.
+    ``--batch-size``:
+        Number of items to index at once. Default is 1000.
+    ``--site``:
+        The site object to use when reindexing (like `search_sites.mysite`).
+    ``--noinput``:
+        If provided, the interactive prompts are skipped and the index is
+        uncerimoniously wiped out.
+    ``--verbosity``:
+        If provided, dumps out more information about what's being done.
+        
+          * ``0`` = No output
+          * ``1`` = Minimal output describing what models were indexed
+            and how many records.
+          * ``2`` = Full output, including everything from ``1`` plus output
+            on each batch that is indexed, which is useful when debugging.
 
 For when you really, really want a completely rebuilt index.
 
