@@ -129,8 +129,8 @@ The functional view provides an example of how Haystack can be used in more
 traditional settings or as an example of how to write a more complex custom
 view. It is also thread-safe.
 
-``SearchView(template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext)``
----------------------------------------------------------------------------------------------------------------------------
+``SearchView(template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
+--------------------------------------------------------------------------------------------------------------------------------------------------
 
 The ``SearchView`` is designed to be easy/flexible enough to override common
 changes as well as being internally abstracted so that only altering a specific
@@ -241,8 +241,8 @@ creates the context and renders the response for all the aforementioned
 processing.
 
 
-``basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None)``
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None)``
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 The ``basic_search`` tries to provide most of the same functionality as the
 class-based views but resembles a more traditional generic view. It's both a

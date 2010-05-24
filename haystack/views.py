@@ -17,12 +17,16 @@ class SearchView(object):
     results = EmptySearchQuerySet()
     request = None
     form = None
+    results_per_page = RESULTS_PER_PAGE
     
-    def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext):
+    def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None):
         self.load_all = load_all
         self.form_class = form_class
         self.context_class = context_class
         self.searchqueryset = searchqueryset
+        
+        if not results_per_page is None:
+            self.results_per_page = results_per_page
         
         if template:
             self.template = template
@@ -93,7 +97,7 @@ class SearchView(object):
         should be a simple matter to override this method to do what they would
         like.
         """
-        paginator = Paginator(self.results, RESULTS_PER_PAGE)
+        paginator = Paginator(self.results, self.results_per_page)
         
         try:
             page = paginator.page(self.request.GET.get('page', 1))
@@ -142,7 +146,7 @@ class FacetedSearchView(SearchView):
         return extra
 
 
-def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None):
+def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None):
     """
     A more traditional view that also demonstrate an alternative
     way to use Haystack.
@@ -175,7 +179,7 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
     else:
         form = form_class(searchqueryset=searchqueryset, load_all=load_all)
     
-    paginator = Paginator(results, RESULTS_PER_PAGE)
+    paginator = Paginator(results, results_per_page or RESULTS_PER_PAGE)
     
     try:
         page = paginator.page(int(request.GET.get('page', 1)))
