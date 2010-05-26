@@ -48,8 +48,8 @@ to enable the ``MoreLikeThisHandler``. Add the following line to your
 Spelling Suggestions
 --------------------
 
-To enable the spelling suggestion functionality in Haystack, you'll need
-to setup the ``MoreLikeThisHandler``. Add the following line to your
+To enable the spelling suggestion functionality in Haystack, you'll need to
+enable the ``SpellCheckComponent``. Add the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
     <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
