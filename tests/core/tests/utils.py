@@ -104,6 +104,15 @@ class HighlighterTestCase(TestCase):
         highlighter = Highlighter('i??')
         highlighter.text_block = 'Foo is i?? in most cases.'
         self.assertEqual(highlighter.render_html({'i??': [7]}, 0, 200), 'Foo is <span class="highlighted">i??</span> in most cases.')
+        
+        # Regression for highlighting already highlighted HTML terms.
+        highlighter = Highlighter('span')
+        highlighter.text_block = 'A span in spam makes html in a can.'
+        self.assertEqual(highlighter.render_html({'span': [2]}, 0, 200), 'A <span class="highlighted">span</span> in spam makes html in a can.')
+        
+        highlighter = Highlighter('highlight')
+        highlighter.text_block = 'A span in spam makes highlighted html in a can.'
+        self.assertEqual(highlighter.render_html({'highlight': [21]}, 0, 200), 'A span in spam makes <span class="highlighted">highlight</span>ed html in a can.')
     
     def test_highlight(self):
         highlighter = Highlighter('this test')

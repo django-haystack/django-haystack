@@ -16,6 +16,7 @@ class Command(BaseCommand):
         """Clears out the search index completely."""
         # Cause the default site to load.
         from haystack import site
+        self.verbosity = int(options.get('verbosity', 1))
         
         if options.get('interactive', True):
             print
@@ -29,10 +30,12 @@ class Command(BaseCommand):
                 print "No action taken."
                 sys.exit()
         
-        print "Removing all documents from your index because you said so."
+        if self.verbosity >= 1:
+            print "Removing all documents from your index because you said so."
         
         from haystack import backend
         sb = backend.SearchBackend()
         sb.clear()
         
-        print "All documents removed."
+        if self.verbosity >= 1:
+            print "All documents removed."

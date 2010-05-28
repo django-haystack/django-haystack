@@ -1,7 +1,6 @@
 import re
 import warnings
 from django.conf import settings
-from haystack import backend
 from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotRegistered
@@ -17,6 +16,7 @@ class SearchQuerySet(object):
         if query is not None:
             self.query = query
         else:
+            from haystack import backend
             self.query = backend.SearchQuery(site=site)
         
         self._result_cache = []

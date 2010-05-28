@@ -57,12 +57,27 @@ class SearchBackend(BaseSearchBackend):
                     qs = model.objects.all()
                 else:
                     for term in query_string.split():
-                        queries = [
-                            Q(**{'%s__icontains' % field.name: term}) for field in model._meta._fields() if not hasattr(field, 'related')
-                        ]
+                        queries = []
+                        
+                        for field in model._meta._fields():
+                            if hasattr(field, 'related'):
+                                continue
+                            
+                            if not field.get_internal_type() in ('TextField', 'CharField', 'SlugField'):
+                                continue
+                            
+                            queries.append(Q(**{'%s__icontains' % field.name: term}))
+                        
                         qs = model.objects.filter(reduce(lambda x, y: x|y, queries))
+                
                 hits += len(qs)
-                results.extend([match for match in qs])
+                
+                for match in qs:
+                    result = SearchResult(match._meta.app_label, match._meta.module_name, match.pk, 0, **match.__dict__)
+                    # For efficiency.
+                    result._object = match.__class__
+                    result._model = match
+                    results.append(result)
         
         return {
             'results': results,
@@ -101,7 +116,7 @@ class SearchQuery(BaseSearchQuery):
         
         for child in search_node.children:
             if isinstance(child, SearchNode):
-                tarm_list.append(self._build_query(child))
+                term_list.append(self._build_query(child))
             else:
                 term_list.append(child[1])
         

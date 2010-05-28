@@ -100,6 +100,21 @@ class SearchViewTestCase(TestCase):
         self.assertNotEqual(foo, bar)
 
 
+class ResultsPerPageTestCase(TestCase):
+    urls = 'core.tests.results_per_page_urls'
+    
+    def test_custom_results_per_page(self):
+        response = self.client.get('/search/', {'q': 'hello world'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context[-1]['page'].object_list), 1)
+        self.assertEqual(response.context[-1]['paginator'].per_page, 1)
+        
+        response = self.client.get('/search2/', {'q': 'hello world'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context[-1]['page'].object_list), 1)
+        self.assertEqual(response.context[-1]['paginator'].per_page, 2)
+
+
 class FacetedSearchViewTestCase(TestCase):
     def setUp(self):
         super(FacetedSearchViewTestCase, self).setUp()

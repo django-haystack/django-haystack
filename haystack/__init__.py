@@ -70,6 +70,7 @@ def load_backend(backend_name=None):
                 and not f.startswith('_') 
                 and not f.startswith('.') 
                 and not f.endswith('.pyc')
+                and not f.endswith('.pyo')
             ]
             available_backends.sort()
             if backend_name not in available_backends:

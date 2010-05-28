@@ -14,17 +14,17 @@ class SimpleMockSearchIndex(indexes.SearchIndex):
 
 class SimpleSearchBackendTestCase(TestCase):
     fixtures = ['bulk_data.json']
-
+    
     def setUp(self):
         super(SimpleSearchBackendTestCase, self).setUp()
-
+        
         self.site = SearchSite()
         self.backend = SearchBackend(site=self.site)
         self.index = SimpleMockSearchIndex(MockModel, backend=self.backend)
         self.site.register(MockModel, SimpleMockSearchIndex)
-
+        
         self.sample_objs = MockModel.objects.all()
-
+    
     def test_update(self):
         self.backend.update(self.index, self.sample_objs)
     
@@ -37,23 +37,23 @@ class SimpleSearchBackendTestCase(TestCase):
     def test_search(self):
         # No query string should always yield zero results.
         self.assertEqual(self.backend.search(u''), {'hits': 0, 'results': []})
-    
+        
         self.assertEqual(self.backend.search(u'*')['hits'], 23)
         self.assertEqual([result.pk for result in self.backend.search(u'*')['results']], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
-
+        
         self.assertEqual(self.backend.search(u'daniel')['hits'], 23)
         self.assertEqual([result.pk for result in self.backend.search(u'daniel')['results']], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
-    
+        
         self.assertEqual(self.backend.search(u'should be a string')['hits'], 1)
         self.assertEqual([result.pk for result in self.backend.search(u'should be a string')['results']], [8])
-    
+        
         self.assertEqual(self.backend.search(u'index document')['hits'], 6)
         self.assertEqual([result.pk for result in self.backend.search(u'index document')['results']], [2, 3, 15, 16, 17, 18])
-    
+        
         # No support for spelling suggestions
         self.assertEqual(self.backend.search(u'Indx')['hits'], 0)
         self.assertFalse(self.backend.search(u'Indx').get('spelling_suggestion'))
-    
+        
         # No support for facets
         self.assertEqual(self.backend.search(u'', facets=['name']), {'hits': 0, 'results': []})
         self.assertEqual(self.backend.search(u'daniel', facets=['name'])['hits'], 23)
@@ -63,6 +63,9 @@ class SimpleSearchBackendTestCase(TestCase):
         self.assertEqual(self.backend.search(u'daniel', query_facets={'name': '[* TO e]'})['hits'], 23)
         self.assertFalse(self.backend.search(u'').get('facets'))
         self.assertFalse(self.backend.search(u'daniel').get('facets'))
+        
+        # Note that only textual-fields are supported.
+        self.assertEqual(self.backend.search(u'2009-06-18')['hits'], 0)
         
     def test_more_like_this(self):
         self.backend.update(self.index, self.sample_objs)

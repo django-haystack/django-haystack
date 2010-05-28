@@ -290,19 +290,20 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual([result.month for result in self.sb.search(u'*')['results']], [u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'06', u'07', u'06'])
     
     def test_writable(self):
-        if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
-        
-        os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0400)
-        
-        try:
-            self.sb.setup()
-            self.fail()
-        except IOError:
-            # Yay. We failed
-            pass
-        
-        os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0755)
+        if getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file') == 'file':
+            if not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+                os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
+            
+            os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0400)
+            
+            try:
+                self.sb.setup()
+                self.fail()
+            except IOError:
+                # Yay. We failed
+                pass
+            
+            os.chmod(settings.HAYSTACK_WHOOSH_PATH, 0755)
     
     def test_slicing(self):
         self.sb.update(self.smmi, self.sample_objs)
