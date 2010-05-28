@@ -71,7 +71,13 @@ class SearchBackend(BaseSearchBackend):
                         qs = model.objects.filter(reduce(lambda x, y: x|y, queries))
                 
                 hits += len(qs)
-                results.extend([match for match in qs])
+                
+                for match in qs:
+                    result = SearchResult(match._meta.app_label, match._meta.module_name, match.pk, 0, **match.__dict__)
+                    # For efficiency.
+                    result._object = match.__class__
+                    result._model = match
+                    results.append(result)
         
         return {
             'results': results,
@@ -110,7 +116,7 @@ class SearchQuery(BaseSearchQuery):
         
         for child in search_node.children:
             if isinstance(child, SearchNode):
-                tarm_list.append(self._build_query(child))
+                term_list.append(self._build_query(child))
             else:
                 term_list.append(child[1])
         
