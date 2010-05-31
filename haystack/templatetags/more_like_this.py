@@ -11,7 +11,10 @@ class MoreLikeThisNode(template.Node):
         self.model = template.Variable(model)
         self.varname = varname
         self.for_types = for_types
-        self.limit = int(limit)
+        self.limit = limit
+        
+        if not self.limit is None:
+            self.limit = int(self.limit)
     
     def render(self, context):
         try:
