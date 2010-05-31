@@ -66,7 +66,7 @@ class SearchField(object):
             
             for attr in attrs:
                 if not hasattr(current_object, attr):
-                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(current_object), attr))
+                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(obj), attr))
                 
                 current_object = getattr(current_object, attr, None)
                 
@@ -82,7 +82,7 @@ class SearchField(object):
                         # accesses will fail misreably.
                         break
                     else:
-                        raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(current_object), attr))
+                        raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(obj), attr))
             
             if callable(current_object):
                 return current_object()
