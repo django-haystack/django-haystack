@@ -11,7 +11,15 @@ from haystack.query import SearchQuerySet
 try:
     from django.contrib.admin.options import csrf_protect_m
 except ImportError:
-    raise ImproperlyConfigured("Using the ``SearchModelAdmin`` requires Django 1.1+.")
+    from haystack.utils.decorators import method_decorator
+    
+    # Do nothing on Django 1.1 and below.
+    def csrf_protect(view):
+        def wraps(request, *args, **kwargs):
+            return view(request, *args, **kwargs)
+        return wraps
+    
+    csrf_protect_m = method_decorator(csrf_protect)
 
 
 class SearchChangeList(ChangeList):
@@ -97,7 +105,7 @@ class SearchModelAdmin(ModelAdmin):
             'action_form': action_form,
             'actions_on_top': self.actions_on_top,
             'actions_on_bottom': self.actions_on_bottom,
-            'actions_selection_counter': self.actions_selection_counter,
+            'actions_selection_counter': getattr(self, 'actions_selection_counter', 0),
         }
         context.update(extra_context or {})
         context_instance = template.RequestContext(request, current_app=self.admin_site.name)
