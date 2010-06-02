@@ -3,6 +3,11 @@ DATABASE_ENGINE = 'sqlite3'
 DATABASE_NAME = 'haystack_tests.db'
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.sites',
     'haystack',
     'core',
 ]
