@@ -46,6 +46,8 @@ class SimpleSearchBackendTestCase(TestCase):
         
         self.assertEqual(self.backend.search(u'should be a string')['hits'], 1)
         self.assertEqual([result.pk for result in self.backend.search(u'should be a string')['results']], [8])
+        # Ensure the results are ``SearchResult`` instances...
+        self.assertEqual(self.backend.search(u'should be a string')['results'][0].score, 0)
         
         self.assertEqual(self.backend.search(u'index document')['hits'], 6)
         self.assertEqual([result.pk for result in self.backend.search(u'index document')['results']], [2, 3, 15, 16, 17, 18])
