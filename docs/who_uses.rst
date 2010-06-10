@@ -173,3 +173,14 @@ For general search.
 Using: Solr
 
 * http://www.custommade.com/
+
+
+University of the Andes, Dept. of Political Science
+---------------------------------------------------
+
+For general search & section-specific search. Developed by Monoku.
+
+Using: Solr
+
+* http://www.congresovisible.org/
+* http://www.monoku.com/
