@@ -69,9 +69,12 @@ Using: Whoosh & Solr
 NASA
 ----
 
-For general search on an internal site called SMD Spacebook 1.1.
+For general search.
 
 Using: Solr
+
+* An internal site called SMD Spacebook 1.1.
+* http://science.nasa.gov/
 
 
 AllForLocal
