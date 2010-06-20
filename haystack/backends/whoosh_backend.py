@@ -25,7 +25,7 @@ except ImportError:
 
 # Bubble up the correct error.
 from whoosh.analysis import StemmingAnalyzer
-from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
+from whoosh.fields import Schema, ID, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME
 from whoosh import index
 from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
@@ -33,8 +33,8 @@ from whoosh.spelling import SpellChecker
 from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 15):
-    raise MissingDependency("The 'whoosh' backend requires version 0.3.15 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (0, 3, 18):
+    raise MissingDependency("The 'whoosh' backend requires version 0.3.18 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -122,14 +122,26 @@ class SearchBackend(BaseSearchBackend):
         for field_name, field_class in fields.items():
             if isinstance(field_class, MultiValueField):
                 if field_class.indexed is False:
-                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True)
+                    schema_fields[field_class.index_fieldname] = IDLIST(stored=True)
                 else:
                     schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True, scorable=True)
-            elif isinstance(field_class, (DateField, DateTimeField, IntegerField, FloatField, BooleanField)):
+            # FIXME: Someday maybe these FieldTypes won't throw initialization
+            #        errors (0.3.18). Should that day ever arrive, uncomment
+            #        these.
+            #        Also get the values in ``_from_python``.
+            # elif isinstance(field_class, (DateField, DateTimeField)):
+            #     schema_fields[field_class.index_fieldname] = DATETIME(stored=field_class.stored)
+            # elif isinstance(field_class, BooleanField):
+            #     schema_fields[field_class.index_fieldname] = BOOLEAN(stored=field_class.stored)
+            elif isinstance(field_class, (DateField, DateTimeField, BooleanField)):
                 if field_class.indexed is False:
                     schema_fields[field_class.index_fieldname] = STORED
                 else:
                     schema_fields[field_class.index_fieldname] = ID(stored=True)
+            elif isinstance(field_class, IntegerField):
+                schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=int)
+            elif isinstance(field_class, FloatField):
+                schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=float)
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             
@@ -463,11 +475,16 @@ class SearchBackend(BaseSearchBackend):
                 value = force_unicode(value.strftime('%Y-%m-%dT00:00:00'))
         elif isinstance(value, bool):
             if value:
+                # value = True
                 value = u'true'
             else:
+                # value = False
                 value = u'false'
         elif isinstance(value, (list, tuple)):
             value = u','.join([force_unicode(v) for v in value])
+        elif isinstance(value, (int, long, float)):
+            # Leave it alone.
+            pass
         else:
             value = force_unicode(value)
         return value
@@ -483,7 +500,7 @@ class SearchBackend(BaseSearchBackend):
         elif value == 'false':
             return False
         
-        if value:
+        if value and isinstance(value, basestring):
             possible_datetime = DATETIME_REGEX.search(value)
             
             if possible_datetime:
@@ -530,7 +547,7 @@ class SearchQuery(BaseSearchQuery):
             value = self.backend._from_python(value)
         
         # Check to see if it's a phrase for an exact match.
-        if ' ' in value:
+        if isinstance(value, basestring) and ' ' in value:
             value = '"%s"' % value
         
         index_fieldname = self.backend.site.get_index_fieldname(field)
@@ -550,10 +567,11 @@ class SearchQuery(BaseSearchQuery):
             }
             
             if filter_type != 'in':
-                possible_datetime = DATETIME_REGEX.search(value)
-                
-                if possible_datetime:
-                    value = self.clean(value)
+                if isinstance(value, basestring):
+                    possible_datetime = DATETIME_REGEX.search(value)
+                    
+                    if possible_datetime:
+                        value = self.clean(value)
                 
                 result = filter_types[filter_type] % (index_fieldname, value)
             else:
@@ -561,10 +579,12 @@ class SearchQuery(BaseSearchQuery):
                 
                 for possible_value in value:
                     pv = self.backend._from_python(possible_value)
-                    possible_datetime = DATETIME_REGEX.search(pv)
                     
-                    if possible_datetime:
-                        pv = self.clean(pv)
+                    if isinstance(pv, basestring):
+                        possible_datetime = DATETIME_REGEX.search(pv)
+                        
+                        if possible_datetime:
+                            pv = self.clean(pv)
                     
                     in_options.append('%s:"%s"' % (index_fieldname, pv))
                 
