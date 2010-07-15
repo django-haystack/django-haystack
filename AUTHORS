@@ -42,3 +42,4 @@ Thanks to
     * dedsm for a patch regarding the pickling of SearchResult objects.
     * EmilStenstrom for a patch to the Highlighter.
     * symroe for a patch regarding the more_like_this template tag.
+    * ghostrocket for a patch regarding the simple backend.
