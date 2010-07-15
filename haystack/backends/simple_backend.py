@@ -75,8 +75,8 @@ class SearchBackend(BaseSearchBackend):
                 for match in qs:
                     result = SearchResult(match._meta.app_label, match._meta.module_name, match.pk, 0, **match.__dict__)
                     # For efficiency.
-                    result._object = match.__class__
-                    result._model = match
+                    result._model = match.__class__
+                    result._object = match
                     results.append(result)
         
         return {

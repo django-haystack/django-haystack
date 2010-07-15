@@ -52,6 +52,10 @@ class SimpleSearchBackendTestCase(TestCase):
         self.assertEqual(self.backend.search(u'index document')['hits'], 6)
         self.assertEqual([result.pk for result in self.backend.search(u'index document')['results']], [2, 3, 15, 16, 17, 18])
         
+        # Regression-ville
+        self.assertEqual([result.object.id for result in self.backend.search(u'index document')['results']], [2, 3, 15, 16, 17, 18])
+        self.assertEqual(self.backend.search(u'index document')['results'][0].model, MockModel)
+        
         # No support for spelling suggestions
         self.assertEqual(self.backend.search(u'Indx')['hits'], 0)
         self.assertFalse(self.backend.search(u'Indx').get('spelling_suggestion'))
