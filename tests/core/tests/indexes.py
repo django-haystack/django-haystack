@@ -1,7 +1,7 @@
 import datetime
 from django.test import TestCase
 from haystack.indexes import *
-from core.models import MockModel
+from core.models import MockModel, AThirdMockModel
 from core.tests.mocks import MockSearchBackend
 
 
@@ -298,6 +298,11 @@ class FieldsWithOverrideModelSearchIndex(ModelSearchIndex):
             return f.name
 
 
+class YetAnotherBasicModelSearchIndex(BasicModelSearchIndex):
+    class Meta:
+        pass
+
+
 class ModelSearchIndexTestCase(TestCase):
     def setUp(self):
         super(ModelSearchIndexTestCase, self).setUp()
@@ -306,6 +311,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.fmsi = FieldsModelSearchIndex(MockModel, backend=self.msb)
         self.emsi = ExcludesModelSearchIndex(MockModel, backend=self.msb)
         self.fwomsi = FieldsWithOverrideModelSearchIndex(MockModel, backend=self.msb)
+        self.yabmsi = YetAnotherBasicModelSearchIndex(AThirdMockModel, backend=self.msb)
     
     def test_basic(self):
         self.assertEqual(len(self.bmsi.fields), 4)
@@ -352,3 +358,25 @@ class ModelSearchIndexTestCase(TestCase):
     def test_overriding_field_name_with_get_index_fieldname(self):
         self.assert_(self.fwomsi.fields['foo'].index_fieldname, 'foo')
         self.assert_(self.fwomsi.fields['author'].index_fieldname, 'author_bar')
+    
+    def test_float_integer_fields(self):
+        self.assertEqual(len(self.yabmsi.fields), 5)
+        self.assertEqual(self.yabmsi.fields.keys(), ['average_delay', 'text', 'author', 'pub_date', 'view_count'])
+        self.assert_('author' in self.yabmsi.fields)
+        self.assert_(isinstance(self.yabmsi.fields['author'], CharField))
+        self.assertEqual(self.yabmsi.fields['author'].null, False)
+        self.assert_('pub_date' in self.yabmsi.fields)
+        self.assert_(isinstance(self.yabmsi.fields['pub_date'], DateTimeField))
+        self.assert_(isinstance(self.yabmsi.fields['pub_date'].default, datetime.datetime))
+        self.assert_('text' in self.yabmsi.fields)
+        self.assert_(isinstance(self.yabmsi.fields['text'], CharField))
+        self.assertEqual(self.yabmsi.fields['text'].document, True)
+        self.assertEqual(self.yabmsi.fields['text'].use_template, True)
+        self.assert_('view_count' in self.yabmsi.fields)
+        self.assert_(isinstance(self.yabmsi.fields['view_count'], IntegerField))
+        self.assertEqual(self.yabmsi.fields['view_count'].null, False)
+        self.assertEqual(self.yabmsi.fields['view_count'].index_fieldname, 'view_count')
+        self.assert_('average_delay' in self.yabmsi.fields)
+        self.assert_(isinstance(self.yabmsi.fields['average_delay'], FloatField))
+        self.assertEqual(self.yabmsi.fields['average_delay'].null, False)
+        self.assertEqual(self.yabmsi.fields['average_delay'].index_fieldname, 'average_delay')

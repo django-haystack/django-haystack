@@ -295,6 +295,14 @@ will likely differ)::
                 {% empty %}
                     <p>No results found.</p>
                 {% endfor %}
+                
+                {% if page.has_previous or page.has_next %}
+                    <div>
+                        {% if page.has_previous %}<a href="?q={{ query }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
+                        |
+                        {% if page.has_next %}<a href="?q={{ query }}&amp;page={{ page.next_page_number }}">{% endif %}Next &raquo;{% if page.has_next %}</a>{% endif %}
+                    </div>
+                {% endif %}
             {% else %}
                 {# Show some example queries to run, maybe query syntax, something else? #}
             {% endif %}

@@ -245,7 +245,7 @@ def index_field_from_django_field(f, default=CharField):
     elif f.get_internal_type() in ('DecimalField', 'FloatField'):
         result = FloatField
     elif f.get_internal_type() in ('IntegerField', 'PositiveIntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField'):
-        result = FloatField
+        result = IntegerField
     
     return result
 

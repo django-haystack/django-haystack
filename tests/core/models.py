@@ -26,3 +26,8 @@ class AnotherMockModel(models.Model):
     
     def __unicode__(self):
         return self.author
+
+
+class AThirdMockModel(AnotherMockModel):
+    average_delay = models.FloatField(default=0.0)
+    view_count = models.PositiveIntegerField(default=0)

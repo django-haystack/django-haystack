@@ -1,7 +1,7 @@
 from datetime import timedelta
 import os
 import shutil
-from whoosh.fields import TEXT, ID, KEYWORD, STORED
+from whoosh.fields import TEXT, ID, IDLIST, KEYWORD, STORED, NUMERIC, BOOLEAN, DATETIME
 from whoosh.qparser import QueryParser
 from django.conf import settings
 from django.utils.datetime_safe import datetime, date
@@ -222,9 +222,9 @@ class WhooshSearchBackendTestCase(TestCase):
     
     def test__from_python(self):
         self.assertEqual(self.sb._from_python('abc'), u'abc')
-        self.assertEqual(self.sb._from_python(1), u'1')
-        self.assertEqual(self.sb._from_python(2653), u'2653')
-        self.assertEqual(self.sb._from_python(25.5), u'25.5')
+        self.assertEqual(self.sb._from_python(1), 1)
+        self.assertEqual(self.sb._from_python(2653), 2653)
+        self.assertEqual(self.sb._from_python(25.5), 25.5)
         self.assertEqual(self.sb._from_python([1, 2, 3]), u'1,2,3')
         self.assertEqual(self.sb._from_python((1, 2, 3)), u'1,2,3')
         self.assertEqual(self.sb._from_python({'a': 1, 'c': 3, 'b': 2}), u"{'a': 1, 'c': 3, 'b': 2}")
@@ -276,7 +276,7 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(schema._names, ['django_ct', 'django_id', 'id', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
         self.assert_(isinstance(schema._by_name['text'], TEXT))
         self.assert_(isinstance(schema._by_name['pub_date'], ID))
-        self.assert_(isinstance(schema._by_name['seen_count'], STORED))
+        self.assert_(isinstance(schema._by_name['seen_count'], NUMERIC))
         self.assert_(isinstance(schema._by_name['sites'], KEYWORD))
     
     def test_verify_type(self):
