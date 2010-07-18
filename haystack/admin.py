@@ -89,7 +89,7 @@ class SearchModelAdmin(ModelAdmin):
         else:
             action_form = None
         
-        selection_note = ungettext('of %(count)d selected',
+        selection_note = ungettext('0 of %(count)d selected',
             'of %(count)d selected', len(changelist.result_list))
         selection_note_all = ungettext('%(total_count)s selected',
             'All %(total_count)s selected', changelist.result_count)
