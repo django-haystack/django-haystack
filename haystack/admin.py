@@ -33,7 +33,7 @@ class SearchChangeList(ChangeList):
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
         result_count = paginator.count
-        full_result_count = result_count
+        full_result_count = SearchQuerySet().models(self.model).all().count()
         
         can_show_all = result_count <= MAX_SHOW_ALL_ALLOWED
         multi_page = result_count > self.list_per_page
