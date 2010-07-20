@@ -450,6 +450,9 @@ class EmptySearchQuerySet(SearchQuerySet):
     def _fill_cache(self, start, end):
         return False
 
+    def facet_counts(self):
+        return {}
+
 
 class RelatedSearchQuerySet(SearchQuerySet):
     """
