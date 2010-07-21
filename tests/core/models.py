@@ -31,3 +31,12 @@ class AnotherMockModel(models.Model):
 class AThirdMockModel(AnotherMockModel):
     average_delay = models.FloatField(default=0.0)
     view_count = models.PositiveIntegerField(default=0)
+
+
+class AFourthMockModel(models.Model):
+    author = models.CharField(max_length=255)
+    editor = models.CharField(max_length=255)
+    pub_date = models.DateTimeField(default=datetime.datetime.now)
+    
+    def __unicode__(self):
+        return self.author
