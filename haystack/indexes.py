@@ -166,6 +166,14 @@ class SearchIndex(object):
             if field.document is True:
                 return field.index_fieldname
     
+    def get_field_weights(self):
+        """Returns a dict of fields with weight values"""
+        weights = {}
+        for field_name, field in self.fields.items():
+            if field.weight:
+                weights[field_name] = field.weight
+        return weights
+    
     def update(self):
         """Update the entire index"""
         self.backend.update(self, self.get_queryset())

@@ -68,7 +68,8 @@
     <field name="type"    type="string"   indexed="true"  stored="true"  multiValued="false" /> 
     <field name="name"    type="string"   indexed="true"  stored="true"  multiValued="false" /> 
     <field name="name_exact"    type="string"   indexed="true"  stored="true"  multiValued="false" /> 
-    <field name="author"    type="string"   indexed="true"  stored="true"  multiValued="false" /> 
+    <field name="author"    type="string"   indexed="true"  stored="true"  multiValued="false" omitNorms="false" /> 
+	<field name="editor"    type="string"   indexed="true"  stored="true"  multiValued="false" omitNorms="false" />
     <field name="text"    type="text"     indexed="true"  stored="true"  multiValued="false" />
     <field name="pub_date"    type="date"     indexed="true"  stored="true"  multiValued="false" /> 
     <field name="month"    type="string"   indexed="false"  stored="true"  multiValued="false" /> 
