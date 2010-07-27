@@ -11,8 +11,8 @@ from haystack.exceptions import HaystackError, FacetingError, NotRegistered
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
-from core.models import MockModel, AnotherMockModel
-from core.tests.mocks import MockSearchQuery, MockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
+from core.models import MockModel, AnotherMockModel, CharPKMockModel
+from core.tests.mocks import MockSearchQuery, MockSearchBackend, CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
 try:
     set
 except NameError:
@@ -284,6 +284,7 @@ class SearchQuerySetTestCase(TestCase):
         self.old_site = haystack.site
         test_site = SearchSite()
         test_site.register(MockModel)
+        test_site.register(CharPKMockModel)
         haystack.site = test_site
         
         backends.reset_search_queries()
@@ -468,6 +469,13 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(self.bsqs.raw_search('(content__exact hello AND content__exact world)')), 1)
     
     def test_load_all(self):
+        # Models with character primary keys
+        sqs = SearchQuerySet(query=MockSearchQuery(backend=CharPKMockSearchBackend()))
+        results = sqs.load_all().all()
+        self.assertEqual(len(results._result_cache), 0)
+        results._fill_cache(0, 2)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 2)
+        
         # If nothing is registered, you get nothing.
         haystack.site.unregister(MockModel)
         sqs = self.msqs.load_all()

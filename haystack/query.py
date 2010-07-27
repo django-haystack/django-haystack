@@ -160,15 +160,16 @@ class SearchQuerySet(object):
         
         for result in results:
             if self._load_all:
-                # We have to deal with integer keys being cast from strings; if this
-                # fails we've got a character pk.
+                # We have to deal with integer keys being cast from strings
+                model_objects = loaded_objects.get(result.model, {})
+                if not result.pk in model_objects:
+                    try:
+                        result.pk = int(result.pk)
+                    except ValueError:
+                        pass
                 try:
-                    result.pk = int(result.pk)
-                except ValueError:
-                    pass
-                try:
-                    result._object = loaded_objects[result.model][result.pk]
-                except (KeyError, IndexError):
+                    result._object = model_objects[result.pk]
+                except KeyError:
                     # The object was either deleted since we indexed or should
                     # be ignored; fail silently.
                     self._ignored_result_count += 1

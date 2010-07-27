@@ -31,3 +31,7 @@ class AnotherMockModel(models.Model):
 class AThirdMockModel(AnotherMockModel):
     average_delay = models.FloatField(default=0.0)
     view_count = models.PositiveIntegerField(default=0)
+
+
+class CharPKMockModel(models.Model):
+    key = models.CharField(primary_key=True, max_length=10)

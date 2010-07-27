@@ -42,5 +42,17 @@
       "pub_date": "2009-03-17 08:00:00",
       "tag": 2
     }
+  },
+  {
+    "pk": "sometext",
+    "model": "core.charpkmockmodel",
+    "fields": {
+    }
+  },
+  {
+    "pk": "1234",
+    "model": "core.charpkmockmodel",
+    "fields": {
+    }
   }
 ]

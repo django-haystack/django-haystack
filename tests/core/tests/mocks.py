@@ -9,13 +9,15 @@ from core.models import MockModel
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
         super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
-        self._model = MockModel
-
+        self._model = get_model('core', model_name)
 
 MOCK_SEARCH_RESULTS = [MockSearchResult('core', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(100)]
 
 
 class MockSearchBackend(BaseSearchBackend):
+    model_name = 'mockmodel'
+    mock_search_results = MOCK_SEARCH_RESULTS
+    
     def __init__(self, site=None):
         self.docs = {}
         self.site = site
@@ -38,13 +40,13 @@ class MockSearchBackend(BaseSearchBackend):
                limit_to_registered_models=None, **kwargs):
         from haystack import site
         results = []
-        hits = len(MOCK_SEARCH_RESULTS)
+        hits = len(self.mock_search_results)
         indexed_models = site.get_indexed_models()
         
-        sliced = MOCK_SEARCH_RESULTS[start_offset:end_offset]
+        sliced = self.mock_search_results[start_offset:end_offset]
         
         for result in sliced:
-            model = get_model('core', 'mockmodel')
+            model = get_model('core', self.model_name)
             
             if model:
                 if model in indexed_models:
@@ -61,10 +63,15 @@ class MockSearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None):
         return {
-            'results': MOCK_SEARCH_RESULTS,
-            'hits': len(MOCK_SEARCH_RESULTS),
+            'results': self.mock_search_results,
+            'hits': len(self.mock_search_results),
         }
 
+
+class CharPKMockSearchBackend(MockSearchBackend):
+    model_name = 'charpkmockmodel'
+    mock_search_results = [MockSearchResult('core', 'CharPKMockModel', 'sometext', 0.5),
+                           MockSearchResult('core', 'CharPKMockModel', '1234', 0.3)]
 
 class MixedMockSearchBackend(MockSearchBackend):
     @log_query
