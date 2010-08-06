@@ -187,3 +187,24 @@ Using: Solr
 
 * http://www.congresovisible.org/
 * http://www.monoku.com/
+
+
+Christchurch Art Gallery
+------------------------
+
+For general search & section-specific search.
+
+Using: Solr
+
+* http://christchurchartgallery.org.nz/search/
+* http://christchurchartgallery.org.nz/collection/browse/
+
+
+DevCheatSheet.com
+-----------------
+
+For general search.
+
+Using: Xapian
+
+* http://devcheatsheet.com/
