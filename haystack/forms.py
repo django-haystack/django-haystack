@@ -18,21 +18,11 @@ class SearchForm(forms.Form):
     q = forms.CharField(required=False, label=_('Search'))
     
     def __init__(self, *args, **kwargs):
-        self.searchqueryset = kwargs.get('searchqueryset', None)
-        self.load_all = kwargs.get('load_all', False)
+        self.searchqueryset = kwargs.pop('searchqueryset', None)
+        self.load_all = kwargs.pop('load_all', False)
         
         if self.searchqueryset is None:
             self.searchqueryset = SearchQuerySet()
-        
-        try:
-            del(kwargs['searchqueryset'])
-        except KeyError:
-            pass
-        
-        try:
-            del(kwargs['load_all'])
-        except KeyError:
-            pass
         
         super(SearchForm, self).__init__(*args, **kwargs)
     
