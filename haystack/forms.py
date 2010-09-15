@@ -36,6 +36,12 @@ class SearchForm(forms.Form):
             return sqs
         else:
             return []
+    
+    def get_suggestion(self):
+        if not self.is_valid():
+            return None
+        
+        return self.searchqueryset.spelling_suggestion(self.cleaned_data['q'])
 
 
 class HighlightedSearchForm(SearchForm):

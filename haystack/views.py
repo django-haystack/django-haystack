@@ -125,7 +125,12 @@ class SearchView(object):
             'form': self.form,
             'page': page,
             'paginator': paginator,
+            'suggestion': None,
         }
+        
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+            context['suggestion'] = self.form.get_suggestion()
+        
         context.update(self.extra_context())
         return render_to_response(self.template, context, context_instance=self.context_class(self.request))
 
@@ -191,7 +196,11 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
         'page': page,
         'paginator': paginator,
         'query': query,
+        'suggestion': None,
     }
+    
+    if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+        context['suggestion'] = form.get_suggestion()
     
     if extra_context:
         context.update(extra_context)
