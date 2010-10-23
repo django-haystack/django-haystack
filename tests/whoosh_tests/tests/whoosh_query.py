@@ -92,7 +92,7 @@ class WhooshSearchQueryTestCase(TestCase):
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
         self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')
-        self.assertEqual(self.sq.clean('hello AND OR NOT TO + - && || ! ( ) { } [ ] ^ " ~ * ? : \ world'), 'hello and or not to \\+ \\- \\&& \\|| \\! \\( \\) \\{ \\} \\[ \\] \\^ \\" \\~ \\* \\? \\: \\\\ world')
+        self.assertEqual(self.sq.clean('hello AND OR NOT TO + - && || ! ( ) { } [ ] ^ " ~ * ? : \ world'), 'hello and or not to \'+\' \'-\' \'&&\' \'||\' \'!\' \'(\' \')\' \'{\' \'}\' \'[\' \']\' \'^\' \'"\' \'~\' \'*\' \'?\' \':\' \'\\\' world')
         self.assertEqual(self.sq.clean('so please NOTe i am in a bAND and bORed'), 'so please NOTe i am in a bAND and bORed')
     
     def test_build_query_with_models(self):
@@ -101,7 +101,7 @@ class WhooshSearchQueryTestCase(TestCase):
         self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:core.mockmodel)')
         
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), u'(hello) AND (django_ct:core.mockmodel OR django_ct:core.anothermockmodel)')
+        self.assertEqual(self.sq.build_query(), u'(hello) AND (django_ct:core.anothermockmodel OR django_ct:core.mockmodel)')
     
     def test_build_query_with_datetime(self):
         self.sq.add_filter(SQ(pub_date=datetime.datetime(2009, 5, 9, 16, 20)))

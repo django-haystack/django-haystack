@@ -34,8 +34,8 @@ from whoosh.spelling import SpellChecker
 from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 1, 0):
-    raise MissingDependency("The 'whoosh' backend requires version 1.1.0 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 1, 1):
+    raise MissingDependency("The 'whoosh' backend requires version 1.1.1 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -352,7 +352,15 @@ class SearchBackend(BaseSearchBackend):
             # Increment because Whoosh uses 1-based page numbers.
             page_num += 1
             
-            raw_page = ResultsPage(raw_results, page_num, page_length)
+            try:
+                raw_page = ResultsPage(raw_results, page_num, page_length)
+            except ValueError:
+                return {
+                    'results': [],
+                    'hits': 0,
+                    'spelling_suggestion': spelling_suggestion,
+                }
+            
             return self._process_results(raw_page, highlight=highlight, query_string=query_string, spelling_query=spelling_query)
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
@@ -547,6 +555,31 @@ class SearchQuery(BaseSearchQuery):
             return force_unicode(date.strftime('%Y%m%dT%H%M%S'))
         else:
             return force_unicode(date.strftime('%Y%m%dT000000'))
+    
+    def clean(self, query_fragment):
+        """
+        Provides a mechanism for sanitizing user input before presenting the
+        value to the backend.
+        
+        Whoosh 1.X differs here in that you can no longer use a backslash
+        to escape reserved characters. Instead, the whole word should be
+        quoted.
+        """
+        words = query_fragment.split()
+        cleaned_words = []
+        
+        for word in words:
+            if word in self.backend.RESERVED_WORDS:
+                word = word.replace(word, word.lower())
+            
+            for char in self.backend.RESERVED_CHARACTERS:
+                if char in word:
+                    word = "'%s'" % word
+                    break
+            
+            cleaned_words.append(word)
+        
+        return ' '.join(cleaned_words)
     
     def build_query_fragment(self, field, filter_type, value):
         result = ''
