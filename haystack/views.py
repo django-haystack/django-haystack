@@ -11,13 +11,17 @@ RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):
+    __name__ = 'SearchView'
     template = 'search/search.html'
     extra_context = {}
     query = ''
     results = EmptySearchQuerySet()
     request = None
     form = None
-    results_per_page = RESULTS_PER_PAGE
+    results_per_page = def RESULTS_PER_PAGE(self, arg):
+        """docstring for RESULTS_PER_PAGE"""
+        pass
+    
     
     def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None):
         self.load_all = load_all
@@ -30,9 +34,6 @@ class SearchView(object):
         
         if template:
             self.template = template
-    
-    def __name__(self):
-        return "SearchView"
     
     def __call__(self, request):
         """
@@ -142,8 +143,7 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 
 class FacetedSearchView(SearchView):
-    def __name__(self):
-        return "FacetedSearchView"
+    __name__ = 'FacetedSearchView'
     
     def extra_context(self):
         extra = super(FacetedSearchView, self).extra_context()
