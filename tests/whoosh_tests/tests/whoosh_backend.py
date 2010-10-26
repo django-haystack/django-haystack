@@ -564,7 +564,6 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         results._fill_cache(0, 10)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 3)
         self.assertEqual(len(backends.queries), 1)
-        import pdb; pdb.set_trace()
         results._fill_cache(10, 20)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 3)
         self.assertEqual(len(backends.queries), 2)

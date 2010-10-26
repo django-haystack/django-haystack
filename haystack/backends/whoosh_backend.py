@@ -358,7 +358,7 @@ class SearchBackend(BaseSearchBackend):
                 return {
                     'results': [],
                     'hits': 0,
-                    'spelling_suggestion': spelling_suggestion,
+                    'spelling_suggestion': None,
                 }
             
             return self._process_results(raw_page, highlight=highlight, query_string=query_string, spelling_query=spelling_query)
