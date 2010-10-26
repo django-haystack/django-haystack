@@ -228,6 +228,9 @@ class FacetField(SearchField):
         if not kwargs.get('null', True):
             raise SearchFieldError("FacetField (%s) does not accept False for the 'null' argument." % self.instance_name)
         
+        if not kwargs.get('indexed', True):
+            raise SearchFieldError("FacetField (%s) does not accept False for the 'indexed' argument." % self.instance_name)
+        
         self.facet_for = None
         
         if 'facet_for' in kwargs:
