@@ -92,4 +92,4 @@ class SolrSearchQueryTestCase(TestCase):
         self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:core.mockmodel)')
         
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:core.mockmodel OR django_ct:core.anothermockmodel)')
+        self.assertEqual(self.sq.build_query(), u'(hello) AND (django_ct:core.anothermockmodel OR django_ct:core.mockmodel)')
