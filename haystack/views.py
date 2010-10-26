@@ -18,9 +18,7 @@ class SearchView(object):
     results = EmptySearchQuerySet()
     request = None
     form = None
-    results_per_page = def RESULTS_PER_PAGE(self, arg):
-        """docstring for RESULTS_PER_PAGE"""
-        pass
+    results_per_page = RESULTS_PER_PAGE
     
     
     def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None):
