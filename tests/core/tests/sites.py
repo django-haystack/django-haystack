@@ -112,7 +112,7 @@ class SearchSiteTestCase(TestCase):
         self.assert_('text' in fields)
         self.assert_(isinstance(fields['text'], CharField))
         self.assertEqual(fields['text'].document, True)
-        self.assertEqual(fields['text'].use_template, True)
+        self.assertEqual(fields['text'].use_template, False)
         self.assert_('title' in fields)
         self.assert_(isinstance(fields['title'], CharField))
         self.assertEqual(fields['title'].document, False)
