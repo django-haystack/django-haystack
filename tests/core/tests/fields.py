@@ -248,3 +248,23 @@ class CharFieldWithTemplateTestCase(TestCase):
         template3 = CharField(use_template=True)
         template3.instance_name = 'template'
         self.assertEqual(template3.prepare(mock), u'Indexed!\n1')
+
+
+class FacetFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = FacetField(model_attr='foo')
+            foo_exact = FacetField(facet_for='bar')
+        except:
+            self.fail()
+        
+        self.assertEqual(foo.facet_for, None)
+        self.assertEqual(foo_exact.null, True)
+        self.assertEqual(foo_exact.facet_for, 'bar')
+    
+    def test_prepare(self):
+        mock = MockModel()
+        mock.user = 'daniel'
+        author = FacetField(model_attr='user')
+        
+        self.assertEqual(author.prepare(mock), u'daniel')

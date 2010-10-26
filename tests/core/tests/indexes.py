@@ -59,6 +59,20 @@ class GoodOverriddenFieldNameMockSearchIndex(SearchIndex):
     hello = CharField(model_attr='hello')
 
 
+class GoodFacetedMockSearchIndex(SearchIndex):
+    content = CharField(document=True, use_template=True)
+    author = CharField(model_attr='author')
+    author_foo = FacetField(facet_for='author')
+    pub_date = DateTimeField(model_attr='pub_date')
+    pub_date_exact = FacetField(facet_for='pub_date')
+    
+    def prepare_author(self, obj):
+        return "Hi, I'm %s" % self.prepared_data['author']
+    
+    def prepare_pub_date_exact(self, obj):
+        return "2010-10-26T01:54:32"
+
+
 class SearchIndexTestCase(TestCase):
     def setUp(self):
         super(SearchIndexTestCase, self).setUp()
@@ -66,6 +80,7 @@ class SearchIndexTestCase(TestCase):
         self.mi = GoodMockSearchIndex(MockModel, backend=self.msb)
         self.cmi = GoodCustomMockSearchIndex(MockModel, backend=self.msb)
         self.cnmi = GoodNullableMockSearchIndex(MockModel, backend=self.msb)
+        self.gfmsi = GoodFacetedMockSearchIndex(MockModel, backend=self.msb)
         self.sample_docs = {
             u'core.mockmodel.1': {
                 'content': u'Indexed!\n1',
@@ -137,8 +152,8 @@ class SearchIndexTestCase(TestCase):
         mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.cmi.prepare(mock)), 9)
-        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        self.assertEqual(len(self.cmi.prepare(mock)), 11)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'whee'])
         
         self.assertEqual(len(self.cmi.full_prepare(mock)), 11)
         self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'whee'])
@@ -149,8 +164,8 @@ class SearchIndexTestCase(TestCase):
         mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.cmi.prepare(mock)), 9)
-        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        self.assertEqual(len(self.cmi.prepare(mock)), 11)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'whee'])
         
         self.assertEqual(len(self.cmi.full_prepare(mock)), 11)
         self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'whee'])
@@ -163,8 +178,8 @@ class SearchIndexTestCase(TestCase):
         mock.author = 'daniel%s' % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
-        self.assertEqual(len(self.cmi.prepare(mock)), 9)
-        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'whee'])
+        self.assertEqual(len(self.cmi.prepare(mock)), 11)
+        self.assertEqual(sorted(self.cmi.prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'whee'])
         
         self.assertEqual(len(self.cmi.full_prepare(mock)), 11)
         self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'whee'])
@@ -262,12 +277,28 @@ class SearchIndexTestCase(TestCase):
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
         
         prepared_data = self.cnmi.prepare(mock)
-        self.assertEqual(len(prepared_data), 4)
-        self.assertEqual(sorted(prepared_data.keys()), ['content', 'django_ct', 'django_id', 'id'])
+        self.assertEqual(len(prepared_data), 6)
+        self.assertEqual(sorted(prepared_data.keys()), ['author', 'author_exact', 'content', 'django_ct', 'django_id', 'id'])
         
         prepared_data = self.cnmi.full_prepare(mock)
         self.assertEqual(len(prepared_data), 4)
         self.assertEqual(sorted(prepared_data.keys()), ['content', 'django_ct', 'django_id', 'id'])
+    
+    def test_custom_facet_fields(self):
+        mock = MockModel()
+        mock.pk = 20
+        mock.author = 'daniel'
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        
+        prepared_data = self.gfmsi.prepare(mock)
+        self.assertEqual(len(prepared_data), 8)
+        self.assertEqual(sorted(prepared_data.keys()), ['author', 'author_foo', 'content', 'django_ct', 'django_id', 'id', 'pub_date', 'pub_date_exact'])
+        
+        prepared_data = self.gfmsi.full_prepare(mock)
+        self.assertEqual(len(prepared_data), 8)
+        self.assertEqual(sorted(prepared_data.keys()), ['author', 'author_foo', 'content', 'django_ct', 'django_id', 'id', 'pub_date', 'pub_date_exact'])
+        self.assertEqual(prepared_data['author_foo'], u"Hi, I'm daniel")
+        self.assertEqual(prepared_data['pub_date_exact'], '2010-10-26T01:54:32')
 
 
 class BasicModelSearchIndex(ModelSearchIndex):

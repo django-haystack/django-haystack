@@ -21,11 +21,33 @@ class DeclarativeMetaclass(type):
         except NameError:
             pass
         
+        # Build a dictionary of faceted fields for cross-referencing.
+        facet_fields = {}
+        
+        for field_name, obj in attrs.items():
+            # Only need to check the FacetFields.
+            if hasattr(obj, 'facet_for'):
+                if not obj.facet_for in facet_fields:
+                    facet_fields[obj.facet_for] = []
+                
+                facet_fields[obj.facet_for].append(field_name)
+        
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
                 field = attrs.pop(field_name)
                 field.set_instance_name(field_name)
                 attrs['fields'][field_name] = field
+                
+                # Only check non-faceted fields for the following info.
+                if not hasattr(field, 'facet_for'):
+                    if field.faceted == True:
+                        # If no other field is claiming this field as
+                        # ``facet_for``, create a shadow ``FacetField``.
+                        if not field_name in facet_fields:
+                            shadow_facet_name = get_facet_field_name(field_name)
+                            shadow_facet_field = FacetField(facet_for=field_name)
+                            shadow_facet_field.set_instance_name(shadow_facet_name)
+                            attrs['fields'][shadow_facet_name] = shadow_facet_field
         
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
@@ -114,12 +136,6 @@ class SearchIndex(object):
                 value = getattr(self, "prepare_%s" % field_name)(obj)
                 self.prepared_data[field.index_fieldname] = value
         
-        # Remove any fields that lack a value and are `null=True`.
-        for field_name, field in self.fields.items():
-            if field.null is True:
-                if self.prepared_data[field.index_fieldname] is None:
-                    del(self.prepared_data[field.index_fieldname])
-        
         return self.prepared_data
     
     def full_prepare(self, obj):
@@ -127,8 +143,19 @@ class SearchIndex(object):
         
         # Duplicate data for faceted fields.
         for field_name, field in self.fields.items():
-            if field.faceted is True and field.index_fieldname in self.prepared_data:
-                self.prepared_data[get_facet_field_name(field.index_fieldname)] = self.prepared_data[field.index_fieldname]
+            if getattr(field, 'facet_for', None):
+                source_field_name = self.fields[field.facet_for].index_fieldname
+                
+                # If there's data there, leave it alone. Otherwise, populate it
+                # with whatever the related field has.
+                if self.prepared_data[field_name] is None and source_field_name in self.prepared_data:
+                    self.prepared_data[field.index_fieldname] = self.prepared_data[source_field_name]
+        
+        # Remove any fields that lack a value and are ``null=True``.
+        for field_name, field in self.fields.items():
+            if field.null is True:
+                if self.prepared_data[field.index_fieldname] is None:
+                    del(self.prepared_data[field.index_fieldname])
         
         return self.prepared_data
     
