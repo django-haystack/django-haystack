@@ -19,8 +19,8 @@ class MockSearchBackend(BaseSearchBackend):
     mock_search_results = MOCK_SEARCH_RESULTS
     
     def __init__(self, site=None):
+        super(MockSearchBackend, self).__init__(site)
         self.docs = {}
-        self.site = site
     
     def update(self, index, iterable, commit=True):
         for obj in iterable:

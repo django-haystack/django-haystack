@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
 from copy import deepcopy
 from time import time
 from django.conf import settings
@@ -10,7 +9,6 @@ from django.utils import tree
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
-from haystack.utils import get_facet_field_name
 try:
     set
 except NameError:
@@ -631,7 +629,7 @@ class BaseSearchQuery(object):
     
     def add_field_facet(self, field):
         """Adds a regular facet on a field."""
-        self.facets.add(get_facet_field_name(field))
+        self.facets.add(self.backend.site.get_facet_field_name(field))
     
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
@@ -644,11 +642,11 @@ class BaseSearchQuery(object):
             'gap_by': gap_by,
             'gap_amount': gap_amount,
         }
-        self.date_facets[get_facet_field_name(field)] = details
+        self.date_facets[self.backend.site.get_facet_field_name(field)] = details
     
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
-        self.query_facets.append((get_facet_field_name(field), query))
+        self.query_facets.append((self.backend.site.get_facet_field_name(field), query))
     
     def add_narrow_query(self, query):
         """
@@ -661,15 +659,15 @@ class BaseSearchQuery(object):
     def post_process_facets(self, results):
         # Handle renaming the facet fields. Undecorate and all that.
         revised_facets = {}
+        field_data = self.backend.site.all_searchfields()
         
         for facet_type, field_details in results.get('facets', {}).items():
             temp_facets = {}
             
             for field, field_facets in field_details.items():
                 fieldname = field
-                
-                if fieldname.endswith('_exact'):
-                    fieldname = fieldname[:-6]
+                if field in field_data and hasattr(field_data[field], 'get_facet_for_name'):
+                    fieldname = field_data[field].get_facet_for_name()
                 
                 temp_facets[fieldname] = field_facets
             

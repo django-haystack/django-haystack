@@ -151,34 +151,34 @@ class BaseSearchQueryTestCase(TestCase):
     
     def test_add_field_facet(self):
         self.bsq.add_field_facet('foo')
-        self.assertEqual(self.bsq.facets, set(['foo_exact']))
+        self.assertEqual(self.bsq.facets, set(['foo']))
         
         self.bsq.add_field_facet('bar')
-        self.assertEqual(self.bsq.facets, set(['foo_exact', 'bar_exact']))
+        self.assertEqual(self.bsq.facets, set(['foo', 'bar']))
     
     def test_add_date_facet(self):
         self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 2, 25), end_date=datetime.date(2009, 3, 25), gap_by='day')
-        self.assertEqual(self.bsq.date_facets, {'foo_exact': {'gap_by': 'day', 'start_date': datetime.date(2009, 2, 25), 'end_date': datetime.date(2009, 3, 25), 'gap_amount': 1}})
+        self.assertEqual(self.bsq.date_facets, {'foo': {'gap_by': 'day', 'start_date': datetime.date(2009, 2, 25), 'end_date': datetime.date(2009, 3, 25), 'gap_amount': 1}})
         
         self.bsq.add_date_facet('bar', start_date=datetime.date(2008, 1, 1), end_date=datetime.date(2009, 12, 1), gap_by='month')
-        self.assertEqual(self.bsq.date_facets, {'foo_exact': {'gap_by': 'day', 'start_date': datetime.date(2009, 2, 25), 'end_date': datetime.date(2009, 3, 25), 'gap_amount': 1}, 'bar_exact': {'gap_by': 'month', 'start_date': datetime.date(2008, 1, 1), 'end_date': datetime.date(2009, 12, 1), 'gap_amount': 1}})
+        self.assertEqual(self.bsq.date_facets, {'foo': {'gap_by': 'day', 'start_date': datetime.date(2009, 2, 25), 'end_date': datetime.date(2009, 3, 25), 'gap_amount': 1}, 'bar': {'gap_by': 'month', 'start_date': datetime.date(2008, 1, 1), 'end_date': datetime.date(2009, 12, 1), 'gap_amount': 1}})
     
     def test_add_query_facet(self):
         self.bsq.add_query_facet('foo', 'bar')
-        self.assertEqual(self.bsq.query_facets, [('foo_exact', 'bar')])
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar')])
         
         self.bsq.add_query_facet('moof', 'baz')
-        self.assertEqual(self.bsq.query_facets, [('foo_exact', 'bar'), ('moof_exact', 'baz')])
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz')])
         
         self.bsq.add_query_facet('foo', 'baz')
-        self.assertEqual(self.bsq.query_facets, [('foo_exact', 'bar'), ('moof_exact', 'baz'), ('foo_exact', 'baz')])
+        self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz'), ('foo', 'baz')])
     
     def test_add_narrow_query(self):
-        self.bsq.add_narrow_query('foo_exact:bar')
-        self.assertEqual(self.bsq.narrow_queries, set(['foo_exact:bar']))
+        self.bsq.add_narrow_query('foo:bar')
+        self.assertEqual(self.bsq.narrow_queries, set(['foo:bar']))
         
-        self.bsq.add_narrow_query('moof_exact:baz')
-        self.assertEqual(self.bsq.narrow_queries, set(['foo_exact:bar', 'moof_exact:baz']))
+        self.bsq.add_narrow_query('moof:baz')
+        self.assertEqual(self.bsq.narrow_queries, set(['foo:bar', 'moof:baz']))
     
     def test_run(self):
         # Stow.

@@ -190,8 +190,8 @@ might look like this::
     {% endif %}
 
 Displaying the facets is a matter of looping through the facets you want and
-providing the UI to suit. The ``author_exact.0`` is the facet text from the backend
-and the ``author_exact.1`` is the facet count.
+providing the UI to suit. The ``author.0`` is the facet text from the backend
+and the ``author.1`` is the facet count.
 
 4. Narrowing The Search
 -----------------------
