@@ -97,6 +97,12 @@ class SearchSite(object):
                 if not field_object.index_fieldname in fields:
                     fields[field_object.index_fieldname] = field_object
                 else:
+                    # FIXME: This needs to handle verifying the field type is
+                    #        the same.
+                    # FIXME: This needs to handle some of the other field
+                    #        options, like ``use_template``.
+                    
+                    
                     # We've already got this field in the list. Ensure that
                     # what we hand back is a superset of all options that
                     # affect the schema.
