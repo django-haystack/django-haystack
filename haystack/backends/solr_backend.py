@@ -351,18 +351,13 @@ class SearchBackend(BaseSearchBackend):
                 if field_data['type'] == 'text':
                     field_data['type'] = 'string'
             
-            schema_fields.append(field_data)
-            
-            if field_class.faceted is True:
-                # Duplicate the field.
-                faceted_field = field_data.copy()
-                faceted_field['field_name'] = get_facet_field_name(faceted_field['field_name'])
-                
+            # If it's a ``FacetField``, make sure we don't postprocess it.
+            if hasattr(field_class, 'facet_for'):
                 # If it's text, it ought to be a string.
-                if faceted_field['type'] == 'text':
-                    faceted_field['type'] = 'string'
-                
-                schema_fields.append(faceted_field)
+                if field_data['type'] == 'text':
+                    field_data['type'] = 'string'
+            
+            schema_fields.append(field_data)
         
         return (content_field_name, schema_fields)
 

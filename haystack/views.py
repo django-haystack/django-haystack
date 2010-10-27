@@ -11,6 +11,7 @@ RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):
+    __name__ = 'SearchView'
     template = 'search/search.html'
     extra_context = {}
     query = ''
@@ -30,9 +31,6 @@ class SearchView(object):
         
         if template:
             self.template = template
-    
-    def __name__(self):
-        return "SearchView"
     
     def __call__(self, request):
         """
@@ -84,10 +82,7 @@ class SearchView(object):
         
         Returns an empty list if there's no query to search with.
         """
-        if self.query:
-            return self.form.search()
-        
-        return EmptySearchQuerySet()
+        return self.form.search()
     
     def build_page(self):
         """
@@ -125,7 +120,12 @@ class SearchView(object):
             'form': self.form,
             'page': page,
             'paginator': paginator,
+            'suggestion': None,
         }
+        
+        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+            context['suggestion'] = self.form.get_suggestion()
+        
         context.update(self.extra_context())
         return render_to_response(self.template, context, context_instance=self.context_class(self.request))
 
@@ -137,8 +137,7 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 
 class FacetedSearchView(SearchView):
-    def __name__(self):
-        return "FacetedSearchView"
+    __name__ = 'FacetedSearchView'
     
     def extra_context(self):
         extra = super(FacetedSearchView, self).extra_context()
@@ -191,7 +190,11 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
         'page': page,
         'paginator': paginator,
         'query': query,
+        'suggestion': None,
     }
+    
+    if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+        context['suggestion'] = form.get_suggestion()
     
     if extra_context:
         context.update(extra_context)

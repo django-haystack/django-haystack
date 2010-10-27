@@ -23,13 +23,13 @@ def clear_solr_index():
     raw_solr.delete(q='*:*')
 
 
-class SolrMockSearchIndex(RealTimeSearchIndex):
+class SolrMockSearchIndex(SearchIndex):
     text = CharField(document=True, use_template=True)
     name = CharField(model_attr='author', faceted=True)
     pub_date = DateField(model_attr='pub_date')
 
 
-class SolrMaintainTypeMockSearchIndex(RealTimeSearchIndex):
+class SolrMaintainTypeMockSearchIndex(SearchIndex):
     text = CharField(document=True, use_template=True)
     month = CharField(indexed=False)
     pub_date = DateField(model_attr='pub_date')
@@ -38,13 +38,13 @@ class SolrMaintainTypeMockSearchIndex(RealTimeSearchIndex):
         return "%02d" % obj.pub_date.month
 
 
-class SolrMockModelSearchIndex(RealTimeSearchIndex):
+class SolrMockModelSearchIndex(SearchIndex):
     text = CharField(model_attr='foo', document=True)
     name = CharField(model_attr='author')
     pub_date = DateField(model_attr='pub_date')
 
 
-class SolrAnotherMockModelSearchIndex(RealTimeSearchIndex):
+class SolrAnotherMockModelSearchIndex(SearchIndex):
     text = CharField(document=True)
     name = CharField(model_attr='author')
     pub_date = DateField(model_attr='pub_date')
@@ -53,17 +53,7 @@ class SolrAnotherMockModelSearchIndex(RealTimeSearchIndex):
         return u"You might be searching for the user %s" % obj.author
 
 
-class SolrBoostMockSearchIndex(RealTimeSearchIndex):
-    text = CharField(
-        document=True, use_template=True,
-        template_name='search/indexes/core/mockmodel_template.txt'
-    )
-    author = CharField(model_attr='author', weight=2.0)
-    editor = CharField(model_attr='editor')
-    pub_date = DateField(model_attr='pub_date')
-
-
-class SolrRoundTripSearchIndex(RealTimeSearchIndex):
+class SolrRoundTripSearchIndex(SearchIndex):
     text = CharField(document=True, default='')
     name = CharField()
     is_active = BooleanField()
@@ -706,14 +696,10 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         haystack.site = test_site
         
         self.sqs = SearchQuerySet()
-        
-        # Force indexing of the content.
-        for mock in MockModel.objects.all():
-            mock.save()
-        
-        # Force indexing of the content.
-        for mock in AnotherMockModel.objects.all():
-            mock.save()
+
+        test_site.get_index(MockModel).update()
+        test_site.get_index(AnotherMockModel).update()
+
     
     def tearDown(self):
         # Restore.

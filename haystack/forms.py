@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
 import haystack
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 
 
 def model_choices(site=None):
@@ -18,34 +18,44 @@ class SearchForm(forms.Form):
     q = forms.CharField(required=False, label=_('Search'))
     
     def __init__(self, *args, **kwargs):
-        self.searchqueryset = kwargs.get('searchqueryset', None)
-        self.load_all = kwargs.get('load_all', False)
+        self.searchqueryset = kwargs.pop('searchqueryset', None)
+        self.load_all = kwargs.pop('load_all', False)
         
         if self.searchqueryset is None:
             self.searchqueryset = SearchQuerySet()
         
-        try:
-            del(kwargs['searchqueryset'])
-        except KeyError:
-            pass
-        
-        try:
-            del(kwargs['load_all'])
-        except KeyError:
-            pass
-        
         super(SearchForm, self).__init__(*args, **kwargs)
     
+    def no_query_found(self):
+        """
+        Determines the behavior when no query was found.
+        
+        By default, no results are returned (``EmptySearchQuerySet``).
+        
+        Should you want to show all results, override this method in your
+        own ``SearchForm`` subclass and do ``return self.searchqueryset.all()``.
+        """
+        return EmptySearchQuerySet()
+    
     def search(self):
-        if self.is_valid():
-            sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
-            
-            if self.load_all:
-                sqs = sqs.load_all()
-            
-            return sqs
-        else:
-            return []
+        if not self.is_valid():
+            return self.no_query_found()
+        
+        if not self.cleaned_data['q']:
+            return self.no_query_found()
+        
+        sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
+        
+        if self.load_all:
+            sqs = sqs.load_all()
+        
+        return sqs
+    
+    def get_suggestion(self):
+        if not self.is_valid():
+            return None
+        
+        return self.searchqueryset.spelling_suggestion(self.cleaned_data['q'])
 
 
 class HighlightedSearchForm(SearchForm):
@@ -74,8 +84,9 @@ class ModelSearchForm(SearchForm):
         """Return an alphabetical list of model classes in the index."""
         search_models = []
         
-        for model in self.cleaned_data['models']:
-            search_models.append(models.get_model(*model.split('.')))
+        if self.is_valid():
+            for model in self.cleaned_data['models']:
+                search_models.append(models.get_model(*model.split('.')))
         
         return search_models
     

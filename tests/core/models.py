@@ -33,10 +33,5 @@ class AThirdMockModel(AnotherMockModel):
     view_count = models.PositiveIntegerField(default=0)
 
 
-class AFourthMockModel(models.Model):
-    author = models.CharField(max_length=255)
-    editor = models.CharField(max_length=255)
-    pub_date = models.DateTimeField(default=datetime.datetime.now)
-    
-    def __unicode__(self):
-        return self.author
+class CharPKMockModel(models.Model):
+    key = models.CharField(primary_key=True, max_length=10)

@@ -31,7 +31,7 @@ class SearchField(object):
         self._default = default
         self.null = null
         self.index_fieldname = index_fieldname
-        self.weight = weight
+        self.is_multivalued = False
         
         self.set_instance_name(None)
     
@@ -205,6 +205,10 @@ class DateTimeField(SearchField):
 
 
 class MultiValueField(SearchField):
+    def __init__(self, **kwargs):
+        super(MultiValueField, self).__init__(**kwargs)
+        self.is_multivalued = True
+    
     def prepare(self, obj):
         return self.convert(super(MultiValueField, self).prepare(obj))
     
@@ -213,3 +217,32 @@ class MultiValueField(SearchField):
             return None
         
         return list(value)
+
+
+class FacetField(SearchField):
+    """
+    ``FacetField`` is slightly different than the other fields because it can
+    work in conjunction with other fields as its data source.
+    
+    Accepts an optional ``facet_for`` kwarg, which should be the field name
+    (not ``index_fieldname``) of the field it should pull data from.
+    """
+    def __init__(self, **kwargs):
+        if kwargs.get('faceted', False):
+            raise SearchFieldError("FacetField (%s) does not accept the 'faceted' argument." % self.instance_name)
+        
+        if not kwargs.get('null', True):
+            raise SearchFieldError("FacetField (%s) does not accept False for the 'null' argument." % self.instance_name)
+        
+        if not kwargs.get('indexed', True):
+            raise SearchFieldError("FacetField (%s) does not accept False for the 'indexed' argument." % self.instance_name)
+        
+        self.facet_for = None
+        
+        if 'facet_for' in kwargs:
+            self.facet_for = kwargs['facet_for']
+            del(kwargs['facet_for'])
+        
+        super(FacetField, self).__init__(**kwargs)
+        # Make sure the field is nullable.
+        self.null = True

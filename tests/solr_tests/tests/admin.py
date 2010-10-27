@@ -59,8 +59,8 @@ class SearchModelAdminTestCase(TestCase):
         # Then search behavior.
         resp = self.client.get('/admin/core/mockmodel/', data={'q': 'Haystack'})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(backends.queries), 2)
-        self.assertEqual(resp.context['cl'].full_result_count, 7)
+        self.assertEqual(len(backends.queries), 3)
+        self.assertEqual(resp.context['cl'].full_result_count, 23)
         # Ensure they aren't search results.
         self.assertEqual(isinstance(resp.context['cl'].result_list[0], MockModel), True)
         self.assertEqual(resp.context['cl'].result_list[0].id, 17)
@@ -68,6 +68,6 @@ class SearchModelAdminTestCase(TestCase):
         # Make sure only changelist is affected.
         resp = self.client.get('/admin/core/mockmodel/1/')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(backends.queries), 2)
+        self.assertEqual(len(backends.queries), 3)
         self.assertEqual(resp.context['original'].id, 1)
         

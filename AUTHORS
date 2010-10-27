@@ -43,3 +43,6 @@ Thanks to
     * EmilStenstrom for a patch to the Highlighter.
     * symroe for a patch regarding the more_like_this template tag.
     * ghostrocket for a patch regarding the simple backend.
+    * Rob Hudson (robhudson) for improvements to the admin search.
+    * apollo13 for simplifying ``SearchForm.__init__``.
+    * Carl Meyer (carljm) for a patch regarding character primary keys.
