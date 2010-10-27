@@ -472,7 +472,7 @@ class BaseSearchQuery(object):
             query = self.matching_all_fragment()
         
         if len(self.models):
-            models = ['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models]
+            models = sorted(['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models])
             models_clause = ' OR '.join(models)
             
             if query != self.matching_all_fragment():
