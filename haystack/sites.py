@@ -1,3 +1,4 @@
+import copy
 from haystack.exceptions import AlreadyRegistered, NotRegistered, SearchFieldError
 
 
@@ -96,6 +97,7 @@ class SearchSite(object):
                 
                 if not field_object.index_fieldname in fields:
                     fields[field_object.index_fieldname] = field_object
+                    fields[field_object.index_fieldname] = copy.copy(field_object)
                 else:
                     # If the field types are different, we can mostly
                     # safely ignore this. The exception is ``MultiValueField``,
@@ -104,6 +106,7 @@ class SearchSite(object):
                     if field_object.is_multivalued == True:
                         old_field = fields[field_object.index_fieldname]
                         fields[field_object.index_fieldname] = field_object
+                        fields[field_object.index_fieldname] = copy.copy(field_object)
                         
                         # Switch it so we don't have to dupe the remaining
                         # checks.
