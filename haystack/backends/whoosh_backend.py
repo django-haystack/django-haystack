@@ -333,6 +333,11 @@ class SearchBackend(BaseSearchBackend):
                     'hits': 0,
                 }
             
+            # Prevent against Whoosh throwing an error. Requires an end_offset
+            # greater than 0.
+            if not end_offset is None and end_offset <= 0:
+                end_offset = 1
+            
             raw_results = searcher.search(parsed_query, limit=end_offset, sortedby=sort_by, reverse=reverse)
             
             # Handle the case where the results have been narrowed.

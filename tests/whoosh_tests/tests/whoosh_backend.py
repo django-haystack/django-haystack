@@ -313,6 +313,10 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual([result.pk for result in page_1['results']], [u'%s' % i for i in xrange(1, 21)])
         self.assertEqual(len(page_2['results']), 3)
         self.assertEqual([result.pk for result in page_2['results']], [u'21', u'22', u'23'])
+        
+        # This used to throw an error.
+        page_0 = self.sb.search(u'*', start_offset=0, end_offset=0)
+        self.assertEqual(len(page_0['results']), 1)
     
     def test_scoring(self):
         self.sb.update(self.smmi, self.sample_objs)
