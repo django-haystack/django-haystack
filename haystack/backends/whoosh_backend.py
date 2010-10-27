@@ -17,6 +17,13 @@ try:
 except NameError:
     from sets import Set as set
 try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        from django.utils import simplejson as json
+try:
     import whoosh
     from whoosh.analysis import StemmingAnalyzer
     from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
@@ -471,9 +478,8 @@ class SearchBackend(BaseSearchBackend):
                 return datetime(date_values['year'], date_values['month'], date_values['day'], date_values['hour'], date_values['minute'], date_values['second'])
         
         try:
-            # This is slightly gross but it's hard to tell otherwise what the
-            # string's original type might have been. Be careful who you trust.
-            converted_value = eval(value)
+            # Attempt to use json to load the values.
+            converted_value = json.loads(value)
             
             # Try to handle most built-in types.
             if isinstance(converted_value, (list, tuple, set, dict, int, float, long, complex)):
