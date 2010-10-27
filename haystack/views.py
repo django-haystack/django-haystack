@@ -20,7 +20,6 @@ class SearchView(object):
     form = None
     results_per_page = RESULTS_PER_PAGE
     
-    
     def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None):
         self.load_all = load_all
         self.form_class = form_class
@@ -83,10 +82,7 @@ class SearchView(object):
         
         Returns an empty list if there's no query to search with.
         """
-        if self.query:
-            return self.form.search()
-        
-        return EmptySearchQuerySet()
+        return self.form.search()
     
     def build_page(self):
         """

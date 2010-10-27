@@ -53,6 +53,8 @@ class SearchViewTestCase(TestCase):
     
     def test_empty_results(self):
         sv = SearchView()
+        sv.request = HttpRequest()
+        sv.form = sv.build_form()
         self.assert_(isinstance(sv.get_results(), EmptySearchQuerySet))
     
     def test_initial_data(self):
@@ -141,6 +143,8 @@ class FacetedSearchViewTestCase(TestCase):
     
     def test_empty_results(self):
         fsv = FacetedSearchView()
+        fsv.request = HttpRequest()
+        fsv.form = fsv.build_form()
         self.assert_(isinstance(fsv.get_results(), EmptySearchQuerySet))
 
 
