@@ -2,7 +2,7 @@ import datetime
 from django.test import TestCase
 from haystack.indexes import *
 from haystack.exceptions import SearchFieldError
-from haystack.fields import CharField
+from haystack.fields import CharField, FacetField
 from haystack.sites import SearchSite, AlreadyRegistered, NotRegistered
 from core.models import MockModel, AnotherMockModel
 
@@ -39,6 +39,13 @@ class AlternateValidSearchIndex(SearchIndex):
     text = CharField(document=True)
     author = CharField(faceted=True)
     title = CharField(faceted=True)
+
+class ExplicitFacetSearchIndex(SearchIndex):
+    text = CharField(document=True)
+    author = CharField(faceted=True)
+    title = CharField()
+    title_facet = FacetField(facet_for='title')
+    bare_facet = FacetField()
 
 
 class MultiValueValidSearchIndex(SearchIndex):
@@ -187,23 +194,70 @@ class SearchSiteTestCase(TestCase):
         self.assertRaises(SearchFieldError, self.site.all_searchfields)
     
     def test_get_index_fieldname(self):
-        self.assertEqual(self.site._field_mapping, None)
+        self.assertEqual(self.site._cached_field_mapping, None)
         
         self.site.register(MockModel, ValidSearchIndex)
         self.site.register(AnotherMockModel)
-        field = self.site.get_index_fieldname('text')
-        self.assertEqual(self.site._field_mapping, {'text': 'text', 'title': 'title', 'author': 'name'})
+        self.site.get_index_fieldname('text')
+        self.assertEqual(self.site._cached_field_mapping, {
+            'text': {'index_fieldname': 'text', 'facet_fieldname': None},
+            'title': {'index_fieldname': 'title', 'facet_fieldname': None},
+            'author': {'index_fieldname': 'name', 'facet_fieldname': None},
+            })
         self.assertEqual(self.site.get_index_fieldname('text'), 'text')
         self.assertEqual(self.site.get_index_fieldname('author'), 'name')
         self.assertEqual(self.site.get_index_fieldname('title'), 'title')
         
         # Reset the internal state to test the invalid case.
-        self.site._field_mapping = None
-        self.assertEqual(self.site._field_mapping, None)
+        self.site._cached_field_mapping = None
+        self.assertEqual(self.site._cached_field_mapping, None)
         
         self.site.unregister(AnotherMockModel)
         self.site.register(AnotherMockModel, AlternateValidSearchIndex)
         self.assertRaises(SearchFieldError, self.site.get_index_fieldname, 'text')
+
+    def test_basic_get_facet_fieldname(self):
+        self.assertEqual(self.site._cached_field_mapping, None)
+        
+        self.site.register(MockModel, AlternateValidSearchIndex)
+        self.site.register(AnotherMockModel)
+        self.site.get_facet_field_name('text')
+        self.assertEqual(self.site._cached_field_mapping, {
+            'author': {'facet_fieldname': None, 'index_fieldname': 'author'},
+            'author_exact': {'facet_fieldname': 'author',
+            'index_fieldname': 'author_exact'},
+            'text': {'facet_fieldname': None, 'index_fieldname': 'text'},
+            'title': {'facet_fieldname': None, 'index_fieldname': 'title'},
+            'title_exact': {'facet_fieldname': 'title', 'index_fieldname': 'title_exact'},
+        })
+        self.assertEqual(self.site.get_index_fieldname('text'), 'text')
+        self.assertEqual(self.site.get_index_fieldname('author'), 'author')
+        self.assertEqual(self.site.get_index_fieldname('title'), 'title')
+
+        self.assertEqual(self.site.get_facet_field_name('text'), 'text')
+        self.assertEqual(self.site.get_facet_field_name('author'), 'author')
+        self.assertEqual(self.site.get_facet_field_name('title'), 'title')
+
+    def test_more_advanced_get_facet_fieldname(self):
+        self.assertEqual(self.site._cached_field_mapping, None)
+
+        self.site.register(MockModel, ExplicitFacetSearchIndex)
+        self.site.register(AnotherMockModel)
+
+        self.site.get_facet_field_name('text')
+        self.assertEqual(self.site._cached_field_mapping, {
+            'author': {'facet_fieldname': None, 'index_fieldname': 'author'},
+            'author_exact': {'facet_fieldname': 'author', 'index_fieldname': 'author_exact'},
+            'bare_facet': {'facet_fieldname': 'bare_facet', 'index_fieldname': 'bare_facet'},
+            'text': {'facet_fieldname': None, 'index_fieldname': 'text'},
+            'title': {'facet_fieldname': None, 'index_fieldname': 'title'},
+            'title_facet': {'facet_fieldname': 'title', 'index_fieldname': 'title_facet'},
+        })
+        self.assertEqual(self.site.get_facet_field_name('title'), 'title')
+
+        self.assertEqual(self.site.get_facet_field_name('title'), 'title')
+        self.assertEqual(self.site.get_facet_field_name('bare_facet'), 'bare_facet')
+
     
     def test_update_object(self):
         self.site.register(MockModel, FakeSearchIndex)

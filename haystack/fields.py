@@ -245,3 +245,6 @@ class FacetField(SearchField):
         super(FacetField, self).__init__(**kwargs)
         # Make sure the field is nullable.
         self.null = True
+
+    def get_facet_for_name(self):
+        return self.facet_for or self.instance_name

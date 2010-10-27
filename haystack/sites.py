@@ -19,7 +19,7 @@ class SearchSite(object):
     
     def __init__(self):
         self._registry = {}
-        self._field_mapping = None
+        self._cached_field_mapping = None
     
     def register(self, model, index_class=None):
         """
@@ -140,25 +140,51 @@ class SearchSite(object):
         ``SearchIndex`` instead of having to remember & use the overridden
         name.
         """
-        if self._field_mapping is None:
-            self._field_mapping = self._build_field_mapping()
-        
-        # Return what was provided as a fallback instead of an IndexError.
-        return self._field_mapping.get(fieldname, fieldname)
+        if fieldname in self._field_mapping():
+            return self._field_mapping()[fieldname]['index_fieldname']
+        else:
+            return fieldname
     
-    def _build_field_mapping(self):
+    def get_facet_field_name(self, fieldname):
+        """
+        Returns the actual name of the facet field in the index.
+
+        If not found, returns the fieldname provided.
+        """
+        facet_fieldname = None
+        if fieldname in self._field_mapping():
+            facet_fieldname = self._field_mapping()[fieldname]['facet_fieldname']
+
+        if facet_fieldname:
+            return self.get_index_fieldname(facet_fieldname)
+        else:
+            return fieldname
+
+    def _field_mapping(self):
         mapping = {}
+        
+        if self._cached_field_mapping:
+            return self._cached_field_mapping
         
         for model, index in self.get_indexes().items():
             for field_name, field_object in index.fields.items():
-                if field_name in mapping:
-                    # We've already seen this field in the list. Check to ensure
-                    # it uses the same index_fieldname as the previous mention.
-                    if field_object.index_fieldname != mapping[field_name]:
-                        raise SearchFieldError("All uses of the '%s' field need to use the same 'index_fieldname' attribute." % field_name)
+                if field_name in mapping and field_object.index_fieldname != mapping[field_name]['index_fieldname']:
+                    # We've already seen this field in the list. Raise an exception if index_fieldname differs.
+                    raise SearchFieldError("All uses of the '%s' field need to use the same 'index_fieldname' attribute." % field_name)
+
+                facet_fieldname = None
+                if hasattr(field_object, 'facet_for'):
+                    if field_object.facet_for:
+                        facet_fieldname = field_object.facet_for
+                    else:
+                        facet_fieldname = field_object.instance_name
                     
-                mapping[field_name] = field_object.index_fieldname
+                mapping[field_name] = {
+                    'index_fieldname': field_object.index_fieldname,
+                    'facet_fieldname': facet_fieldname,
+                }
         
+        self._cached_field_mapping = mapping
         return mapping
     
     def update_object(self, instance):
