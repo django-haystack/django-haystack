@@ -97,11 +97,17 @@ class SearchSite(object):
                 if not field_object.index_fieldname in fields:
                     fields[field_object.index_fieldname] = field_object
                 else:
-                    # FIXME: This needs to handle verifying the field type is
-                    #        the same.
-                    # FIXME: This needs to handle some of the other field
-                    #        options, like ``use_template``.
-                    
+                    # If the field types are different, we can mostly
+                    # safely ignore this. The exception is ``MultiValueField``,
+                    # in which case we'll use it instead, copying over the
+                    # values.
+                    if field_object.is_multivalued == True:
+                        old_field = fields[field_object.index_fieldname]
+                        fields[field_object.index_fieldname] = field_object
+                        
+                        # Switch it so we don't have to dupe the remaining
+                        # checks.
+                        field_object = old_field
                     
                     # We've already got this field in the list. Ensure that
                     # what we hand back is a superset of all options that
@@ -114,6 +120,12 @@ class SearchSite(object):
                     
                     if field_object.faceted is True:
                         fields[field_object.index_fieldname].faceted = True
+                    
+                    if field_object.use_template is True:
+                        fields[field_object.index_fieldname].use_template = True
+                    
+                    if field_object.null is True:
+                        fields[field_object.index_fieldname].null = True
         
         return fields
     

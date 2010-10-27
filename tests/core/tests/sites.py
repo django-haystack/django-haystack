@@ -41,6 +41,12 @@ class AlternateValidSearchIndex(SearchIndex):
     title = CharField(faceted=True)
 
 
+class MultiValueValidSearchIndex(SearchIndex):
+    text = CharField(document=True)
+    author = MultiValueField(stored=False)
+    title = CharField(indexed=False)
+
+
 class SearchSiteTestCase(TestCase):
     def setUp(self):
         super(SearchSiteTestCase, self).setUp()
@@ -124,6 +130,7 @@ class SearchSiteTestCase(TestCase):
         self.assertEqual(fields['author'].document, False)
         self.assertEqual(fields['author'].use_template, False)
         self.assertEqual(fields['author'].faceted, True)
+        self.assertEqual(fields['author'].stored, True)
         self.assertEqual(fields['author'].index_fieldname, 'author')
         
         self.site.unregister(MockModel)
@@ -151,6 +158,29 @@ class SearchSiteTestCase(TestCase):
         self.assertEqual(fields['name'].use_template, False)
         self.assertEqual(fields['name'].faceted, False)
         self.assertEqual(fields['name'].index_fieldname, 'name')
+        
+        self.site.unregister(AnotherMockModel)
+        self.site.register(AnotherMockModel, MultiValueValidSearchIndex)
+        fields = self.site.all_searchfields()
+        self.assertEqual(len(fields), 4)
+        self.assertEqual(sorted(fields.keys()), ['author', 'name', 'text', 'title'])
+        self.assert_('text' in fields)
+        self.assert_(isinstance(fields['text'], CharField))
+        self.assertEqual(fields['text'].document, True)
+        self.assertEqual(fields['text'].use_template, False)
+        self.assert_('title' in fields)
+        self.assert_(isinstance(fields['title'], CharField))
+        self.assertEqual(fields['title'].document, False)
+        self.assertEqual(fields['title'].use_template, False)
+        self.assertEqual(fields['title'].faceted, True)
+        self.assertEqual(fields['title'].indexed, True)
+        self.assert_('author' in fields)
+        self.assert_(isinstance(fields['author'], MultiValueField))
+        self.assertEqual(fields['author'].document, False)
+        self.assertEqual(fields['author'].use_template, False)
+        self.assertEqual(fields['author'].stored, False)
+        self.assertEqual(fields['author'].faceted, False)
+        self.assertEqual(fields['author'].index_fieldname, 'author')
         
         self.site.unregister(AnotherMockModel)
         self.site.register(AnotherMockModel, InvalidSearchIndex)

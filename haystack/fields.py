@@ -30,6 +30,7 @@ class SearchField(object):
         self._default = default
         self.null = null
         self.index_fieldname = index_fieldname
+        self.is_multivalued = False
         
         self.set_instance_name(None)
     
@@ -203,6 +204,10 @@ class DateTimeField(SearchField):
 
 
 class MultiValueField(SearchField):
+    def __init__(self, **kwargs):
+        super(MultiValueField, self).__init__(**kwargs)
+        self.is_multivalued = True
+    
     def prepare(self, obj):
         return self.convert(super(MultiValueField, self).prepare(obj))
     
