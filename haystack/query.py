@@ -374,13 +374,11 @@ class SearchQuerySet(object):
     
     def count(self):
         """Returns the total number of matching results."""
-        clone = self._clone()
-        return len(clone)
+        return len(self)
     
     def best_match(self):
         """Returns the best/top search result that matches the query."""
-        clone = self._clone()
-        return clone[0]
+        return self[0]
     
     def latest(self, date_field):
         """Returns the most recent search result that matches the query."""

@@ -490,6 +490,17 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(backends.queries), 1)
     
+    def test_count(self):
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        sqs = self.sqs.all()
+        self.assertEqual(sqs.count(), 23)
+        self.assertEqual(sqs.count(), 23)
+        self.assertEqual(len(sqs), 23)
+        self.assertEqual(sqs.count(), 23)
+        # Should only execute one query to count the length of the result set.
+        self.assertEqual(len(backends.queries), 1)
+    
     def test_manual_iter(self):
         results = self.sqs.all()
         
@@ -709,24 +720,28 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
     
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(mlt.count(), 25)
+        self.assertEqual(mlt.count(), 24)
         self.assertEqual([result.pk for result in mlt], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '1', '2', '20', '16', '17', '8', '11'])
+        self.assertEqual(len([result.pk for result in mlt]), 24)
         
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
-        self.assertEqual(alt_mlt.count(), 11)
+        self.assertEqual(alt_mlt.count(), 10)
         self.assertEqual([result.pk for result in alt_mlt], ['23', '13', '17', '16', '22', '19', '4', '10', '1', '2'])
+        self.assertEqual(len([result.pk for result in alt_mlt]), 10)
         
         alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(alt_mlt_with_models.count(), 23)
+        self.assertEqual(alt_mlt_with_models.count(), 22)
         self.assertEqual([result.pk for result in alt_mlt_with_models], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])
+        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 22)
         
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
             mi = MockModel.objects.defer('foo').get(pk=1)
             self.assertEqual(mi._deferred, True)
             deferred = self.sqs.models(MockModel).more_like_this(mi)
-            self.assertEqual(alt_mlt_with_models.count(), 23)
-            self.assertEqual([result.pk for result in alt_mlt_with_models], ['6', '14', '4', '10', '22', '5', '3', '12', '2', '23', '18', '19', '13', '7', '15', '21', '9', '20', '16', '17', '8', '11'])
+            self.assertEqual(deferred.count(), 0)
+            self.assertEqual([result.pk for result in deferred], [])
+            self.assertEqual(len([result.pk for result in deferred]), 0)
 
 
 class LiveSolrRoundTripTestCase(TestCase):
