@@ -216,7 +216,7 @@ class SearchSiteTestCase(TestCase):
         self.site.register(AnotherMockModel, AlternateValidSearchIndex)
         self.assertRaises(SearchFieldError, self.site.get_index_fieldname, 'text')
 
-    def test_basic_get_facet_fieldname(self):
+    def test_basic_get_facet_field_name(self):
         self.assertEqual(self.site._cached_field_mapping, None)
         
         self.site.register(MockModel, AlternateValidSearchIndex)
@@ -238,7 +238,7 @@ class SearchSiteTestCase(TestCase):
         self.assertEqual(self.site.get_facet_field_name('author'), 'author')
         self.assertEqual(self.site.get_facet_field_name('title'), 'title')
 
-    def test_more_advanced_get_facet_fieldname(self):
+    def test_more_advanced_get_facet_field_name(self):
         self.assertEqual(self.site._cached_field_mapping, None)
 
         self.site.register(MockModel, ExplicitFacetSearchIndex)
