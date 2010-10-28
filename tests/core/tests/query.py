@@ -478,6 +478,7 @@ class SearchQuerySetTestCase(TestCase):
         
         # If nothing is registered, you get nothing.
         haystack.site.unregister(MockModel)
+        haystack.site.unregister(CharPKMockModel)
         sqs = self.msqs.load_all()
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs), 0)

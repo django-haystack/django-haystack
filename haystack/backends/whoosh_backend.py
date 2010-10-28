@@ -344,9 +344,6 @@ class SearchBackend(BaseSearchBackend):
             if narrowed_results:
                 raw_results.filter(narrowed_results)
             
-            # Make sure we don't process bits we already have.
-            # import pdb; pdb.set_trace()
-            
             # Determine the page.
             page_num = 0
             

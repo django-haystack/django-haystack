@@ -580,6 +580,25 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(backends.queries), 1)
+    
+    def test_count(self):
+        more_samples = []
+        
+        for i in xrange(1, 50):
+            mock = MockModel()
+            mock.id = i
+            mock.author = 'daniel%s' % i
+            mock.pub_date = date(2009, 2, 25) - timedelta(days=i)
+            more_samples.append(mock)
+        
+        self.sb.update(self.smmi, more_samples)
+        
+        backends.reset_search_queries()
+        self.assertEqual(len(backends.queries), 0)
+        results = self.sqs.all()
+        self.assertEqual(len(results), 49)
+        self.assertEqual(results._cache_is_full(), False)
+        self.assertEqual(len(backends.queries), 1)
 
 
 class WhooshRoundTripSearchIndex(SearchIndex):

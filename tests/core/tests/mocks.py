@@ -43,7 +43,7 @@ class MockSearchBackend(BaseSearchBackend):
         hits = len(self.mock_search_results)
         indexed_models = site.get_indexed_models()
         
-        sliced = self.mock_search_results[start_offset:end_offset]
+        sliced = self.mock_search_results
         
         for result in sliced:
             model = get_model('core', self.model_name)
@@ -57,7 +57,7 @@ class MockSearchBackend(BaseSearchBackend):
                 hits -= 1
         
         return {
-            'results': results,
+            'results': results[start_offset:end_offset],
             'hits': hits,
         }
     
