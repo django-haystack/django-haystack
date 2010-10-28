@@ -4,10 +4,15 @@ from django.conf import settings
 from django.core.management.base import AppCommand, CommandError
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+from haystack.query import SearchQuerySet
 try:
     from django.utils import importlib
 except ImportError:
     from haystack.utils import importlib
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 DEFAULT_BATCH_SIZE = getattr(settings, 'HAYSTACK_BATCH_SIZE', 1000)
@@ -27,6 +32,9 @@ class Command(AppCommand):
         ),
         make_option('-s', '--site', action='store', dest='site',
             type='string', help='The site object to use when reindexing (like `search_sites.mysite`).'
+        ),
+        make_option('-r', '--remove', action='store_true', dest='remove',
+            default=False, help='Remove objects from the index that are no longer present in the database.'
         ),
     )
     option_list = AppCommand.option_list + base_options
@@ -51,6 +59,7 @@ class Command(AppCommand):
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
         self.site = options.get('site')
+        self.remove = options.get('remove', False)
         
         if not apps:
             from django.db.models import get_app
@@ -111,16 +120,52 @@ class Command(AppCommand):
             if self.verbosity >= 1:
                 print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
             
+            pks_seen = set()
+            
             for start in range(0, total, self.batchsize):
                 end = min(start + self.batchsize, total)
-                
-                if self.verbosity >= 2:
-                    print "  indexing %s - %d of %d." % (start+1, end, total)
                 
                 # Get a clone of the QuerySet so that the cache doesn't bloat up
                 # in memory. Useful when reindexing large amounts of data.
                 small_cache_qs = qs.all()
-                index.backend.update(index, small_cache_qs[start:end])
+                current_qs = small_cache_qs[start:end]
+                
+                for obj in current_qs:
+                    pks_seen.add(smart_str(obj.pk))
+                
+                if self.verbosity >= 2:
+                    print "  indexing %s - %d of %d." % (start+1, end, total)
+                
+                index.backend.update(index, current_qs)
                 
                 # Clear out the DB connections queries because it bloats up RAM.
                 reset_queries()
+            
+            if self.remove:
+                if self.age or total <= 0:
+                    # They're using a reduced set, which may not incorporate
+                    # all pks. Rebuild the list with everything.
+                    pks_seen = set()
+                    qs = index.get_queryset().values_list('pk', flat=True)
+                    total = qs.count()
+                    
+                    for pk in qs:
+                        pks_seen.add(smart_str(pk))
+                
+                for start in range(0, total, self.batchsize):
+                    upper_bound = start + self.batchsize
+                    
+                    # Fetch a list of results.
+                    # Can't do pk range, because id's are strings (thanks comments
+                    # & UUIDs!).
+                    stuff_in_the_index = SearchQuerySet().models(model)[start:upper_bound]
+                    
+                    # Iterate over those results.
+                    for result in stuff_in_the_index:
+                        # Be careful not to hit the DB.
+                        if not smart_str(result.pk) in pks_seen:
+                            # The id is NOT in the small_cache_qs, issue a delete.
+                            if self.verbosity >= 2:
+                                print "  removing %s." % result.pk
+                            
+                            index.backend.remove(".".join([result.app_label, result.model_name, result.pk]))

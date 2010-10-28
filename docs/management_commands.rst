@@ -41,6 +41,9 @@ arguments::
         Number of items to index at once. Default is 1000.
     ``--site``:
         The site object to use when reindexing (like `search_sites.mysite`).
+    ``--remove``:
+        Remove objects from the index that are no longer present in the
+        database.
     ``--verbosity``:
         If provided, dumps out more information about what's being done.
         
@@ -76,6 +79,9 @@ of the arguments of the following arguments::
     ``--noinput``:
         If provided, the interactive prompts are skipped and the index is
         uncerimoniously wiped out.
+    ``--remove``:
+        Remove objects from the index that are no longer present in the
+        database.
     ``--verbosity``:
         If provided, dumps out more information about what's being done.
         
