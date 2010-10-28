@@ -579,6 +579,7 @@ The following lookup types are supported:
 * lte
 * in
 * startswith
+* range
 
 These options are similar in function to the way Django's lookup types work.
 The actual behavior of these lookups is backend-specific.
@@ -603,6 +604,7 @@ Example::
     # Other usages look like:
     SearchQuerySet().filter(pub_date__gte=datetime.date(2008, 1, 1), pub_date__lt=datetime.date(2009, 1, 1))
     SearchQuerySet().filter(author__in=['daniel', 'john', 'jane'])
+    SearchQuerySet().filter(view_count__range=[3, 5])
 
 
 ``EmptySearchQuerySet``

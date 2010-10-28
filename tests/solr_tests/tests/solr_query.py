@@ -63,7 +63,8 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(created__lt='2009-02-12 12:13:00'))
         self.sq.add_filter(SQ(title__gte='B'))
         self.sq.add_filter(SQ(id__in=[1, 2, 3]))
-        self.assertEqual(self.sq.build_query(), u'(why AND pub_date:[* TO "2009-02-10 01:59:00"] AND author:{daniel TO *} AND created:{* TO "2009-02-12 12:13:00"} AND title:[B TO *] AND (id:"1" OR id:"2" OR id:"3"))')
+        self.sq.add_filter(SQ(rating__range=[3, 5]))
+        self.assertEqual(self.sq.build_query(), u'(why AND pub_date:[* TO "2009-02-10 01:59:00"] AND author:{daniel TO *} AND created:{* TO "2009-02-12 12:13:00"} AND title:[B TO *] AND (id:"1" OR id:"2" OR id:"3") AND rating:[3 TO 5])')
     
     def test_build_query_in_filter_multiple_words(self):
         self.sq.add_filter(SQ(content='why'))

@@ -596,7 +596,7 @@ class SearchQuery(BaseSearchQuery):
         if hasattr(value, 'strftime'):
             is_datetime = True
         
-        if filter_type != 'in':
+        if not filter_type in ('in', 'range'):
             # 'in' is a bit of a special case, as we don't want to
             # convert a valid list/tuple to string. Defer handling it
             # until later...
@@ -622,12 +622,7 @@ class SearchQuery(BaseSearchQuery):
                 'startswith': "%s:%s*",
             }
             
-            if filter_type != 'in':
-                if is_datetime is True:
-                    value = self._convert_datetime(value)
-                
-                result = filter_types[filter_type] % (index_fieldname, value)
-            else:
+            if filter_type == 'in':
                 in_options = []
                 
                 for possible_value in value:
@@ -644,5 +639,21 @@ class SearchQuery(BaseSearchQuery):
                     in_options.append('%s:"%s"' % (index_fieldname, pv))
                 
                 result = "(%s)" % " OR ".join(in_options)
+            elif filter_type == 'range':
+                start = self.backend._from_python(value[0])
+                end = self.backend._from_python(value[1])
+                
+                if hasattr(value[0], 'strftime'):
+                    start = self._convert_datetime(start)
+                
+                if hasattr(value[1], 'strftime'):
+                    end = self._convert_datetime(end)
+                
+                return "%s:[%s TO %s]" % (index_fieldname, start, end)
+            else:
+                if is_datetime is True:
+                    value = self._convert_datetime(value)
+                
+                result = filter_types[filter_type] % (index_fieldname, value)
         
         return result

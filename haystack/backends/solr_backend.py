@@ -401,15 +401,19 @@ class SearchQuery(BaseSearchQuery):
                 'startswith': "%s:%s*",
             }
             
-            if filter_type != 'in':
-                result = filter_types[filter_type] % (index_fieldname, value)
-            else:
+            if filter_type == 'in':
                 in_options = []
                 
                 for possible_value in value:
                     in_options.append('%s:"%s"' % (index_fieldname, self.backend.conn._from_python(possible_value)))
                 
                 result = "(%s)" % " OR ".join(in_options)
+            elif filter_type == 'range':
+                start = self.backend.conn._from_python(value[0])
+                end = self.backend.conn._from_python(value[1])
+                return "%s:[%s TO %s]" % (index_fieldname, start, end)
+            else:
+                result = filter_types[filter_type] % (index_fieldname, value)
         
         return result
     
