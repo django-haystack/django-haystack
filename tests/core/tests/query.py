@@ -18,6 +18,16 @@ try:
 except NameError:
     from sets import Set as set
 
+test_pickling = True
+
+try:
+    import cPickle as pickle
+except ImportError:
+    try:
+        import pickle
+    except ImportError:
+        test_pickling = False
+
 
 class SQTestCase(TestCase):
     def test_split_expression(self):
@@ -661,3 +671,41 @@ class EmptySearchQuerySetTestCase(TestCase):
         EmptySearchQuerySets can be used in templates.
         """
         self.assertRaises(TypeError, lambda: self.esqs['count'])
+
+
+if test_pickling:
+    class PickleSearchQuerySetTestCase(TestCase):
+        def setUp(self):
+            super(PickleSearchQuerySetTestCase, self).setUp()
+            self.bsqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()))
+            self.msqs = SearchQuerySet(query=MockSearchQuery(backend=MockSearchBackend()))
+            self.mmsqs = SearchQuerySet(query=MockSearchQuery(backend=MixedMockSearchBackend()))
+            
+            # Stow.
+            self.old_debug = settings.DEBUG
+            settings.DEBUG = True
+            self.old_site = haystack.site
+            test_site = SearchSite()
+            test_site.register(MockModel)
+            test_site.register(CharPKMockModel)
+            haystack.site = test_site
+            
+            backends.reset_search_queries()
+        
+        def tearDown(self):
+            # Restore.
+            haystack.site = self.old_site
+            settings.DEBUG = self.old_debug
+            super(PickleSearchQuerySetTestCase, self).tearDown()
+        
+        def test_pickling(self):
+            results = self.msqs.all()
+            
+            for res in results:
+                # Make sure the cache is full.
+                pass
+            
+            in_a_pickle = pickle.dumps(results)
+            like_a_cuke = pickle.loads(in_a_pickle)
+            self.assertEqual(len(like_a_cuke), len(results))
+            self.assertEqual(like_a_cuke[0].id, results[0].id)

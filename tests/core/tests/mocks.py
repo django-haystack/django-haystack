@@ -112,3 +112,8 @@ class MockSearchQuery(BaseSearchQuery):
         results = self.backend.more_like_this(self._mlt_instance, final_query)
         self._results = results['results'][self.start_offset:self.end_offset]
         self._hit_count = results['hits']
+
+
+# For pickling tests.
+SearchBackend = MockSearchBackend
+SearchQuery = MockSearchQuery

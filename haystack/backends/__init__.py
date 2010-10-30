@@ -297,9 +297,10 @@ class BaseSearchQuery(object):
         """For pickling."""
         obj_dict = self.__dict__.copy()
         del(obj_dict['backend'])
+        
         # Rip off the class bits as we'll be using this path when we go to load
         # the backend.
-        obj_dict['backend_used'] = ".".join(str(self.backend).replace("<class '", "").replace("'>", "").split(".")[0:-1])
+        obj_dict['backend_used'] = ".".join(str(self.backend).replace("<", "").split(".")[0:-1])
         return obj_dict
     
     def __setstate__(self, obj_dict):

@@ -38,7 +38,16 @@ class SearchQuerySet(object):
         len(self)
         obj_dict = self.__dict__.copy()
         obj_dict['_iter'] = None
+        del obj_dict['site']
         return obj_dict
+
+    def __setstate__(self, dict):
+        """
+        For unpickling.
+        """
+        self.__dict__ = dict
+        from haystack import site as main_site
+        self.site = main_site
     
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])

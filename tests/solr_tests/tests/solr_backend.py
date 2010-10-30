@@ -15,6 +15,16 @@ try:
 except NameError:
     from sets import Set as set
 
+test_pickling = True
+
+try:
+    import cPickle as pickle
+except ImportError:
+    try:
+        import pickle
+    except ImportError:
+        test_pickling = False
+
 
 def clear_solr_index():
     # Wipe it clean.
@@ -794,3 +804,48 @@ class LiveSolrRoundTripTestCase(TestCase):
         self.assertEqual(result.created, datetime.datetime(2009, 11, 21, 21, 31, 00))
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [3, 5, 1])
+
+
+if test_pickling:
+    class LiveSolrPickleTestCase(TestCase):
+        fixtures = ['bulk_data.json']
+        
+        def setUp(self):
+            super(LiveSolrPickleTestCase, self).setUp()
+            
+            # Wipe it clean.
+            clear_solr_index()
+            
+            # With the models registered, you get the proper bits.
+            import haystack
+            from haystack.sites import SearchSite
+            
+            # Stow.
+            self.old_site = haystack.site
+            test_site = SearchSite()
+            test_site.register(MockModel, SolrMockModelSearchIndex)
+            test_site.register(AnotherMockModel, SolrAnotherMockModelSearchIndex)
+            haystack.site = test_site
+            
+            self.sqs = SearchQuerySet()
+            
+            test_site.get_index(MockModel).update()
+            test_site.get_index(AnotherMockModel).update()
+        
+        def tearDown(self):
+            # Restore.
+            import haystack
+            haystack.site = self.old_site
+            super(LiveSolrPickleTestCase, self).tearDown()
+        
+        def test_pickling(self):
+            results = self.sqs.all()
+            
+            for res in results:
+                # Make sure the cache is full.
+                pass
+            
+            in_a_pickle = pickle.dumps(results)
+            like_a_cuke = pickle.loads(in_a_pickle)
+            self.assertEqual(len(like_a_cuke), len(results))
+            self.assertEqual(like_a_cuke[0].id, results[0].id)
