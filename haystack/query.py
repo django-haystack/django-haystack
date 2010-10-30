@@ -4,6 +4,10 @@ from django.conf import settings
 from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotRegistered
+try:
+    from django.utils import importlib
+except ImportError:
+    from haystack.utils import importlib
 
 
 class SearchQuerySet(object):
@@ -38,16 +42,24 @@ class SearchQuerySet(object):
         len(self)
         obj_dict = self.__dict__.copy()
         obj_dict['_iter'] = None
+        site_name = str(self.site).replace("<", "").split(" ")[0].split(".")
+        obj_dict['site_used'] = "%s %s" % (".".join(site_name[0:-1]), site_name[-1])
         del obj_dict['site']
         return obj_dict
 
-    def __setstate__(self, dict):
+    def __setstate__(self, obj_dict):
         """
         For unpickling.
         """
-        self.__dict__ = dict
-        from haystack import site as main_site
-        self.site = main_site
+        module_name, site_name = obj_dict.pop('site_used').split(' ')
+        self.__dict__.update(obj_dict)
+
+        try:
+            site_module = importlib.import_module(module_name)
+            site_class = getattr(site_module, site_name)
+        except (ImportError, AttributeError):
+            raise NotRegistered("The site this query was pickled with '%s.%s' could not be loaded" % (module_name, site_name))
+        self.site = site_class()
     
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
