@@ -15,9 +15,12 @@ DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|
 
 class SearchField(object):
     """The base implementation of a search field."""
+    field_type = None
+    
     def __init__(self, model_attr=None, use_template=False, template_name=None,
                  document=False, indexed=True, stored=True, faceted=False,
-                 default=NOT_PROVIDED, null=False, index_fieldname=None):
+                 default=NOT_PROVIDED, null=False, index_fieldname=None,
+                 facet_class=None):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -31,6 +34,13 @@ class SearchField(object):
         self.null = null
         self.index_fieldname = index_fieldname
         self.is_multivalued = False
+        
+        # We supply the facet_class for making it easy to create a faceted
+        # field based off of this field.
+        self.facet_class = facet_class
+        
+        if self.facet_class is None:
+            self.facet_class = FacetCharField
         
         self.set_instance_name(None)
     
@@ -126,6 +136,14 @@ class SearchField(object):
 
 
 class CharField(SearchField):
+    field_type = 'string'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetCharField
+        
+        super(CharField, self).__init__(**kwargs)
+    
     def prepare(self, obj):
         return self.convert(super(CharField, self).prepare(obj))
     
@@ -137,6 +155,14 @@ class CharField(SearchField):
 
 
 class IntegerField(SearchField):
+    field_type = 'integer'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetIntegerField
+        
+        super(IntegerField, self).__init__(**kwargs)
+    
     def prepare(self, obj):
         return self.convert(super(IntegerField, self).prepare(obj))
     
@@ -148,6 +174,14 @@ class IntegerField(SearchField):
 
 
 class FloatField(SearchField):
+    field_type = 'float'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetFloatField
+        
+        super(FloatField, self).__init__(**kwargs)
+    
     def prepare(self, obj):
         return self.convert(super(FloatField, self).prepare(obj))
     
@@ -159,6 +193,14 @@ class FloatField(SearchField):
 
 
 class BooleanField(SearchField):
+    field_type = 'boolean'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetBooleanField
+        
+        super(BooleanField, self).__init__(**kwargs)
+    
     def prepare(self, obj):
         return self.convert(super(BooleanField, self).prepare(obj))
     
@@ -170,6 +212,14 @@ class BooleanField(SearchField):
 
 
 class DateField(SearchField):
+    field_type = 'date'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetDateField
+        
+        super(DateField, self).__init__(**kwargs)
+    
     def convert(self, value):
         if value is None:
             return None
@@ -187,6 +237,14 @@ class DateField(SearchField):
 
 
 class DateTimeField(SearchField):
+    field_type = 'datetime'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetDateTimeField
+        
+        super(DateTimeField, self).__init__(**kwargs)
+    
     def convert(self, value):
         if value is None:
             return None
@@ -204,7 +262,12 @@ class DateTimeField(SearchField):
 
 
 class MultiValueField(SearchField):
+    field_type = 'string'
+    
     def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetMultiValueField
+        
         super(MultiValueField, self).__init__(**kwargs)
         self.is_multivalued = True
     
@@ -226,7 +289,9 @@ class FacetField(SearchField):
     Accepts an optional ``facet_for`` kwarg, which should be the field name
     (not ``index_fieldname``) of the field it should pull data from.
     """
-    def __init__(self, **kwargs):
+    instance_name = None
+    
+    def handle_facet_parameters(self, kwargs):
         if kwargs.get('faceted', False):
             raise SearchFieldError("FacetField (%s) does not accept the 'faceted' argument." % self.instance_name)
         
@@ -236,15 +301,76 @@ class FacetField(SearchField):
         if not kwargs.get('indexed', True):
             raise SearchFieldError("FacetField (%s) does not accept False for the 'indexed' argument." % self.instance_name)
         
+        if kwargs.get('facet_class'):
+            raise SearchFieldError("FacetField (%s) does not accept the 'facet_class' argument." % self.instance_name)
+        
         self.facet_for = None
+        self.facet_class = None
+        
+        # Make sure the field is nullable.
+        kwargs['null'] = True
         
         if 'facet_for' in kwargs:
             self.facet_for = kwargs['facet_for']
             del(kwargs['facet_for'])
         
-        super(FacetField, self).__init__(**kwargs)
-        # Make sure the field is nullable.
-        self.null = True
-
+        return kwargs
+    
     def get_facet_for_name(self):
         return self.facet_for or self.instance_name
+
+
+class FacetCharField(CharField, FacetField):
+    field_type = 'string'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetCharField, self).__init__(**handled_kwargs)
+
+
+class FacetIntegerField(IntegerField, FacetField):
+    field_type = 'integer'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetIntegerField, self).__init__(**handled_kwargs)
+
+
+class FacetFloatField(FloatField, FacetField):
+    field_type = 'float'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetFloatField, self).__init__(**handled_kwargs)
+
+
+class FacetBooleanField(BooleanField, FacetField):
+    field_type = 'boolean'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetBooleanField, self).__init__(**handled_kwargs)
+
+
+class FacetDateField(DateField, FacetField):
+    field_type = 'date'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetDateField, self).__init__(**handled_kwargs)
+
+
+class FacetDateTimeField(DateTimeField, FacetField):
+    field_type = 'datetime'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetDateTimeField, self).__init__(**handled_kwargs)
+
+
+class FacetMultiValueField(MultiValueField, FacetField):
+    field_type = 'string'
+    
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetMultiValueField, self).__init__(**handled_kwargs)

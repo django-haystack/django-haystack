@@ -90,6 +90,18 @@ class SolrRoundTripSearchIndex(SearchIndex):
         return prepped
 
 
+class SolrComplexFacetsMockSearchIndex(SearchIndex):
+    text = CharField(document=True, default='')
+    name = CharField(faceted=True)
+    is_active = BooleanField(faceted=True)
+    post_count = IntegerField()
+    post_count_i = FacetIntegerField(facet_for='post_count')
+    average_rating = FloatField(faceted=True)
+    pub_date = DateField(faceted=True)
+    created = DateTimeField(faceted=True)
+    sites = MultiValueField(faceted=True)
+
+
 class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
@@ -299,6 +311,119 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'name_exact',
                 'stored': 'true',
                 'type': 'string',
+                'multi_valued': 'false'
+            }
+        ])
+        
+        self.site.unregister(MockModel)
+        self.site.register(MockModel, SolrComplexFacetsMockSearchIndex)
+        (content_field_name, fields) = self.sb.build_schema(self.site.all_searchfields())
+        self.assertEqual(content_field_name, 'text')
+        self.assertEqual(len(fields), 15)
+        self.assertEqual(fields, [
+            {
+                'indexed': 'true',
+                'type': 'text',
+                'stored': 'true',
+                'field_name': 'name',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'boolean',
+                'stored': 'true',
+                'field_name': 'is_active_exact',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'stored': 'true',
+                'field_name': 'created',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'slong',
+                'stored': 'true',
+                'field_name': 'post_count',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'stored': 'true',
+                'field_name': 'created_exact',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'string',
+                'stored': 'true',
+                'field_name': 'sites_exact',
+                'multi_valued': 'true'
+            },
+            {
+                'indexed': 'true',
+                'type': 'boolean',
+                'stored': 'true',
+                'field_name': 'is_active',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'text',
+                'stored': 'true',
+                'field_name': 'sites',
+                'multi_valued': 'true'
+            },
+            {
+                'indexed': 'true',
+                'type': 'slong',
+                'stored': 'true',
+                'field_name': 'post_count_i',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'sfloat',
+                'stored': 'true',
+                'field_name': 'average_rating',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'text',
+                'stored': 'true',
+                'field_name': 'text',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'stored': 'true',
+                'field_name': 'pub_date_exact',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'string',
+                'stored': 'true',
+                'field_name': 'name_exact',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'stored': 'true',
+                'field_name': 'pub_date',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'sfloat',
+                'stored': 'true',
+                'field_name': 'average_rating_exact',
                 'multi_valued': 'false'
             }
         ])

@@ -62,9 +62,9 @@ class GoodOverriddenFieldNameMockSearchIndex(SearchIndex):
 class GoodFacetedMockSearchIndex(SearchIndex):
     content = CharField(document=True, use_template=True)
     author = CharField(model_attr='author')
-    author_foo = FacetField(facet_for='author')
+    author_foo = FacetCharField(facet_for='author')
     pub_date = DateTimeField(model_attr='pub_date')
-    pub_date_exact = FacetField(facet_for='pub_date')
+    pub_date_exact = FacetDateTimeField(facet_for='pub_date')
     
     def prepare_author(self, obj):
         return "Hi, I'm %s" % self.prepared_data['author']
@@ -133,6 +133,22 @@ class SearchIndexTestCase(TestCase):
         self.assert_(isinstance(self.mi.fields['pub_date'], DateTimeField))
         self.assert_('extra' in self.mi.fields)
         self.assert_(isinstance(self.mi.fields['extra'], CharField))
+        
+        self.assertEqual(len(self.cmi.fields), 7)
+        self.assert_('content' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['content'], CharField))
+        self.assert_('author' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['author'], CharField))
+        self.assert_('author_exact' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['author_exact'], FacetCharField))
+        self.assert_('pub_date' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['pub_date'], DateTimeField))
+        self.assert_('pub_date_exact' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['pub_date_exact'], FacetDateTimeField))
+        self.assert_('extra' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['extra'], CharField))
+        self.assert_('hello' in self.cmi.fields)
+        self.assert_(isinstance(self.cmi.fields['extra'], CharField))
     
     def test_get_queryset(self):
         self.assertEqual(len(self.mi.get_queryset()), 3)

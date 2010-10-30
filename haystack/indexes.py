@@ -1,4 +1,5 @@
 import copy
+import sys
 from django.db.models import signals
 from django.utils.encoding import force_unicode
 from haystack.fields import *
@@ -45,7 +46,7 @@ class DeclarativeMetaclass(type):
                         # ``facet_for``, create a shadow ``FacetField``.
                         if not field_name in facet_fields:
                             shadow_facet_name = get_facet_field_name(field_name)
-                            shadow_facet_field = FacetField(facet_for=field_name)
+                            shadow_facet_field = field.facet_class(facet_for=field_name)
                             shadow_facet_field.set_instance_name(shadow_facet_name)
                             attrs['fields'][shadow_facet_name] = shadow_facet_field
         

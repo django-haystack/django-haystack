@@ -44,8 +44,8 @@ class ExplicitFacetSearchIndex(SearchIndex):
     text = CharField(document=True)
     author = CharField(faceted=True)
     title = CharField()
-    title_facet = FacetField(facet_for='title')
-    bare_facet = FacetField()
+    title_facet = FacetCharField(facet_for='title')
+    bare_facet = FacetCharField()
 
 
 class MultiValueValidSearchIndex(SearchIndex):

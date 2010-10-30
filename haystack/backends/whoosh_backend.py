@@ -128,24 +128,19 @@ class SearchBackend(BaseSearchBackend):
         content_field_name = ''
         
         for field_name, field_class in fields.items():
-            if isinstance(field_class, MultiValueField):
+            if field_class.is_multivalued:
                 if field_class.indexed is False:
                     schema_fields[field_class.index_fieldname] = IDLIST(stored=True)
                 else:
                     schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True, scorable=True)
-            elif isinstance(field_class, (DateField, DateTimeField)):
+            elif field_class.field_type in ['date', 'datetime']:
                 schema_fields[field_class.index_fieldname] = DATETIME(stored=field_class.stored)
-            elif isinstance(field_class, BooleanField):
-                schema_fields[field_class.index_fieldname] = BOOLEAN(stored=field_class.stored)
-            elif isinstance(field_class, (DateField, DateTimeField, BooleanField)):
-                if field_class.indexed is False:
-                    schema_fields[field_class.index_fieldname] = STORED
-                else:
-                    schema_fields[field_class.index_fieldname] = ID(stored=True)
-            elif isinstance(field_class, IntegerField):
+            elif field_class.field_type == 'integer':
                 schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=int)
-            elif isinstance(field_class, FloatField):
+            elif field_class.field_type == 'float':
                 schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=float)
+            elif field_class.field_type == 'boolean':
+                schema_fields[field_class.index_fieldname] = BOOLEAN(stored=field_class.stored)
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             
