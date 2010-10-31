@@ -235,8 +235,8 @@ class SearchSiteTestCase(TestCase):
         self.assertEqual(self.site.get_index_fieldname('title'), 'title')
 
         self.assertEqual(self.site.get_facet_field_name('text'), 'text')
-        self.assertEqual(self.site.get_facet_field_name('author'), 'author')
-        self.assertEqual(self.site.get_facet_field_name('title'), 'title')
+        self.assertEqual(self.site.get_facet_field_name('author'), 'author_exact')
+        self.assertEqual(self.site.get_facet_field_name('title'), 'title_exact')
 
     def test_more_advanced_get_facet_field_name(self):
         self.assertEqual(self.site._cached_field_mapping, None)
@@ -253,9 +253,7 @@ class SearchSiteTestCase(TestCase):
             'title': {'facet_fieldname': None, 'index_fieldname': 'title'},
             'title_facet': {'facet_fieldname': 'title', 'index_fieldname': 'title_facet'},
         })
-        self.assertEqual(self.site.get_facet_field_name('title'), 'title')
-
-        self.assertEqual(self.site.get_facet_field_name('title'), 'title')
+        self.assertEqual(self.site.get_facet_field_name('title'), 'title_facet')
         self.assertEqual(self.site.get_facet_field_name('bare_facet'), 'bare_facet')
 
     

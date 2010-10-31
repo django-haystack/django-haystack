@@ -151,18 +151,19 @@ class SearchSite(object):
     def get_facet_field_name(self, fieldname):
         """
         Returns the actual name of the facet field in the index.
-
+        
         If not found, returns the fieldname provided.
         """
         facet_fieldname = None
-        if fieldname in self._field_mapping():
-            facet_fieldname = self._field_mapping()[fieldname]['facet_fieldname']
-
-        if facet_fieldname:
-            return self.get_index_fieldname(facet_fieldname)
-        else:
-            return fieldname
-
+        
+        reverse_map = {}
+        
+        for field, info in self._field_mapping().items():
+            if info['facet_fieldname'] and info['facet_fieldname'] == fieldname:
+                return info['index_fieldname']
+        
+        return self.get_index_fieldname(fieldname)
+    
     def _field_mapping(self):
         mapping = {}
         
@@ -174,14 +175,15 @@ class SearchSite(object):
                 if field_name in mapping and field_object.index_fieldname != mapping[field_name]['index_fieldname']:
                     # We've already seen this field in the list. Raise an exception if index_fieldname differs.
                     raise SearchFieldError("All uses of the '%s' field need to use the same 'index_fieldname' attribute." % field_name)
-
+                
                 facet_fieldname = None
+                
                 if hasattr(field_object, 'facet_for'):
                     if field_object.facet_for:
                         facet_fieldname = field_object.facet_for
                     else:
                         facet_fieldname = field_object.instance_name
-                    
+                
                 mapping[field_name] = {
                     'index_fieldname': field_object.index_fieldname,
                     'facet_fieldname': facet_fieldname,
