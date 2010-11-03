@@ -83,8 +83,9 @@ class SearchBackend(BaseSearchBackend):
         if self.use_file_storage and not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_WHOOSH_PATH in your settings.')
         
-        if getattr(settings, 'HAYSTACK_WOOSH_USE_NGRAM_SEARCH') == True:
-            self.use_ngram_for_text = True
+        if hasattr(settings, 'HAYSTACK_WOOSH_USE_NGRAM_SEARCH'):
+            if getattr(settings, 'HAYSTACK_WOOSH_USE_NGRAM_SEARCH') == True:
+                self.use_ngram_for_text = True
             if hasattr(settings, 'HAYSTACK_WOOSH_NGRAM_MIN'):
                 self.ngram_min_size = getattr(settings, 'HAYSTACK_WOOSH_NGRAM_MIN')
             if hasattr(settings, 'HAYSTACK_WOOSH_NGRAM_MAX'):
