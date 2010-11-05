@@ -1,5 +1,6 @@
 from django.contrib.admin.options import ModelAdmin
-from django.contrib.admin.views.main import ChangeList, MAX_SHOW_ALL_ALLOWED
+from django.contrib.admin.views.main import (ChangeList, MAX_SHOW_ALL_ALLOWED,
+                                             SEARCH_VAR)
 from django.core.exceptions import PermissionDenied, ImproperlyConfigured
 from django.core.paginator import Paginator, InvalidPage
 from django.shortcuts import render_to_response
@@ -24,11 +25,11 @@ except ImportError:
 
 class SearchChangeList(ChangeList):
     def get_results(self, request):
-        if not 'q' in request.GET:
+        if not SEARCH_VAR in request.GET:
             return super(SearchChangeList, self).get_results(request)
         
         # Note that pagination is 0-based, not 1-based.
-        sqs = SearchQuerySet().models(self.model).auto_query(request.GET['q']).load_all()
+        sqs = SearchQuerySet().models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
         
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
@@ -61,7 +62,7 @@ class SearchModelAdmin(ModelAdmin):
         if not self.has_change_permission(request, None):
             raise PermissionDenied
         
-        if not 'q' in request.GET:
+        if not SEARCH_VAR in request.GET:
             # Do the usual song and dance.
             return super(SearchModelAdmin, self).changelist_view(request, extra_context)
         
