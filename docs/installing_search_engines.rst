@@ -85,12 +85,13 @@ your ``SearchIndex`` classes (in this case, assuming the main field is called
 Whoosh
 ======
 
-Official Download Location: http://whoosh.ca/
+Official Download Location: http://bitbucket.org/mchaput/whoosh/
 
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. With the
 0.3.1+ releases, Whoosh has become much more performant, stable and better
-tested. The current recommended version is 0.3.15+. You can install via PyPI_
+tested. The current recommended version is 0.3.15+. Haystack 1.0.x requires 
+Whoosh 0.3.x and will not work with Whoosh 1.x. You can install via PyPI_
 using::
 
     sudo easy_install whoosh
