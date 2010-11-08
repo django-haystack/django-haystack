@@ -90,12 +90,19 @@ Official Download Location: http://whoosh.ca/
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. With the
 0.3.1+ releases, Whoosh has become much more performant, stable and better
-tested. The current recommended version is 0.3.5+. You can install via PyPI_
+tested. The current recommended version is 0.3.18. You can install via PyPI_
 using::
 
     sudo easy_install whoosh
     # ... or ...
-    sudo pip install whoosh
+    sudo pip install whoosh==0.3.18
+
+.. warning:
+
+  Haystack 1.0.X does *NOT* support the Whoosh 1.X releases as they are not API
+  compatible. The 1.X series is supported in Haystack's git master and will be
+  part of the 1.1 release. This is unlikely to be backported due to time
+  constraints.
 
 Note that, while capable otherwise, the Whoosh backend does not currently
 support "More Like This" or faceting.

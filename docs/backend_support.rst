@@ -54,7 +54,7 @@ Whoosh
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: whoosh
+* Requires: whoosh (0.3.15 - 0.3.18 - *NOT* the 1.X releases)
 
 
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
