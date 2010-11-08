@@ -72,8 +72,8 @@ class SearchBackend(BaseSearchBackend):
         self.setup_complete = False
         self.use_file_storage = True
         self.use_ngram_for_text = False
-        self.ngram_min_size = None # We don't need any magic number here - Woosh hassane defauls
-        self.ngram_max_size = None # Same here - Woosh has sane defaults.
+        self.ngram_min_size = None # We don't need any magic number here - Whoosh has sane defauls
+        self.ngram_max_size = None # Same here - Whoosh has sane defaults.
         
         self.post_limit = getattr(settings, 'HAYSTACK_WHOOSH_POST_LIMIT', 128 * 1024 * 1024)
         

@@ -178,65 +178,65 @@ Examples::
 
 The default is 128 * 1024 * 1024.
 
-``HAYSTACK_WOOSH_USE_NGRAM_SEARCH``
+``HAYSTACK_WHOOSH_USE_NGRAM_SEARCH``
 ===================================
 
 **Optional / Experimental**
 
 This setting controls how textfields should be indexed. By default, Haystack will
-order Woosh to use ``TEXT`` fields, but in some occurences you might want to use the
-more flexible but memory-hungry ``NGRAM`` field, which allows to prefix-search on words
+order Whoosh to use ``TEXT`` fields, but in some occurences you might want to use the
+more flexible but memory-hungry ``NGRAM`` field, which allows to prefix-search on words,
 for example.
 
 This sets *all fields* who would use TEXT type to use NGRAM instead! Your indexes will 
 be much larger, and this might cause problems. Please experiment with various gram sizes 
 on a small dataset before deploying! 
 
-For more information about this cool feature, please refer to the `Woosh documentation`_
+For more information about this cool feature, please refer to the `Whoosh documentation`_
 
-.. _Woosh documentation : http://files.whoosh.ca/whoosh/docs/latest/api/fields.html
+.. _Whoosh documentation : http://files.whoosh.ca/whoosh/docs/latest/api/fields.html
 
 Examples::
 
-    HAYSTACK_WOOSH_USE_NGRAM_SEARCH = True # Anything else is False
+    HAYSTACK_WHOOSH_USE_NGRAM_SEARCH = True # Anything else is False
 
 The default is `False`.
 
-``HAYSTACK_WOOSH_NGRAM_MIN``
+``HAYSTACK_WHOOSH_NGRAM_MIN``
 ============================
 
 **Optional**
 
 This setting controls the minimal size grams should have when using the 
-``HAYSTACK_WOOSH_USE_NGRAM_SEARCH`` feature.
+``HAYSTACK_WHOOSH_USE_NGRAM_SEARCH`` feature.
 
-For more information about this setting, please refer to the `Woosh documentation`_
+For more information about this setting, please refer to the `Whoosh documentation`_
 
-.. _Woosh documentation : http://files.whoosh.ca/whoosh/docs/latest/api/fields.html
+.. _Whoosh documentation : http://files.whoosh.ca/whoosh/docs/latest/api/fields.html
 
 Examples::
 
-    HAYSTACK_WOOSH_NGRAM_MIN = 2
+    HAYSTACK_WHOOSH_NGRAM_MIN = 2
 
-The default behavior is to use the Woosh default (`2` at the time of this writing).
+The default behavior is to use the Whoosh default (`2` at the time of this writing).
 
-``HAYSTACK_WOOSH_NGRAM_MAX``
+``HAYSTACK_WHOOSH_NGRAM_MAX``
 ============================
 
 **Optional**
 
 This setting controls the maximal size grams should have when using the 
-``HAYSTACK_WOOSH_USE_NGRAM_SEARCH`` feature.
+``HAYSTACK_WHOOSH_USE_NGRAM_SEARCH`` feature.
 
-For more information about this setting, please refer to the `Woosh documentation`_
+For more information about this setting, please refer to the `Whoosh documentation`_
 
-.. _Woosh documentation : http://files.whoosh.ca/whoosh/docs/latest/api/fields.html
+.. _Whoosh documentation : http://files.whoosh.ca/whoosh/docs/latest/api/fields.html
 
 Examples::
 
-    HAYSTACK_WOOSH_NGRAM_MAX = 4
+    HAYSTACK_WHOOSH_NGRAM_MAX = 4
 
-The default behavior is to use the Woosh default (`4` at the time of this writing).
+The default behavior is to use the Whoosh default (`4` at the time of this writing).
 
 
 ``HAYSTACK_XAPIAN_PATH``
