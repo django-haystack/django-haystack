@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 from time import time
+from traceback import extract_stack
 from django.conf import settings
 from django.core import signals
 from django.db.models import Q
@@ -57,7 +58,8 @@ def log_query(func):
                     'query_string': query_string,
                     'additional_args': args,
                     'additional_kwargs': kwargs,
-                    'time': "%.3f" % (stop - start),
+                    'time': stop - start,
+                    'stacktrace': extract_stack(),
                 })
     
     return wrapper
