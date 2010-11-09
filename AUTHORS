@@ -47,3 +47,4 @@ Thanks to
     * apollo13 for simplifying ``SearchForm.__init__``.
     * Carl Meyer (carljm) for a patch regarding character primary keys.
     * oyiptong for a patch regarding pickling.
+    * alfredo for a patch to generate epub docs.
