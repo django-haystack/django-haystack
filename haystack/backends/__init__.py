@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import django
+import os
+import SocketServer
 from copy import deepcopy
 from time import time
 from traceback import extract_stack
@@ -44,6 +47,24 @@ def log_query(func):
     A decorator for pseudo-logging search queries. Used in the ``SearchBackend``
     to wrap the ``search`` method.
     """
+    django_path = os.path.realpath(os.path.dirname(django.__file__))
+    socketserver_path = os.path.realpath(os.path.dirname(SocketServer.__file__))
+
+    def tidy_stacktrace(strace):
+        """
+        Clean up stacktrace and remove all entries that:
+        1. Are part of Django
+        2. Are part of SocketServer (used by Django's dev server)
+        3. Are the last entry (and part of this stack trace call)
+        """
+        trace = []
+        for s in strace[:-1]:
+            s_path = os.path.realpath(s[0])
+            if django_path in s_path or socketserver_path in s_path:
+                continue
+            trace.append((s[0], s[1], s[2], s[3]))
+        return trace
+
     def wrapper(obj, query_string, *args, **kwargs):
         start = time()
         
@@ -59,7 +80,7 @@ def log_query(func):
                     'additional_args': args,
                     'additional_kwargs': kwargs,
                     'time': stop - start,
-                    'stacktrace': extract_stack(),
+                    'stacktrace': tidy_stacktrace(extract_stack()),
                 })
     
     return wrapper
