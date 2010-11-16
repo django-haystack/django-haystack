@@ -69,7 +69,7 @@ class FacetedSearchForm(SearchForm):
     def search(self):
         sqs = super(FacetedSearchForm, self).search()
         
-        if self.cleaned_data['selected_facets']:
+        if hasattr(self, 'cleaned_data') and self.cleaned_data['selected_facets']:
             sqs = sqs.narrow(self.cleaned_data['selected_facets'])
         
         return sqs
@@ -106,7 +106,7 @@ class FacetedModelSearchForm(ModelSearchForm):
     def search(self):
         sqs = super(FacetedModelSearchForm, self).search()
         
-        if self.cleaned_data['selected_facets']:
+        if hasattr(self, 'cleaned_data') and self.cleaned_data['selected_facets']:
             sqs = sqs.narrow(self.cleaned_data['selected_facets'])
         
         return sqs.models(*self.get_models())
