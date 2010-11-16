@@ -143,4 +143,12 @@ change your URL.
 
 This can also be caused when using old versions of pysolr (2.0.9 and before),
 using httplib2 and including a trailing slash in your ``HAYSTACK_SOLR_URL``.
-Please upgrade your version of pysolr.
+Please upgrade your version of pysolr (2.0.13+).
+
+
+"Got an unexpected keyword argument 'boost'"
+============================================
+
+This is a Solr-specific traceback. This can also be caused when using old
+versions of pysolr (2.0.12 and before). Please upgrade your version of
+pysolr (2.0.13+).

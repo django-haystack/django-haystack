@@ -25,7 +25,7 @@ You'll need to revise your schema. You can generate this from your application
 it in ``apache-solr-1.3.0/example/solr/conf/schema.xml``. Then restart Solr.
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
-distributed via PyPI, is the best version to use (2.0.9+). Place ``pysolr.py``
+distributed via PyPI, is the best version to use (2.0.13+). Place ``pysolr.py``
 somewhere on your ``PYTHONPATH``.
 
 .. note::
