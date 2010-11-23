@@ -232,6 +232,10 @@ class CharFieldWithTemplateTestCase(TestCase):
         
         foo = CharField(use_template=True, template_name='foo.txt')
         self.assertEqual(foo.template_name, 'foo.txt')
+        
+        # Test the select_template usage.
+        foo = CharField(use_template=True, template_name=['bar.txt', 'foo.txt'])
+        self.assertEqual(foo.template_name, ['bar.txt', 'foo.txt'])
     
     def test_prepare(self):
         mock = MockModel()
@@ -248,6 +252,14 @@ class CharFieldWithTemplateTestCase(TestCase):
         template3 = CharField(use_template=True)
         template3.instance_name = 'template'
         self.assertEqual(template3.prepare(mock), u'Indexed!\n1')
+        
+        template4 = CharField(use_template=True, template_name='search/indexes/foo.txt')
+        template4.instance_name = 'template'
+        self.assertEqual(template4.prepare(mock), u'FOO!\n')
+        
+        template5 = CharField(use_template=True, template_name=['foo.txt', 'search/indexes/bar.txt'])
+        template5.instance_name = 'template'
+        self.assertEqual(template5.prepare(mock), u'BAR!\n')
 
 
 ##############################################################################
