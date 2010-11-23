@@ -32,6 +32,16 @@ Included with Haystack are the following field types:
 * ``IntegerField``
 * ``MultiValueField``
 
+And equivalent faceted versions:
+
+* ``FacetBooleanField``
+* ``FacetCharField``
+* ``FacetDateField``
+* ``FacetDateTimeField``
+* ``FacetFloatField``
+* ``FacetIntegerField``
+* ``FacetMultiValueField``
+
 
 Usage
 =====
@@ -167,6 +177,14 @@ Example::
 
     bio = CharField(use_template=True, template_name='myapp/data/bio.txt')
 
+You can also provide a list of templates, as ``loader.select_template`` is used
+under the hood.
+
+Example::
+
+    bio = CharField(use_template=True, template_name=['myapp/data/bio.txt', 'myapp/bio.txt', 'bio.txt'])
+
+
 ``use_template``
 ----------------
 
@@ -187,7 +205,7 @@ Method Reference
 ``__init__``
 ------------
 
-.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, default=NOT_PROVIDED, null=False)
+.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, faceted=False, default=NOT_PROVIDED, null=False, index_fieldname=None, facet_class=None, weight=1.0)
 
 Instantiates a fresh ``SearchField`` instance.
 
