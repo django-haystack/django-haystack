@@ -71,6 +71,11 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(self.extra_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
         self.assertEqual(self.no_overwrite_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
     
+    def test_content_type(self):
+        self.assertEqual(self.no_data_sr.content_type(), u'core.mockmodel')
+        self.assertEqual(self.extra_data_sr.content_type(), u'core.mockmodel')
+        self.assertEqual(self.no_overwrite_data_sr.content_type(), u'core.mockmodel')
+    
     def test_stored_fields(self):
         # Stow.
         import haystack
@@ -119,7 +124,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol1.verbose_name, u'Mock model')
         self.assertEqual(awol1.verbose_name_plural, u'Mock models')
         self.assertEqual(awol1.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 3)
+        self.assertEqual(len(CaptureHandler.logs_seen), 4)
         
         CaptureHandler.logs_seen = []
         self.assertEqual(awol2.model, None)
@@ -127,7 +132,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name, u'')
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 9)
+        self.assertEqual(len(CaptureHandler.logs_seen), 12)
     
     def test_pickling(self):
         pickle_me_1 = SearchResult('core', 'mockmodel', '1000000', 2)
