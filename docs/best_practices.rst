@@ -133,6 +133,67 @@ your ``SearchIndex`` as the HTML result.
     query for each type of model with ``load_all=True``.
 
 
+Content-Type Specific Templates
+===============================
+
+Frequently, when displaying results, you'll want to customize the HTML output
+based on what model the result represents.
+
+In practice, the best way to handle this is through the use of ``include``
+along with the data on the ``SearchResult``.
+
+Your existing loop might look something like::
+
+    {% for result in page.object_list %}
+        <p>
+            <a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a>
+        </p>
+    {% empty %}
+        <p>No results found.</p>
+    {% endfor %}
+
+An improved version might look like::
+
+    {% for result in page.object_list %}
+        {% if result.content_type == "blog.post" %}
+        {% include "search/includes/blog/post.html" %}
+        {% endif %}
+        {% if result.content_type == "media.photo" %}
+        {% include "search/includes/media/photo.html" %}
+        {% endif %}
+    {% empty %}
+        <p>No results found.</p>
+    {% endfor %}
+
+Those include files might look like::
+
+    # search/includes/blog/post.html
+    <div class="post_result">
+        <h3><a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a></h3>
+        
+        <p>{{ result.object.tease }}</p>
+    </div>
+    
+    # search/includes/media/photo.html
+    <div class="photo_result">
+        <a href="{{ result.object.get_absolute_url }}">
+        <img src="http://your.media.example.com/media/{{ result.object.photo.url }}"></a>
+        <p>Taken By {{ result.object.taken_by }}</p>
+    </div>
+
+You can make this even better by standardizing on an includes layout, then
+writing a template tag or filter that generates the include filename. Usage
+might looks something like::
+
+    {% for result in page.object_list %}
+        {% with result|search_include as fragment %}
+        {% include fragment %}
+        {% endwith %}
+    {% empty %}
+        <p>No results found.</p>
+    {% endfor %}
+
+
 Real-Time Search
 ================
 
