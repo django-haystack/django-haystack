@@ -9,6 +9,7 @@ from django.db.models.loading import get_model
 from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
@@ -32,7 +33,8 @@ except ImportError:
 
 # Bubble up the correct error.
 from whoosh.analysis import StemmingAnalyzer
-from whoosh.fields import Schema, ID, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME
+from whoosh.fields import Schema, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME
+from whoosh.fields import ID as WHOOSH_ID
 from whoosh import index
 from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
@@ -118,9 +120,9 @@ class SearchBackend(BaseSearchBackend):
     
     def build_schema(self, fields):
         schema_fields = {
-            'id': ID(stored=True, unique=True),
-            'django_ct': ID(stored=True),
-            'django_id': ID(stored=True),
+            ID: WHOOSH_ID(stored=True, unique=True),
+            DJANGO_CT: WHOOSH_ID(stored=True),
+            DJANGO_ID: WHOOSH_ID(stored=True),
         }
         # Grab the number of keys that are hard-coded into Haystack.
         # We'll use this to (possibly) fail slightly more gracefully later.
@@ -186,7 +188,7 @@ class SearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         whoosh_id = get_identifier(obj_or_string)
-        self.index.delete_by_query(q=self.parser.parse(u'id:"%s"' % whoosh_id))
+        self.index.delete_by_query(q=self.parser.parse(u'%s:"%s"' % (ID, whoosh_id)))
     
     def clear(self, models=[], commit=True):
         if not self.setup_complete:
@@ -200,7 +202,7 @@ class SearchBackend(BaseSearchBackend):
             models_to_delete = []
             
             for model in models:
-                models_to_delete.append(u"django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                models_to_delete.append(u"%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
             
             self.index.delete_by_query(q=self.parser.parse(u" OR ".join(models_to_delete)))
     
@@ -301,7 +303,7 @@ class SearchBackend(BaseSearchBackend):
             registered_models = self.build_registered_models_list()
             
             if len(registered_models) > 0:
-                narrow_queries.add('django_ct:(%s)' % ' OR '.join(registered_models))
+                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
         
         if narrow_queries is not None:
             # Potentially expensive? I don't see another way to do it in Whoosh...
@@ -404,7 +406,7 @@ class SearchBackend(BaseSearchBackend):
         
         for doc_offset, raw_result in enumerate(raw_page):
             score = raw_page.score(doc_offset) or 0
-            app_label, model_name = raw_result['django_ct'].split('.')
+            app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
             
@@ -425,8 +427,8 @@ class SearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self._to_python(value)
                 
-                del(additional_fields['django_ct'])
-                del(additional_fields['django_id'])
+                del(additional_fields[DJANGO_CT])
+                del(additional_fields[DJANGO_ID])
                 
                 if highlight:
                     from whoosh import analysis
@@ -438,7 +440,7 @@ class SearchBackend(BaseSearchBackend):
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
                 
-                result = SearchResult(app_label, model_name, raw_result['django_id'], score, **additional_fields)
+                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1

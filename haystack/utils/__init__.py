@@ -1,5 +1,6 @@
 import re
 from django.utils.html import strip_tags
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 try:
     set
 except NameError:
@@ -26,7 +27,7 @@ def get_identifier(obj_or_string):
 
 
 def get_facet_field_name(fieldname):
-    if fieldname in ['id', 'django_id', 'django_ct']:
+    if fieldname in [ID, DJANGO_ID, DJANGO_CT]:
         return fieldname
     
     return "%s_exact" % fieldname

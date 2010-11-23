@@ -2,6 +2,7 @@ import copy
 import sys
 from django.db.models import signals
 from django.utils.encoding import force_unicode
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.fields import *
 from haystack.utils import get_identifier, get_facet_field_name
 
@@ -122,9 +123,9 @@ class SearchIndex(object):
         Fetches and adds/alters data before indexing.
         """
         self.prepared_data = {
-            'id': get_identifier(obj),
-            'django_ct': "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
-            'django_id': force_unicode(obj.pk),
+            ID: get_identifier(obj),
+            DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
+            DJANGO_ID: force_unicode(obj.pk),
         }
         
         for field_name, field in self.fields.items():
@@ -302,7 +303,7 @@ class ModelSearchIndex(SearchIndex):
     """
     text = CharField(document=True, use_template=True)
     # list of reserved field names
-    fields_to_skip = ('id', 'django_ct', 'django_id', 'content', 'text')
+    fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, 'content', 'text')
     
     def __init__(self, model, backend=None, extra_field_kwargs=None):
         self.model = model

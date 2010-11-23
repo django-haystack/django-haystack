@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
@@ -75,7 +76,11 @@ class SearchBackend(BaseSearchBackend):
         solr_id = get_identifier(obj_or_string)
         
         try:
-            self.conn.delete(id=solr_id, commit=commit)
+            kwargs = {
+                'commit': commit,
+                ID: solr_id
+            }
+            self.conn.delete(**kwargs)
         except (IOError, SolrError), e:
             self.log.error("Failed to remove document '%s' from Solr: %s", solr_id, e)
     
@@ -88,7 +93,7 @@ class SearchBackend(BaseSearchBackend):
                 models_to_delete = []
                 
                 for model in models:
-                    models_to_delete.append("django_ct:%s.%s" % (model._meta.app_label, model._meta.module_name))
+                    models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
                 
                 self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
             
@@ -175,7 +180,7 @@ class SearchBackend(BaseSearchBackend):
             registered_models = self.build_registered_models_list()
             
             if len(registered_models) > 0:
-                narrow_queries.add('django_ct:(%s)' % ' OR '.join(registered_models))
+                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
         
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
@@ -223,7 +228,7 @@ class SearchBackend(BaseSearchBackend):
             registered_models = self.build_registered_models_list()
             
             if len(registered_models) > 0:
-                narrow_queries.add('django_ct:(%s)' % ' OR '.join(registered_models))
+                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
         
         if additional_query_string:
             narrow_queries.add(additional_query_string)
@@ -231,7 +236,7 @@ class SearchBackend(BaseSearchBackend):
         if narrow_queries:
             params['fq'] = list(narrow_queries)
         
-        query = "id:%s" % get_identifier(model_instance)
+        query = "%s:%s" % (ID, get_identifier(model_instance))
         
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
@@ -271,7 +276,7 @@ class SearchBackend(BaseSearchBackend):
         indexed_models = site.get_indexed_models()
         
         for raw_result in raw_results.docs:
-            app_label, model_name = raw_result['django_ct'].split('.')
+            app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
             
@@ -285,14 +290,14 @@ class SearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self.conn._to_python(value)
                 
-                del(additional_fields['django_ct'])
-                del(additional_fields['django_id'])
+                del(additional_fields[DJANGO_CT])
+                del(additional_fields[DJANGO_ID])
                 del(additional_fields['score'])
                 
-                if raw_result['id'] in getattr(raw_results, 'highlighting', {}):
-                    additional_fields['highlighted'] = raw_results.highlighting[raw_result['id']]
+                if raw_result[ID] in getattr(raw_results, 'highlighting', {}):
+                    additional_fields['highlighted'] = raw_results.highlighting[raw_result[ID]]
                 
-                result = SearchResult(app_label, model_name, raw_result['django_id'], raw_result['score'], **additional_fields)
+                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
                 results.append(result)
             else:
                 hits -= 1

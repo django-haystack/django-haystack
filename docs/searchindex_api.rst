@@ -75,6 +75,9 @@ search, et cetera).
     Haystack reserves the following field names for internal use: ``id``,
     ``django_ct``, ``django_id`` & ``content``. The ``name`` & ``type`` names
     used to be reserved but no longer are.
+    
+    You can override these field names using the ``HAYSTACK_ID_FIELD``,
+    ``HAYSTACK_DJANGO_CT_FIELD`` & ``HAYSTACK_DJANGO_ID_FIELD`` if needed.
 
 
 Significance Of ``document=True``

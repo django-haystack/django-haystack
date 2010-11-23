@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
 try:
     set
@@ -476,7 +476,7 @@ class BaseSearchQuery(object):
             query = self.matching_all_fragment()
         
         if len(self.models):
-            models = sorted(['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models])
+            models = sorted(['%s:%s.%s' % (DJANGO_CT, model._meta.app_label, model._meta.module_name) for model in self.models])
             models_clause = ' OR '.join(models)
             
             if query != self.matching_all_fragment():

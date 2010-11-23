@@ -299,3 +299,51 @@ An example::
     HAYSTACK_LIMIT_TO_REGISTERED_MODELS = False
 
 Default is ``True``.
+
+
+``HAYSTACK_ID_FIELD``
+=====================
+
+**Optional**
+
+This setting allows you to control what the unique field name used internally
+by Haystack is called. Rarely needed unless your field names collide with
+Haystack's defaults.
+
+An example::
+
+    HAYSTACK_ID_FIELD = 'my_id'
+
+Default is ``id``.
+
+
+``HAYSTACK_DJANGO_CT_FIELD``
+============================
+
+**Optional**
+
+This setting allows you to control what the content type field name used
+internally by Haystack is called. Rarely needed unless your field names
+collide with Haystack's defaults.
+
+An example::
+
+    HAYSTACK_DJANGO_CT_FIELD = 'my_django_ct'
+
+Default is ``django_ct``.
+
+
+``HAYSTACK_DJANGO_ID_FIELD``
+============================
+
+**Optional**
+
+This setting allows you to control what the primary key field name used
+internally by Haystack is called. Rarely needed unless your field names
+collide with Haystack's defaults.
+
+An example::
+
+    HAYSTACK_DJANGO_ID_FIELD = 'my_django_id'
+
+Default is ``django_id``.
