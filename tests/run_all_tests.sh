@@ -19,3 +19,7 @@ echo ""
 
 echo "** SITE REG **"
 django-admin.py test site_registration --settings=site_registration_settings
+
+echo "** OVERRIDES **"
+django-admin.py test overrides --settings=overrides_settings
+echo ""

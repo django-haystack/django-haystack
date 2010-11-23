@@ -64,9 +64,9 @@
 
   <fields>   
     <!-- general -->
-    <field name="id"      type="string"   indexed="true"  stored="true"  multiValued="false" required="true"/>
-    <field name="django_ct" type="string"   indexed="true"  stored="true"  multiValued="false" />
-    <field name="django_id" type="string"   indexed="true"  stored="true"  multiValued="false" />
+    <field name="{{ ID }}" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
+    <field name="{{ DJANGO_CT }}" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="{{ DJANGO_ID }}" type="string" indexed="true" stored="true" multiValued="false" />
 
     <dynamicField name="*_i"  type="sint"    indexed="true"  stored="true"/>
     <dynamicField name="*_s"  type="string"  indexed="true"  stored="true"/>
@@ -83,7 +83,7 @@
   </fields>
 
   <!-- field to use to determine and enforce document uniqueness. -->
-  <uniqueKey>id</uniqueKey>
+  <uniqueKey>{{ ID }}</uniqueKey>
 
   <!-- field for the QueryParser to use when an explicit fieldname is absent -->
   <defaultSearchField>{{ content_field_name }}</defaultSearchField>
