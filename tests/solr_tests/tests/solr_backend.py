@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 import logging
 import pysolr
@@ -829,6 +830,53 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(backends.queries), 5)
+    
+    def test_quotes_regression(self):
+        sqs = self.sqs.auto_query("44°48'40''N 20°28'32''E")
+        # Should not have empty terms.
+        self.assertEqual(sqs.query.build_query(), u"(44\ufffd\ufffd48'40''N AND 20\ufffd\ufffd28'32''E)")
+        # Should not cause Solr to 500.
+        self.assertEqual(sqs.count(), 0)
+        
+        sqs = self.sqs.auto_query('blazing')
+        self.assertEqual(sqs.query.build_query(), u'blazing')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('blazing saddles')
+        self.assertEqual(sqs.query.build_query(), u'(blazing AND saddles)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('"blazing saddles')
+        self.assertEqual(sqs.query.build_query(), u'(\\"blazing AND saddles)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('"blazing saddles"')
+        self.assertEqual(sqs.query.build_query(), u'"blazing saddles"')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing saddles"')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" AND mel)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing \'saddles"')
+        self.assertEqual(sqs.query.build_query(), u'("blazing \'saddles" AND mel)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing \'\'saddles"')
+        self.assertEqual(sqs.query.build_query(), u'("blazing \'\'saddles" AND mel)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing \'\'saddles"\'')
+        self.assertEqual(sqs.query.build_query(), u'("blazing \'\'saddles" AND mel AND \')')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing \'\'saddles"\'"')
+        self.assertEqual(sqs.query.build_query(), u'("blazing \'\'saddles" AND mel AND \'\\")')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('"blazing saddles" mel')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" AND mel)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('"blazing saddles" mel brooks')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" AND mel AND brooks)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing saddles" brooks')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" AND mel AND brooks)')
+        self.assertEqual(sqs.count(), 0)
+        sqs = self.sqs.auto_query('mel "blazing saddles" "brooks')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" AND mel AND \\"brooks)')
+        self.assertEqual(sqs.count(), 0)
 
 
 class LiveSolrMoreLikeThisTestCase(TestCase):

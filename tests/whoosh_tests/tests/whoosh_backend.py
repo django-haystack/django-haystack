@@ -488,7 +488,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 0)
         
         sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
-        self.assertEqual(sqs.query.build_query(), u"(\"bell bronze\" AND 'daler-rowney' AND pearlescent)")
+        self.assertEqual(sqs.query.build_query(), u"('daler-rowney' AND pearlescent AND 'bell AND bronze')")
         self.assertEqual(len(sqs), 0)
         
         sqs = self.sqs.models(MockModel)

@@ -346,21 +346,24 @@ class SearchQuerySet(object):
         clone = self._clone()
         
         # Pull out anything wrapped in quotes and do an exact match on it.
-        quote_regex = re.compile(r'([\'"])(.*?)\1')
-        result = quote_regex.search(query_string)
-        
-        while result is not None:
-            full_match = result.group()
-            query_string = query_string.replace(full_match, '', 1)
-            
-            exact_match = result.groups()[1]
-            clone = clone.filter(content=clone.query.clean(exact_match))
-            
-            # Re-search the string for other exact matches.
-            result = quote_regex.search(query_string)
+        open_quote_position = None
+        non_exact_query = query_string
+
+        for offset, char in enumerate(query_string):
+            if char == '"':
+                if open_quote_position != None:
+                    current_match = non_exact_query[open_quote_position + 1:offset]
+
+                    if current_match:
+                        clone = clone.filter(content=clone.query.clean(current_match))
+
+                    non_exact_query = non_exact_query.replace('"%s"' % current_match, '', 1)
+                    open_quote_position = None
+                else:
+                    open_quote_position = offset
         
         # Pseudo-tokenize the rest of the query.
-        keywords = query_string.split()
+        keywords = non_exact_query.split()
         
         # Loop through keywords and add filters to the query.
         for keyword in keywords:

@@ -507,11 +507,11 @@ class SearchQuerySetTestCase(TestCase):
         
         sqs = self.bsqs.auto_query('test "my thing" search \'moar quotes\' -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__exact=moar quotes AND content__exact=test AND content__exact=search AND NOT (content__exact=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), "<SQ: AND (content__exact=my thing AND content__exact=test AND content__exact=search AND content__exact='moar AND content__exact=quotes' AND NOT (content__exact=stuff))>")
         
         sqs = self.bsqs.auto_query('test "my thing" search \'moar quotes\' "foo -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__exact=moar quotes AND content__exact=test AND content__exact=search AND content__exact="foo AND NOT (content__exact=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__exact=test AND content__exact=search AND content__exact=\'moar AND content__exact=quotes\' AND content__exact="foo AND NOT (content__exact=stuff))>')
         
         sqs = self.bsqs.auto_query('test - stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))
