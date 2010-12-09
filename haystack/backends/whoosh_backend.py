@@ -69,16 +69,18 @@ class SearchBackend(BaseSearchBackend):
         '[', ']', '^', '"', '~', '*', '?', ':', '.',
     )
     
-    def __init__(self, site=None):
+    def __init__(self, site=None, post_limit=None, storage=None, path=None):
         super(SearchBackend, self).__init__(site)
         self.setup_complete = False
         self.use_file_storage = True
-        self.post_limit = getattr(settings, 'HAYSTACK_WHOOSH_POST_LIMIT', 128 * 1024 * 1024)
+        self.post_limit = post_limit or getattr(settings, 'HAYSTACK_WHOOSH_POST_LIMIT', 128 * 1024 * 1024)
         
-        if getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file') != 'file':
+        if (storage or getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file')) != 'file':
             self.use_file_storage = False
         
-        if self.use_file_storage and not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
+        self.path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', path)
+        
+        if self.use_file_storage and not self.path:
             raise ImproperlyConfigured('You must specify a HAYSTACK_WHOOSH_PATH in your settings.')
     
     def setup(self):
@@ -88,15 +90,15 @@ class SearchBackend(BaseSearchBackend):
         new_index = False
         
         # Make sure the index is there.
-        if self.use_file_storage and not os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            os.makedirs(settings.HAYSTACK_WHOOSH_PATH)
+        if self.use_file_storage and not os.path.exists(self.path):
+            os.makedirs(self.path)
             new_index = True
         
-        if self.use_file_storage and not os.access(settings.HAYSTACK_WHOOSH_PATH, os.W_OK):
-            raise IOError("The path to your Whoosh index '%s' is not writable for the current user/group." % settings.HAYSTACK_WHOOSH_PATH)
+        if self.use_file_storage and not os.access(self.path, os.W_OK):
+            raise IOError("The path to your Whoosh index '%s' is not writable for the current user/group." % self.path)
         
         if self.use_file_storage:
-            self.storage = FileStorage(settings.HAYSTACK_WHOOSH_PATH)
+            self.storage = FileStorage(self.path)
         else:
             global LOCALS
             
@@ -209,8 +211,8 @@ class SearchBackend(BaseSearchBackend):
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
         # it's much more efficient to simply delete the index files.
-        if self.use_file_storage and os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        if self.use_file_storage and os.path.exists(self.path):
+            shutil.rmtree(self.path)
         elif not self.use_file_storage:
             self.storage.clean()
         
