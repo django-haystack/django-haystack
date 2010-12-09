@@ -18,9 +18,10 @@ class SearchSite(object):
     much as it makes sense to do.
     """
     
-    def __init__(self):
+    def __init__(self, backend=None):
         self._registry = {}
         self._cached_field_mapping = None
+        self.backend = backend
     
     def register(self, model, index_class=None, backend=None):
         """
@@ -41,7 +42,7 @@ class SearchSite(object):
         if model in self._registry:
             raise AlreadyRegistered('The model %s is already registered' % model.__class__)
         
-        self._registry[model] = index_class(model, backend)
+        self._registry[model] = index_class(model, backend or self.backend)
         self._setup(model, self._registry[model])
     
     def unregister(self, model):
