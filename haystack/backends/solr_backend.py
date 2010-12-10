@@ -248,7 +248,7 @@ class SearchBackend(BaseSearchBackend):
         return self._process_results(raw_results)
     
     def _process_results(self, raw_results, highlight=False):
-        from haystack import site
+        site = self.site
         results = []
         hits = raw_results.hits
         facets = {}
@@ -366,12 +366,14 @@ class SearchBackend(BaseSearchBackend):
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(backend=backend)
+        super(SearchQuery, self).__init__(site=site, backend=backend)
         
         if backend is not None:
             self.backend = backend
+        elif self.site:
+            self.backend = self.site.backend
         else:
-            self.backend = SearchBackend(site=site)
+            self.backend = SearchBackend()
 
     def matching_all_fragment(self):
         return '*:*'

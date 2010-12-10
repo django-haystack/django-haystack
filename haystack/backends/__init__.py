@@ -287,8 +287,10 @@ class BaseSearchQuery(object):
         
         if backend is not None:
             self.backend = backend
+        elif self.site:
+            self.backend = site.backend
         else:
-            self.backend = SearchBackend(site=site)
+            self.backend = SearchBackend()
     
     def __str__(self):
         return self.build_query()
@@ -695,7 +697,7 @@ class BaseSearchQuery(object):
         if klass is None:
             klass = self.__class__
         
-        clone = klass()
+        clone = klass(backend=self.backend)
         clone.query_filter = deepcopy(self.query_filter)
         clone.order_by = self.order_by[:]
         clone.models = self.models.copy()
@@ -707,7 +709,7 @@ class BaseSearchQuery(object):
         clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
-        clone.backend = self.backend
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+        
         return clone

@@ -342,7 +342,7 @@ class SearchBackend(BaseSearchBackend):
             # Handle the case where the results have been narrowed.
             if narrowed_results:
                 raw_results.filter(narrowed_results)
-            
+
             # Determine the page.
             page_num = 0
             
@@ -395,7 +395,7 @@ class SearchBackend(BaseSearchBackend):
         }
     
     def _process_results(self, raw_page, highlight=False, query_string='', spelling_query=None):
-        from haystack import site
+        site = self.site
         results = []
         
         # It's important to grab the hits first before slicing. Otherwise, this
@@ -550,12 +550,14 @@ class SearchBackend(BaseSearchBackend):
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(backend=backend)
+        super(SearchQuery, self).__init__(site=site, backend=backend)
         
         if backend is not None:
             self.backend = backend
+        elif self.site:
+            self.backend = self.site.backend
         else:
-            self.backend = SearchBackend(site=site)
+            self.backend = SearchBackend()
     
     def _convert_datetime(self, date):
         if hasattr(date, 'hour'):

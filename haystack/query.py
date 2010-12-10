@@ -50,9 +50,12 @@ class SearchQuerySet(object):
         self.site = main_site
     
     def __repr__(self):
-        data = list(self[:REPR_OUTPUT_SIZE])
+        try:
+            data = list(self[:REPR_OUTPUT_SIZE])
+        except Exception, e:
+            return object.__repr__(self)
         
-        if len(self) > REPR_OUTPUT_SIZE:
+        if data and len(self) > REPR_OUTPUT_SIZE:
             data[-1] = "...(remaining elements truncated)..."
         
         return repr(data)

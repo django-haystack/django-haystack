@@ -98,12 +98,14 @@ class SearchBackend(BaseSearchBackend):
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(backend=backend)
+        super(SearchQuery, self).__init__(site=site, backend=backend)
         
         if backend is not None:
             self.backend = backend
+        elif self.site:
+            self.backend = self.site.backend
         else:
-            self.backend = SearchBackend(site=site)
+            self.backend = SearchBackend()
     
     def build_query(self):
         if not self.query_filter:

@@ -44,7 +44,7 @@ class SearchSite(object):
         
         self._registry[model] = index_class(model, backend or self.backend)
         self._setup(model, self._registry[model])
-    
+
     def unregister(self, model):
         """
         Unregisters a model from the site.
