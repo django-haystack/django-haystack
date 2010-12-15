@@ -11,7 +11,7 @@ except ImportError:
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (1, 1, 0)
+__version__ = (1, 1, 1, 'beta')
 __all__ = ['backend']
 
 
