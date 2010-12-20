@@ -305,6 +305,8 @@ class SearchBackend(BaseSearchBackend):
             if len(registered_models) > 0:
                 narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
         
+        narrow_searcher = None
+        
         if narrow_queries is not None:
             # Potentially expensive? I don't see another way to do it in Whoosh...
             narrow_searcher = self.index.searcher()
@@ -367,7 +369,13 @@ class SearchBackend(BaseSearchBackend):
                     'spelling_suggestion': None,
                 }
             
-            return self._process_results(raw_page, highlight=highlight, query_string=query_string, spelling_query=spelling_query)
+            results = self._process_results(raw_page, highlight=highlight, query_string=query_string, spelling_query=spelling_query)
+            searcher.close()
+            
+            if hasattr(narrow_searcher, 'close'):
+                narrow_searcher.close()
+            
+            return results
         else:
             if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
                 if spelling_query:
