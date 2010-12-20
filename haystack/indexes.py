@@ -171,8 +171,8 @@ class SearchIndex(object):
         """Returns a dict of fields with weight values"""
         weights = {}
         for field_name, field in self.fields.items():
-            if field.weight:
-                weights[field_name] = field.weight
+            if field.boost:
+                weights[field_name] = field.boost
         return weights
     
     def update(self):

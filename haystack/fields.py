@@ -20,7 +20,7 @@ class SearchField(object):
     def __init__(self, model_attr=None, use_template=False, template_name=None,
                  document=False, indexed=True, stored=True, faceted=False,
                  default=NOT_PROVIDED, null=False, index_fieldname=None,
-                 facet_class=None, weight=1.0):
+                 facet_class=None, boost=1.0, weight=None):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -33,7 +33,7 @@ class SearchField(object):
         self._default = default
         self.null = null
         self.index_fieldname = index_fieldname
-        self.weight = weight
+        self.boost = weight or boost
         self.is_multivalued = False
         
         # We supply the facet_class for making it easy to create a faceted

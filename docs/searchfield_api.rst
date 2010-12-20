@@ -205,7 +205,7 @@ Method Reference
 ``__init__``
 ------------
 
-.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, faceted=False, default=NOT_PROVIDED, null=False, index_fieldname=None, facet_class=None, weight=1.0)
+.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, faceted=False, default=NOT_PROVIDED, null=False, index_fieldname=None, facet_class=None, boost=1.0, weight=None)
 
 Instantiates a fresh ``SearchField`` instance.
 
