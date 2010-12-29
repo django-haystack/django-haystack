@@ -138,7 +138,17 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 class FacetedSearchView(SearchView):
     __name__ = 'FacetedSearchView'
-    
+
+    def build_form(self, form_kwargs=None):
+        if form_kwargs is None:
+            form_kwargs = {}
+
+        # This way the form can always receive a list containing zero or more
+        # facet expressions:
+        form_kwargs['selected_facets'] = self.request.GET.getlist("selected_facets")
+
+        return super(FacetedSearchView, self).build_form(form_kwargs)
+
     def extra_context(self):
         extra = super(FacetedSearchView, self).extra_context()
         extra['facets'] = self.results.facet_counts()
