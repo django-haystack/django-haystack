@@ -3,10 +3,10 @@ import Queue
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django import forms
-from django.http import HttpRequest
+from django.http import HttpRequest, QueryDict
 from django.test import TestCase
 import haystack
-from haystack.forms import model_choices, SearchForm, ModelSearchForm
+from haystack.forms import model_choices, SearchForm, ModelSearchForm, FacetedSearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.sites import SearchSite
 from haystack.views import SearchView, FacetedSearchView, search_view_factory
@@ -144,8 +144,29 @@ class FacetedSearchViewTestCase(TestCase):
     def test_empty_results(self):
         fsv = FacetedSearchView()
         fsv.request = HttpRequest()
+        fsv.request.GET = QueryDict('')
         fsv.form = fsv.build_form()
         self.assert_(isinstance(fsv.get_results(), EmptySearchQuerySet))
+    
+    def test_default_form(self):
+        fsv = FacetedSearchView()
+        fsv.request = HttpRequest()
+        fsv.request.GET = QueryDict('')
+        fsv.form = fsv.build_form()
+        self.assert_(isinstance(fsv.form, FacetedSearchForm))
+    
+    def test_list_selected_facets(self):
+        fsv = FacetedSearchView()
+        fsv.request = HttpRequest()
+        fsv.request.GET = QueryDict('')
+        fsv.form = fsv.build_form()
+        self.assertEqual(fsv.form.selected_facets, [])
+        
+        fsv = FacetedSearchView()
+        fsv.request = HttpRequest()
+        fsv.request.GET = QueryDict('selected_facets=author:daniel&selected_facets=author:chris')
+        fsv.form = fsv.build_form()
+        self.assertEqual(fsv.form.selected_facets, [u'author:daniel', u'author:chris'])
 
 
 class BasicSearchViewTestCase(TestCase):

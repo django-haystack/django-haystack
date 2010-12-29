@@ -3,7 +3,7 @@ from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from haystack.forms import ModelSearchForm
+from haystack.forms import ModelSearchForm, FacetedSearchForm
 from haystack.query import EmptySearchQuerySet
 
 
@@ -20,11 +20,14 @@ class SearchView(object):
     form = None
     results_per_page = RESULTS_PER_PAGE
     
-    def __init__(self, template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None):
+    def __init__(self, template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None):
         self.load_all = load_all
         self.form_class = form_class
         self.context_class = context_class
         self.searchqueryset = searchqueryset
+        
+        if form_class is None:
+            self.form_class = ModelSearchForm
         
         if not results_per_page is None:
             self.results_per_page = results_per_page
@@ -138,6 +141,23 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 class FacetedSearchView(SearchView):
     __name__ = 'FacetedSearchView'
+    
+    def __init__(self, *args, **kwargs):
+        # Needed to switch out the default form class.
+        if kwargs.get('form_class') is None:
+            kwargs['form_class'] = FacetedSearchForm
+        
+        super(FacetedSearchView, self).__init__(*args, **kwargs)
+    
+    def build_form(self, form_kwargs=None):
+        if form_kwargs is None:
+            form_kwargs = {}
+        
+        # This way the form can always receive a list containing zero or more
+        # facet expressions:
+        form_kwargs['selected_facets'] = self.request.GET.getlist("selected_facets")
+        
+        return super(FacetedSearchView, self).build_form(form_kwargs)
     
     def extra_context(self):
         extra = super(FacetedSearchView, self).extra_context()

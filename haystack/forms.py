@@ -64,13 +64,23 @@ class HighlightedSearchForm(SearchForm):
 
 
 class FacetedSearchForm(SearchForm):
-    selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
+    def __init__(self, *args, **kwargs):
+        self.selected_facets = kwargs.pop("selected_facets", [])
+        super(FacetedSearchForm, self).__init__(*args, **kwargs)
     
     def search(self):
         sqs = super(FacetedSearchForm, self).search()
         
-        if hasattr(self, 'cleaned_data') and self.cleaned_data['selected_facets']:
-            sqs = sqs.narrow(self.cleaned_data['selected_facets'])
+        # We need to process each facet to ensure that the field name and the
+        # value are quoted correctly and separately:
+        for facet in self.selected_facets:
+            if ":" not in facet:
+                continue
+            
+            field, value = facet.split(":", 1)
+            
+            if value:
+                sqs = sqs.narrow(u'%s:"%s"' % (field, sqs.query.clean(value)))
         
         return sqs
 

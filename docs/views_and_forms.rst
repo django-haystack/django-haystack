@@ -129,7 +129,7 @@ The functional view provides an example of how Haystack can be used in more
 traditional settings or as an example of how to write a more complex custom
 view. It is also thread-safe.
 
-``SearchView(template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
+``SearchView(template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 The ``SearchView`` is designed to be easy/flexible enough to override common
@@ -158,7 +158,7 @@ URLconf should look something like::
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
-            form_class=ModelSearchForm
+            form_class=SearchForm
         ), name='haystack_search'),
     )
     
@@ -179,6 +179,9 @@ URLconf should look something like::
     The standard ``SearchView`` is not thread-safe. Use the
     ``search_view_factory`` function, which returns thread-safe instances of
     ``SearchView``.
+
+By default, if you don't specify a ``form_class``, the view will use the
+``haystack.forms.ModelSearchForm`` form.
 
 Beyond this customizations, you can create your own ``SearchView`` and
 extend/override the following methods to change the functionality.
