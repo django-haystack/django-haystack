@@ -135,6 +135,23 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError("Subclasses must provide a way to fetch similar record via the 'more_like_this' method if supported by the backend.")
 
+    def extract_file_contents(self, file_obj):
+        """
+        Hook to allow backends which support rich-content types such as PDF,
+        Word, etc. extraction to process the provided file object and return
+        the contents for indexing
+
+        Returns None if metadata cannot be extracted; otherwise returns a
+        dictionary containing at least two keys:
+
+            :contents:
+                        Extracted full-text content, if applicable
+            :metadata:
+                        key:value pairs of text strings
+        """
+
+        raise NotImplementedError("Subclasses must provide a way to extract metadata via the 'extract' method if supported by the backend.")
+
     def build_schema(self, fields):
         """
         Takes a dictionary of fields and returns schema information.

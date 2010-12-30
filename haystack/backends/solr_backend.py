@@ -377,6 +377,38 @@ class SolrSearchBackend(BaseSearchBackend):
 
         return (content_field_name, schema_fields)
 
+    def extract_file_contents(self, file_obj):
+        """Extract text and metadata from a structured file (PDF, MS Word, etc.)
+
+        Uses the Solr ExtractingRequestHandler, which is based on Apache Tika.
+        See the Solr wiki for details:
+
+            http://wiki.apache.org/solr/ExtractingRequestHandler
+
+        Due to the way the ExtractingRequestHandler is implemented it completely
+        replaces the normal Haystack indexing process with several unfortunate
+        restrictions: only one file per request, the extracted data is added to
+        the index with no ability to modify it, etc. To simplify the process and
+        allow for more advanced use we'll run using the extract-only mode to
+        return the extracted data without adding it to the index so we can then
+        use it within Haystack's normal templating process.
+
+        Returns None if metadata cannot be extracted; otherwise returns a
+        dictionary containing at least two keys:
+
+            :contents:
+                        Extracted full-text content, if applicable
+            :metadata:
+                        key:value pairs of text strings
+        """
+
+        try:
+            return self.conn.extract(file_obj)
+        except StandardError, e:
+            self.log.warning(u"Unable to extract file contents: %s", e,
+                             exc_info=True, extra={"data": {"file": file_obj}})
+            return None
+
 
 class SolrSearchQuery(BaseSearchQuery):
     def matching_all_fragment(self):
