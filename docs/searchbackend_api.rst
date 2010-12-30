@@ -70,6 +70,17 @@ results the search backend found.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
+``extract_file_contents``
+-------------------------
+
+.. method:: SearchBackend.extract_file_contents(self, file_obj)
+
+Perform text extraction on the provided file or file-like object. Returns either
+None or a dictionary containing the keys ``contents`` and ``metadata``. The
+``contents`` field will always contain the extracted text content returned by
+the underlying search engine but ``metadata`` may vary considerably based on
+the backend and the input file.
+
 ``prep_value``
 --------------
 
