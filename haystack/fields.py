@@ -140,7 +140,7 @@ class SearchField(object):
 
 
 class CharField(SearchField):
-    field_type = 'string'
+    field_type = 'text'
     
     def __init__(self, **kwargs):
         if kwargs.get('facet_class') is None:

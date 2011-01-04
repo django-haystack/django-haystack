@@ -336,6 +336,8 @@ class SearchBackend(BaseSearchBackend):
                 field_data['type'] = 'sfloat'
             elif field_class.field_type == 'boolean':
                 field_data['type'] = 'boolean'
+            elif field_class.field_type == 'string':
+                field_data['type'] = 'string'
             
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
