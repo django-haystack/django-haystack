@@ -10,13 +10,20 @@ class Command(BaseCommand):
     base_options = (
         make_option("-f", "--filename", action="store", type="string", dest="filename",
                     help='If provided, directs output to a file instead of stdout.'),
+    
+        make_option("-t", "--template", action="store", type="string", dest="template",
+                    help='If provided, use a specified template for building the schema'),
     )
+    
+    
     option_list = BaseCommand.option_list + base_options
     
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
-        schema_xml = self.build_template()
-        
+        if options.get('template'):
+            schema_xml = self.build_template(template=options.get('template'))
+        else:
+            schema_xml = self.build_template(template=None)
         if options.get('filename'):
             self.write_file(options.get('filename'), schema_xml)
         else:
@@ -35,8 +42,11 @@ class Command(BaseCommand):
             'DJANGO_ID': DJANGO_ID,
         })
     
-    def build_template(self):
-        t = loader.get_template('search_configuration/solr.xml')
+    def build_template(self, template=None):
+        if template:
+            t = loader.get_template(template)
+        else:
+            t = loader.get_template('search_configuration/solr.xml')
         c = self.build_context()
         return t.render(c)
     
