@@ -269,6 +269,7 @@ class BaseSearchQuery(object):
         self.order_by = []
         self.models = set()
         self.boost = {}
+        self.dismax = {}
         self.start_offset = 0
         self.end_offset = None
         self.highlight = False
@@ -607,6 +608,10 @@ class BaseSearchQuery(object):
     def add_boost(self, term, boost_value):
         """Adds a boosted term and the amount to boost it to the query."""
         self.boost[term] = boost_value
+        
+    def add_dismax(self, field, boost_value):
+        """Boost certain field in the query."""
+        self.dismax[field] = boost_value
     
     def raw_search(self, query_string, **kwargs):
         """
@@ -700,6 +705,7 @@ class BaseSearchQuery(object):
         clone.order_by = self.order_by[:]
         clone.models = self.models.copy()
         clone.boost = self.boost.copy()
+        clone.dismax = self.dismax.copy()
         clone.highlight = self.highlight
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()

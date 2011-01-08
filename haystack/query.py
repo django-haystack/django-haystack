@@ -300,6 +300,11 @@ class SearchQuerySet(object):
         clone.query.add_boost(term, boost)
         return clone
     
+    def dismax(self, field, boost):
+        clone = self._clone()
+        clone.query.add_dismax(field, boost)
+        return clone
+    
     def facet(self, field):
         """Adds faceting to a query for the provided field."""
         clone = self._clone()
