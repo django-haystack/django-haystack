@@ -192,10 +192,13 @@ Relies on internal, overridable methods to construct the response. You generally
 should avoid altering this method unless you need to change the flow of the
 methods or to add a new method into the processing.
 
-``build_form(self)``
-~~~~~~~~~~~~~~~~~~~~
+``build_form(self, form_kwargs=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Instantiates the form the class should use to process the search query.
+
+Optionally accepts a dictionary of parameters that are passed on to the
+form's ``__init__``. You can use this to lightly customize the form.
 
 You should override this if you write a custom form that needs special
 parameters for instantiation.
