@@ -8,6 +8,8 @@ from django.utils.text import capfirst
 
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
+from haystack.exceptions import NotRegistered
+
 class SearchResult(object):
     """
     A single search result. The actual object is loaded lazily by accessing
@@ -65,7 +67,12 @@ class SearchResult(object):
                 return None
             
             try:
-                self._object = self.searchindex.read_queryset().get(pk=self.pk)
+                try:
+                    self._object = self.searchindex.read_queryset().get(pk=self.pk)
+                except NotRegistered:
+                    self.log.warning("Model not registered with search site '%s.%s'." % (self.app_label, self.model_name))
+                    # Revert to old behaviour
+                    self._object = self.model._default_manager.get(pk=self.pk)
             except ObjectDoesNotExist:
                 self.log.error("Object could not be found in database for SearchResult '%s'." % self)
                 self._object = None
