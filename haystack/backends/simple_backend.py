@@ -73,7 +73,7 @@ class SearchBackend(BaseSearchBackend):
                 hits += len(qs)
                 
                 for match in qs:
-                    result = SearchResult(match._meta.app_label, match._meta.module_name, match.pk, 0, self.site, **match.__dict__)
+                    result = SearchResult(match._meta.app_label, match._meta.module_name, match.pk, 0, searchsite=self.site, **match.__dict__)
                     # For efficiency.
                     result._model = match.__class__
                     result._object = match

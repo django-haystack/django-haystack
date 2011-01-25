@@ -17,7 +17,7 @@ class SearchResult(object):
     result will do O(N) database queries, which may not fit your needs for
     performance.
     """
-    def __init__(self, app_label, model_name, pk, score, searchsite, **kwargs):
+    def __init__(self, app_label, model_name, pk, score, searchsite=None, **kwargs):
         self.app_label, self.model_name = app_label, model_name
         self.pk = pk
         self.score = score
@@ -27,7 +27,11 @@ class SearchResult(object):
         self._additional_fields = []
         self.stored_fields = None
         self.log = self._get_log()
-        self.searchsite = searchsite
+        if searchsite:
+            self.searchsite = searchsite
+        else:
+            from haystack import site
+            self.searchsite = site
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
