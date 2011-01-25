@@ -9,7 +9,7 @@ from haystack.backends.solr_backend import SearchBackend, SearchQuery
 from haystack.exceptions import HaystackError
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
 from haystack.sites import SearchSite
-from core.models import MockModel, AnotherMockModel, AFourthMockModel
+from core.models import MockModel, AnotherMockModel
 try:
     set
 except NameError:
@@ -61,16 +61,6 @@ class SolrAnotherMockModelSearchIndex(SearchIndex):
     
     def prepare_text(self, obj):
         return u"You might be searching for the user %s" % obj.author
-
-
-class SolrBoostMockSearchIndex(SearchIndex):
-    text = CharField(
-        document=True, use_template=True,
-        template_name='search/indexes/core/mockmodel_template.txt'
-    )
-    author = CharField(model_attr='author', weight=2.0)
-    editor = CharField(model_attr='editor')
-    pub_date = DateField(model_attr='pub_date')
 
 
 class SolrRoundTripSearchIndex(SearchIndex):
@@ -984,55 +974,3 @@ if test_pickling:
             like_a_cuke = pickle.loads(in_a_pickle)
             self.assertEqual(len(like_a_cuke), len(results))
             self.assertEqual(like_a_cuke[0].id, results[0].id)
-
-
-class SolrBoostBackendTestCase(TestCase):
-    def setUp(self):
-        super(SolrBoostBackendTestCase, self).setUp()
-        
-        # Wipe it clean.
-        self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
-        clear_solr_index()
-        
-        self.site = SearchSite()
-        self.sb = SearchBackend(site=self.site)
-        self.smmi = SolrBoostMockSearchIndex(AFourthMockModel, backend=self.sb)
-        self.site.register(AFourthMockModel, SolrBoostMockSearchIndex)
-        
-        # Stow.
-        import haystack
-        self.old_site = haystack.site
-        haystack.site = self.site
-        self.sample_objs = []
-        
-        for i in xrange(1, 5):
-            mock = AFourthMockModel()
-            mock.id = i
-            
-            if i % 2:
-                mock.author = 'daniel'
-                mock.editor = 'david'
-            else:
-                mock.author = 'david'
-                mock.editor = 'daniel'
-            
-            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
-            self.sample_objs.append(mock)
-    
-    def tearDown(self):
-        import haystack
-        haystack.site = self.old_site
-        super(SolrBoostBackendTestCase, self).tearDown()
-    
-    def test_boost(self):
-        self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_solr.search('*:*').hits, 4)
-        
-        results = SearchQuerySet().filter(SQ(author='daniel') | SQ(editor='daniel'))
-        
-        self.assertEqual([result.id for result in results], [
-            'core.afourthmockmodel.1',
-            'core.afourthmockmodel.3',
-            'core.afourthmockmodel.2',
-            'core.afourthmockmodel.4'
-        ])

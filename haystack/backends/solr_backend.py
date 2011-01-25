@@ -67,7 +67,7 @@ class SearchBackend(BaseSearchBackend):
         
         if len(docs) > 0:
             try:
-                self.conn.add(docs, commit=commit, boost=index.get_field_weights())
+                self.conn.add(docs, commit=commit)
             except (IOError, SolrError), e:
                 self.log.error("Failed to add documents to Solr: %s", e)
     
