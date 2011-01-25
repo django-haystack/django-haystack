@@ -32,7 +32,7 @@ except ImportError:
 
 # Bubble up the correct error.
 from whoosh.analysis import StemmingAnalyzer
-from whoosh.fields import Schema, ID, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME
+from whoosh.fields import Schema, ID, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME, NGRAM
 from whoosh import index
 from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
@@ -71,6 +71,10 @@ class SearchBackend(BaseSearchBackend):
         super(SearchBackend, self).__init__(site)
         self.setup_complete = False
         self.use_file_storage = True
+        self.use_ngram_for_text = False
+        self.ngram_min_size = None # We don't need any magic number here - Whoosh has sane defauls
+        self.ngram_max_size = None # Same here - Whoosh has sane defaults.
+        
         self.post_limit = getattr(settings, 'HAYSTACK_WHOOSH_POST_LIMIT', 128 * 1024 * 1024)
         
         if getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file') != 'file':
@@ -78,7 +82,15 @@ class SearchBackend(BaseSearchBackend):
         
         if self.use_file_storage and not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_WHOOSH_PATH in your settings.')
-    
+        
+        if hasattr(settings, 'HAYSTACK_WOOSH_USE_NGRAM_SEARCH'):
+            if getattr(settings, 'HAYSTACK_WOOSH_USE_NGRAM_SEARCH') == True:
+                self.use_ngram_for_text = True
+            if hasattr(settings, 'HAYSTACK_WOOSH_NGRAM_MIN'):
+                self.ngram_min_size = getattr(settings, 'HAYSTACK_WOOSH_NGRAM_MIN')
+            if hasattr(settings, 'HAYSTACK_WOOSH_NGRAM_MAX'):
+                self.ngram_max_size = getattr(settings, 'HAYSTACK_WOOSH_NGRAM_MAX')
+        
     def setup(self):
         """
         Defers loading until needed.
@@ -142,7 +154,15 @@ class SearchBackend(BaseSearchBackend):
             elif field_class.field_type == 'boolean':
                 schema_fields[field_class.index_fieldname] = BOOLEAN(stored=field_class.stored)
             else:
-                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
+                if self.use_ngram_for_text:
+                    params = {'stored': True}
+                    if self.ngram_max_size:
+                        params['maxsize'] = self.ngram_max_size
+                    if self.ngram_min_size:
+                        params['minsize'] = self.ngram_min_size
+                    schema_fields[field_class.index_fieldname] = NGRAM(**params)
+                else:
+                    schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname

@@ -1,17 +1,17 @@
+from core.models import MockModel, AnotherMockModel
 from datetime import timedelta
-import os
-import shutil
-from whoosh.fields import TEXT, ID, KEYWORD, NUMERIC, DATETIME
-from whoosh.qparser import QueryParser
 from django.conf import settings
-from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
+from django.utils.datetime_safe import datetime, date
 from haystack import backends
-from haystack.indexes import *
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
+from haystack.indexes import *
 from haystack.query import SearchQuerySet, SQ
 from haystack.sites import SearchSite
-from core.models import MockModel, AnotherMockModel
+from whoosh.fields import TEXT, ID, KEYWORD, NUMERIC, DATETIME, NGRAM
+from whoosh.qparser import QueryParser
+import os
+import shutil
 try:
     set
 except NameError:
@@ -764,3 +764,140 @@ class LiveWhooshRamStorageTestCase(TestCase):
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [u'3', u'5', u'1'])
         self.assertEqual(result.empty_list, [])
+        
+class WhooshNGramSearchBackendTestCase(WhooshSearchBackendTestCase):
+    ''' 
+    This is simply the same as the "normal" testcase, using the n-Gram settings.
+    '''
+    def setUp(self):
+        super(WhooshSearchBackendTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_ngram_query')
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        
+        # Here's the N-Gram specific part:
+        settings.HAYSTACK_WOOSH_USE_NGRAM_SEARCH = True
+        
+        self.site = SearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.smmi = WhooshMockSearchIndex(MockModel, backend=self.sb)
+        self.wmtmmi = WhooshMaintainTypeMockSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshMockSearchIndex)
+        
+        # With the models registered, you get the proper bits.
+        import haystack
+        
+        # Stow.
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        self.sb.delete_index()
+        
+        self.sample_objs = MockModel.objects.all()
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        # Just in case this one gets run before the "normal" one
+        settings.HAYSTACK_WOOSH_USE_NGRAM_SEARCH = False
+        
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        
+        super(WhooshSearchBackendTestCase, self).tearDown()
+    
+    def test_scoring(self):
+        '''
+        Explicitly don't run the scoring test on this (it makes no sense)
+        '''
+        pass
+    
+    def test_range_queries(self):
+        '''
+        Explicitly don't run the scoring test on this (it makes no sense)
+        '''
+        pass
+    
+    def test_build_schema(self):
+        self.site.unregister(MockModel)
+        self.site.register(MockModel, AllTypesWhooshMockSearchIndex)
+        
+        (content_field_name, schema) = self.sb.build_schema(self.site.all_searchfields())
+        self.assertEqual(content_field_name, 'text')
+        self.assertEqual(len(schema.names()), 8)
+        self.assertEqual(schema.names(), ['django_ct', 'django_id', 'id', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
+        self.assert_(isinstance(schema._fields['text'], NGRAM))
+        self.assert_(isinstance(schema._fields['pub_date'], DATETIME))
+        self.assert_(isinstance(schema._fields['seen_count'], NUMERIC))
+        self.assert_(isinstance(schema._fields['sites'], KEYWORD))
+        
+    def test_search(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+        
+        # No query string should always yield zero results.
+        self.assertEqual(self.sb.search(u''), {'hits': 0, 'results': []})
+        
+        # A one letter query string gets nabbed by a stopwords filter. Should
+        # always yield zero results.
+        self.assertEqual(self.sb.search(u'a'), {'hits': 0, 'results': []})
+        
+        # Possible AttributeError?
+        # self.assertEqual(self.sb.search(u'a b'), {'hits': 0, 'results': [], 'spelling_suggestion': '', 'facets': {}})
+        
+        self.assertEqual(self.sb.search(u'*')['hits'], 23)
+        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in xrange(1, 24)])
+        
+        self.assertEqual(self.sb.search(u'', highlight=True), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'index*', highlight=True)['hits'], 23)
+        # DRL_FIXME: Uncomment once highlighting works.
+        # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
+        
+        self.assertEqual(self.sb.search(u'Indx')['hits'], 0)
+        self.assertEqual(self.sb.search(u'Indx')['spelling_suggestion'], u'ind') # With default gram sizes, it should actually return ind
+        
+        self.assertEqual(self.sb.search(u'', facets=['name']), {'hits': 0, 'results': []})
+        results = self.sb.search(u'Index*', facets=['name'])
+        results = self.sb.search(u'index*', facets=['name'])
+        self.assertEqual(results['hits'], 23)
+        self.assertEqual(results['facets'], {})
+        
+        self.assertEqual(self.sb.search(u'', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
+        results = self.sb.search(u'Index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
+        results = self.sb.search(u'index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
+        self.assertEqual(results['hits'], 23)
+        self.assertEqual(results['facets'], {})
+        
+        self.assertEqual(self.sb.search(u'', query_facets={'name': '[* TO e]'}), {'hits': 0, 'results': []})
+        results = self.sb.search(u'Index*', query_facets={'name': '[* TO e]'})
+        results = self.sb.search(u'index*', query_facets={'name': '[* TO e]'})
+        self.assertEqual(results['hits'], 23)
+        self.assertEqual(results['facets'], {})
+        
+        # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
+        # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
+        # self.assertEqual(results['hits'], 1)
+        
+        # Check the use of ``limit_to_registered_models``.
+        self.assertEqual(self.sb.search(u'', limit_to_registered_models=False), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'*', limit_to_registered_models=False)['hits'], 23)
+        self.assertEqual([result.pk for result in self.sb.search(u'*', limit_to_registered_models=False)['results']], [u'%s' % i for i in xrange(1, 24)])
+        
+        # Stow.
+        old_limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
+        settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = False
+        
+        self.assertEqual(self.sb.search(u''), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'*')['hits'], 23)
+        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in xrange(1, 24)])
+        
+        # Restore.
+        settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
