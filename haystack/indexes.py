@@ -122,7 +122,7 @@ class SearchIndex(object):
         """
         Alias of index_queryset kept for backwards compatibility.
         """
-        return self.get_queryset()
+        return self.index_queryset()
 
     def read_queryset(self):
         """
