@@ -168,7 +168,7 @@ might look like this::
                     <dt>Author</dt>
                     {# Provide only the top 5 authors #}
                     {% for author in facets.fields.author|slice:":5" %}
-                        <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
+                        <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author_exact:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
                     {% endfor %}
                 {% else %}
                     <p>No author facets.</p>
