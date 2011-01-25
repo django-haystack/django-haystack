@@ -46,7 +46,7 @@ class SearchBackend(BaseSearchBackend):
                limit_to_registered_models=None, result_class=None, **kwargs):
         if query_string == '(content__exact hello AND content__exact world)':
             return {
-                'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],
+                'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5, searchsite=self.site)],
                 'hits': 1,
             }
         

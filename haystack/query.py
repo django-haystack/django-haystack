@@ -168,8 +168,13 @@ class SearchQuerySet(object):
             
             # Load the objects for each model in turn.
             for model in models_pks:
-                loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
-        
+                try:
+                    loaded_objects[model] = self.site.get_index(model).read_queryset().in_bulk(models_pks[model])
+                except NotRegistered:
+                    self.log.warning("Model not registered with search site '%s.%s'." % (self.app_label, self.model_name))
+                    # Revert to old behaviour
+                    loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
+
         to_cache = []
         
         for result in results:

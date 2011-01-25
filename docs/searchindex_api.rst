@@ -32,7 +32,7 @@ For the impatient::
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
         
-        def get_queryset(self):
+        def index_queryset(self):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     
@@ -362,14 +362,31 @@ already present in the quickest and most efficient way.
 ``Search Index``
 ================
 
+``index_queryset``
+----------------
+
+.. method:: SearchIndex.index_queryset(self)
+
+Get the default QuerySet to index when doing a full update.
+
+Subclasses can override this method to avoid indexing certain objects.
+
 ``get_queryset``
 ----------------
 
 .. method:: SearchIndex.get_queryset(self)
 
-Get the default QuerySet to index when doing a full update.
+Alias of ``SearchIndex.index_queryset`` for backwards compatibility.
 
-Subclasses can override this method to avoid indexing certain objects.
+``read_queryset``
+-----------------
+
+.. method:: SearchIndex.read_queryset(self)
+
+Get the default QuerySet for read actions.
+
+Subclasses can override this method to work with other managers.
+Useful when working with default managers that filter some objects.
 
 ``prepare``
 -----------
@@ -562,7 +579,7 @@ For the impatient::
             fields = ['user', 'pub_date']
         
         # Note that regular ``SearchIndex`` methods apply.
-        def get_queryset(self):
+        def index_queryset(self):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     

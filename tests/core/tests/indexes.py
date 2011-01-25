@@ -46,6 +46,12 @@ class GoodCustomMockSearchIndex(SearchIndex):
     
     def load_all_queryset(self):
         return self.model._default_manager.filter(id__gt=1)
+    
+    def index_queryset(self):
+        return MockModel.objects.all()
+    
+    def read_queryset(self):
+        return MockModel.objects.filter(author__in=['daniel1', 'daniel3'])
 
 
 class GoodNullableMockSearchIndex(SearchIndex):
@@ -150,8 +156,14 @@ class SearchIndexTestCase(TestCase):
         self.assert_('hello' in self.cmi.fields)
         self.assert_(isinstance(self.cmi.fields['extra'], CharField))
     
+    def test_index_queryset(self):
+        self.assertEqual(len(self.cmi.index_queryset()), 3)
+    
     def test_get_queryset(self):
-        self.assertEqual(len(self.mi.get_queryset()), 3)
+        self.assertEqual(len(self.cmi.get_queryset()), 3)
+    
+    def test_read_queryset(self):
+        self.assertEqual(len(self.cmi.read_queryset()), 2)
     
     def test_prepare(self):
         mock = MockModel()
@@ -349,6 +361,12 @@ class YetAnotherBasicModelSearchIndex(BasicModelSearchIndex):
     class Meta:
         pass
 
+
+class ReadQuerySetTestSearchIndex(SearchIndex):
+    author = CharField(model_attr='author', document=True)
+
+    def read_queryset(self):
+        return self.model.objects.complete_set()
 
 class ModelSearchIndexTestCase(TestCase):
     def setUp(self):

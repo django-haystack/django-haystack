@@ -17,7 +17,7 @@ class DogIndex(RealTimeSearchIndex):
     # Note that we can't assign an attribute here. We'll manually prepare it instead.
     toys = MultiValueField()
     
-    def get_queryset(self):
+    def index_queryset(self):
         return Dog.objects.filter(public=True)
     
     def prepare_toys(self, obj):

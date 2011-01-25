@@ -69,8 +69,8 @@ class SearchIndex(object):
             author = CharField(model_attr='user')
             pub_date = DateTimeField(model_attr='pub_date')
             
-            def get_queryset(self):
-                return super(NoteIndex, self).get_queryset().filter(pub_date__lte=datetime.datetime.now())
+            def index_queryset(self):
+                return super(NoteIndex, self).index_queryset().filter(pub_date__lte=datetime.datetime.now())
     
     """
     __metaclass__ = DeclarativeMetaclass
@@ -110,13 +110,28 @@ class SearchIndex(object):
         """A hook for removing the behavior when the registered model is deleted."""
         pass
     
-    def get_queryset(self):
+    def index_queryset(self):
         """
         Get the default QuerySet to index when doing a full update.
         
         Subclasses can override this method to avoid indexing certain objects.
         """
         return self.model._default_manager.all()
+    
+    def get_queryset(self):
+        """
+        Alias of index_queryset for backwards compatibility.
+        """
+        return self.index_queryset()
+    
+    def read_queryset(self):
+        """
+        Get the default QuerySet for read actions.
+        
+        Subclasses can override this method to work with other managers.
+        Useful when working with default managers that filter some objects.
+        """
+        return self.index_queryset()
     
     def prepare(self, obj):
         """
@@ -177,7 +192,7 @@ class SearchIndex(object):
     
     def update(self):
         """Update the entire index"""
-        self.backend.update(self, self.get_queryset())
+        self.backend.update(self, self.index_queryset())
     
     def update_object(self, instance, **kwargs):
         """

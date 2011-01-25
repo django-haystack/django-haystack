@@ -109,12 +109,12 @@ class Command(AppCommand):
                     if self.verbosity >= 2:
                         print "No updated date field found for '%s' - not restricting by age." % model.__name__
             
-            if not hasattr(index.get_queryset(), 'filter'):
+            if not hasattr(index.index_queryset(), 'filter'):
                 raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'get_queryset' method." % index)
             
             # `.select_related()` seems like a good idea here but can fail on
             # nullable `ForeignKey` as well as what seems like other cases.
-            qs = index.get_queryset().filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
+            qs = index.index_queryset().filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
             total = qs.count()
             
             if self.verbosity >= 1:
@@ -146,7 +146,7 @@ class Command(AppCommand):
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     pks_seen = set()
-                    qs = index.get_queryset().values_list('pk', flat=True)
+                    qs = index.index_queryset().values_list('pk', flat=True)
                     total = qs.count()
                     
                     for pk in qs:

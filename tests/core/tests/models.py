@@ -2,9 +2,9 @@ import logging
 import pickle
 from django.test import TestCase
 from haystack.models import SearchResult
-from core.models import MockModel
+from core.models import MockModel, AFifthMockModel
 from core.tests.mocks import MockSearchResult
-
+from core.tests.indexes import ReadQuerySetTestSearchIndex
 
 class CaptureHandler(logging.Handler):
     logs_seen = []
@@ -124,8 +124,8 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol1.verbose_name, u'Mock model')
         self.assertEqual(awol1.verbose_name_plural, u'Mock models')
         self.assertEqual(awol1.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 4)
-        
+        self.assertEqual(len(CaptureHandler.logs_seen), 8)
+
         CaptureHandler.logs_seen = []
         self.assertEqual(awol2.model, None)
         self.assertEqual(awol2.object, None)
@@ -133,6 +133,30 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
         self.assertEqual(len(CaptureHandler.logs_seen), 12)
+
+    def test_read_queryset(self):
+        # The model is flagged deleted so not returned by the default manager
+        deleted1 = SearchResult('core', 'afifthmockmodel', 2, 2)
+        self.assertEqual(deleted1.object, None)
+
+        import haystack
+        from haystack.sites import SearchSite
+        # stow
+        old_site = haystack.site
+        test_site = SearchSite()
+        haystack.site = test_site
+
+        haystack.site.register(AFifthMockModel, ReadQuerySetTestSearchIndex)
+
+        # The soft delete manager returns the object
+        deleted2 = SearchResult('core', 'afifthmockmodel', 2, 2)
+        self.assertNotEqual(deleted2.object, None)
+        self.assertEqual(deleted2.object.author, 'sam2')
+
+        # restore
+        haystack.site = old_site
+
+
     
     def test_pickling(self):
         pickle_me_1 = SearchResult('core', 'mockmodel', '1000000', 2)

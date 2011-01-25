@@ -204,7 +204,7 @@ it applies to, though that is not required. This allows
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
         
-        def get_queryset(self):
+        def index_queryset(self):
             """Used when the entire index for model is updated."""
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     
@@ -241,7 +241,7 @@ with a variety of ``SearchField`` classes to handle most types of data.
 
 A common theme is to allow admin users to add future content but have it not
 display on the site until that future date is reached. We specify a custom
-``get_queryset`` method to prevent those future items from being indexed.
+``index_queryset`` method to prevent those future items from being indexed.
 
 .. _Django admin site: http://docs.djangoproject.com/en/dev/ref/contrib/admin/
 

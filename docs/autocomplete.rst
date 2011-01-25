@@ -40,7 +40,7 @@ Example (continuing from the tutorial)::
         # We add this for autocomplete.
         content_auto = indexes.EdgeNgramField(model_attr='content')
         
-        def get_queryset(self):
+        def index_queryset(self):
             """Used when the entire index for model is updated."""
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
     
