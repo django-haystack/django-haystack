@@ -448,7 +448,7 @@ class SearchBackend(BaseSearchBackend):
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
                 
-                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
+                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], score, self.site, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1

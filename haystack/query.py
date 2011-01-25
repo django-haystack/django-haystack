@@ -163,7 +163,7 @@ class SearchQuerySet(object):
             
             # Load the objects for each model in turn.
             for model in models_pks:
-                loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
+                loaded_objects[model] = self.site.get_index(model).read_queryset().in_bulk(models_pks[model])
         
         to_cache = []
         

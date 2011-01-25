@@ -297,7 +297,7 @@ class SearchBackend(BaseSearchBackend):
                 if raw_result[ID] in getattr(raw_results, 'highlighting', {}):
                     additional_fields['highlighted'] = raw_results.highlighting[raw_result[ID]]
                 
-                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
+                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], self.site, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1

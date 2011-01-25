@@ -17,7 +17,7 @@ class SearchResult(object):
     result will do O(N) database queries, which may not fit your needs for
     performance.
     """
-    def __init__(self, app_label, model_name, pk, score, **kwargs):
+    def __init__(self, app_label, model_name, pk, score, searchsite, **kwargs):
         self.app_label, self.model_name = app_label, model_name
         self.pk = pk
         self.score = score
@@ -27,6 +27,7 @@ class SearchResult(object):
         self._additional_fields = []
         self.stored_fields = None
         self.log = self._get_log()
+        self.searchsite = searchsite
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
@@ -47,7 +48,12 @@ class SearchResult(object):
             raise AttributeError
         
         return self.__dict__.get(attr, None)
-    
+
+    def _get_searchindex(self):
+        return self.searchsite.get_index(self.model)
+
+    searchindex = property(_get_searchindex)
+
     def _get_object(self):
         if self._object is None:
             if self.model is None:
@@ -55,7 +61,7 @@ class SearchResult(object):
                 return None
             
             try:
-                self._object = self.model._default_manager.get(pk=self.pk)
+                self._object = self.searchindex.read_queryset().get(pk=self.pk)
             except ObjectDoesNotExist:
                 self.log.error("Object could not be found in database for SearchResult '%s'." % self)
                 self._object = None

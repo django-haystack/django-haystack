@@ -110,11 +110,25 @@ class SearchIndex(object):
         """A hook for removing the behavior when the registered model is deleted."""
         pass
     
-    def get_queryset(self):
+    def index_queryset(self):
         """
         Get the default QuerySet to index when doing a full update.
         
         Subclasses can override this method to avoid indexing certain objects.
+        """
+        return self.model._default_manager.all()
+
+    def get_queryset(self):
+        """
+        Alias of index_queryset kept for backwards compatibility.
+        """
+        return self.get_queryset()
+
+    def read_queryset(self):
+        """
+        Get the default QuerySet for read actions.
+
+        Subclasses can override this method, for example when the default manager filters some objects.
         """
         return self.model._default_manager.all()
     
