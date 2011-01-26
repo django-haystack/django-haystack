@@ -350,6 +350,12 @@ class YetAnotherBasicModelSearchIndex(BasicModelSearchIndex):
         pass
 
 
+class ReadQuerySetTestSearchIndex(SearchIndex):
+    author = CharField(model_attr='author', document=True)
+
+    def read_queryset(self):
+        return self.model.objects.complete_set()
+
 class ModelSearchIndexTestCase(TestCase):
     def setUp(self):
         super(ModelSearchIndexTestCase, self).setUp()

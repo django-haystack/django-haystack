@@ -54,5 +54,21 @@
     "model": "core.charpkmockmodel",
     "fields": {
     }
+  },
+  {
+    "pk": 1,
+    "model": "core.afifthmockmodel",
+    "fields": {
+      "author": "sam1",
+      "deleted": false
+    }
+  },
+  {
+    "pk": 2,
+    "model": "core.afifthmockmodel",
+    "fields": {
+      "author": "sam2",
+      "deleted": true
+    }
   }
 ]

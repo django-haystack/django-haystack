@@ -11,8 +11,9 @@ from haystack.exceptions import HaystackError, FacetingError, NotRegistered
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
-from core.models import MockModel, AnotherMockModel, CharPKMockModel
-from core.tests.mocks import MockSearchQuery, MockSearchBackend, CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS
+from core.models import MockModel, AnotherMockModel, CharPKMockModel, AFifthMockModel
+from core.tests.indexes import ReadQuerySetTestSearchIndex
+from core.tests.mocks import MockSearchQuery, MockSearchBackend, CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS, ReadQuerySetMockSearchBackend
 try:
     set
 except NameError:
@@ -496,6 +497,34 @@ class SearchQuerySetTestCase(TestCase):
         
         # For full tests, see the solr_backend.
     
+    def test_load_all_read_queryset(self):
+        # stow
+        old_site = haystack.site
+        test_site = SearchSite()
+        # Register a default SearchIndex first (without the SoftDeleteMangaer as the read_queryset)
+        test_site.register(AFifthMockModel)
+        haystack.site = test_site
+
+        sqs = SearchQuerySet(query=MockSearchQuery(backend=ReadQuerySetMockSearchBackend()))
+        results = sqs.load_all().all()
+        results._fill_cache(0, 2)
+        # The deleted result isn't returned
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 1)
+
+        test_site.unregister(AFifthMockModel)
+        # Register a SearchIndex with a read_queryset that returns deleted items
+        test_site.register(AFifthMockModel, ReadQuerySetTestSearchIndex)
+
+        sqs = SearchQuerySet(query=MockSearchQuery(backend=ReadQuerySetMockSearchBackend()))
+        results = sqs.load_all().all()
+        results._fill_cache(0, 2)
+        # Both the deleted and not deleted items are returned
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 2)
+
+
+        # restore
+        haystack.site = old_site
+
     def test_auto_query(self):
         sqs = self.bsqs.auto_query('test search -stuff')
         self.assert_(isinstance(sqs, SearchQuerySet))

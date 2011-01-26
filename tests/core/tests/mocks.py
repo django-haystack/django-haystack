@@ -73,6 +73,11 @@ class CharPKMockSearchBackend(MockSearchBackend):
     mock_search_results = [MockSearchResult('core', 'CharPKMockModel', 'sometext', 0.5),
                            MockSearchResult('core', 'CharPKMockModel', '1234', 0.3)]
 
+class ReadQuerySetMockSearchBackend(MockSearchBackend):
+    model_name = 'afifthmockmodel'
+    mock_search_results = [MockSearchResult('core', 'afifthmockmodel', 1, 2),
+                           MockSearchResult('core', 'afifthmockmodel', 2, 2)]
+
 class MixedMockSearchBackend(MockSearchBackend):
     @log_query
     def search(self, query_string, **kwargs):
