@@ -17,6 +17,14 @@ Provides a queue-based setup as an alternative to ``RealTimeSearchIndex`` or
 constantly running the ``update_index`` command. Useful for high-load, short
 update time situations.
 
+django-celery-haystack
+----------------------
+
+https://github.com/mixcloud/django-celery-haystack-SearchIndex
+
+Also provides a queue-based setup, this time centered around Celery. Useful
+for keeping the index fresh.
+
 saved_searches
 --------------
 
