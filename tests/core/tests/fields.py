@@ -60,6 +60,120 @@ class CharFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), None)
 
 
+class NgramFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = NgramField(model_attr='foo')
+        except:
+            self.fail()
+        
+        self.assertRaises(SearchFieldError, NgramField, faceted=True)
+    
+    def test_prepare(self):
+        mock = MockModel()
+        mock.user = 'daniel'
+        author = NgramField(model_attr='user')
+        
+        self.assertEqual(author.prepare(mock), u'daniel')
+        
+        # Do a lookup through the relation.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_name = NgramField(model_attr='tag__name')
+        
+        self.assertEqual(tag_name.prepare(mock), u'primary')
+        
+        # Use the default.
+        mock = MockModel()
+        author = NgramField(model_attr='author', default='')
+        
+        self.assertEqual(author.prepare(mock), u'')
+        
+        # Simulate failed lookups.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_slug = NgramField(model_attr='tag__slug')
+        
+        self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
+        
+        # Simulate default='foo'.
+        mock = MockModel()
+        default = NgramField(default='foo')
+        
+        self.assertEqual(default.prepare(mock), 'foo')
+        
+        # Simulate null=True.
+        mock = MockModel()
+        empty = NgramField(null=True)
+        
+        self.assertEqual(empty.prepare(mock), None)
+        
+        mock = MockModel()
+        mock.user = None
+        author = NgramField(model_attr='user', null=True)
+        
+        self.assertEqual(author.prepare(mock), None)
+
+
+class EdgeNgramFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = EdgeNgramField(model_attr='foo')
+        except:
+            self.fail()
+        
+        self.assertRaises(SearchFieldError, EdgeNgramField, faceted=True)
+    
+    def test_prepare(self):
+        mock = MockModel()
+        mock.user = 'daniel'
+        author = EdgeNgramField(model_attr='user')
+        
+        self.assertEqual(author.prepare(mock), u'daniel')
+        
+        # Do a lookup through the relation.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_name = EdgeNgramField(model_attr='tag__name')
+        
+        self.assertEqual(tag_name.prepare(mock), u'primary')
+        
+        # Use the default.
+        mock = MockModel()
+        author = EdgeNgramField(model_attr='author', default='')
+        
+        self.assertEqual(author.prepare(mock), u'')
+        
+        # Simulate failed lookups.
+        mock_tag = MockTag(name='primary')
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_slug = EdgeNgramField(model_attr='tag__slug')
+        
+        self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
+        
+        # Simulate default='foo'.
+        mock = MockModel()
+        default = EdgeNgramField(default='foo')
+        
+        self.assertEqual(default.prepare(mock), 'foo')
+        
+        # Simulate null=True.
+        mock = MockModel()
+        empty = EdgeNgramField(null=True)
+        
+        self.assertEqual(empty.prepare(mock), None)
+        
+        mock = MockModel()
+        mock.user = None
+        author = EdgeNgramField(model_attr='user', null=True)
+        
+        self.assertEqual(author.prepare(mock), None)
+
+
 class IntegerFieldTestCase(TestCase):
     def test_init(self):
         try:

@@ -158,6 +158,20 @@ class CharField(SearchField):
         return unicode(value)
 
 
+class NgramField(CharField):
+    field_type = 'ngram'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('faceted') is True:
+            raise SearchFieldError("%s can not be faceted." % self.__class__.__name__)
+        
+        super(NgramField, self).__init__(**kwargs)
+
+
+class EdgeNgramField(NgramField):
+    field_type = 'edge_ngram'
+
+
 class IntegerField(SearchField):
     field_type = 'integer'
     

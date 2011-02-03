@@ -33,7 +33,7 @@ except ImportError:
 
 # Bubble up the correct error.
 from whoosh.analysis import StemmingAnalyzer
-from whoosh.fields import Schema, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME
+from whoosh.fields import Schema, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME, NGRAM, NGRAMWORDS
 from whoosh.fields import ID as WHOOSH_ID
 from whoosh import index
 from whoosh.qparser import QueryParser
@@ -43,8 +43,8 @@ from whoosh.spelling import SpellChecker
 from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 1, 1):
-    raise MissingDependency("The 'whoosh' backend requires version 1.1.1 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 5, 6):
+    raise MissingDependency("The 'whoosh' backend requires version 1.5.6 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -143,6 +143,10 @@ class SearchBackend(BaseSearchBackend):
                 schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=float)
             elif field_class.field_type == 'boolean':
                 schema_fields[field_class.index_fieldname] = BOOLEAN(stored=field_class.stored)
+            elif field_class.field_type == 'ngram':
+                schema_fields[field_class.index_fieldname] = NGRAM(minsize=3, maxsize=15, stored=field_class.stored)
+            elif field_class.field_type == 'edge_ngram':
+                schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, stored=field_class.stored)
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
             
