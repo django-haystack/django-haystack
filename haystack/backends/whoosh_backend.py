@@ -509,9 +509,9 @@ class SearchBackend(BaseSearchBackend):
                 value = datetime(value.year, value.month, value.day, 0, 0, 0)
         elif isinstance(value, bool):
             if value:
-                value = True
+                value = 'true'
             else:
-                value = False
+                value = 'false'
         elif isinstance(value, (list, tuple)):
             value = u','.join([force_unicode(v) for v in value])
         elif isinstance(value, (int, long, float)):
