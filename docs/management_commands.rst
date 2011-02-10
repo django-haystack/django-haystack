@@ -24,6 +24,12 @@ following arguments::
 By default, this is an **INTERACTIVE** command and assumes that you do **NOT**
 wish to delete the entire index.
 
+.. warning::
+
+  Depending on the backend you're using, this may simply delete the entire
+  directory, so be sure your ``HAYSTACK_<ENGINE>_PATH`` setting is correctly
+  pointed at just the index directory.
+
 
 ``update_index``
 ================

@@ -134,6 +134,12 @@ This setting controls where on the filesystem the Whoosh indexes will be stored.
 The user must have the appropriate permissions for reading and writing to this
 directory.
 
+.. note::
+
+  This should be it's own directory, with nothing else in it. Pointing this
+  at a directory (like your project root) could cause you to lose data when
+  clearing the index.
+
 Any trailing slashes should be left off.
 
 Finally, you should ensure that this directory is not located within the
@@ -187,6 +193,12 @@ The default is 128 * 1024 * 1024.
 This setting controls where on the filesystem the Xapian indexes will be stored.
 The user must have the appropriate permissions for reading and writing to this
 directory.
+
+.. note::
+
+  This should be it's own directory, with nothing else in it. Pointing this
+  at a directory (like your project root) could cause you to lose data when
+  clearing the index.
 
 Any trailing slashes should be left off.
 
