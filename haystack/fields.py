@@ -286,6 +286,9 @@ class MultiValueField(SearchField):
         if kwargs.get('facet_class') is None:
             kwargs['facet_class'] = FacetMultiValueField
         
+        if kwargs.get('use_template') is True:
+            raise SearchFieldError("'%s' fields can not use templates to prepare their data." % self.__class__.__name__)
+        
         super(MultiValueField, self).__init__(**kwargs)
         self.is_multivalued = True
     

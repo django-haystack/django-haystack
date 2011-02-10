@@ -311,6 +311,8 @@ class MultiValueFieldTestCase(TestCase):
             foo = MultiValueField(model_attr='foo')
         except:
             self.fail()
+        
+        self.assertRaises(SearchFieldError, MultiValueField, use_template=True)
     
     def test_prepare(self):
         mock = MockModel()
