@@ -136,16 +136,14 @@ def handle_registrations(*args, **kwargs):
         # part to make things work.
         return
     
-    # This is a little dirty but we need to run the code that follows only
-    # once, no matter how many times the main Haystack module is imported.
-    # We'll look through the stack to see if we appear anywhere and simply
-    # return if we do, allowing the original call to finish.
-    stack = inspect.stack()
-    
-    for stack_info in stack[1:]:
-        if 'handle_registrations' in stack_info[3]:
-            return
-    
+    # We need to run the code that follows only once, no matter how many times
+    # the main Haystack module is imported. We'll set a var to track if the
+    # function ran, otherwise return. 
+    if not getattr(handle_registrations, 'already_run', False):
+        handle_registrations.already_run = True
+    else:
+        return
+
     # Pull in the config file, causing any SearchSite initialization code to
     # execute.
     search_sites_conf = importlib.import_module(settings.HAYSTACK_SITECONF)
