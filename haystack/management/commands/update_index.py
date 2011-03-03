@@ -168,4 +168,4 @@ class Command(AppCommand):
                             if self.verbosity >= 2:
                                 print "  removing %s." % result.pk
                             
-                            index.backend.remove(".".join([result.app_label, result.model_name, result.pk]))
+                            index.backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]))
