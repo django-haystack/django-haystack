@@ -1,11 +1,39 @@
 from django.test import TestCase
-from haystack.forms import ModelSearchForm, model_choices
+from haystack.forms import SearchForm, ModelSearchForm, model_choices
 import haystack
 from haystack.sites import SearchSite
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
 from core.models import MockModel, AnotherMockModel
+
+
+class SearchFormTestCase(TestCase):
+    def setUp(self):
+        super(SearchFormTestCase, self).setUp()
+        mock_index_site = SearchSite()
+        mock_index_site.register(MockModel)
+        mock_index_site.register(AnotherMockModel)
+        
+        # Stow.
+        self.old_site = haystack.site
+        haystack.site = mock_index_site
+        
+        self.sqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()), site=mock_index_site)
+    
+    def tearDown(self):
+        haystack.site = self.old_site
+        super(SearchFormTestCase, self).tearDown()
+    
+    def test_unbound(self):
+        sf = SearchForm({}, searchqueryset=self.sqs)
+        
+        self.assertEqual(sf.errors, {})
+        self.assertEqual(sf.is_valid(), True)
+        
+        # This shouldn't blow up.
+        sqs = sf.search()
+        self.assertTrue(isinstance(sqs, EmptySearchQuerySet))
 
 
 class ModelSearchFormTestCase(TestCase):

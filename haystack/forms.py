@@ -41,7 +41,7 @@ class SearchForm(forms.Form):
         if not self.is_valid():
             return self.no_query_found()
         
-        if not self.cleaned_data['q']:
+        if not self.cleaned_data.get('q'):
             return self.no_query_found()
         
         sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
