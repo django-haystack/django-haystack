@@ -418,6 +418,18 @@ Example::
 
 This method is somewhat naive but works well enough for simple, common cases.
 
+``autocomplete``
+~~~~~~~~~~~~~~~~
+
+A shortcut method to perform an autocomplete search.
+
+Must be run against fields that are either ``NgramField`` or
+``EdgeNgramField``.
+
+Example::
+
+    SearchQuerySet().autocomplete(title_autocomplete='gol')
+
 ``more_like_this``
 ~~~~~~~~~~~~~~~~~~
 

@@ -113,6 +113,14 @@ class SolrComplexFacetsMockSearchIndex(SearchIndex):
     sites = MultiValueField(faceted=True)
 
 
+class SolrAutocompleteMockModelSearchIndex(SearchIndex):
+    text = CharField(model_attr='foo', document=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
+    text_auto = EdgeNgramField(model_attr='foo')
+    name_auto = EdgeNgramField(model_attr='author')
+
+
 class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
@@ -935,6 +943,65 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
             self.assertEqual(deferred.count(), 0)
             self.assertEqual([result.pk for result in deferred], [])
             self.assertEqual(len([result.pk for result in deferred]), 0)
+
+
+class LiveSolrAutocompleteTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+    
+    def setUp(self):
+        super(LiveSolrAutocompleteTestCase, self).setUp()
+        
+        # Wipe it clean.
+        clear_solr_index()
+        
+        # With the models registered, you get the proper bits.
+        import haystack
+        from haystack.sites import SearchSite
+        
+        # Stow.
+        self.old_site = haystack.site
+        test_site = SearchSite()
+        test_site.register(MockModel, SolrAutocompleteMockModelSearchIndex)
+        haystack.site = test_site
+        
+        self.sqs = SearchQuerySet()
+        
+        test_site.get_index(MockModel).update()
+    
+    def tearDown(self):
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        super(LiveSolrAutocompleteTestCase, self).tearDown()
+    
+    def test_autocomplete(self):
+        autocomplete = self.sqs.autocomplete(text_auto='mod')
+        self.assertEqual(autocomplete.count(), 5)
+        self.assertEqual([result.pk for result in autocomplete], ['1', '12', '6', '7', '14'])
+        self.assertTrue('mod' in autocomplete[0].text.lower())
+        self.assertTrue('mod' in autocomplete[1].text.lower())
+        self.assertTrue('mod' in autocomplete[2].text.lower())
+        self.assertTrue('mod' in autocomplete[3].text.lower())
+        self.assertTrue('mod' in autocomplete[4].text.lower())
+        self.assertEqual(len([result.pk for result in autocomplete]), 5)
+        
+        # Test multiple words.
+        autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
+        self.assertEqual(autocomplete_2.count(), 3)
+        self.assertEqual([result.pk for result in autocomplete_2], ['1', '14', '6'])
+        self.assertTrue('your' in autocomplete_2[0].text.lower())
+        self.assertTrue('mod' in autocomplete_2[0].text.lower())
+        self.assertTrue('your' in autocomplete_2[1].text.lower())
+        self.assertTrue('mod' in autocomplete_2[1].text.lower())
+        self.assertTrue('your' in autocomplete_2[2].text.lower())
+        self.assertTrue('mod' in autocomplete_2[2].text.lower())
+        self.assertEqual(len([result.pk for result in autocomplete_2]), 3)
+        
+        # Test multiple fields.
+        autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
+        self.assertEqual(autocomplete_3.count(), 4)
+        self.assertEqual([result.pk for result in autocomplete_3], ['12', '1', '14', '22'])
+        self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
 class LiveSolrRoundTripTestCase(TestCase):

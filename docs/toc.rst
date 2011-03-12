@@ -22,6 +22,7 @@ Table Of Contents
    best_practices
    highlighting
    faceting
+   autocomplete
    boost
    do_not_try_this_at_home
    

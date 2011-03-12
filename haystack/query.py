@@ -1,3 +1,4 @@
+import operator
 import re
 import warnings
 from django.conf import settings
@@ -385,6 +386,26 @@ class SearchQuerySet(object):
                 clone = clone.filter(content=cleaned_keyword)
         
         return clone
+    
+    def autocomplete(self, **kwargs):
+        """
+        A shortcut method to perform an autocomplete search.
+        
+        Must be run against fields that are either ``NgramField`` or
+        ``EdgeNgramField``.
+        """
+        clone = self._clone()
+        query_bits = []
+        
+        for field_name, query in kwargs.items():
+            for word in query.split(' '):
+                bit = clone.query.clean(word.strip())
+                kwargs = {
+                    field_name: bit,
+                }
+                query_bits.append(SQ(**kwargs))
+        
+        return clone.filter(reduce(operator.__and__, query_bits))
     
     # Methods that do not return a SearchQuerySet.
     

@@ -54,6 +54,7 @@ you may want to include in your application.
    best_practices
    highlighting
    faceting
+   autocomplete
    boost
    do_not_try_this_at_home
 

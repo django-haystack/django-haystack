@@ -44,6 +44,14 @@ class WhooshMaintainTypeMockSearchIndex(SearchIndex):
         return "%02d" % obj.pub_date.month
 
 
+class WhooshAutocompleteMockModelSearchIndex(SearchIndex):
+    text = CharField(model_attr='foo', document=True)
+    name = CharField(model_attr='author')
+    pub_date = DateField(model_attr='pub_date')
+    text_auto = EdgeNgramField(model_attr='foo')
+    name_auto = EdgeNgramField(model_attr='author')
+
+
 class WhooshSearchBackendTestCase(TestCase):
     fixtures = ['bulk_data.json']
     
@@ -599,6 +607,62 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(results), 49)
         self.assertEqual(results._cache_is_full(), False)
         self.assertEqual(len(backends.queries), 1)
+
+
+class LiveWhooshAutocompleteTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+    
+    def setUp(self):
+        super(LiveWhooshAutocompleteTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        
+        self.site = SearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.wacsi = WhooshAutocompleteMockModelSearchIndex(MockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshAutocompleteMockModelSearchIndex)
+        
+        # Stow.
+        import haystack
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.sqs = SearchQuerySet(site=self.site)
+        
+        # Wipe it clean.
+        self.sqs.query.backend.clear()
+        
+        for mock in MockModel.objects.all():
+            self.wacsi.update_object(mock)
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        
+        import haystack
+        haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
+        
+        super(LiveWhooshAutocompleteTestCase, self).tearDown()
+    
+    def test_autocomplete(self):
+        autocomplete = self.sqs.autocomplete(text_auto='mod')
+        self.assertEqual(autocomplete.count(), 5)
+        self.assertEqual([result.pk for result in autocomplete], [u'1', u'12', u'14', u'7', u'6'])
+        self.assertTrue('mod' in autocomplete[0].text.lower())
+        self.assertTrue('mod' in autocomplete[1].text.lower())
+        self.assertTrue('mod' in autocomplete[2].text.lower())
+        self.assertTrue('mod' in autocomplete[3].text.lower())
+        self.assertTrue('mod' in autocomplete[4].text.lower())
+        self.assertEqual(len([result.pk for result in autocomplete]), 5)
 
 
 class WhooshRoundTripSearchIndex(SearchIndex):
