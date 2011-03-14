@@ -43,7 +43,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, **kwargs):
         if query_string == '(content__exact hello AND content__exact world)':
             return {
                 'results': [DummySearchResult('haystack', 'dummymodel', 1, 1.5)],
@@ -60,7 +60,7 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, **kwargs):
         return {
             'results': [],
             'hits': 0

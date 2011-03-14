@@ -1,8 +1,8 @@
 import datetime
-from django.conf import settings
 from django.test import TestCase
-from haystack.query import SQ
 from haystack.backends.solr_backend import SearchBackend, SearchQuery
+from haystack.models import SearchResult
+from haystack.query import SQ
 from core.models import MockModel, AnotherMockModel
 
 
@@ -94,3 +94,18 @@ class SolrSearchQueryTestCase(TestCase):
         
         self.sq.add_model(AnotherMockModel)
         self.assertEqual(self.sq.build_query(), u'(hello) AND (django_ct:core.anothermockmodel OR django_ct:core.mockmodel)')
+    
+    def test_set_result_class(self):
+        # Assert that we're defaulting to ``SearchResult``.
+        self.assertTrue(issubclass(self.sq.result_class, SearchResult))
+        
+        # Custom class.
+        class IttyBittyResult(object):
+            pass
+        
+        self.sq.set_result_class(IttyBittyResult)
+        self.assertTrue(issubclass(self.sq.result_class, IttyBittyResult))
+        
+        # Reset to default.
+        self.sq.set_result_class(None)
+        self.assertTrue(issubclass(self.sq.result_class, SearchResult))

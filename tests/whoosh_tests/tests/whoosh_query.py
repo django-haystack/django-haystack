@@ -2,8 +2,9 @@ import datetime
 import os
 from django.conf import settings
 from django.test import TestCase
-from haystack.query import SQ
 from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
+from haystack.models import SearchResult
+from haystack.query import SQ
 from core.models import MockModel, AnotherMockModel
 
 
@@ -111,3 +112,18 @@ class WhooshSearchQueryTestCase(TestCase):
     def test_build_query_with_sequence_and_filter_not_in(self):
         self.sq.add_filter(SQ(id__exact=[1, 2, 3]))
         self.assertEqual(self.sq.build_query(), u'id:1,2,3')
+    
+    def test_set_result_class(self):
+        # Assert that we're defaulting to ``SearchResult``.
+        self.assertTrue(issubclass(self.sq.result_class, SearchResult))
+        
+        # Custom class.
+        class IttyBittyResult(object):
+            pass
+        
+        self.sq.set_result_class(IttyBittyResult)
+        self.assertTrue(issubclass(self.sq.result_class, IttyBittyResult))
+        
+        # Reset to default.
+        self.sq.set_result_class(None)
+        self.assertTrue(issubclass(self.sq.result_class, SearchResult))

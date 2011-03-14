@@ -7,8 +7,9 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID, VALID_FILTERS, FILTER_SEPARATOR
+from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
+from haystack.models import SearchResult
 try:
     set
 except NameError:
@@ -112,7 +113,7 @@ class BaseSearchBackend(object):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -135,7 +136,7 @@ class BaseSearchBackend(object):
         """
         return force_unicode(value)
     
-    def more_like_this(self, model_instance, additional_query_string=None):
+    def more_like_this(self, model_instance, additional_query_string=None, result_class=None):
         """
         Takes a model object and returns results the backend thinks are similar.
         
@@ -284,6 +285,7 @@ class BaseSearchQuery(object):
         self._hit_count = None
         self._facet_counts = None
         self._spelling_suggestion = None
+        self.result_class = SearchResult
         
         if backend is not None:
             self.backend = backend
@@ -352,6 +354,9 @@ class BaseSearchQuery(object):
         if self.boost:
             kwargs['boost'] = self.boost
         
+        if self.result_class:
+            kwargs['result_class'] = self.result_class
+        
         return kwargs
     
     def run(self, spelling_query=None):
@@ -373,8 +378,12 @@ class BaseSearchQuery(object):
         if self._more_like_this is False or self._mlt_instance is None:
             raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
         
+        kwargs = {
+            'result_class': self.result_class,
+        }
+        
         additional_query_string = self.build_query()
-        results = self.backend.more_like_this(self._mlt_instance, additional_query_string)
+        results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
     
@@ -662,6 +671,18 @@ class BaseSearchQuery(object):
         """
         self.narrow_queries.add(query)
     
+    def set_result_class(self, klass):
+        """
+        Sets the result class to use for results.
+        
+        Overrides any previous usages. If ``None`` is provided, Haystack will
+        revert back to the default ``SearchResult`` object.
+        """
+        if klass is None:
+            klass = SearchResult
+        
+        self.result_class = klass
+    
     def post_process_facets(self, results):
         # Handle renaming the facet fields. Undecorate and all that.
         revised_facets = {}
@@ -708,6 +729,7 @@ class BaseSearchQuery(object):
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
         clone.backend = self.backend
+        clone.result_class = self.result_class
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
         return clone

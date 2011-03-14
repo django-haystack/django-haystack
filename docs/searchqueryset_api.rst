@@ -236,6 +236,20 @@ Example::
 
     SearchQuerySet().filter(content='foo').models(BlogEntry, Comment)
 
+``result_class``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.result_class(self, klass)
+
+Allows specifying a different class to use for results.
+
+Overrides any previous usages. If ``None`` is provided, Haystack will
+revert back to the default ``SearchResult`` object.
+
+Example::
+
+    SearchQuerySet().result_class(CustomResult)
+
 ``boost``
 ~~~~~~~~~
 

@@ -4,6 +4,7 @@ from haystack import indexes, sites, backends
 from haystack.backends.simple_backend import SearchBackend
 from haystack.sites import SearchSite
 from core.models import MockModel
+from core.tests.mocks import MockSearchResult
 
 
 class SimpleMockSearchIndex(indexes.SearchIndex):
@@ -73,9 +74,12 @@ class SimpleSearchBackendTestCase(TestCase):
         # Note that only textual-fields are supported.
         self.assertEqual(self.backend.search(u'2009-06-18')['hits'], 0)
         
+        # Ensure that swapping the ``result_class`` works.
+        self.assertTrue(isinstance(self.backend.search(u'index document', result_class=MockSearchResult)['results'][0], MockSearchResult))
+        
     def test_more_like_this(self):
         self.backend.update(self.index, self.sample_objs)
         self.assertEqual(self.backend.search(u'*')['hits'], 23)
         
-        # Unsupported by 'dummy'. Should see empty results.
+        # Unsupported by 'simple'. Should see empty results.
         self.assertEqual(self.backend.more_like_this(self.sample_objs[0])['hits'], 0)

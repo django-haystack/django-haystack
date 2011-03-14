@@ -109,7 +109,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -191,11 +191,11 @@ class SearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Solr using '%s': %s", query_string, e)
             raw_results = EmptyResults()
         
-        return self._process_results(raw_results, highlight=highlight)
+        return self._process_results(raw_results, highlight=highlight, result_class=result_class)
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, **kwargs):
         # Handle deferred models.
         if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
             model_klass = get_proxied_model(model_instance._meta)
@@ -244,14 +244,17 @@ class SearchBackend(BaseSearchBackend):
             self.log.error("Failed to fetch More Like This from Solr for document '%s': %s", query, e)
             raw_results = EmptyResults()
         
-        return self._process_results(raw_results)
+        return self._process_results(raw_results, result_class=result_class)
     
-    def _process_results(self, raw_results, highlight=False):
+    def _process_results(self, raw_results, highlight=False, result_class=None):
         from haystack import site
         results = []
         hits = raw_results.hits
         facets = {}
         spelling_suggestion = None
+        
+        if result_class is None:
+            result_class = SearchResult
         
         if hasattr(raw_results, 'facets'):
             facets = {
@@ -297,7 +300,7 @@ class SearchBackend(BaseSearchBackend):
                 if raw_result[ID] in getattr(raw_results, 'highlighting', {}):
                     additional_fields['highlighted'] = raw_results.highlighting[raw_result[ID]]
                 
-                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
@@ -369,7 +372,7 @@ class SearchBackend(BaseSearchBackend):
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(backend=backend)
+        super(SearchQuery, self).__init__(site, backend)
         
         if backend is not None:
             self.backend = backend
@@ -427,6 +430,7 @@ class SearchQuery(BaseSearchQuery):
         final_query = self.build_query()
         kwargs = {
             'start_offset': self.start_offset,
+            'result_class': self.result_class,
         }
         
         if self.order_by:
@@ -475,6 +479,7 @@ class SearchQuery(BaseSearchQuery):
         additional_query_string = self.build_query()
         kwargs = {
             'start_offset': self.start_offset,
+            'result_class': self.result_class,
         }
         
         if self.end_offset is not None:

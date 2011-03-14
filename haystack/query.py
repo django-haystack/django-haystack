@@ -299,6 +299,17 @@ class SearchQuerySet(object):
         
         return clone
     
+    def result_class(self, klass):
+        """
+        Allows specifying a different class to use for results.
+        
+        Overrides any previous usages. If ``None`` is provided, Haystack will
+        revert back to the default ``SearchResult`` object.
+        """
+        clone = self._clone()
+        clone.query.set_result_class(klass)
+        return clone
+    
     def boost(self, term, boost):
         """Boosts a certain aspect of the query."""
         clone = self._clone()

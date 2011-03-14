@@ -7,7 +7,7 @@ from haystack import backends
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
-from haystack.exceptions import HaystackError, FacetingError, NotRegistered
+from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.sites import SearchSite
@@ -190,6 +190,21 @@ class BaseSearchQueryTestCase(TestCase):
         
         self.bsq.add_narrow_query('moof:baz')
         self.assertEqual(self.bsq.narrow_queries, set(['foo:bar', 'moof:baz']))
+    
+    def test_set_result_class(self):
+        # Assert that we're defaulting to ``SearchResult``.
+        self.assertTrue(issubclass(self.bsq.result_class, SearchResult))
+        
+        # Custom class.
+        class IttyBittyResult(object):
+            pass
+        
+        self.bsq.set_result_class(IttyBittyResult)
+        self.assertTrue(issubclass(self.bsq.result_class, IttyBittyResult))
+        
+        # Reset to default.
+        self.bsq.set_result_class(None)
+        self.assertTrue(issubclass(self.bsq.result_class, SearchResult))
     
     def test_run(self):
         # Stow.
@@ -457,6 +472,21 @@ class SearchQuerySetTestCase(TestCase):
         sqs = bsqs.models(AnotherMockModel)
         self.assert_(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.models), 1)
+    
+    def test_result_class(self):
+        sqs = self.bsqs.all()
+        self.assertTrue(issubclass(sqs.query.result_class, SearchResult))
+        
+        # Custom class.
+        class IttyBittyResult(object):
+            pass
+        
+        sqs = self.bsqs.result_class(IttyBittyResult)
+        self.assertTrue(issubclass(sqs.query.result_class, IttyBittyResult))
+        
+        # Reset to default.
+        sqs = self.bsqs.result_class(None)
+        self.assertTrue(issubclass(sqs.query.result_class, SearchResult))
     
     def test_boost(self):
         sqs = self.bsqs.boost('foo', 10)

@@ -284,3 +284,13 @@ Adds a query facet on a field.
 Narrows a search to a subset of all documents per the query.
 
 Generally used in conjunction with faceting.
+
+``set_result_class``
+~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.set_result_class(self, klass)
+
+Sets the result class to use for results.
+
+Overrides any previous usages. If ``None`` is provided, Haystack will
+revert back to the default ``SearchResult`` object.

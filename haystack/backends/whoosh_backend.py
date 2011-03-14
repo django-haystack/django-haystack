@@ -10,7 +10,6 @@ from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_unicode
 from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
-from haystack.fields import DateField, DateTimeField, IntegerField, FloatField, BooleanField, MultiValueField
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
@@ -232,7 +231,7 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, **kwargs):
         if not self.setup_complete:
             self.setup()
         
@@ -373,7 +372,7 @@ class SearchBackend(BaseSearchBackend):
                     'spelling_suggestion': None,
                 }
             
-            results = self._process_results(raw_page, highlight=highlight, query_string=query_string, spelling_query=spelling_query)
+            results = self._process_results(raw_page, highlight=highlight, query_string=query_string, spelling_query=spelling_query, result_class=result_class)
             searcher.close()
             
             if hasattr(narrow_searcher, 'close'):
@@ -397,20 +396,23 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, **kwargs):
         warnings.warn("Whoosh does not handle More Like This.", Warning, stacklevel=2)
         return {
             'results': [],
             'hits': 0,
         }
     
-    def _process_results(self, raw_page, highlight=False, query_string='', spelling_query=None):
+    def _process_results(self, raw_page, highlight=False, query_string='', spelling_query=None, result_class=None):
         from haystack import site
         results = []
         
         # It's important to grab the hits first before slicing. Otherwise, this
         # can cause pagination failures.
         hits = len(raw_page)
+        
+        if result_class is None:
+            result_class = SearchResult
         
         facets = {}
         spelling_suggestion = None
@@ -429,7 +431,7 @@ class SearchBackend(BaseSearchBackend):
                     
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         # Special-cased due to the nature of KEYWORD fields.
-                        if isinstance(index.fields[string_key], MultiValueField):
+                        if index.fields[string_key].is_multivalued:
                             if value is None or len(value) is 0:
                                 additional_fields[string_key] = []
                             else:
@@ -452,7 +454,7 @@ class SearchBackend(BaseSearchBackend):
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
                 
-                result = SearchResult(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
@@ -560,7 +562,7 @@ class SearchBackend(BaseSearchBackend):
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(backend=backend)
+        super(SearchQuery, self).__init__(site, backend)
         
         if backend is not None:
             self.backend = backend

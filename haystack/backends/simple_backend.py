@@ -47,9 +47,12 @@ class SearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, **kwargs):
         hits = 0
         results = []
+        
+        if result_class is None:
+            result_class = SearchResult
         
         if query_string:
             for model in self.site.get_indexed_models():
@@ -73,7 +76,7 @@ class SearchBackend(BaseSearchBackend):
                 hits += len(qs)
                 
                 for match in qs:
-                    result = SearchResult(match._meta.app_label, match._meta.module_name, match.pk, 0, **match.__dict__)
+                    result = result_class(match._meta.app_label, match._meta.module_name, match.pk, 0, **match.__dict__)
                     # For efficiency.
                     result._model = match.__class__
                     result._object = match
@@ -89,7 +92,7 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, **kwargs):
         return {
             'results': [],
             'hits': 0
@@ -98,7 +101,7 @@ class SearchBackend(BaseSearchBackend):
 
 class SearchQuery(BaseSearchQuery):
     def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(backend=backend)
+        super(SearchQuery, self).__init__(site, backend)
         
         if backend is not None:
             self.backend = backend
