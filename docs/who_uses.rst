@@ -208,3 +208,14 @@ For general search.
 Using: Xapian
 
 * http://devcheatsheet.com/
+
+
+TodasLasRecetas
+---------------
+
+For search, faceting & More Like This.
+
+Using: Solr
+
+* http://www.todaslasrecetas.es/receta/s/?q=langostinos
+* http://www.todaslasrecetas.es/receta/9526/brochetas-de-langostinos
