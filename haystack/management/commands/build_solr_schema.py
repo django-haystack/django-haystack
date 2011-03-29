@@ -12,9 +12,11 @@ class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
     base_options = (
         make_option("-f", "--filename", action="store", type="string", dest="filename",
-                    help='If provided, directs output to a file instead of stdout.'),
+            help='If provided, directs output to a file instead of stdout.',
+        ),
         make_option("-s", "--site", action="store", type="string", dest="site",
-                    help='If provided, configures Haystack to use the appropriate site module. (Defaults to `haystack.site`)'),
+            help='If provided, configures Haystack to use the appropriate site module. (Defaults to `haystack.site`)',
+        ),
     )
     option_list = BaseCommand.option_list + base_options
     

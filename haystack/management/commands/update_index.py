@@ -58,8 +58,14 @@ class Command(AppCommand):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
-        self.site = options.get('site')
         self.remove = options.get('remove', False)
+
+        if options.get('site'):
+            mod_name, attr_name = options['site'].rsplit('.', 1)
+            self.site = getattr(importlib.import_module(mod_name), attr_name)
+        else:
+            from haystack import site
+            self.site = site
         
         if not apps:
             from django.db.models import get_app
@@ -79,24 +85,12 @@ class Command(AppCommand):
     
     def handle_app(self, app, **options):
         # Cause the default site to load.
-        from haystack import site
         from django.db.models import get_models
         from haystack.exceptions import NotRegistered
         
-        if self.site:
-            path_bits = self.site.split('.')
-            module_name = '.'.join(path_bits[:-1])
-            site_name = path_bits[-1]
-            
-            try:
-                module = importlib.import_module(module_name)
-                site = getattr(module, site_name)
-            except (ImportError, NameError):
-                pass
-        
         for model in get_models(app):
             try:
-                index = site.get_index(model)
+                index = self.site.get_index(model)
             except NotRegistered:
                 if self.verbosity >= 2:
                     print "Skipping '%s' - no index." % model
