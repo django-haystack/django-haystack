@@ -22,12 +22,6 @@ stream.setLevel(logging.INFO)
 log.addHandler(stream)
 
 
-if not hasattr(settings, "HAYSTACK_SITECONF"):
-    raise ImproperlyConfigured("You must define the HAYSTACK_SITECONF setting before using the search framework.")
-if not hasattr(settings, "HAYSTACK_SEARCH_ENGINE"):
-    raise ImproperlyConfigured("You must define the HAYSTACK_SEARCH_ENGINE setting before using the search framework.")
-
-
 # Load the search backend.
 def load_backend(backend_name=None):
     """
@@ -80,8 +74,13 @@ def load_backend(backend_name=None):
                 raise # If there's some other error, this must be an error in Django itself.
 
 
-backend = load_backend(settings.HAYSTACK_SEARCH_ENGINE)
+if getattr(settings, 'HAYSTACK_SEARCH_ENGINE', None):
+    if not hasattr(settings, "HAYSTACK_SITECONF"):
+        raise ImproperlyConfigured("You must define the HAYSTACK_SITECONF setting before using the search framework.")
 
+    backend = load_backend(settings.HAYSTACK_SEARCH_ENGINE)
+else:
+    backend = None
 
 def autodiscover():
     """
