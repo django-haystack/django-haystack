@@ -128,6 +128,9 @@ def handle_registrations(*args, **kwargs):
     This makes it possible for scripts/management commands that affect models
     but know nothing of Haystack to keep the index up to date.
     """
+    if not hasattr(settings, 'HAYSTACK_SITECONF'):
+        return
+    
     if not getattr(settings, 'HAYSTACK_ENABLE_REGISTRATIONS', True):
         # If the user really wants to disable this, they can, possibly at their
         # own expense. This is generally only required in cases where other
