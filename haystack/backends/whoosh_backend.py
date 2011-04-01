@@ -131,23 +131,24 @@ class SearchBackend(BaseSearchBackend):
         for field_name, field_class in fields.items():
             if field_class.is_multivalued:
                 if field_class.indexed is False:
-                    schema_fields[field_class.index_fieldname] = IDLIST(stored=True)
+                    schema_fields[field_class.index_fieldname] = IDLIST(stored=True, field_boost=field_class.boost)
                 else:
-                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True, scorable=True)
+                    schema_fields[field_class.index_fieldname] = KEYWORD(stored=True, commas=True, scorable=True, field_boost=field_class.boost)
             elif field_class.field_type in ['date', 'datetime']:
                 schema_fields[field_class.index_fieldname] = DATETIME(stored=field_class.stored)
             elif field_class.field_type == 'integer':
-                schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=int)
+                schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=int, field_boost=field_class.boost)
             elif field_class.field_type == 'float':
-                schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=float)
+                schema_fields[field_class.index_fieldname] = NUMERIC(stored=field_class.stored, type=float, field_boost=field_class.boost)
             elif field_class.field_type == 'boolean':
+                # Field boost isn't supported on BOOLEAN as of 1.8.2.
                 schema_fields[field_class.index_fieldname] = BOOLEAN(stored=field_class.stored)
             elif field_class.field_type == 'ngram':
-                schema_fields[field_class.index_fieldname] = NGRAM(minsize=3, maxsize=15, stored=field_class.stored)
+                schema_fields[field_class.index_fieldname] = NGRAM(minsize=3, maxsize=15, stored=field_class.stored, field_boost=field_class.boost)
             elif field_class.field_type == 'edge_ngram':
-                schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, stored=field_class.stored)
+                schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, stored=field_class.stored, field_boost=field_class.boost)
             else:
-                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer())
+                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer(), field_boost=field_class.boost)
             
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
