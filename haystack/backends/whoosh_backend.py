@@ -42,8 +42,8 @@ from whoosh.spelling import SpellChecker
 from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 5, 6):
-    raise MissingDependency("The 'whoosh' backend requires version 1.5.6 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 8, 1):
+    raise MissingDependency("The 'whoosh' backend requires version 1.8.1 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -571,9 +571,9 @@ class SearchQuery(BaseSearchQuery):
     
     def _convert_datetime(self, date):
         if hasattr(date, 'hour'):
-            return force_unicode(date.strftime('%Y%m%dT%H%M%S'))
+            return force_unicode(date.strftime('%Y%m%d%H%M%S'))
         else:
-            return force_unicode(date.strftime('%Y%m%dT000000'))
+            return force_unicode(date.strftime('%Y%m%d000000'))
     
     def clean(self, query_fragment):
         """
@@ -626,10 +626,10 @@ class SearchQuery(BaseSearchQuery):
         else:
             filter_types = {
                 'exact': "%s:%s",
-                'gt': "%s:{%s TO}",
-                'gte': "%s:[%s TO]",
-                'lt': "%s:{TO %s}",
-                'lte': "%s:[TO %s]",
+                'gt': "%s:{%s to}",
+                'gte': "%s:[%s to]",
+                'lt': "%s:{to %s}",
+                'lte': "%s:[to %s]",
                 'startswith': "%s:%s*",
             }
             
@@ -660,7 +660,7 @@ class SearchQuery(BaseSearchQuery):
                 if hasattr(value[1], 'strftime'):
                     end = self._convert_datetime(end)
                 
-                return "%s:[%s TO %s]" % (index_fieldname, start, end)
+                return "%s:[%s to %s]" % (index_fieldname, start, end)
             else:
                 if is_datetime is True:
                     value = self._convert_datetime(value)

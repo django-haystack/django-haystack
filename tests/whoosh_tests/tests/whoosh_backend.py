@@ -268,15 +268,15 @@ class WhooshSearchBackendTestCase(TestCase):
         
         self.assertEqual(len(self.whoosh_search(u'[d TO]')), 23)
         self.assertEqual(len(self.whoosh_search(u'name:[d TO]')), 23)
-        self.assertEqual(len(self.whoosh_search(u'Ind* AND name:[d TO]')), 23)
-        self.assertEqual(len(self.whoosh_search(u'Ind* AND name:[TO c]')), 0)
+        self.assertEqual(len(self.whoosh_search(u'Ind* AND name:[d to]')), 23)
+        self.assertEqual(len(self.whoosh_search(u'Ind* AND name:[to c]')), 0)
     
     def test_date_queries(self):
         self.sb.update(self.smmi, self.sample_objs)
         
-        self.assertEqual(len(self.whoosh_search(u"pub_date:20090717T003000")), 1)
-        self.assertEqual(len(self.whoosh_search(u"pub_date:20090717T000000")), 0)
-        self.assertEqual(len(self.whoosh_search(u'Ind* AND pub_date:[TO 20090717T003000]')), 3)
+        self.assertEqual(len(self.whoosh_search(u"pub_date:20090717003000")), 1)
+        self.assertEqual(len(self.whoosh_search(u"pub_date:20090717000000")), 0)
+        self.assertEqual(len(self.whoosh_search(u'Ind* AND pub_date:[to 20090717003000]')), 3)
     
     def test_escaped_characters_queries(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -487,15 +487,15 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 3)
         
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 8, 31))
-        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[TO 20090831T000000])")
+        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[to 20090831000000])")
         self.assertEqual(len(sqs), 3)
         
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 23))
-        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[TO 20090223T000000])")
+        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[to 20090223000000])")
         self.assertEqual(len(sqs), 2)
         
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 25)).filter(django_id__in=[1, 2]).exclude(name='daniel1')
-        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[TO 20090225T000000] AND (django_id:\"1\" OR django_id:\"2\") AND NOT (name:daniel1))")
+        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[to 20090225000000] AND (django_id:\"1\" OR django_id:\"2\") AND NOT (name:daniel1))")
         self.assertEqual(len(sqs), 1)
         
         sqs = self.sqs.auto_query('re-inker')
@@ -682,7 +682,7 @@ class LiveWhooshAutocompleteTestCase(TestCase):
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
         self.assertEqual(autocomplete.count(), 5)
-        self.assertEqual([result.pk for result in autocomplete], [u'1', u'12', u'14', u'7', u'6'])
+        self.assertEqual([result.pk for result in autocomplete], [u'1', u'12', u'7', u'6', u'14'])
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())

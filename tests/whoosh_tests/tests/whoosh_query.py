@@ -74,7 +74,7 @@ class WhooshSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(title__gte='B'))
         self.sq.add_filter(SQ(id__in=[1, 2, 3]))
         self.sq.add_filter(SQ(rating__range=[3, 5]))
-        self.assertEqual(self.sq.build_query(), u'(why AND pub_date:[TO 20090210T015900] AND author:{daniel TO} AND created:{TO 20090212T121300} AND title:[B TO] AND (id:"1" OR id:"2" OR id:"3") AND rating:[3 TO 5])')
+        self.assertEqual(self.sq.build_query(), u'(why AND pub_date:[to 20090210015900] AND author:{daniel to} AND created:{to 20090212121300} AND title:[B to] AND (id:"1" OR id:"2" OR id:"3") AND rating:[3 to 5])')
     
     def test_build_query_in_filter_multiple_words(self):
         self.sq.add_filter(SQ(content='why'))
@@ -84,7 +84,7 @@ class WhooshSearchQueryTestCase(TestCase):
     def test_build_query_in_filter_datetime(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(pub_date__in=[datetime.datetime(2009, 7, 6, 1, 56, 21)]))
-        self.assertEqual(self.sq.build_query(), u'(why AND (pub_date:"20090706T015621"))')
+        self.assertEqual(self.sq.build_query(), u'(why AND (pub_date:"20090706015621"))')
     
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
@@ -107,7 +107,7 @@ class WhooshSearchQueryTestCase(TestCase):
     
     def test_build_query_with_datetime(self):
         self.sq.add_filter(SQ(pub_date=datetime.datetime(2009, 5, 9, 16, 20)))
-        self.assertEqual(self.sq.build_query(), u'pub_date:20090509T162000')
+        self.assertEqual(self.sq.build_query(), u'pub_date:20090509162000')
     
     def test_build_query_with_sequence_and_filter_not_in(self):
         self.sq.add_filter(SQ(id__exact=[1, 2, 3]))
