@@ -12,10 +12,11 @@ Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. note::
 
-    This documentation represents the development version of Haystack. For
-    old versions of the documentation: `1.0`_.
+    This documentation represents the 1.1 version of Haystack. For
+    other versions of the documentation: `1.0`_, `dev`_.
 
 .. _`1.0`: http://docs.haystacksearch.org/1.0/
+.. _`dev`: http://docs.haystacksearch.org/dev/
 
 Getting Started
 ---------------
