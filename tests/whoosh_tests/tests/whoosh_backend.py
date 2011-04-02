@@ -1,7 +1,7 @@
 from datetime import timedelta
 import os
 import shutil
-from whoosh.fields import TEXT, KEYWORD, NUMERIC, DATETIME
+from whoosh.fields import TEXT, KEYWORD, NUMERIC, DATETIME, BOOLEAN
 from whoosh.qparser import QueryParser
 from django.conf import settings
 from django.utils.datetime_safe import datetime, date
@@ -32,6 +32,7 @@ class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
     pub_date = indexes.DateField(model_attr='pub_date')
     sites = indexes.MultiValueField()
     seen_count = indexes.IntegerField(indexed=False)
+    is_active = indexes.BooleanField(default=True)
 
 
 class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
@@ -290,12 +291,13 @@ class WhooshSearchBackendTestCase(TestCase):
         
         (content_field_name, schema) = self.sb.build_schema(self.site.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(schema.names()), 8)
-        self.assertEqual(schema.names(), ['django_ct', 'django_id', 'id', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
+        self.assertEqual(len(schema.names()), 9)
+        self.assertEqual(schema.names(), ['django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
         self.assert_(isinstance(schema._fields['text'], TEXT))
         self.assert_(isinstance(schema._fields['pub_date'], DATETIME))
         self.assert_(isinstance(schema._fields['seen_count'], NUMERIC))
         self.assert_(isinstance(schema._fields['sites'], KEYWORD))
+        self.assert_(isinstance(schema._fields['is_active'], BOOLEAN))
     
     def test_verify_type(self):
         import haystack
@@ -788,6 +790,10 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [u'3', u'5', u'1'])
         self.assertEqual(result.empty_list, [])
+        
+        # Check boolean filtering...
+        results = self.sqs.filter(id='core.mockmodel.1', is_active=True)
+        self.assertEqual(results.count(), 1)
 
 
 class LiveWhooshRamStorageTestCase(TestCase):
