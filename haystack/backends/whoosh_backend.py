@@ -8,7 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_unicode
-from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
@@ -20,6 +20,11 @@ except ImportError:
         import simplejson as json
     except ImportError:
         from django.utils import simplejson as json
+try:
+    from django.db.models.sql.query import get_proxied_model
+except ImportError:
+    # Likely on Django 1.0
+    get_proxied_model = None
 
 try:
     import whoosh
@@ -38,8 +43,8 @@ from whoosh.spelling import SpellChecker
 from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 8, 3):
-    raise MissingDependency("The 'whoosh' backend requires version 1.8.3 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 8, 4):
+    raise MissingDependency("The 'whoosh' backend requires version 1.8.4 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -394,11 +399,106 @@ class SearchBackend(BaseSearchBackend):
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
                        limit_to_registered_models=None, result_class=None, **kwargs):
-        warnings.warn("Whoosh does not handle More Like This.", Warning, stacklevel=2)
-        return {
-            'results': [],
-            'hits': 0,
-        }
+        if not self.setup_complete:
+            self.setup()
+        
+        # Handle deferred models.
+        if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
+            model_klass = get_proxied_model(model_instance._meta)
+        else:
+            model_klass = type(model_instance)
+        
+        index = self.site.get_index(model_klass)
+        field_name = index.get_content_field()
+        narrow_queries = set()
+        narrowed_results = None
+        self.index = self.index.refresh()
+        
+        if limit_to_registered_models is None:
+            limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
+        
+        if limit_to_registered_models:
+            # Using narrow queries, limit the results to only models registered
+            # with the current site.
+            if narrow_queries is None:
+                narrow_queries = set()
+            
+            registered_models = self.build_registered_models_list()
+            
+            if len(registered_models) > 0:
+                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
+        
+        if additional_query_string:
+            narrow_queries.add(additional_query_string)
+        
+        narrow_searcher = None
+        
+        if narrow_queries is not None:
+            # Potentially expensive? I don't see another way to do it in Whoosh...
+            narrow_searcher = self.index.searcher()
+            
+            for nq in narrow_queries:
+                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_unicode(nq)))
+                
+                if narrowed_results:
+                    narrowed_results.filter(recent_narrowed_results)
+                else:
+                   narrowed_results = recent_narrowed_results
+        
+        # Prevent against Whoosh throwing an error. Requires an end_offset
+        # greater than 0.
+        if not end_offset is None and end_offset <= 0:
+            end_offset = 1
+        
+        # Determine the page.
+        page_num = 0
+        
+        if end_offset is None:
+            end_offset = 1000000
+        
+        if start_offset is None:
+            start_offset = 0
+        
+        page_length = end_offset - start_offset
+        
+        if page_length and page_length > 0:
+            page_num = start_offset / page_length
+        
+        # Increment because Whoosh uses 1-based page numbers.
+        page_num += 1
+        
+        self.index = self.index.refresh()
+        raw_results = EmptyResults()
+        
+        if self.index.doc_count():
+            query = "%s:%s" % (ID, get_identifier(model_instance))
+            searcher = self.index.searcher()
+            parsed_query = self.parser.parse(query)
+            results = searcher.search(parsed_query)
+            
+            if len(results):
+                raw_results = results[0].more_like_this(field_name, top=end_offset)
+            
+            # Handle the case where the results have been narrowed.
+            if narrowed_results and hasattr(raw_results, 'filter'):
+                raw_results.filter(narrowed_results)
+        
+        try:
+            raw_page = ResultsPage(raw_results, page_num, page_length)
+        except ValueError:
+            return {
+                'results': [],
+                'hits': 0,
+                'spelling_suggestion': None,
+            }
+        
+        results = self._process_results(raw_page, result_class=result_class)
+        searcher.close()
+        
+        if hasattr(narrow_searcher, 'close'):
+            narrow_searcher.close()
+        
+        return results
     
     def _process_results(self, raw_page, highlight=False, query_string='', spelling_query=None, result_class=None):
         if not self.site:
