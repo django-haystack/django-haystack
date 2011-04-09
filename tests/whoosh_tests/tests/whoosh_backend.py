@@ -245,12 +245,12 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sb.update(self.wmmi, self.sample_objs)
         self.assertEqual(len(self.whoosh_search(u'*')), 23)
         
-        # Unsupported by Whoosh. Should see empty results.
-        self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 0)
+        # Now supported by Whoosh (as of 1.8.4). See the ``LiveWhooshMoreLikeThisTestCase``.
+        self.assertEqual(self.sb.more_like_this(self.sample_objs[0])['hits'], 22)
         
         # Make sure that swapping the ``result_class`` doesn't blow up.
         try:
-            self.sb.search(u'index document', result_class=MockSearchResult)
+            self.sb.more_like_this(self.sample_objs[0], result_class=MockSearchResult)
         except:
             self.fail()
     
@@ -743,8 +743,6 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
         self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
-        
         self.old_ui = connections['default'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
@@ -783,6 +781,72 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.models(AnotherMockModel)
         self.assertEqual(sqs.query.build_query(), u'django_ct:core.anothermockmodel')
         self.assertEqual(len(sqs), 2)
+
+
+class LiveWhooshMoreLikeThisTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+    
+    def setUp(self):
+        super(LiveWhooshMoreLikeThisTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
+        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.wmmi = WhooshMockSearchIndex()
+        self.wamsi = WhooshAnotherMockSearchIndex()
+        self.ui.build(indexes=[self.wmmi, self.wamsi])
+        self.sb = connections['default'].get_backend()
+        connections['default']._index = self.ui
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        self.sb.delete_index()
+        
+        self.wmmi.update()
+        self.wamsi.update()
+        
+        self.sqs = SearchQuerySet()
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        
+        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
+        connections['default']._index = self.old_ui
+        super(LiveWhooshMoreLikeThisTestCase, self).tearDown()
+    
+    def test_more_like_this(self):
+        mlt = self.sqs.more_like_this(MockModel.objects.get(pk=22))
+        self.assertEqual(mlt.count(), 22)
+        self.assertEqual(sorted([result.pk for result in mlt]), sorted([u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'2', u'1', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'23']))
+        self.assertEqual(len([result.pk for result in mlt]), 22)
+        
+        alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=13))
+        self.assertEqual(alt_mlt.count(), 8)
+        self.assertEqual(sorted([result.pk for result in alt_mlt]), sorted([u'4', u'3', u'22', u'19', u'17', u'16', u'10', u'23']))
+        self.assertEqual(len([result.pk for result in alt_mlt]), 8)
+        
+        alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=11))
+        self.assertEqual(alt_mlt_with_models.count(), 22)
+        self.assertEqual(sorted([result.pk for result in alt_mlt_with_models]), sorted([u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'2', u'1', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'10', u'23']))
+        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 22)
+        
+        if hasattr(MockModel.objects, 'defer'):
+            # Make sure MLT works with deferred bits.
+            mi = MockModel.objects.defer('foo').get(pk=21)
+            self.assertEqual(mi._deferred, True)
+            deferred = self.sqs.models(MockModel).more_like_this(mi)
+            self.assertEqual(deferred.count(), 0)
+            self.assertEqual([result.pk for result in deferred], [])
+            self.assertEqual(len([result.pk for result in deferred]), 0)
+        
+        # Ensure that swapping the ``result_class`` works.
+        self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=21))[0], MockSearchResult))
 
 
 class LiveWhooshAutocompleteTestCase(TestCase):
