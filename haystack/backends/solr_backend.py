@@ -3,7 +3,7 @@ import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
-from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query
+from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
@@ -24,11 +24,6 @@ except ImportError:
 
 
 BACKEND_NAME = 'solr'
-
-
-class EmptyResults(object):
-    hits = 0
-    docs = []
 
 
 class SearchBackend(BaseSearchBackend):

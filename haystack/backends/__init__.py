@@ -64,6 +64,20 @@ def log_query(func):
     return wrapper
 
 
+class EmptyResults(object):
+    hits = 0
+    docs = []
+    
+    def __len__(self):
+        return 0
+    
+    def __getitem__(self, k):
+        if isinstance(k, slice):
+            return []
+        else:
+            raise IndexError("It's not here.")
+
+
 class BaseSearchBackend(object):
     # Backends should include their own reserved words/characters.
     RESERVED_WORDS = []
