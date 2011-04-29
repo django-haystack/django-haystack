@@ -294,6 +294,37 @@ class SolrSearchBackendTestCase(TestCase):
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
     
+    def test_use_correct_site(self):
+        import haystack
+        test_site = SearchSite()
+        test_site.register(MockModel, SolrMockSearchIndex)
+        self.sb.update(self.smmi, self.sample_objs)
+        
+        # Make sure that ``_process_results`` uses the right ``site``.
+        self.assertEqual(self.sb.search('*:*')['hits'], 3)
+        self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], ['1', '2', '3'])
+        
+        haystack.site.unregister(MockModel)
+        self.assertEqual(len(haystack.site.get_indexed_models()), 0)
+        self.sb.site = test_site
+        self.assertTrue(len(self.sb.site.get_indexed_models()) > 0)
+        
+        # Should still be there, despite the main ``site`` not having that model
+        # registered any longer.
+        self.assertEqual(self.sb.search('*:*')['hits'], 3)
+        self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], ['1', '2', '3'])
+        
+        # Unregister it on the backend & make sure it takes effect.
+        self.sb.site.unregister(MockModel)
+        self.assertEqual(len(self.sb.site.get_indexed_models()), 0)
+        self.assertEqual(self.sb.search('*:*')['hits'], 0)
+        
+        # Nuke it & fallback on the main ``site``.
+        self.sb.site = haystack.site
+        self.assertEqual(self.sb.search('*:*')['hits'], 0)
+        haystack.site.register(MockModel, SolrMockSearchIndex)
+        self.assertEqual(self.sb.search('*:*')['hits'], 3)
+    
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)

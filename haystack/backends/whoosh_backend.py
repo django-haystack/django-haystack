@@ -404,7 +404,11 @@ class SearchBackend(BaseSearchBackend):
         }
     
     def _process_results(self, raw_page, highlight=False, query_string='', spelling_query=None, result_class=None):
-        from haystack import site
+        if not self.site:
+            from haystack import site
+        else:
+            site = self.site
+        
         results = []
         
         # It's important to grab the hits first before slicing. Otherwise, this

@@ -242,7 +242,11 @@ class SearchBackend(BaseSearchBackend):
         return self._process_results(raw_results, result_class=result_class)
     
     def _process_results(self, raw_results, highlight=False, result_class=None):
-        from haystack import site
+        if not self.site:
+            from haystack import site
+        else:
+            site = self.site
+        
         results = []
         hits = raw_results.hits
         facets = {}
