@@ -6,10 +6,6 @@ from haystack.indexes import *
 from haystack.backends.solr_backend import SearchBackend
 from haystack.sites import SearchSite
 from core.models import MockModel
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 
 class MLTSearchIndex(RealTimeSearchIndex):

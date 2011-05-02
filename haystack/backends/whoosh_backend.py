@@ -14,10 +14,6 @@ from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
 try:
-    set
-except NameError:
-    from sets import Set as set
-try:
     import json
 except ImportError:
     try:

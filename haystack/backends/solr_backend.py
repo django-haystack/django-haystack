@@ -9,10 +9,6 @@ from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
 try:
-    set
-except NameError:
-    from sets import Set as set
-try:
     from django.db.models.sql.query import get_proxied_model
 except ImportError:
     # Likely on Django 1.0

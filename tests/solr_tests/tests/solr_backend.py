@@ -12,10 +12,6 @@ from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel, AFourthMockModel
 from core.tests.mocks import MockSearchResult
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 test_pickling = True
 

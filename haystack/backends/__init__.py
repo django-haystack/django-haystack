@@ -11,10 +11,6 @@ from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 try:
-    set
-except NameError:
-    from sets import Set as set
-try:
     from django.utils import importlib
 except ImportError:
     from haystack.utils import importlib

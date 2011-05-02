@@ -1,10 +1,6 @@
 import re
 from django.utils.html import strip_tags
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 
 IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')

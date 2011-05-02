@@ -9,10 +9,6 @@ try:
     from django.utils import importlib
 except ImportError:
     from haystack.utils import importlib
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 
 DEFAULT_BATCH_SIZE = getattr(settings, 'HAYSTACK_BATCH_SIZE', 1000)
