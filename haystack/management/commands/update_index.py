@@ -1,6 +1,7 @@
 import datetime
 from optparse import make_option
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import AppCommand, CommandError
 from django.db import reset_queries
 from django.utils.encoding import smart_str
@@ -107,6 +108,9 @@ class Command(AppCommand):
                 else:
                     if self.verbosity >= 2:
                         print "No updated date field found for '%s' - not restricting by age." % model.__name__
+            
+            if not hasattr(index.get_queryset(), 'filter'):
+                raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'get_queryset' method." % index)
             
             # `.select_related()` seems like a good idea here but can fail on
             # nullable `ForeignKey` as well as what seems like other cases.
