@@ -49,3 +49,4 @@ Thanks to
     * oyiptong for a patch regarding pickling.
     * alfredo for a patch to generate epub docs.
     * Luke Hatcher (lukeman) for documentation patches.
+    * Trey Hunner (treyhunner) for a Whoosh field boosting patch.
