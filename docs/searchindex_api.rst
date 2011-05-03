@@ -363,7 +363,7 @@ already present in the quickest and most efficient way.
 ================
 
 ``index_queryset``
-----------------
+------------------
 
 .. method:: SearchIndex.index_queryset(self)
 
