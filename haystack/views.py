@@ -161,6 +161,7 @@ class FacetedSearchView(SearchView):
     
     def extra_context(self):
         extra = super(FacetedSearchView, self).extra_context()
+        extra['request'] = self.request
         extra['facets'] = self.results.facet_counts()
         return extra
 
