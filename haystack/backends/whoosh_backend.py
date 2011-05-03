@@ -605,6 +605,10 @@ class SearchQuery(BaseSearchQuery):
         result = ''
         is_datetime = False
         
+        # Handle when we've got a ``ValuesListQuerySet``...
+        if hasattr(value, 'values_list'):
+            value = list(value)
+        
         if hasattr(value, 'strftime'):
             is_datetime = True
         

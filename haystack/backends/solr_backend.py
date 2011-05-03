@@ -380,6 +380,10 @@ class SearchQuery(BaseSearchQuery):
     def build_query_fragment(self, field, filter_type, value):
         result = ''
         
+        # Handle when we've got a ``ValuesListQuerySet``...
+        if hasattr(value, 'values_list'):
+            value = list(value)
+        
         if not isinstance(value, (list, tuple)):
             # Convert whatever we find to what pysolr wants.
             value = self.backend.conn._from_python(value)
