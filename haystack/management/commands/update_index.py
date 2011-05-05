@@ -5,6 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import AppCommand, CommandError
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+from django.utils import translation
 from haystack.query import SearchQuerySet
 try:
     from django.utils import importlib
@@ -52,6 +53,9 @@ class Command(AppCommand):
         )
     
     def handle(self, *apps, **options):
+        # Activate language from settings
+        translation.activate(settings.LANGUAGE_CODE)
+
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
