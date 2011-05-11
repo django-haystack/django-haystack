@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
-from haystack import backends
+from haystack import connections, connection_router, reset_search_queries
+from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 from solr_tests.tests.solr_backend import SolrMockModelSearchIndex, clear_solr_index
 
@@ -12,24 +13,21 @@ class SearchModelAdminTestCase(TestCase):
     def setUp(self):
         super(SearchModelAdminTestCase, self).setUp()
         
-        # With the models registered, you get the proper bits.
-        import haystack
-        from haystack.sites import SearchSite
-        
+        # With the models setup, you get the proper bits.
         # Stow.
         self.old_debug = settings.DEBUG
         settings.DEBUG = True
-        self.old_site = haystack.site
-        test_site = SearchSite()
-        test_site.register(MockModel, SolrMockModelSearchIndex)
-        haystack.site = test_site
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        smmsi = SolrMockModelSearchIndex()
+        self.ui.build(indexes=[smmsi])
+        connections['default']._index = self.ui
         
         # Wipe it clean.
         clear_solr_index()
         
         # Force indexing of the content.
-        mockmodel_index = test_site.get_index(MockModel)
-        mockmodel_index.update()
+        smmsi.update()
         
         superuser = User.objects.create_superuser(
             username='superuser',
@@ -39,27 +37,26 @@ class SearchModelAdminTestCase(TestCase):
     
     def tearDown(self):
         # Restore.
-        import haystack
-        haystack.site = self.old_site
+        connections['default']._index = self.old_ui
         settings.DEBUG = self.old_debug
         super(SearchModelAdminTestCase, self).tearDown()
     
     def test_usage(self):
-        backends.reset_search_queries()
-        self.assertEqual(len(backends.queries), 0)
+        reset_search_queries()
+        self.assertEqual(len(connections['default'].queries), 0)
         
         self.assertEqual(self.client.login(username='superuser', password='password'), True)
         
         # First, non-search behavior.
         resp = self.client.get('/admin/core/mockmodel/')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(backends.queries), 0)
+        self.assertEqual(len(connections['default'].queries), 0)
         self.assertEqual(resp.context['cl'].full_result_count, 23)
         
         # Then search behavior.
         resp = self.client.get('/admin/core/mockmodel/', data={'q': 'Haystack'})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(backends.queries), 3)
+        self.assertEqual(len(connections['default'].queries), 3)
         self.assertEqual(resp.context['cl'].full_result_count, 23)
         # Ensure they aren't search results.
         self.assertEqual(isinstance(resp.context['cl'].result_list[0], MockModel), True)
@@ -68,6 +65,6 @@ class SearchModelAdminTestCase(TestCase):
         # Make sure only changelist is affected.
         resp = self.client.get('/admin/core/mockmodel/1/')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(backends.queries), 3)
+        self.assertEqual(len(connections['default'].queries), 3)
         self.assertEqual(resp.context['original'].id, 1)
         

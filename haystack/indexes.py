@@ -2,7 +2,8 @@ import copy
 import sys
 from django.db.models import signals
 from django.utils.encoding import force_unicode
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
+from haystack import connections, connection_router
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
 from haystack.utils import get_identifier, get_facet_field_name
 
@@ -54,36 +55,31 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(object):
+class SearchIndex(Indexable):
     """
     Base class for building indexes.
     
     An example might look like this::
     
         import datetime
-        from haystack.indexes import *
+        from haystack import indexes
         from myapp.models import Note
         
-        class NoteIndex(SearchIndex):
-            text = CharField(document=True, use_template=True)
-            author = CharField(model_attr='user')
-            pub_date = DateTimeField(model_attr='pub_date')
+        class NoteIndex(indexes.SearchIndex):
+            text = indexes.CharField(document=True, use_template=True)
+            author = indexes.CharField(model_attr='user')
+            pub_date = indexes.DateTimeField(model_attr='pub_date')
+            
+            def get_model(self):
+                return Note
             
             def index_queryset(self):
-                return super(NoteIndex, self).index_queryset().filter(pub_date__lte=datetime.datetime.now())
+                return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
     
     """
     __metaclass__ = DeclarativeMetaclass
     
-    def __init__(self, model, backend=None):
-        self.model = model
-        
-        if backend:
-            self.backend = backend
-        else:
-            import haystack
-            self.backend = haystack.backend.SearchBackend()
-        
+    def __init__(self):
         self.prepared_data = None
         content_fields = []
         
@@ -94,21 +90,30 @@ class SearchIndex(object):
         if not len(content_fields) == 1:
             raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
     
-    def _setup_save(self, model):
+    def _setup_save(self):
         """A hook for controlling what happens when the registered model is saved."""
         pass
     
-    def _setup_delete(self, model):
+    def _setup_delete(self):
         """A hook for controlling what happens when the registered model is deleted."""
         pass
     
-    def _teardown_save(self, model):
+    def _teardown_save(self):
         """A hook for removing the behavior when the registered model is saved."""
         pass
     
-    def _teardown_delete(self, model):
+    def _teardown_delete(self):
         """A hook for removing the behavior when the registered model is deleted."""
         pass
+    
+    def get_model(self):
+        """
+        Should return the ``Model`` class (not an instance) that the rest of the
+        ``SearchIndex`` should use.
+
+        This method is required & you must override it to return the correct class.
+        """
+        return NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
     
     def index_queryset(self):
         """
@@ -116,7 +121,7 @@ class SearchIndex(object):
         
         Subclasses can override this method to avoid indexing certain objects.
         """
-        return self.model._default_manager.all()
+        return self.get_model()._default_manager.all()
     
     def get_queryset(self):
         """
@@ -190,34 +195,66 @@ class SearchIndex(object):
                 weights[field_name] = field.boost
         return weights
     
-    def update(self):
-        """Update the entire index"""
-        self.backend.update(self, self.index_queryset())
+    def _get_backend(self, using):
+        if using is None:
+            using = connection_router.for_write(index=self)
+        
+        return connections[using].get_backend()
     
-    def update_object(self, instance, **kwargs):
+    def update(self, using=None):
+        """
+        Updates the entire index.
+        
+        If ``using`` is provided, it specifies which connection should be
+        used. Default relies on the routers to decide which backend should
+        be used.
+        """
+        self._get_backend(using).update(self, self.index_queryset())
+    
+    def update_object(self, instance, using=None, **kwargs):
         """
         Update the index for a single object. Attached to the class's
         post-save hook.
+        
+        If ``using`` is provided, it specifies which connection should be
+        used. Default relies on the routers to decide which backend should
+        be used.
         """
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
-            self.backend.update(self, [instance])
+            self._get_backend(using).update(self, [instance])
     
-    def remove_object(self, instance, **kwargs):
+    def remove_object(self, instance, using=None, **kwargs):
         """
         Remove an object from the index. Attached to the class's 
         post-delete hook.
+        
+        If ``using`` is provided, it specifies which connection should be
+        used. Default relies on the routers to decide which backend should
+        be used.
         """
-        self.backend.remove(instance)
+        self._get_backend(using).remove(instance)
     
-    def clear(self):
-        """Clear the entire index."""
-        self.backend.clear(models=[self.model])
+    def clear(self, using=None):
+        """
+        Clears the entire index.
+        
+        If ``using`` is provided, it specifies which connection should be
+        used. Default relies on the routers to decide which backend should
+        be used.
+        """
+        self._get_backend(using).clear(models=[self.get_model()])
     
-    def reindex(self):
-        """Completely clear the index for this model and rebuild it."""
-        self.clear()
-        self.update()
+    def reindex(self, using=None):
+        """
+        Completely clear the index for this model and rebuild it.
+        
+        If ``using`` is provided, it specifies which connection should be
+        used. Default relies on the routers to decide which backend should
+        be used.
+        """
+        self.clear(using=using)
+        self.update(using=using)
     
     def get_updated_field(self):
         """
@@ -252,7 +289,7 @@ class SearchIndex(object):
         
         By default, returns ``all()`` on the model's default manager.
         """
-        return self.model._default_manager.all()
+        return self.get_model()._default_manager.all()
 
 
 class RealTimeSearchIndex(SearchIndex):
@@ -260,17 +297,17 @@ class RealTimeSearchIndex(SearchIndex):
     A variant of the ``SearchIndex`` that constantly keeps the index fresh,
     as opposed to requiring a cron job.
     """
-    def _setup_save(self, model):
-        signals.post_save.connect(self.update_object, sender=model)
+    def _setup_save(self):
+        signals.post_save.connect(self.update_object, sender=self.get_model())
     
-    def _setup_delete(self, model):
-        signals.post_delete.connect(self.remove_object, sender=model)
+    def _setup_delete(self):
+        signals.post_delete.connect(self.remove_object, sender=self.get_model())
     
-    def _teardown_save(self, model):
-        signals.post_save.disconnect(self.update_object, sender=model)
+    def _teardown_save(self):
+        signals.post_save.disconnect(self.update_object, sender=self.get_model())
     
-    def _teardown_delete(self, model):
-        signals.post_delete.disconnect(self.remove_object, sender=model)
+    def _teardown_delete(self):
+        signals.post_delete.disconnect(self.remove_object, sender=self.get_model())
 
 
 class BasicSearchIndex(SearchIndex):
@@ -320,14 +357,8 @@ class ModelSearchIndex(SearchIndex):
     # list of reserved field names
     fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, 'content', 'text')
     
-    def __init__(self, model, backend=None, extra_field_kwargs=None):
-        self.model = model
-        
-        if backend:
-            self.backend = backend
-        else:
-            import haystack
-            self.backend = haystack.backend.SearchBackend()
+    def __init__(self, extra_field_kwargs=None):
+        self.model = None
         
         self.prepared_data = None
         content_fields = []
@@ -339,6 +370,7 @@ class ModelSearchIndex(SearchIndex):
         self._meta = getattr(self, 'Meta', None)
         
         if self._meta:
+            self.model = getattr(self._meta, 'model', None)
             fields = getattr(self._meta, 'fields', [])
             excludes = getattr(self._meta, 'excludes', [])
             
@@ -366,6 +398,9 @@ class ModelSearchIndex(SearchIndex):
             return True
         
         return False
+    
+    def get_model(self):
+        return self.model
     
     def get_index_fieldname(self, f):
         """

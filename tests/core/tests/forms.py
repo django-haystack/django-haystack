@@ -1,28 +1,33 @@
 from django.test import TestCase
+from haystack import connections, connection_router
 from haystack.forms import SearchForm, ModelSearchForm, model_choices, FacetedSearchForm
-import haystack
-from haystack.sites import SearchSite
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
-from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
-from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
+from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel, AnotherMockModel
+from core.tests.views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
 
 
 class SearchFormTestCase(TestCase):
     def setUp(self):
         super(SearchFormTestCase, self).setUp()
-        mock_index_site = SearchSite()
-        mock_index_site.register(MockModel)
-        mock_index_site.register(AnotherMockModel)
         
         # Stow.
-        self.old_site = haystack.site
-        haystack.site = mock_index_site
+        self.old_unified_index = connections['default']._index
+        self.ui = UnifiedIndex()
+        self.bmmsi = BasicMockModelSearchIndex()
+        self.bammsi = BasicAnotherMockModelSearchIndex()
+        self.ui.build(indexes=[self.bmmsi, self.bammsi])
+        connections['default']._index = self.ui
         
-        self.sqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()), site=mock_index_site)
+        # Update the "index".
+        backend = connections['default'].get_backend()
+        backend.clear()
+        backend.update(self.bmmsi, MockModel.objects.all())
+        
+        self.sqs = SearchQuerySet()
     
     def tearDown(self):
-        haystack.site = self.old_site
+        connections['default']._index = self.old_unified_index
         super(SearchFormTestCase, self).tearDown()
     
     def test_unbound(self):
@@ -39,18 +44,23 @@ class SearchFormTestCase(TestCase):
 class ModelSearchFormTestCase(TestCase):
     def setUp(self):
         super(ModelSearchFormTestCase, self).setUp()
-        mock_index_site = SearchSite()
-        mock_index_site.register(MockModel)
-        mock_index_site.register(AnotherMockModel)
-        
         # Stow.
-        self.old_site = haystack.site
-        haystack.site = mock_index_site
+        self.old_unified_index = connections['default']._index
+        self.ui = UnifiedIndex()
+        self.bmmsi = BasicMockModelSearchIndex()
+        self.bammsi = BasicAnotherMockModelSearchIndex()
+        self.ui.build(indexes=[self.bmmsi, self.bammsi])
+        connections['default']._index = self.ui
         
-        self.sqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()), site=mock_index_site)
+        # Update the "index".
+        backend = connections['default'].get_backend()
+        backend.clear()
+        backend.update(self.bmmsi, MockModel.objects.all())
+        
+        self.sqs = SearchQuerySet()
     
     def tearDown(self):
-        haystack.site = self.old_site
+        connections['default']._index = self.old_unified_index
         super(ModelSearchFormTestCase, self).tearDown()
     
     def test_models_regression_1(self):
@@ -68,28 +78,30 @@ class ModelSearchFormTestCase(TestCase):
         self.assertEqual(len(sqs_with_models.query.models), 2)
     
     def test_model_choices(self):
-        mis = SearchSite()
-        mis.register(MockModel)
-        mis.register(AnotherMockModel)
-        self.assertEqual(len(model_choices(site=mis)), 2)
-        self.assertEqual([option[1] for option in model_choices(site=mis)], [u'Another mock models', u'Mock models'])
+        self.assertEqual(len(model_choices()), 2)
+        self.assertEqual([option[1] for option in model_choices()], [u'Another mock models', u'Mock models'])
 
 
 class FacetedSearchFormTestCase(TestCase):
     def setUp(self):
         super(FacetedSearchFormTestCase, self).setUp()
-        mock_index_site = SearchSite()
-        mock_index_site.register(MockModel)
-        mock_index_site.register(AnotherMockModel)
-        
         # Stow.
-        self.old_site = haystack.site
-        haystack.site = mock_index_site
+        self.old_unified_index = connections['default']._index
+        self.ui = UnifiedIndex()
+        self.bmmsi = BasicMockModelSearchIndex()
+        self.bammsi = BasicAnotherMockModelSearchIndex()
+        self.ui.build(indexes=[self.bmmsi, self.bammsi])
+        connections['default']._index = self.ui
         
-        self.sqs = SearchQuerySet(query=DummySearchQuery(backend=DummySearchBackend()), site=mock_index_site)
+        # Update the "index".
+        backend = connections['default'].get_backend()
+        backend.clear()
+        backend.update(self.bmmsi, MockModel.objects.all())
+        
+        self.sqs = SearchQuerySet()
     
     def tearDown(self):
-        haystack.site = self.old_site
+        connections['default']._index = self.old_unified_index
         super(FacetedSearchFormTestCase, self).tearDown()
     
     def test_init_with_selected_facets(self):

@@ -6,27 +6,28 @@ INSTALLED_APPS = INSTALLED_APPS + [
     'haystack',
 ]
 
-# Required and specific to where you place the file.
-HAYSTACK_SITECONF = 'example_project.search_sites'
-
-# Optional Haystack settings.
-# See `docs/settings.rst` for a complete list.
-HAYSTACK_INCLUDE_SPELLING = True
-
-
-# For Solr:
-HAYSTACK_SEARCH_ENGINE = 'solr'
-HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/example'
-HAYSTACK_SOLR_TIMEOUT = 60 * 5
-
-
-# For Whoosh:
-# import os
-# HAYSTACK_SEARCH_ENGINE = 'whoosh'
-# HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
-
-
-# For Xapian (requires the third-party install):
-# import os
-# HAYSTACK_SEARCH_ENGINE = 'xapian'
-# HAYSTACK_XAPIAN_PATH = os.path.join(os.path.dirname(__file__), 'xapian_index')
+import os
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        # For Solr:
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': 'http://localhost:9001/solr/example',
+        'TIMEOUT': 60 * 5,
+        'INCLUDE_SPELLING': True,
+    },
+    'whoosh': {
+        # For Whoosh:
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+        'INCLUDE_SPELLING': True,
+    },
+    'simple': {
+        # For Simple:
+        'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+    },
+    'xapian': {
+        # For Xapian (requires the third-party install):
+        'ENGINE': 'xapian_haystack.xapian_backend.XapianEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'xapian_index'),
+    }
+}

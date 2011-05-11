@@ -2,7 +2,7 @@ import os
 from settings import *
 
 INSTALLED_APPS += [
-    'whoosh_tests',
+    'discovery',
 ]
 
 HAYSTACK_CONNECTIONS = {
@@ -10,6 +10,5 @@ HAYSTACK_CONNECTIONS = {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
         'PATH': os.path.join('tmp', 'test_whoosh_query'),
         'INCLUDE_SPELLING': True,
-        # 'STORAGE': 'ram',
     },
 }

@@ -1,16 +1,8 @@
 from datetime import date
 from django.test import TestCase
-from haystack import indexes, sites, backends
-from haystack.backends.simple_backend import SearchBackend
-from haystack.sites import SearchSite
+from haystack import connections, connection_router
 from core.models import MockModel
 from core.tests.mocks import MockSearchResult
-
-
-class SimpleMockSearchIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
 
 
 class SimpleSearchBackendTestCase(TestCase):
@@ -19,11 +11,8 @@ class SimpleSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SimpleSearchBackendTestCase, self).setUp()
         
-        self.site = SearchSite()
-        self.backend = SearchBackend(site=self.site)
-        self.index = SimpleMockSearchIndex(MockModel, backend=self.backend)
-        self.site.register(MockModel, SimpleMockSearchIndex)
-        
+        self.backend = connections['default'].get_backend()
+        self.index = connections['default'].get_unified_index().get_index(MockModel)
         self.sample_objs = MockModel.objects.all()
     
     def test_update(self):

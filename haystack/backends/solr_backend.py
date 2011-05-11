@@ -3,7 +3,7 @@ import sys
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
-from haystack.backends import BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
+from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
@@ -19,10 +19,7 @@ except ImportError:
     raise MissingDependency("The 'solr' backend requires the installation of 'pysolr'. Please refer to the documentation.")
 
 
-BACKEND_NAME = 'solr'
-
-
-class SearchBackend(BaseSearchBackend):
+class SolrSearchBackend(BaseSearchBackend):
     # Word reserved by Solr for special use.
     RESERVED_WORDS = (
         'AND',
@@ -38,14 +35,13 @@ class SearchBackend(BaseSearchBackend):
         '[', ']', '^', '"', '~', '*', '?', ':',
     )
     
-    def __init__(self, site=None):
-        super(SearchBackend, self).__init__(site)
+    def __init__(self, connection_alias, **connection_options):
+        super(SolrSearchBackend, self).__init__(connection_alias, **connection_options)
         
-        if not hasattr(settings, 'HAYSTACK_SOLR_URL'):
-            raise ImproperlyConfigured('You must specify a HAYSTACK_SOLR_URL in your settings.')
+        if not 'URL' in connection_options:
+            raise ImproperlyConfigured("You must specify a 'URL' in your settings for connection '%s'." % connection_alias)
         
-        timeout = getattr(settings, 'HAYSTACK_SOLR_TIMEOUT', 10)
-        self.conn = Solr(settings.HAYSTACK_SOLR_URL, timeout=timeout)
+        self.conn = Solr(connection_options['URL'], timeout=self.timeout)
         self.log = logging.getLogger('haystack')
     
     def update(self, index, iterable, commit=True):
@@ -127,7 +123,7 @@ class SearchBackend(BaseSearchBackend):
             kwargs['hl'] = 'true'
             kwargs['hl.fragsize'] = '200'
         
-        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+        if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
             kwargs['spellcheck.collate'] = 'true'
             kwargs['spellcheck.count'] = 1
@@ -163,12 +159,12 @@ class SearchBackend(BaseSearchBackend):
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
         
         if limit_to_registered_models:
-            # Using narrow queries, limit the results to only models registered
-            # with the current site.
+            # Using narrow queries, limit the results to only models handled
+            # with the current routers.
             if narrow_queries is None:
                 narrow_queries = set()
             
-            registered_models = self.build_registered_models_list()
+            registered_models = self.build_models_list()
             
             if len(registered_models) > 0:
                 narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
@@ -187,13 +183,15 @@ class SearchBackend(BaseSearchBackend):
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
                        limit_to_registered_models=None, result_class=None, **kwargs):
+        from haystack import connections
+        
         # Handle deferred models.
         if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
             model_klass = get_proxied_model(model_instance._meta)
         else:
             model_klass = type(model_instance)
         
-        index = self.site.get_index(model_klass)
+        index = connections[self.connection_alias].get_unified_index().get_index(model_klass)
         field_name = index.get_content_field()
         params = {
             'fl': '*,score',
@@ -211,12 +209,12 @@ class SearchBackend(BaseSearchBackend):
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
         
         if limit_to_registered_models:
-            # Using narrow queries, limit the results to only models registered
-            # with the current site.
+            # Using narrow queries, limit the results to only models handled
+            # with the current routers.
             if narrow_queries is None:
                 narrow_queries = set()
             
-            registered_models = self.build_registered_models_list()
+            registered_models = self.build_models_list()
             
             if len(registered_models) > 0:
                 narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
@@ -238,11 +236,7 @@ class SearchBackend(BaseSearchBackend):
         return self._process_results(raw_results, result_class=result_class)
     
     def _process_results(self, raw_results, highlight=False, result_class=None):
-        if not self.site:
-            from haystack import site
-        else:
-            site = self.site
-        
+        from haystack import connections
         results = []
         hits = raw_results.hits
         facets = {}
@@ -264,14 +258,15 @@ class SearchBackend(BaseSearchBackend):
                     # pairs.
                     facets[key][facet_field] = zip(facets[key][facet_field][::2], facets[key][facet_field][1::2])
         
-        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False) is True:
+        if self.include_spelling is True:
             if hasattr(raw_results, 'spellcheck'):
                 if len(raw_results.spellcheck.get('suggestions', [])):
                     # For some reason, it's an array of pairs. Pull off the
                     # collated result from the end.
                     spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
         
-        indexed_models = site.get_indexed_models()
+        unified_index = connections[self.connection_alias].get_unified_index()
+        indexed_models = unified_index.get_indexed_models()
         
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result[DJANGO_CT].split('.')
@@ -280,7 +275,7 @@ class SearchBackend(BaseSearchBackend):
             
             if model and model in indexed_models:
                 for key, value in raw_result.items():
-                    index = site.get_index(model)
+                    index = unified_index.get_index(model)
                     string_key = str(key)
                     
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
@@ -295,7 +290,7 @@ class SearchBackend(BaseSearchBackend):
                 if raw_result[ID] in getattr(raw_results, 'highlighting', {}):
                     additional_fields['highlighted'] = raw_results.highlighting[raw_result[ID]]
                 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], searchsite=self.site, **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
@@ -365,19 +360,12 @@ class SearchBackend(BaseSearchBackend):
         return (content_field_name, schema_fields)
 
 
-class SearchQuery(BaseSearchQuery):
-    def __init__(self, site=None, backend=None):
-        super(SearchQuery, self).__init__(site, backend)
-        
-        if backend is not None:
-            self.backend = backend
-        else:
-            self.backend = SearchBackend(site=site)
-
+class SolrSearchQuery(BaseSearchQuery):
     def matching_all_fragment(self):
         return '*:*'
 
     def build_query_fragment(self, field, filter_type, value):
+        from haystack import connections
         result = ''
         
         # Handle when we've got a ``ValuesListQuerySet``...
@@ -392,7 +380,7 @@ class SearchQuery(BaseSearchQuery):
         if ' ' in value:
             value = '"%s"' % value
         
-        index_fieldname = self.backend.site.get_index_fieldname(field)
+        index_fieldname = connections[self._using].get_unified_index().get_index_fieldname(field)
         
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
@@ -487,3 +475,8 @@ class SearchQuery(BaseSearchQuery):
         results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
+
+
+class SolrEngine(BaseEngine):
+    backend = SolrSearchBackend
+    query = SolrSearchQuery

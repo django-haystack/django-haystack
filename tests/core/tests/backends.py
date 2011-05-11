@@ -1,7 +1,7 @@
 import warnings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
-import haystack
+from haystack.utils import loading
 
 
 class LoadBackendTestCase(TestCase):
@@ -12,8 +12,8 @@ class LoadBackendTestCase(TestCase):
             warnings.warn("Pysolr doesn't appear to be installed. Unable to test loading the Solr backend.")
             return
         
-        backend = haystack.load_backend('solr')
-        self.assertEqual(backend.BACKEND_NAME, 'solr')
+        backend = loading.load_backend('haystack.backends.solr_backend.SolrEngine')
+        self.assertEqual(backend.__name__, 'SolrEngine')
     
     def test_load_whoosh(self):
         try:
@@ -22,20 +22,28 @@ class LoadBackendTestCase(TestCase):
             warnings.warn("Whoosh doesn't appear to be installed. Unable to test loading the Whoosh backend.")
             return
         
-        backend = haystack.load_backend('whoosh')
-        self.assertEqual(backend.BACKEND_NAME, 'whoosh')
-    
-    def test_load_dummy(self):
-        backend = haystack.load_backend('dummy')
-        self.assertEqual(backend.BACKEND_NAME, 'dummy')
+        backend = loading.load_backend('haystack.backends.whoosh_backend.WhooshEngine')
+        self.assertEqual(backend.__name__, 'WhooshEngine')
     
     def test_load_simple(self):
-        backend = haystack.load_backend('simple')
-        self.assertEqual(backend.BACKEND_NAME, 'simple')
+        backend = loading.load_backend('haystack.backends.simple_backend.SimpleEngine')
+        self.assertEqual(backend.__name__, 'SimpleEngine')
     
     def test_load_nonexistent(self):
         try:
-            backend = haystack.load_backend('foobar')
+            backend = loading.load_backend('foobar')
             self.fail()
         except ImproperlyConfigured, e:
-            self.assertEqual(str(e), "'foobar' isn't an available search backend. Available options are: 'dummy', 'simple', 'solr', 'whoosh'")
+            self.assertEqual(str(e), "The provided backend 'foobar' is not a complete Python path to a BaseEngine subclass.")
+        
+        try:
+            backend = loading.load_backend('foobar.FooEngine')
+            self.fail()
+        except ImportError, e:
+            pass
+        
+        try:
+            backend = loading.load_backend('haystack.backends.simple_backend.FooEngine')
+            self.fail()
+        except ImportError, e:
+            self.assertEqual(str(e), "The Python module 'haystack.backends.simple_backend' has no 'FooEngine' class.")

@@ -19,18 +19,19 @@ Table Of Contents
    other_apps
    debugging
    
+   migration_from_1_to_2
+   
    best_practices
    highlighting
    faceting
    autocomplete
    boost
-   do_not_try_this_at_home
+   multiple_index
    
    searchqueryset_api
    searchindex_api
    searchfield_api
    searchresult_api
-   searchsite_api
    searchquery_api
    searchbackend_api
    

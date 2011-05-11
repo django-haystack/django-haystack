@@ -14,12 +14,8 @@ class MissingDependency(HaystackError):
     """Raised when a library a backend depends on can not be found."""
     pass
 
-class AlreadyRegistered(HaystackError):
-    """Raised when a model is already registered with a site."""
-    pass
-
-class NotRegistered(HaystackError):
-    """Raised when a model is not registered with a site."""
+class NotHandled(HaystackError):
+    """Raised when a model is not handled by the router setup."""
     pass
 
 class MoreLikeThisError(HaystackError):

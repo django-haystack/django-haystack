@@ -1,13 +1,13 @@
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.admin.views.main import (ChangeList, MAX_SHOW_ALL_ALLOWED,
                                              SEARCH_VAR)
-from django.core.exceptions import PermissionDenied, ImproperlyConfigured
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, InvalidPage
 from django.shortcuts import render_to_response
 from django import template
 from django.utils.encoding import force_unicode
 from django.utils.translation import ungettext
-from haystack import site
+from haystack import connections
 from haystack.query import SearchQuerySet
 try:
     from django.contrib.admin.options import csrf_protect_m
@@ -68,7 +68,7 @@ class SearchModelAdmin(ModelAdmin):
         
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
-        if not self.model in site.get_indexed_models():
+        if not self.model in connections['default'].get_unified_index().get_indexed_models():
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
             return super(SearchModelAdmin, self).changelist_view(request, extra_context)

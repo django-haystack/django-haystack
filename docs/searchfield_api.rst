@@ -59,13 +59,13 @@ within a ``SearchIndex``. You use them in a declarative manner, just like
 fields in ``django.forms.Form`` or ``django.db.models.Model`` objects. For
 example::
 
-    from haystack.indexes import *
+    from haystack import indexes
     
     
-    class NoteIndex(SearchIndex):
-        text = CharField(document=True, use_template=True)
-        author = CharField(model_attr='user')
-        pub_date = DateTimeField(model_attr='pub_date')
+    class NoteIndex(indexes.SearchIndex):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
 
 This will hook up those fields with the index and, when updating a ``Model``
 object, pull the relevant data out and prepare it for storage in the index.

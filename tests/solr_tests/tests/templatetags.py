@@ -2,14 +2,18 @@ import pysolr
 from django.conf import settings
 from django.template import Template, Context
 from django.test import TestCase
-from haystack.indexes import *
-from haystack.backends.solr_backend import SearchBackend
-from haystack.sites import SearchSite
+from haystack import connections, connection_router
+from haystack import indexes
+from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
+from solr_tests.tests.solr_backend import clear_solr_index
 
 
-class MLTSearchIndex(RealTimeSearchIndex):
-    text = CharField(document=True, model_attr='foo')
+class MLTSearchIndex(indexes.RealTimeSearchIndex):
+    text = indexes.CharField(document=True, model_attr='foo')
+    
+    def get_model(self):
+        return MockModel
 
 
 class MoreLikeThisTagTestCase(TestCase):
@@ -18,26 +22,21 @@ class MoreLikeThisTagTestCase(TestCase):
     def setUp(self):
         super(MoreLikeThisTagTestCase, self).setUp()
         
-        self.raw_solr = pysolr.Solr(settings.HAYSTACK_SOLR_URL)
-        self.raw_solr.delete(q='*:*')
-        
-        self.site = SearchSite()
-        self.sb = SearchBackend(site=self.site)
-        self.smmi = MLTSearchIndex(MockModel, backend=self.sb)
-        self.site.register(MockModel, MLTSearchIndex)
+        clear_solr_index()
         
         # Stow.
-        import haystack
-        self.old_site = haystack.site
-        haystack.site = self.site
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = MLTSearchIndex()
+        self.ui.build(indexes=[self.smmi])
+        connections['default']._index = self.ui
         
         # Force indexing of the content.
         for mock in MockModel.objects.all():
             mock.save()
     
     def tearDown(self):
-        import haystack
-        haystack.site = self.old_site
+        connections['default']._index = self.old_ui
         super(MoreLikeThisTagTestCase, self).tearDown()
     
     def render(self, template, context):
