@@ -6,13 +6,11 @@ class Command(NoArgsCommand):
     
     def handle_noargs(self, **options):
         """Provides feedback about the current Haystack setup."""
-        # Cause the default site to load.
-        from haystack import site
+        from haystack import connections
         
-        indexed = site.get_indexed_models()
+        indexed = connections['default'].get_unified_index().get_indexed_models()
         index_count = len(indexed)
-        print "Loaded URLconf to initialize SearchSite..."
-        print "Main site registered %s index(es)." % index_count
+        print "Number of handled %s index(es)." % index_count
         
         for index in indexed:
             print "  - %s" % index

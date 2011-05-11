@@ -1,5 +1,5 @@
 from django.test import TestCase
-from haystack.backends.simple_backend import SearchBackend, SearchQuery
+from haystack import connections
 from haystack.models import SearchResult
 from haystack.query import SQ
 
@@ -7,7 +7,7 @@ from haystack.query import SQ
 class SimpleSearchQueryTestCase(TestCase):
     def setUp(self):
         super(SimpleSearchQueryTestCase, self).setUp()
-        self.sq = SearchQuery(backend=SearchBackend())
+        self.sq = connections['default'].get_query()
 
     def test_build_query_all(self):
         self.assertEqual(self.sq.build_query(), '*')

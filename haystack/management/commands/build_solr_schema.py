@@ -2,7 +2,7 @@ from optparse import make_option
 import sys
 from django.core.management.base import BaseCommand
 from django.template import loader, Context
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR, DEFAULT_ALIAS
 
 
 class Command(BaseCommand):
@@ -10,22 +10,25 @@ class Command(BaseCommand):
     base_options = (
         make_option("-f", "--filename", action="store", type="string", dest="filename",
                     help='If provided, directs output to a file instead of stdout.'),
+        make_option("-u", "--using", action="store", type="string", dest="using",
+                    help='If provided, chooses a connection to work with.'),
     )
     option_list = BaseCommand.option_list + base_options
     
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
-        schema_xml = self.build_template()
+        using = options.get('using', DEFAULT_ALIAS)
+        schema_xml = self.build_template(using=using)
         
         if options.get('filename'):
             self.write_file(options.get('filename'), schema_xml)
         else:
             self.print_stdout(schema_xml)
     
-    def build_context(self):
-        # Cause the default site to load.
-        from haystack import backend, site
-        content_field_name, fields = backend.SearchBackend().build_schema(site.all_searchfields())
+    def build_context(self, using):
+        from haystack import connections, connection_router
+        backend = connections[using].get_backend()
+        content_field_name, fields = backend.build_schema(connections[using].get_unified_index().all_searchfields())
         return Context({
             'content_field_name': content_field_name,
             'fields': fields,
@@ -35,9 +38,9 @@ class Command(BaseCommand):
             'DJANGO_ID': DJANGO_ID,
         })
     
-    def build_template(self):
+    def build_template(self, using):
         t = loader.get_template('search_configuration/solr.xml')
-        c = self.build_context()
+        c = self.build_context(using=using)
         return t.render(c)
     
     def print_stdout(self, schema_xml):

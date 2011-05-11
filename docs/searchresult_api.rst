@@ -4,7 +4,7 @@
 ``SearchResult`` API
 ====================
 
-.. class:: SearchResult(app_label, model_name, pk, score, searchsite=None, **kwargs)
+.. class:: SearchResult(app_label, model_name, pk, score, **kwargs)
 
 The ``SearchResult`` class provides structure to the results that come back from
 the search index. These objects are what a ``SearchQuerySet`` will return when
@@ -23,7 +23,6 @@ The class exposes the following useful attributes/properties:
 * ``object`` - The actual model instance (lazy loaded).
 * ``model`` - The model class.
 * ``verbose_name`` - A prettier version of the model's class name for display.
-* ``searchsite`` - The ``SearchSite`` the record is associated with.
 
 
 Method Reference

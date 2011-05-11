@@ -4,7 +4,7 @@
 ``SearchBackend`` API
 =====================
 
-.. class:: SearchBackend(site=None)
+.. class:: SearchBackend(connection_alias, **connection_options)
 
 The ``SearchBackend`` class handles interaction directly with the backend. The
 search query it performs is usually fed to it from a ``SearchQuery`` class that
@@ -100,14 +100,14 @@ Takes a dictionary of fields and returns schema information.
 This method MUST be implemented by each backend, as it will be highly
 specific to each one.
 
-``build_registered_models_list``
---------------------------------
+``build_models_list``
+---------------------
 
-.. method:: SearchBackend.build_registered_models_list(self)
+.. method:: SearchBackend.build_models_list(self)
 
-Builds a list of registered models for searching.
+Builds a list of models for searching.
 
 The ``search`` method should use this and the ``django_ct`` field to
 narrow the results (unless the user indicates not to). This helps ignore
-any results that are not currently registered models and ensures
+any results that are not currently handled models and ensures
 consistent caching.

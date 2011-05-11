@@ -2,17 +2,15 @@ import datetime
 from optparse import make_option
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.management.base import AppCommand, CommandError
+from django.core.management.base import AppCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+from haystack import connections, connection_router
+from haystack.constants import DEFAULT_ALIAS
 from haystack.query import SearchQuerySet
-try:
-    from django.utils import importlib
-except ImportError:
-    from haystack.utils import importlib
 
 
-DEFAULT_BATCH_SIZE = getattr(settings, 'HAYSTACK_BATCH_SIZE', 1000)
+DEFAULT_BATCH_SIZE = None
 DEFAULT_AGE = None
 
 
@@ -24,14 +22,14 @@ class Command(AppCommand):
             help='Number of hours back to consider objects new.'
         ),
         make_option('-b', '--batch-size', action='store', dest='batchsize',
-            default=DEFAULT_BATCH_SIZE, type='int',
+            default=None, type='int',
             help='Number of items to index at once.'
-        ),
-        make_option('-s', '--site', action='store', dest='site',
-            type='string', help='The site object to use when reindexing (like `search_sites.mysite`).'
         ),
         make_option('-r', '--remove', action='store_true', dest='remove',
             default=False, help='Remove objects from the index that are no longer present in the database.'
+        ),
+        make_option("-u", "--using", action="store", type="string", dest="using", default=None,
+            help='If provided, chooses a connection to work with.'
         ),
     )
     option_list = AppCommand.option_list + base_options
@@ -53,10 +51,11 @@ class Command(AppCommand):
     
     def handle(self, *apps, **options):
         self.verbosity = int(options.get('verbosity', 1))
-        self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
-        self.site = options.get('site')
         self.remove = options.get('remove', False)
+        self.using = options.get('using') or DEFAULT_ALIAS
+        
+        self.backend = connections[self.using].get_backend()
         
         if not apps:
             from django.db.models import get_app
@@ -75,26 +74,15 @@ class Command(AppCommand):
         return super(Command, self).handle(*apps, **options)
     
     def handle_app(self, app, **options):
-        # Cause the default site to load.
-        from haystack import site
         from django.db.models import get_models
-        from haystack.exceptions import NotRegistered
+        from haystack.exceptions import NotHandled
         
-        if self.site:
-            path_bits = self.site.split('.')
-            module_name = '.'.join(path_bits[:-1])
-            site_name = path_bits[-1]
-            
-            try:
-                module = importlib.import_module(module_name)
-                site = getattr(module, site_name)
-            except (ImportError, NameError):
-                pass
+        unified_index = connections[self.using].get_unified_index()
         
         for model in get_models(app):
             try:
-                index = site.get_index(model)
-            except NotRegistered:
+                index = unified_index.get_index(model)
+            except NotHandled:
                 if self.verbosity >= 2:
                     print "Skipping '%s' - no index." % model
                 continue
@@ -122,8 +110,8 @@ class Command(AppCommand):
             
             pks_seen = set()
             
-            for start in range(0, total, self.batchsize):
-                end = min(start + self.batchsize, total)
+            for start in range(0, total, self.backend.batch_size):
+                end = min(start + self.backend.batch_size, total)
                 
                 # Get a clone of the QuerySet so that the cache doesn't bloat up
                 # in memory. Useful when reindexing large amounts of data.
@@ -136,7 +124,7 @@ class Command(AppCommand):
                 if self.verbosity >= 2:
                     print "  indexing %s - %d of %d." % (start+1, end, total)
                 
-                index.backend.update(index, current_qs)
+                self.backend.update(index, current_qs)
                 
                 # Clear out the DB connections queries because it bloats up RAM.
                 reset_queries()
@@ -152,8 +140,8 @@ class Command(AppCommand):
                     for pk in qs:
                         pks_seen.add(smart_str(pk))
                 
-                for start in range(0, total, self.batchsize):
-                    upper_bound = start + self.batchsize
+                for start in range(0, total, self.backend.batch_size):
+                    upper_bound = start + self.backend.batch_size
                     
                     # Fetch a list of results.
                     # Can't do pk range, because id's are strings (thanks comments
@@ -168,4 +156,4 @@ class Command(AppCommand):
                             if self.verbosity >= 2:
                                 print "  removing %s." % result.pk
                             
-                            index.backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]))
+                            self.backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]))

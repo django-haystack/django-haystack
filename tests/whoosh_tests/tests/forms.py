@@ -1,7 +1,6 @@
 # To ensure spelling suggestions work...
 from django.conf import settings
 from django.http import HttpRequest
-from django.test import TestCase
 from haystack.forms import SearchForm
 from haystack.views import SearchView
 from whoosh_tests.tests.whoosh_backend import LiveWhooshRoundTripTestCase
@@ -11,14 +10,14 @@ from whoosh_tests.tests.whoosh_backend import LiveWhooshRoundTripTestCase
 # not ``None``, we know the backend is doing something. Whee.
 class SpellingSuggestionTestCase(LiveWhooshRoundTripTestCase):
     def setUp(self):
-        self.old_spelling_setting = getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False)
-        settings.HAYSTACK_INCLUDE_SPELLING = True
+        self.old_spelling_setting = settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING']
+        settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = True
         
         super(SpellingSuggestionTestCase, self).setUp()
     
     def tearDown(self):
+        settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = self.old_spelling_setting
         super(SpellingSuggestionTestCase, self).tearDown()
-        settings.HAYSTACK_INCLUDE_SPELLING = self.old_spelling_setting
     
     def test_form_suggestion(self):
         form = SearchForm({'q': 'exampl'})

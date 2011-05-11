@@ -20,6 +20,9 @@ following arguments::
         uncerimoniously wiped out.
     ``--verbosity``:
         Accepted but ignored.
+    ``--using``:
+        If provided, determines which connection should be used. Default is
+        ``default``.
 
 By default, this is an **INTERACTIVE** command and assumes that you do **NOT**
 wish to delete the entire index.
@@ -27,7 +30,7 @@ wish to delete the entire index.
 .. warning::
 
   Depending on the backend you're using, this may simply delete the entire
-  directory, so be sure your ``HAYSTACK_<ENGINE>_PATH`` setting is correctly
+  directory, so be sure your ``HAYSTACK_CONNECTIONS[<alias>]['PATH']`` setting is correctly
   pointed at just the index directory.
 
 
@@ -58,6 +61,9 @@ arguments::
             and how many records.
           * ``2`` = Full output, including everything from ``1`` plus output
             on each batch that is indexed, which is useful when debugging.
+    ``--using``:
+        If provided, determines which connection should be used. Default is
+        ``default``.
 
 .. note::
 
@@ -96,6 +102,9 @@ of the arguments of the following arguments::
             and how many records.
           * ``2`` = Full output, including everything from ``1`` plus output
             on each batch that is indexed, which is useful when debugging.
+    ``--using``:
+        If provided, determines which connection should be used. Default is
+        ``default``.
 
 For when you really, really want a completely rebuilt index.
 
@@ -104,12 +113,19 @@ For when you really, really want a completely rebuilt index.
 =====================
 
 Once all of your ``SearchIndex`` classes are in place, this command can be used
-to generate the XML schema Solr needs to handle the search data. It accepts no
-arguments.
+to generate the XML schema Solr needs to handle the search data. It accepts the
+following arguments::
+
+    ``--filename``:
+        If provided, directs output to a file instead of stdout.
+    ``--using``:
+        If provided, determines which connection should be used. Default is
+        ``default``.
 
 .. warning:
 
-    This command does NOT update the ``schema.xml`` file for you. You have to
+    This command does NOT update the ``schema.xml`` file for you. You either
+    have to specify a ``filename`` flag or have to
     copy-paste (or redirect) the output to the correct file. Haystack has no
     way of knowing where your Solr is setup (or if it's even on the same
     machine), hence the manual step.

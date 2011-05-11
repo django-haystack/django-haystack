@@ -1,10 +1,9 @@
 import operator
-import re
 import warnings
-from django.conf import settings
+from haystack import connections, connection_router
 from haystack.backends import SQ
-from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
-from haystack.exceptions import NotRegistered
+from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR, DEFAULT_ALIAS
+from haystack.exceptions import NotHandled
 
 
 class SearchQuerySet(object):
@@ -13,24 +12,44 @@ class SearchQuerySet(object):
     
     Supports chaining (a la QuerySet) to narrow the search.
     """
-    def __init__(self, site=None, query=None):
+    def __init__(self, using=None, query=None):
+        # ``_using`` should only ever be a value other than ``None`` if it's
+        # been forced with the ``.using`` method.
+        self._using = using
+        self.query = None
+        self._determine_backend()
+        
+        # If ``query`` is present, it should override even what the routers
+        # think.
         if query is not None:
             self.query = query
-        else:
-            from haystack import backend
-            self.query = backend.SearchQuery(site=site)
         
         self._result_cache = []
         self._result_count = None
         self._cache_full = False
         self._load_all = False
         self._ignored_result_count = 0
+    
+    def _determine_backend(self):
+        # A backend has been manually selected. Use it instead.
+        if self._using is not None:
+            return self._using
         
-        if site is not None:
-            self.site = site
+        # No backend, so rely on the routers to figure out what's right.
+        from haystack import connections
+        hints = {}
+        
+        if self.query:
+            hints['models'] = self.query.models
+        
+        backend_alias = connection_router.for_read(**hints)
+        
+        # The ``SearchQuery`` might swap itself out for a different variant
+        # here.
+        if self.query:
+            self.query = self.query.using(backend_alias)
         else:
-            from haystack import site as main_site
-            self.site = main_site
+            self.query = connections[backend_alias].get_query()
     
     def __getstate__(self):
         """
@@ -39,16 +58,13 @@ class SearchQuerySet(object):
         len(self)
         obj_dict = self.__dict__.copy()
         obj_dict['_iter'] = None
-        del obj_dict['site']
         return obj_dict
 
-    def __setstate__(self, dict):
+    def __setstate__(self, data_dict):
         """
         For unpickling.
         """
-        self.__dict__ = dict
-        from haystack import site as main_site
-        self.site = main_site
+        self.__dict__ = data_dict
     
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
@@ -169,9 +185,12 @@ class SearchQuerySet(object):
             # Load the objects for each model in turn.
             for model in models_pks:
                 try:
-                    loaded_objects[model] = self.site.get_index(model).read_queryset().in_bulk(models_pks[model])
-                except NotRegistered:
-                    self.log.warning("Model not registered with search site '%s.%s'." % (self.app_label, self.model_name))
+                    ui = connections[self.query._using].get_unified_index()
+                    index = ui.get_index(model)
+                    objects = index.read_queryset()
+                    loaded_objects[model] = objects.in_bulk(models_pks[model])
+                except NotHandled:
+                    self.log.warning("Model '%s.%s' not handled by the routers." % (self.app_label, self.model_name))
                     # Revert to old behaviour
                     loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
 
@@ -297,7 +316,7 @@ class SearchQuerySet(object):
         clone = self._clone()
         
         for model in models:
-            if not model in self.site.get_indexed_models():
+            if not model in connections[self.query._using].get_unified_index().get_indexed_models():
                 warnings.warn('The model %r is not registered for search.' % model)
             
             clone.query.add_model(model)
@@ -423,6 +442,16 @@ class SearchQuerySet(object):
         
         return clone.filter(reduce(operator.__and__, query_bits))
     
+    def using(self, connection_name):
+        """
+        Allows switching which connection the ``SearchQuerySet`` uses to
+        search in.
+        """
+        clone = self._clone()
+        clone.query = self.query.using(connection_name)
+        clone._using = connection_name
+        return clone
+    
     # Methods that do not return a SearchQuerySet.
     
     def count(self):
@@ -460,8 +489,8 @@ class SearchQuerySet(object):
         """
         Returns the spelling suggestion found by the query.
         
-        To work, you must set ``settings.HAYSTACK_INCLUDE_SPELLING`` to True.
-        Otherwise, ``None`` will be returned.
+        To work, you must set ``INCLUDE_SPELLING`` within your connection's
+        settings dictionary to ``True``. Otherwise, ``None`` will be returned.
         
         This will cause the query to execute and should generally be used when
         presenting the data.
@@ -477,7 +506,7 @@ class SearchQuerySet(object):
             klass = self.__class__
         
         query = self.query._clone()
-        clone = klass(site=self.site, query=query)
+        clone = klass(query=query)
         clone._load_all = self._load_all
         return clone
 
@@ -579,12 +608,12 @@ class RelatedSearchQuerySet(SearchQuerySet):
                 else:
                     # Check the SearchIndex for the model for an override.
                     try:
-                        index = self.site.get_index(model)
+                        index = connections[self.query._using].get_unified_index().get_index(model)
                         qs = index.load_all_queryset()
                         loaded_objects[model] = qs.in_bulk(models_pks[model])
-                    except NotRegistered:
-                        # The model returned doesn't seem to be registered with
-                        # the current site. We should silently fail and populate
+                    except NotHandled:
+                        # The model returned doesn't seem to be handled by the
+                        # routers. We should silently fail and populate
                         # nothing for those objects.
                         loaded_objects[model] = []
         
@@ -670,7 +699,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
             klass = self.__class__
         
         query = self.query._clone()
-        clone = klass(site=self.site, query=query)
+        clone = klass(query=query)
         clone._load_all = self._load_all
         clone._load_all_querysets = self._load_all_querysets
         return clone

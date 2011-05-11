@@ -1,7 +1,9 @@
 import logging
 import pickle
 from django.test import TestCase
+from haystack import connections
 from haystack.models import SearchResult
+from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel, AFifthMockModel
 from core.tests.mocks import MockSearchResult
 from core.tests.indexes import ReadQuerySetTestSearchIndex
@@ -78,31 +80,34 @@ class SearchResultTestCase(TestCase):
     
     def test_stored_fields(self):
         # Stow.
-        import haystack
-        from haystack.sites import SearchSite
-        old_site = haystack.site
-        test_site = SearchSite()
-        haystack.site = test_site
+        old_unified_index = connections['default']._index
+        ui = UnifiedIndex()
+        ui.build(indexes=[])
+        connections['default']._index = ui
         
         # Without registering, we should receive an empty dict.
         self.assertEqual(self.no_data_sr.get_stored_fields(), {})
         self.assertEqual(self.extra_data_sr.get_stored_fields(), {})
         self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(), {})
         
-        from haystack.indexes import SearchIndex, CharField
+        from haystack import indexes
         
-        class TestSearchIndex(SearchIndex):
-            stored = CharField(model_attr='author', document=True)
+        class TestSearchIndex(indexes.SearchIndex):
+            stored = indexes.CharField(model_attr='author', document=True)
+            
+            def get_model(self):
+                return MockModel
         
-        # Register the index & try again.
-        haystack.site.register(MockModel, TestSearchIndex)
+        # Include the index & try again.
+        ui.document_field = 'stored'
+        ui.build(indexes=[TestSearchIndex()])
         
         self.assertEqual(self.no_data_sr.get_stored_fields(), {'stored': None})
         self.assertEqual(self.extra_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
         self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
         
         # Restore.
-        haystack.site = old_site
+        connections['default']._index = old_unified_index
     
     def test_missing_object(self):
         awol1 = SearchResult('core', 'mockmodel', '1000000', 2)
@@ -124,8 +129,8 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol1.verbose_name, u'Mock model')
         self.assertEqual(awol1.verbose_name_plural, u'Mock models')
         self.assertEqual(awol1.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 8)
-
+        self.assertEqual(len(CaptureHandler.logs_seen), 4)
+        
         CaptureHandler.logs_seen = []
         self.assertEqual(awol2.model, None)
         self.assertEqual(awol2.object, None)
@@ -133,30 +138,26 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
         self.assertEqual(len(CaptureHandler.logs_seen), 12)
-
+    
     def test_read_queryset(self):
-        # The model is flagged deleted so not returned by the default manager
+        # The model is flagged deleted so not returned by the default manager.
         deleted1 = SearchResult('core', 'afifthmockmodel', 2, 2)
         self.assertEqual(deleted1.object, None)
-
-        import haystack
-        from haystack.sites import SearchSite
-        # stow
-        old_site = haystack.site
-        test_site = SearchSite()
-        haystack.site = test_site
-
-        haystack.site.register(AFifthMockModel, ReadQuerySetTestSearchIndex)
-
-        # The soft delete manager returns the object
+        
+        # Stow.
+        old_unified_index = connections['default']._index
+        ui = UnifiedIndex()
+        ui.document_field = 'author'
+        ui.build(indexes=[ReadQuerySetTestSearchIndex()])
+        connections['default']._index = ui
+        
+        # The soft delete manager returns the object.
         deleted2 = SearchResult('core', 'afifthmockmodel', 2, 2)
         self.assertNotEqual(deleted2.object, None)
         self.assertEqual(deleted2.object.author, 'sam2')
-
-        # restore
-        haystack.site = old_site
-
-
+        
+        # Restore.
+        connections['default']._index = old_unified_index
     
     def test_pickling(self):
         pickle_me_1 = SearchResult('core', 'mockmodel', '1000000', 2)

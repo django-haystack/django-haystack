@@ -25,43 +25,101 @@ Valid options are::
 Defaults to ``AND``.
 
 
-``HAYSTACK_SITECONF``
-=====================
+``HAYSTACK_CONNECTIONS``
+========================
 
 **Required**
 
-This setting controls what module should be loaded to setup your ``SearchSite``.
-The module should be on your ``PYTHONPATH`` and should contain only the calls
-necessary to setup Haystack to your needs.
+This setting controls which backends should be available. It should be a
+dictionary of dictionaries resembling the following (complete) example::
 
-The convention is to name this file ``search_sites`` and place it in the same
-directory as your ``settings.py`` and/or ``urls.py``.
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+            'URL': 'http://localhost:9001/solr/default',
+            'TIMEOUT': 60 * 5,
+            'INCLUDE_SPELLING': True,
+            'BATCH_SIZE': 100,
+        },
+        'autocomplete': {
+            'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+            'PATH': '/home/search/whoosh_index',
+            'STORAGE': 'file',
+            'POST_LIMIT': 128 * 1024 * 1024,
+            'INCLUDE_SPELLING': True,
+            'BATCH_SIZE': 100,
+        },
+        'slave': {
+            'ENGINE': 'xapian_backend.XapianEngine',
+            'PATH': '/home/search/xapian_index',
+            'INCLUDE_SPELLING': True,
+            'BATCH_SIZE': 100,
+        },
+        'db': {
+            'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+        }
+    }
 
-Valid options are::
+No default for this setting is provided.
 
-    HAYSTACK_SITECONF = 'myproject.search_sites'
+The main keys (``default`` & friends) are identifiers for your application.
+You can use them any place the API exposes ``using`` as a method or kwarg.
 
-No default is provided.
+There must always be at least a ``default`` key within this setting.
+
+The ``ENGINE`` option is required for all backends & should point to the
+``BaseEngine`` subclass for the backend.
+
+Additionally, each backend may have additional options it requires:
+
+* Solr
+
+  * ``URL`` - The URL to the Solr core.
+
+* Whoosh
+
+  * ``PATH`` - The filesystem path to where the index data is located.
+
+* Xapian
+
+  * ``PATH`` - The filesystem path to where the index data is located.
+
+The following options are optional:
+
+* ``INCLUDE_SPELLING`` - Include spelling suggestions. Default is ``False``
+* ``BATCH_SIZE`` - How many records should be updated at once via the management
+  commands. Default is ``1000``.
+* ``TIMEOUT`` - (Solr-only) How long to wait (in seconds) before the connection
+  times out. Default is ``10``.
+* ``STORAGE`` - (Whoosh-only) Which storage engine to use. Accepts ``file`` or
+  ``ram``. Default is ``file``.
+* ``POST_LIMIT`` - (Whoosh-only) How large the file sizes can be. Default is
+  ``128 * 1024 * 1024``.
+* ``FLAGS`` - (Xapian-only) A list of flags to use when querying the index.
 
 
-``HAYSTACK_SEARCH_ENGINE``
-==========================
+``HAYSTACK_ROUTERS``
+====================
 
-**Required**
+**Optional**
 
-This setting controls which backend should be used. You should provide the
-short name (e.g. ``solr``), not the full filename of the backend (e.g.
-``solr_backend.py``).
 
-Valid options are::
 
-    HAYSTACK_SEARCH_ENGINE = 'solr'
-    HAYSTACK_SEARCH_ENGINE = 'whoosh'
-    HAYSTACK_SEARCH_ENGINE = 'xapian'
-    HAYSTACK_SEARCH_ENGINE = 'simple'
-    HAYSTACK_SEARCH_ENGINE = 'dummy'
 
-No default is provided.
+``HAYSTACK_EXCLUDED_INDEXES``
+=============================
+
+**Optional**
+
+
+
+
+``HAYSTACK_DOCUMENT_FIELD``
+===========================
+
+**Optional**
+
+
 
 
 ``HAYSTACK_SEARCH_RESULTS_PER_PAGE``
@@ -79,155 +137,6 @@ An example::
 Defaults to ``20``.
 
 
-``HAYSTACK_INCLUDE_SPELLING``
-=============================
-
-**Optional**
-
-This setting controls if spelling suggestions should be included in search
-results. This can potentially have performance implications so it is disabled
-by default.
-
-An example::
-
-    HAYSTACK_INCLUDE_SPELLING = True
-
-Works for the ``solr``, ``xapian`` and ``whoosh`` backends.
-
-
-``HAYSTACK_SOLR_URL``
-=====================
-
-**Required when using the ``solr`` backend**
-
-This setting controls what URL the ``solr`` backend should be connecting to.
-This depends on how the user sets up their Solr daemon.
-
-Examples::
-
-    HAYSTACK_SOLR_URL = 'http://localhost:9000/solr/test'
-    HAYSTACK_SOLR_URL = 'http://solr.mydomain.com/solr/mysite'
-
-No default is provided.
-
-
-``HAYSTACK_SOLR_TIMEOUT``
-=========================
-
-**Optional when using the ``solr`` backend**
-
-This setting controls the time to wait for a response from Solr in seconds.
-
-Examples::
-
-    HAYSTACK_SOLR_TIMEOUT = 30
-
-The default is 10 seconds.
-
-
-``HAYSTACK_WHOOSH_PATH``
-========================
-
-**Required when using the ``whoosh`` backend**
-
-This setting controls where on the filesystem the Whoosh indexes will be stored.
-The user must have the appropriate permissions for reading and writing to this
-directory.
-
-.. note::
-
-  This should be it's own directory, with nothing else in it. Pointing this
-  at a directory (like your project root) could cause you to lose data when
-  clearing the index.
-
-Any trailing slashes should be left off.
-
-Finally, you should ensure that this directory is not located within the
-document root of your site and that you take appropriate security precautions.
-
-An example::
-
-    HAYSTACK_WHOOSH_PATH = '/home/mysite/whoosh_index'
-
-No default is provided.
-
-
-``HAYSTACK_WHOOSH_STORAGE``
-===========================
-
-**Optional**
-
-This setting controls whether Whoosh uses either the standard file-based
-storage or the RAM-based storage.
-
-Note that the RAM-based storage is not permanent and disappears when the
-process is ended. This is mostly useful for testing.
-
-Examples::
-
-    HAYSTACK_WHOOSH_STORAGE = 'file'
-    HAYSTACK_WHOOSH_STORAGE = 'ram'
-
-The default is 'file'.
-
-
-``HAYSTACK_WHOOSH_POST_LIMIT``
-==============================
-
-**Optional**
-
-This setting controls how large of a document Whoosh will accept when writing.
-
-Examples::
-
-    HAYSTACK_WHOOSH_POST_LIMIT = 256 * 1024 * 1024
-
-The default is 128 * 1024 * 1024.
-
-
-``HAYSTACK_XAPIAN_PATH``
-========================
-
-**Required when using the ``xapian`` backend**
-
-This setting controls where on the filesystem the Xapian indexes will be stored.
-The user must have the appropriate permissions for reading and writing to this
-directory.
-
-.. note::
-
-  This should be it's own directory, with nothing else in it. Pointing this
-  at a directory (like your project root) could cause you to lose data when
-  clearing the index.
-
-Any trailing slashes should be left off.
-
-Finally, you should ensure that this directory is not located within the
-document root of your site and that you take appropriate security precautions.
-
-An example::
-
-    HAYSTACK_XAPIAN_PATH = '/home/mysite/xapian_index'
-
-No default is provided.
-
-
-``HAYSTACK_BATCH_SIZE``
-=======================
-
-**Optional**
-
-This setting controls the number of model instances loaded at a time while
-reindexing. This affects how often the search indexes must merge (an intensive
-operation).
-
-An example::
-
-    HAYSTACK_BATCH_SIZE = 100
-
-The default is 1000 models per commit.
-
-
 ``HAYSTACK_CUSTOM_HIGHLIGHTER``
 ===============================
 
@@ -243,34 +152,6 @@ An example::
 
 No default is provided. Haystack automatically falls back to the default
 implementation.
-
-
-``HAYSTACK_ENABLE_REGISTRATIONS``
-=================================
-
-**Optional**
-
-This setting allows you to control whether or not Haystack will manage it's own
-registrations at start-up. It should be a boolean.
-
-An example::
-
-    HAYSTACK_ENABLE_REGISTRATIONS = False
-
-Default is ``True``.
-
-.. warning::
-
-    Setting this to ``False`` prevents Haystack from doing any imports, which
-    means that no ``SearchIndex`` classes will get registered, no signals will
-    get hooked up and any use of ``SearchQuerySet`` without further work will
-    yield no results. You can manually import your ``SearchIndex`` classes in
-    other files (like your views or elsewhere). In short, Haystack will still
-    be available but essentially in an un-initialized state.
-    
-    You should ONLY use this setting if you're using another third-party
-    application that causes tracebacks/import errors when used in conjunction
-    with Haystack.
 
 
 ``HAYSTACK_ITERATOR_LOAD_PER_QUERY``

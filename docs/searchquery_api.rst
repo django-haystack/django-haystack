@@ -4,7 +4,7 @@
 ``SearchQuery`` API
 ===================
 
-.. class:: SearchQuery(backend=None)
+.. class:: SearchQuery(using=DEFAULT_ALIAS)
 
 The ``SearchQuery`` class acts as an intermediary between ``SearchQuerySet``'s
 abstraction and ``SearchBackend``'s actual search. Given the metadata provided
@@ -21,8 +21,8 @@ interface to work with.
 
 Should you need advanced/custom behavior, you can supply your version of
 ``SearchQuery`` that overrides/extends the class in the manner you see fit.
-``SearchQuerySet`` objects take a kwarg parameter ``query`` where you can pass
-in your class.
+You can either hook it up in a ``BaseEngine`` subclass or ``SearchQuerySet``
+objects take a kwarg parameter ``query`` where you can pass in your class.
 
 
 ``SQ`` Objects
@@ -294,3 +294,13 @@ Sets the result class to use for results.
 
 Overrides any previous usages. If ``None`` is provided, Haystack will
 revert back to the default ``SearchResult`` object.
+
+``using``
+~~~~~~~~~
+
+.. method:: SearchQuery.using(self, using=None)
+
+Allows for overriding which connection should be used. This
+disables the use of routers when performing the query.
+
+If ``None`` is provided, it has no effect on what backend is used.

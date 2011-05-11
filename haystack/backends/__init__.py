@@ -2,37 +2,17 @@
 from copy import deepcopy
 from time import time
 from django.conf import settings
-from django.core import signals
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR
-from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
+from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
+from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
-try:
-    from django.utils import importlib
-except ImportError:
-    from haystack.utils import importlib
+from haystack.utils.loading import UnifiedIndex
 
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
-
-
-# A means to inspect all search queries that have run in the last request.
-queries = []
-
-
-# Per-request, reset the ghetto query log.
-# Probably not extraordinarily thread-safe but should only matter when
-# DEBUG = True.
-def reset_search_queries(**kwargs):
-    global queries
-    queries = []
-
-
-if settings.DEBUG:
-    signals.request_started.connect(reset_search_queries)
 
 
 def log_query(func):
@@ -49,8 +29,8 @@ def log_query(func):
             stop = time()
             
             if settings.DEBUG:
-                global queries
-                queries.append({
+                from haystack import connections
+                connections[obj.connection_alias].queries.append({
                     'query_string': query_string,
                     'additional_args': args,
                     'additional_kwargs': kwargs,
@@ -75,19 +55,18 @@ class EmptyResults(object):
 
 
 class BaseSearchBackend(object):
+    """
+    Abstract search engine base class.
+    """
     # Backends should include their own reserved words/characters.
     RESERVED_WORDS = []
     RESERVED_CHARACTERS = []
     
-    """
-    Abstract search engine base class.
-    """
-    def __init__(self, site=None):
-        if site is not None:
-            self.site = site
-        else:
-            from haystack import site
-            self.site = site
+    def __init__(self, connection_alias, **connection_options):
+        self.connection_alias = connection_alias
+        self.timeout = connection_options.get('TIMEOUT', 10)
+        self.include_spelling = connection_options.get('INCLUDE_SPELLING', False)
+        self.batch_size = connection_options.get('BATCH_SIZE', 1000)
     
     def update(self, index, iterable):
         """
@@ -164,18 +143,19 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError("Subclasses must provide a way to build their schema.")
     
-    def build_registered_models_list(self):
+    def build_models_list(self):
         """
-        Builds a list of registered models for searching.
+        Builds a list of models for searching.
         
         The ``search`` method should use this and the ``django_ct`` field to
         narrow the results (unless the user indicates not to). This helps ignore
-        any results that are not currently registered models and ensures
+        any results that are not currently handled models and ensures
         consistent caching.
         """
+        from haystack import connections
         models = []
         
-        for model in self.site.get_indexed_models():
+        for model in connections[self.connection_alias].get_unified_index().get_indexed_models():
             models.append(u"%s.%s" % (model._meta.app_label, model._meta.module_name))
         
         return models
@@ -275,7 +255,7 @@ class BaseSearchQuery(object):
     implementation.
     """
     
-    def __init__(self, site=None, backend=None):
+    def __init__(self, using=DEFAULT_ALIAS):
         self.query_filter = SearchNode()
         self.order_by = []
         self.models = set()
@@ -297,10 +277,9 @@ class BaseSearchQuery(object):
         self._spelling_suggestion = None
         self.result_class = SearchResult
         
-        if backend is not None:
-            self.backend = backend
-        else:
-            self.backend = SearchBackend(site=site)
+        from haystack import connections
+        self._using = using
+        self.backend = connections[self._using].get_backend()
     
     def __str__(self):
         return self.build_query()
@@ -309,23 +288,13 @@ class BaseSearchQuery(object):
         """For pickling."""
         obj_dict = self.__dict__.copy()
         del(obj_dict['backend'])
-        
-        # Rip off the class bits as we'll be using this path when we go to load
-        # the backend.
-        obj_dict['backend_used'] = ".".join(str(self.backend).replace("<", "").split(".")[0:-1])
         return obj_dict
     
     def __setstate__(self, obj_dict):
         """For unpickling."""
-        backend_used = obj_dict.pop('backend_used')
+        from haystack import connections
         self.__dict__.update(obj_dict)
-        
-        try:
-            loaded_backend = importlib.import_module(backend_used)
-        except ImportError:
-            raise SearchBackendError("The backend this query was pickled with '%s.SearchBackend' could not be loaded." % backend_used)
-        
-        self.backend = loaded_backend.SearchBackend()
+        self.backend = connections[self._using].get_backend()
     
     def has_run(self):
         """Indicates if any query has been been run."""
@@ -654,10 +623,12 @@ class BaseSearchQuery(object):
     
     def add_field_facet(self, field):
         """Adds a regular facet on a field."""
-        self.facets.add(self.backend.site.get_facet_field_name(field))
+        from haystack import connections
+        self.facets.add(connections[self._using].get_unified_index().get_facet_fieldname(field))
     
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
+        from haystack import connections
         if not gap_by in VALID_GAPS:
             raise FacetingError("The gap_by ('%s') must be one of the following: %s." % (gap_by, ', '.join(VALID_GAPS)))
         
@@ -667,11 +638,12 @@ class BaseSearchQuery(object):
             'gap_by': gap_by,
             'gap_amount': gap_amount,
         }
-        self.date_facets[self.backend.site.get_facet_field_name(field)] = details
+        self.date_facets[connections[self._using].get_unified_index().get_facet_fieldname(field)] = details
     
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
-        self.query_facets.append((self.backend.site.get_facet_field_name(field), query))
+        from haystack import connections
+        self.query_facets.append((connections[self._using].get_unified_index().get_facet_fieldname(field), query))
     
     def add_narrow_query(self, query):
         """
@@ -695,8 +667,9 @@ class BaseSearchQuery(object):
     
     def post_process_facets(self, results):
         # Handle renaming the facet fields. Undecorate and all that.
+        from haystack import connections
         revised_facets = {}
-        field_data = self.backend.site.all_searchfields()
+        field_data = connections[self._using].get_unified_index().all_searchfields()
         
         for facet_type, field_details in results.get('facets', {}).items():
             temp_facets = {}
@@ -712,6 +685,15 @@ class BaseSearchQuery(object):
         
         return revised_facets
     
+    def using(self, using=None):
+        """
+        Allows for overriding which connection should be used. This
+        disables the use of routers when performing the query.
+        
+        If ``None`` is provided, it has no effect on what backend is used.
+        """
+        return self._clone(using=using)
+    
     def _reset(self):
         """
         Resets the instance's internal state to appear as though no query has
@@ -722,11 +704,17 @@ class BaseSearchQuery(object):
         self._facet_counts = None
         self._spelling_suggestion = None
     
-    def _clone(self, klass=None):
+    def _clone(self, klass=None, using=None):
+        if using is None:
+            using = self._using
+        else:
+            from haystack import connections
+            klass = connections[using].query
+        
         if klass is None:
             klass = self.__class__
         
-        clone = klass()
+        clone = klass(using=using)
         clone.query_filter = deepcopy(self.query_filter)
         clone.order_by = self.order_by[:]
         clone.models = self.models.copy()
@@ -738,8 +726,37 @@ class BaseSearchQuery(object):
         clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
-        clone.backend = self.backend
         clone.result_class = self.result_class
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
         return clone
+
+
+class BaseEngine(object):
+    backend = BaseSearchBackend
+    query = BaseSearchQuery
+    unified_index = UnifiedIndex
+    
+    def __init__(self, using=None):
+        if using is None:
+            using = DEFAULT_ALIAS
+        
+        self.using = using
+        self.options = settings.HAYSTACK_CONNECTIONS.get(self.using, {})
+        self.queries = []
+        self._index = None
+    
+    def get_backend(self):
+        return self.backend(self.using, **self.options)
+    
+    def get_query(self):
+        return self.query(using=self.using)
+    
+    def reset_queries(self):
+        self.queries = []
+    
+    def get_unified_index(self):
+        if self._index is None:
+            self._index = self.unified_index()
+        
+        return self._index

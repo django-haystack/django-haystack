@@ -1,2 +1,0 @@
-import haystack
-haystack.autodiscover()

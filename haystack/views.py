@@ -126,7 +126,7 @@ class SearchView(object):
             'suggestion': None,
         }
         
-        if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+        if self.results.query.backend.include_spelling:
             context['suggestion'] = self.form.get_suggestion()
         
         context.update(self.extra_context())
@@ -214,7 +214,7 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
         'suggestion': None,
     }
     
-    if getattr(settings, 'HAYSTACK_INCLUDE_SPELLING', False):
+    if results.query.backend.include_spelling:
         context['suggestion'] = form.get_suggestion()
     
     if extra_context:

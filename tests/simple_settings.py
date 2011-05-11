@@ -5,4 +5,8 @@ INSTALLED_APPS += [
     'simple_tests',
 ]
 
-HAYSTACK_SEARCH_ENGINE = 'simple'
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+    },
+}

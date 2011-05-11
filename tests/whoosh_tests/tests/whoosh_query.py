@@ -1,8 +1,9 @@
 import datetime
 import os
+import shutil
 from django.conf import settings
 from django.test import TestCase
-from haystack.backends.whoosh_backend import SearchBackend, SearchQuery
+from haystack import connections
 from haystack.models import SearchResult
 from haystack.query import SQ
 from core.models import MockModel, AnotherMockModel
@@ -14,21 +15,16 @@ class WhooshSearchQueryTestCase(TestCase):
         
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
-        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
+        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
         
-        self.sq = SearchQuery(backend=SearchBackend())
+        self.sq = connections['default'].get_query()
     
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
-            index_files = os.listdir(settings.HAYSTACK_WHOOSH_PATH)
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
         
-            for index_file in index_files:
-                os.remove(os.path.join(settings.HAYSTACK_WHOOSH_PATH, index_file))
-        
-            os.removedirs(settings.HAYSTACK_WHOOSH_PATH)
-        
-        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
         super(WhooshSearchQueryTestCase, self).tearDown()
     
     def test_build_query_all(self):

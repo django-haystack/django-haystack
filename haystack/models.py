@@ -4,12 +4,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.encoding import force_unicode
 from django.utils.text import capfirst
+from haystack.exceptions import NotHandled
 
 
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
-from haystack.exceptions import NotRegistered
-
 class SearchResult(object):
     """
     A single search result. The actual object is loaded lazily by accessing
@@ -19,7 +18,7 @@ class SearchResult(object):
     result will do O(N) database queries, which may not fit your needs for
     performance.
     """
-    def __init__(self, app_label, model_name, pk, score, searchsite=None, **kwargs):
+    def __init__(self, app_label, model_name, pk, score, **kwargs):
         self.app_label, self.model_name = app_label, model_name
         self.pk = pk
         self.score = score
@@ -29,12 +28,6 @@ class SearchResult(object):
         self._additional_fields = []
         self.stored_fields = None
         self.log = self._get_log()
-        
-        if searchsite:
-            self.searchsite = searchsite
-        else:
-            from haystack import site
-            self.searchsite = site
         
         for key, value in kwargs.items():
             if not key in self.__dict__:
@@ -57,7 +50,8 @@ class SearchResult(object):
         return self.__dict__.get(attr, None)
 
     def _get_searchindex(self):
-        return self.searchsite.get_index(self.model)
+        from haystack import connections
+        return connections['default'].get_unified_index().get_index(self.model)
 
     searchindex = property(_get_searchindex)
 
@@ -70,8 +64,8 @@ class SearchResult(object):
             try:
                 try:
                     self._object = self.searchindex.read_queryset().get(pk=self.pk)
-                except NotRegistered:
-                    self.log.warning("Model not registered with search site '%s.%s'." % (self.app_label, self.model_name))
+                except NotHandled:
+                    self.log.warning("Model '%s.%s' not handled by the routers." % (self.app_label, self.model_name))
                     # Revert to old behaviour
                     self._object = self.model._default_manager.get(pk=self.pk)
             except ObjectDoesNotExist:
@@ -145,12 +139,12 @@ class SearchResult(object):
         indexes are aware of as being 'stored'.
         """
         if self._stored_fields is None:
-            from haystack import site
-            from haystack.exceptions import NotRegistered
+            from haystack import connections
+            from haystack.exceptions import NotHandled
             
             try:
-                index = site.get_index(self.model)
-            except NotRegistered:
+                index = connections['default'].get_unified_index().get_index(self.model)
+            except NotHandled:
                 # Not found? Return nothing.
                 return {}
             
@@ -172,13 +166,24 @@ class SearchResult(object):
         # The ``log`` is excluded because, under the hood, ``logging`` uses
         # ``threading.Lock``, which doesn't pickle well.
         ret_dict = self.__dict__.copy()
-        del(ret_dict['searchsite'])
         del(ret_dict['log'])
         return ret_dict
     
-    def __setstate__(self, d):
+    def __setstate__(self, data_dict):
         """
         Updates the object's attributes according to data passed by pickle.
         """
-        self.__dict__.update(d)
+        self.__dict__.update(data_dict)
         self.log = self._get_log()
+
+
+# Setup pre_save/pre_delete signals to make sure things like the signals in
+# ``RealTimeSearchIndex`` are setup in time to handle data changes.
+def load_indexes(sender, instance, *args, **kwargs):
+    from haystack import connections
+    
+    for conn in connections.all():
+        conn.get_unified_index().setup_indexes()
+
+models.signals.pre_save.connect(load_indexes, dispatch_uid='setup_index_signals')
+models.signals.pre_delete.connect(load_indexes, dispatch_uid='setup_index_signals')
