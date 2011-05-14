@@ -11,7 +11,7 @@ one to prepare the data and one to implement the actual search.
 Step 1. Setup The Data
 ======================
 
-To do autocomplete effectively, the search backend uses n-grams (essential
+To do autocomplete effectively, the search backend uses n-grams (essentially
 a small window passed over the string). Because this alters the way your
 data needs to be stored, the best approach is to add a new field to your
 ``SearchIndex`` that contains the text you want to autocomplete on.
