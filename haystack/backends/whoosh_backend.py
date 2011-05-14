@@ -303,7 +303,7 @@ class SearchBackend(BaseSearchBackend):
             registered_models = self.build_registered_models_list()
             
             if len(registered_models) > 0:
-                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
+                narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in registered_models]))
         
         narrow_searcher = None
         

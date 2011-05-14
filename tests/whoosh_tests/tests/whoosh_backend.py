@@ -22,6 +22,15 @@ class WhooshMockSearchIndex(indexes.SearchIndex):
     pub_date = indexes.DateField(model_attr='pub_date')
 
 
+class WhooshAnotherMockSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True)
+    name = indexes.CharField(model_attr='author')
+    pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def prepare_text(self, obj):
+        return obj.author
+
+
 class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', indexed=False)
@@ -211,6 +220,17 @@ class WhooshSearchBackendTestCase(TestCase):
         
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+    
+    def test_search_all_models(self):
+        wamsi = WhooshAnotherMockSearchIndex(AnotherMockModel)
+        self.site.register(AnotherMockModel, WhooshAnotherMockSearchIndex)
+        
+        self.sb.update(self.smmi, self.sample_objs)
+        self.sb.update(wamsi, AnotherMockModel.objects.all())
+        
+        self.assertEqual(len(self.whoosh_search(u'*')), 25)
+        
+        self.site.unregister(AnotherMockModel)
     
     def test_use_correct_site(self):
         import haystack
@@ -739,6 +759,68 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         # Reset to default.
         sqs = self.sqs.result_class(None).all()
         self.assertTrue(isinstance(sqs[0], SearchResult))
+
+
+class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+    
+    def setUp(self):
+        super(LiveWhooshMultiSearchQuerySetTestCase, self).setUp()
+        
+        # Stow.
+        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        self.old_whoosh_path = getattr(settings, 'HAYSTACK_WHOOSH_PATH', temp_path)
+        settings.HAYSTACK_WHOOSH_PATH = temp_path
+        
+        self.site = SearchSite()
+        self.sb = SearchBackend(site=self.site)
+        self.smmi = WhooshMockSearchIndex(MockModel, backend=self.sb)
+        self.sammi = WhooshAnotherMockSearchIndex(AnotherMockModel, backend=self.sb)
+        self.site.register(MockModel, WhooshMockSearchIndex)
+        self.site.register(AnotherMockModel, WhooshAnotherMockSearchIndex)
+        
+        # Stow.
+        import haystack
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_site = haystack.site
+        haystack.site = self.site
+        
+        self.sb.setup()
+        self.raw_whoosh = self.sb.index
+        self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
+        self.sb.delete_index()
+        
+        self.sq = SearchQuery(backend=self.sb)
+        self.sqs = SearchQuerySet(site=self.site)
+        
+        self.smmi.update()
+        self.sammi.update()
+    
+    def tearDown(self):
+        if os.path.exists(settings.HAYSTACK_WHOOSH_PATH):
+            shutil.rmtree(settings.HAYSTACK_WHOOSH_PATH)
+        
+        settings.HAYSTACK_WHOOSH_PATH = self.old_whoosh_path
+        
+        import haystack
+        haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
+        
+        super(LiveWhooshMultiSearchQuerySetTestCase, self).tearDown()
+    
+    def test_searchquerysets_with_models(self):
+        sqs = self.sqs.all()
+        self.assertEqual(sqs.query.build_query(), u'*')
+        self.assertEqual(len(sqs), 25)
+        
+        sqs = self.sqs.models(MockModel)
+        self.assertEqual(sqs.query.build_query(), u'django_ct:core.mockmodel')
+        self.assertEqual(len(sqs), 23)
+        
+        sqs = self.sqs.models(AnotherMockModel)
+        self.assertEqual(sqs.query.build_query(), u'django_ct:core.anothermockmodel')
+        self.assertEqual(len(sqs), 2)
 
 
 class LiveWhooshAutocompleteTestCase(TestCase):
