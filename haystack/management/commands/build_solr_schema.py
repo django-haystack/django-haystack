@@ -11,7 +11,8 @@ class Command(BaseCommand):
         make_option("-f", "--filename", action="store", type="string", dest="filename",
                     help='If provided, directs output to a file instead of stdout.'),
         make_option("-u", "--using", action="store", type="string", dest="using",
-                    help='If provided, chooses a connection to work with.'),
+                    help='If provided, chooses a connection to work with.',
+                    default=DEFAULT_ALIAS),
     )
     option_list = BaseCommand.option_list + base_options
     
