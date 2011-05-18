@@ -9,6 +9,10 @@ class FooIndex(indexes.SearchIndex):
         return Foo
 
 
+# Import the old way & make sure things don't explode.
+from haystack.indexes import SearchIndex
+
+
 class BarIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True)
     

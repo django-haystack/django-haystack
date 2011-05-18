@@ -139,6 +139,8 @@ class UnifiedIndex(object):
         self._facet_fieldnames = {}
     
     def collect_indexes(self):
+        from haystack.indexes import SearchIndex, BasicSearchIndex, ModelSearchIndex
+        base_classes = [Indexable, SearchIndex, BasicSearchIndex, ModelSearchIndex]
         indexes = []
         
         for app in settings.INSTALLED_APPS:
@@ -148,7 +150,7 @@ class UnifiedIndex(object):
                 continue
             
             for item_name, item in inspect.getmembers(search_index_module, inspect.isclass):
-                if item != Indexable and issubclass(item, Indexable):
+                if not item in base_classes and issubclass(item, Indexable):
                     # We've got an index. Check if we should be ignoring it.
                     class_path = "%s.search_indexes.%s" % (app, item_name)
                     
