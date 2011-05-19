@@ -372,7 +372,7 @@ class SolrSearchQuery(BaseSearchQuery):
         if hasattr(value, 'values_list'):
             value = list(value)
         
-        if not isinstance(value, (list, tuple)):
+        if not isinstance(value, (set, list, tuple)):
             # Convert whatever we find to what pysolr wants.
             value = self.backend.conn._from_python(value)
         
