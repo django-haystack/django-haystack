@@ -53,6 +53,9 @@ arguments::
     ``--remove``:
         Remove objects from the index that are no longer present in the
         database.
+    ``--workers``:
+        Allows for the use multiple workers to parallelize indexing. Requires
+        ``multiprocessing``.
     ``--verbosity``:
         If provided, dumps out more information about what's being done.
         
@@ -68,9 +71,9 @@ arguments::
 .. note::
 
     This command *ONLY* updates records in the index. It does *NOT* handle
-    deletions, so you may need to write a separate script that handles deleted
-    models, such as a queue consumer or something that runs through all records
-    and tries to load the model for it. Alternatively, you can use the
+    deletions unless the ``--remove`` flag is provided. You might consider
+    a queue consumer if the memory requirements for ``--remove`` don't
+    fit your needs. Alternatively, you can use the
     ``RealTimeSearchIndex``, which will automatically handle deletions.
     
 
