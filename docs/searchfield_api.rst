@@ -28,6 +28,7 @@ Included with Haystack are the following field types:
 * ``CharField``
 * ``DateField``
 * ``DateTimeField``
+* ``DecimalField``
 * ``EdgeNgramField``
 * ``FloatField``
 * ``IntegerField``
@@ -40,6 +41,7 @@ And equivalent faceted versions:
 * ``FacetCharField``
 * ``FacetDateField``
 * ``FacetDateTimeField``
+* ``FacetDecimalField``
 * ``FacetFloatField``
 * ``FacetIntegerField``
 * ``FacetMultiValueField``

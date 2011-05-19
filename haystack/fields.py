@@ -1,3 +1,4 @@
+from decimal import Decimal
 import re
 from django.utils import datetime_safe
 from django.template import loader, Context
@@ -210,6 +211,25 @@ class FloatField(SearchField):
         return float(value)
 
 
+class DecimalField(SearchField):
+    field_type = 'string'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('facet_class') is None:
+            kwargs['facet_class'] = FacetDecimalField
+        
+        super(DecimalField, self).__init__(**kwargs)
+    
+    def prepare(self, obj):
+        return self.convert(super(DecimalField, self).prepare(obj))
+    
+    def convert(self, value):
+        if value is None:
+            return None
+        
+        return unicode(value)
+
+
 class BooleanField(SearchField):
     field_type = 'boolean'
     
@@ -347,11 +367,17 @@ class FacetField(SearchField):
 
 class FacetCharField(FacetField, CharField):
     pass
-    
+
+
 class FacetIntegerField(FacetField, IntegerField):
     pass
-    
+
+
 class FacetFloatField(FacetField, FloatField):
+    pass
+
+
+class FacetDecimalField(FacetField, DecimalField):
     pass
 
 
