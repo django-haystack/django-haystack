@@ -118,6 +118,7 @@
     <field name="is_active"    type="boolean"   indexed="true"  stored="true"  multiValued="false" /> 
     <field name="post_count"    type="sint"   indexed="true"  stored="true"  multiValued="false" /> 
     <field name="average_rating"    type="sfloat"   indexed="true"  stored="true"  multiValued="false" /> 
+    <field name="price"    type="string"   indexed="true"  stored="true"  multiValued="false" /> 
     <field name="created"    type="date"   indexed="true"  stored="true"  multiValued="false" /> 
     <field name="tags"    type="text"   indexed="true"  stored="true"  multiValued="true" /> 
     <field name="sites"    type="sint"   indexed="true"  stored="true"  multiValued="true" /> 

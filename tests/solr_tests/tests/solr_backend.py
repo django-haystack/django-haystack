@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from decimal import Decimal
 import logging
 import pysolr
 from django.conf import settings
@@ -91,6 +92,7 @@ class SolrRoundTripSearchIndex(indexes.SearchIndex):
     is_active = indexes.BooleanField()
     post_count = indexes.IntegerField()
     average_rating = indexes.FloatField()
+    price = indexes.DecimalField()
     pub_date = indexes.DateField()
     created = indexes.DateTimeField()
     tags = indexes.MultiValueField()
@@ -107,6 +109,7 @@ class SolrRoundTripSearchIndex(indexes.SearchIndex):
             'is_active': True,
             'post_count': 25,
             'average_rating': 3.6,
+            'price': Decimal('24.99'),
             'pub_date': datetime.date(2009, 11, 21),
             'created': datetime.datetime(2009, 11, 21, 21, 31, 00),
             'tags': ['staff', 'outdoor', 'activist', 'scientist'],
@@ -1082,6 +1085,7 @@ class LiveSolrRoundTripTestCase(TestCase):
         self.assertEqual(result.is_active, True)
         self.assertEqual(result.post_count, 25)
         self.assertEqual(result.average_rating, 3.6)
+        self.assertEqual(result.price, u'24.99')
         self.assertEqual(result.pub_date, datetime.date(2009, 11, 21))
         self.assertEqual(result.created, datetime.datetime(2009, 11, 21, 21, 31, 00))
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])

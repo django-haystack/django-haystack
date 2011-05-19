@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
 from haystack.fields import *
@@ -232,6 +233,33 @@ class FloatFieldTestCase(TestCase):
         # Simulate null=True.
         mock = MockModel()
         floaty_none = FloatField(null=True)
+        
+        self.assertEqual(floaty_none.prepare(mock), None)
+
+
+class DecimalFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = DecimalField(model_attr='foo')
+        except:
+            self.fail()
+    
+    def test_prepare(self):
+        mock = MockModel()
+        mock.floaty = Decimal('12.5')
+        floaty = DecimalField(model_attr='floaty')
+        
+        self.assertEqual(floaty.prepare(mock), '12.5')
+        
+        # Simulate default=1.5.
+        mock = MockModel()
+        default = DecimalField(default='1.5')
+        
+        self.assertEqual(default.prepare(mock), '1.5')
+        
+        # Simulate null=True.
+        mock = MockModel()
+        floaty_none = DecimalField(null=True)
         
         self.assertEqual(floaty_none.prepare(mock), None)
 
