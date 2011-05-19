@@ -1,6 +1,10 @@
 # Haystack settings for running tests.
-DATABASE_ENGINE = 'sqlite3'
-DATABASE_NAME = 'haystack_tests.db'
+DATABASES = {
+    'default': {
+        'ENGINE': 'sqlite3',
+        'NAME': 'haystack_tests.db',
+    }
+}
 
 INSTALLED_APPS = [
     'django.contrib.admin',
