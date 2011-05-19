@@ -76,6 +76,11 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(pub_date__in=[datetime.datetime(2009, 7, 6, 1, 56, 21)]))
         self.assertEqual(self.sq.build_query(), u'(why AND (pub_date:"2009-07-06T01:56:21Z"))')
     
+    def test_build_query_in_with_set(self):
+        self.sq.add_filter(SQ(content='why'))
+        self.sq.add_filter(SQ(title__in=set(["A Famous Paper", "An Infamous Article"])))
+        self.assertEqual(self.sq.build_query(), u'(why AND (title:"A Famous Paper" OR title:"An Infamous Article"))')
+    
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__startswith='haystack'))
