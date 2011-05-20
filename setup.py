@@ -20,12 +20,14 @@ setup(
     package_data={
         'haystack': ['templates/search_configuration/*']
     },
-    classifiers=['Development Status :: 5 - Production/Stable',
-                 'Environment :: Web Environment',
-                 'Framework :: Django',
-                 'Intended Audience :: Developers',
-                 'License :: OSI Approved :: BSD License',
-                 'Operating System :: OS Independent',
-                 'Programming Language :: Python',
-                 'Topic :: Utilities'],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Web Environment',
+        'Framework :: Django',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Utilities'
+    ],
 )
