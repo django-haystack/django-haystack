@@ -38,8 +38,8 @@ from whoosh.spelling import SpellChecker
 from whoosh.writing import AsyncWriter
 
 # Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 8, 1):
-    raise MissingDependency("The 'whoosh' backend requires version 1.8.1 or greater.")
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (1, 8, 3):
+    raise MissingDependency("The 'whoosh' backend requires version 1.8.3 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
