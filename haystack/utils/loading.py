@@ -139,8 +139,8 @@ class UnifiedIndex(object):
         self._facet_fieldnames = {}
     
     def collect_indexes(self):
-        from haystack.indexes import SearchIndex, BasicSearchIndex, ModelSearchIndex
-        base_classes = [Indexable, SearchIndex, BasicSearchIndex, ModelSearchIndex]
+        from haystack.indexes import SearchIndex, BasicSearchIndex, ModelSearchIndex, RealTimeSearchIndex
+        base_classes = [Indexable, SearchIndex, BasicSearchIndex, ModelSearchIndex, RealTimeSearchIndex]
         indexes = []
         
         for app in settings.INSTALLED_APPS:
