@@ -45,6 +45,16 @@ Using: Xapian
 * http://www.canadiantire.ca/ (Portions of)
 
 
+Vickerey.com
+------------
+
+For (really well done) search & faceting.
+
+Using: Solr
+
+* http://store.vickerey.com/products/search/
+
+
 Eldarion
 --------
 
