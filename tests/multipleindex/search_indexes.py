@@ -2,6 +2,14 @@ from haystack import indexes
 from multipleindex.models import Foo, Bar
 
 
+# To test additional ignores...
+class BaseIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, model_attr='body')
+    
+    def get_model(self):
+        return Foo
+
+
 class FooIndex(indexes.SearchIndex):
     text = indexes.CharField(document=True, model_attr='body')
     
@@ -10,7 +18,7 @@ class FooIndex(indexes.SearchIndex):
 
 
 # Import the old way & make sure things don't explode.
-from haystack.indexes import SearchIndex
+from haystack.indexes import SearchIndex, RealTimeSearchIndex
 
 
 class BarIndex(indexes.SearchIndex):
