@@ -196,9 +196,6 @@ class SearchIndexTestCase(TestCase):
     def test_index_queryset(self):
         self.assertEqual(len(self.cmi.index_queryset()), 3)
     
-    def test_get_queryset(self):
-        self.assertEqual(len(self.cmi.get_queryset()), 3)
-    
     def test_read_queryset(self):
         self.assertEqual(len(self.cmi.read_queryset()), 2)
     
