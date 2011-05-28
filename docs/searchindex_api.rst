@@ -371,13 +371,6 @@ Get the default QuerySet to index when doing a full update.
 
 Subclasses can override this method to avoid indexing certain objects.
 
-``get_queryset``
-----------------
-
-.. method:: SearchIndex.get_queryset(self)
-
-Alias of ``SearchIndex.index_queryset`` for backwards compatibility.
-
 ``read_queryset``
 -----------------
 

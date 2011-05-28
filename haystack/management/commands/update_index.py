@@ -1,5 +1,6 @@
 import datetime
 import os
+import warnings
 from optparse import make_option
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -77,12 +78,20 @@ def build_queryset(index, model, age=DEFAULT_AGE, verbosity=1):
             if verbosity >= 2:
                 print "No updated date field found for '%s' - not restricting by age." % model.__name__
     
-    if not hasattr(index.index_queryset(), 'filter'):
-        raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'get_queryset' method." % index)
+    index_qs = None
+
+    if hasattr(index, 'get_queryset'):
+        warnings.warn("'SearchIndex.get_queryset' is pending deprecation & will be removed in Haystack v2. Please rename them to 'index_queryset'.")
+        index_qs = index.get_queryset()
+    else:
+        index_qs = index.index_queryset()
+
+    if not hasattr(index_qs, 'filter'):
+        raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'index_queryset' method." % index)
     
     # `.select_related()` seems like a good idea here but can fail on
     # nullable `ForeignKey` as well as what seems like other cases.
-    return index.index_queryset().filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
+    return index_qs.filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
 
 
 def do_update(index, qs, start, end, total, verbosity=1):

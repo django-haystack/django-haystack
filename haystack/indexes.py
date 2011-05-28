@@ -118,12 +118,6 @@ class SearchIndex(object):
         """
         return self.model._default_manager.all()
     
-    def get_queryset(self):
-        """
-        Alias of index_queryset for backwards compatibility.
-        """
-        return self.index_queryset()
-    
     def read_queryset(self):
         """
         Get the default QuerySet for read actions.
