@@ -169,8 +169,8 @@ set the ``HAYSTACK_DOCUMENT_FIELD`` setting. For example::
     HAYSTACK_DOCUMENT_FIELD = 'pink_polka_dot'
 
 Finally, the ``index_queryset`` method should supplant the ``get_queryset``
-method. This was present in the Haystack 1.2.X series & ``get_queryset`` will
-continue to work for backward-compatibility.
+method. This was present in the Haystack 1.2.X series (with a deprecation warning
+in 1.2.4+) but has been removed in Haystack v2.
 
 Finally, if you were unregistering other indexes before, you should make use of
 the new ``HAYSTACK_EXCLUDED_INDEXES`` setting. It should be a list of strings
