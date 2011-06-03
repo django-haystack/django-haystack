@@ -1,8 +1,21 @@
 from datetime import date
+from django.conf import settings
 from django.test import TestCase
 from haystack import connections, connection_router
+from haystack import indexes
+from haystack.query import SearchQuerySet
+from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 from core.tests.mocks import MockSearchResult
+
+
+class SimpleMockSearchIndex(indexes.SearchIndex):
+    text = indexes.CharField(document=True, use_template=True)
+    name = indexes.CharField(model_attr='author', faceted=True)
+    pub_date = indexes.DateField(model_attr='pub_date')
+    
+    def get_model(self):
+        return MockModel
 
 
 class SimpleSearchBackendTestCase(TestCase):
@@ -72,3 +85,37 @@ class SimpleSearchBackendTestCase(TestCase):
         
         # Unsupported by 'simple'. Should see empty results.
         self.assertEqual(self.backend.more_like_this(self.sample_objs[0])['hits'], 0)
+
+
+class LiveSimpleSearchQuerySetTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+    
+    def setUp(self):
+        super(LiveSimpleSearchQuerySetTestCase, self).setUp()
+        
+        # Stow.
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = SimpleMockSearchIndex()
+        self.ui.build(indexes=[self.smmi])
+        connections['default']._index = self.ui
+        
+        self.sample_objs = MockModel.objects.all()
+        self.sqs = SearchQuerySet()
+
+    def tearDown(self):
+        # Restore.
+        connections['default']._index = self.old_ui
+        settings.DEBUG = self.old_debug
+        super(LiveSimpleSearchQuerySetTestCase, self).tearDown()
+    
+    def test_general_queries(self):
+        # For now, just make sure these don't throw an exception.
+        # They won't work until the simple backend is improved.
+        self.assertTrue(len(self.sqs.auto_query('daniel')) > 0)
+        self.assertTrue(len(self.sqs.filter(text='index')) > 0)
+        self.assertTrue(len(self.sqs.exclude(name='daniel')) > 0)
+        self.assertTrue(len(self.sqs.order_by('-pub_date')) > 0)
+
