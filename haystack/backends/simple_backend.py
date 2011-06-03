@@ -119,7 +119,7 @@ class SearchQuery(BaseSearchQuery):
         
         for child in search_node.children:
             if isinstance(child, SearchNode):
-                term_list.append(self._build_query(child))
+                term_list.append(self._build_sub_query(child))
             else:
                 term_list.append(child[1])
         

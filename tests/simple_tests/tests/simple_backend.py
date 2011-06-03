@@ -1,7 +1,9 @@
 from datetime import date
+from django.conf import settings
 from django.test import TestCase
 from haystack import indexes, sites, backends
 from haystack.backends.simple_backend import SearchBackend
+from haystack.query import SearchQuerySet
 from haystack.sites import SearchSite
 from core.models import MockModel
 from core.tests.mocks import MockSearchResult
@@ -83,3 +85,41 @@ class SimpleSearchBackendTestCase(TestCase):
         
         # Unsupported by 'simple'. Should see empty results.
         self.assertEqual(self.backend.more_like_this(self.sample_objs[0])['hits'], 0)
+
+
+class LiveSimpleSearchQuerySetTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+    
+    def setUp(self):
+        super(LiveSimpleSearchQuerySetTestCase, self).setUp()
+        
+        import haystack
+        
+        # Stow.
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_site = haystack.site
+        self.site = SearchSite()
+        self.backend = SearchBackend(site=self.site)
+        self.index = SimpleMockSearchIndex(MockModel, backend=self.backend)
+        self.site.register(MockModel, SimpleMockSearchIndex)
+        haystack.site = self.site
+        
+        self.sample_objs = MockModel.objects.all()
+        self.sqs = SearchQuerySet()
+
+    def tearDown(self):
+        # Restore.
+        import haystack
+        haystack.site = self.old_site
+        settings.DEBUG = self.old_debug
+        super(LiveSimpleSearchQuerySetTestCase, self).tearDown()
+    
+    def test_general_queries(self):
+        # For now, just make sure these don't throw an exception.
+        # They won't work until the simple backend is improved.
+        self.assertTrue(len(self.sqs.auto_query('daniel')) > 0)
+        self.assertTrue(len(self.sqs.filter(text='index')) > 0)
+        self.assertTrue(len(self.sqs.exclude(name='daniel')) > 0)
+        self.assertTrue(len(self.sqs.order_by('-pub_date')) > 0)
+
