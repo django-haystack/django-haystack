@@ -127,6 +127,35 @@ class WhooshSearchBackendTestCase(TestCase):
         searcher = self.raw_whoosh.searcher()
         return searcher.search(self.parser.parse(query), limit=1000)
     
+    def test_non_silent(self):
+        bad_sb = connections['default'].backend('bad', PATH='/tmp/bad_whoosh', SILENTLY_FAIL=False)
+        bad_sb.use_file_storage = False
+        bad_sb.storage = 'omg.wtf.bbq'
+
+        try:
+            bad_sb.update(self.wmmi, self.sample_objs)
+            self.fail()
+        except:
+            pass
+
+        try:
+            bad_sb.remove('core.mockmodel.1')
+            self.fail()
+        except:
+            pass
+        
+        try:
+            bad_sb.clear()
+            self.fail()
+        except:
+            pass
+        
+        try:
+            bad_sb.search('foo')
+            self.fail()
+        except:
+            pass
+    
     def test_update(self):
         self.sb.update(self.wmmi, self.sample_objs)
         
