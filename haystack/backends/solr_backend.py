@@ -55,12 +55,18 @@ class SearchBackend(BaseSearchBackend):
             for obj in iterable:
                 docs.append(index.full_prepare(obj))
         except UnicodeDecodeError:
-            sys.stderr.write("Chunk failed.\n")
+            if not self.silently_fail:
+                raise
+            
+            self.log.error("Chunk failed.\n")
         
         if len(docs) > 0:
             try:
                 self.conn.add(docs, commit=commit, boost=index.get_field_weights())
             except (IOError, SolrError), e:
+                if not self.silently_fail:
+                    raise
+                
                 self.log.error("Failed to add documents to Solr: %s", e)
     
     def remove(self, obj_or_string, commit=True):
@@ -73,6 +79,9 @@ class SearchBackend(BaseSearchBackend):
             }
             self.conn.delete(**kwargs)
         except (IOError, SolrError), e:
+            if not self.silently_fail:
+                raise
+            
             self.log.error("Failed to remove document '%s' from Solr: %s", solr_id, e)
     
     def clear(self, models=[], commit=True):
@@ -91,6 +100,9 @@ class SearchBackend(BaseSearchBackend):
             # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
             self.conn.optimize()
         except (IOError, SolrError), e:
+            if not self.silently_fail:
+                raise
+            
             if len(models):
                 self.log.error("Failed to clear Solr index of models '%s': %s", ','.join(models_to_delete), e)
             else:
@@ -179,6 +191,9 @@ class SearchBackend(BaseSearchBackend):
         try:
             raw_results = self.conn.search(query_string, **kwargs)
         except (IOError, SolrError), e:
+            if not self.silently_fail:
+                raise
+            
             self.log.error("Failed to query Solr using '%s': %s", query_string, e)
             raw_results = EmptyResults()
         
@@ -232,6 +247,9 @@ class SearchBackend(BaseSearchBackend):
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
         except (IOError, SolrError), e:
+            if not self.silently_fail:
+                raise
+            
             self.log.error("Failed to fetch More Like This from Solr for document '%s': %s", query, e)
             raw_results = EmptyResults()
         

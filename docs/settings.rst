@@ -313,6 +313,23 @@ An example::
 Default is ``True``.
 
 
+``HAYSTACK_SILENTLY_FAIL``
+==========================
+
+**Optional**
+
+This setting allows you to control whether or not Haystack will silently
+fail when querying the index or not. On by default, this allows big
+reindexes that simply lost a connection to mostly succeed, given the
+time involved.
+
+An example::
+
+    HAYSTACK_SILENTLY_FAIL = False
+
+Default is ``True``.
+
+
 ``HAYSTACK_ID_FIELD``
 =====================
 

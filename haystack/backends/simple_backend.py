@@ -31,17 +31,14 @@ class SearchBackend(BaseSearchBackend):
     def update(self, indexer, iterable, commit=True):
         if settings.DEBUG:
             logger.warning('update is not implemented in this backend')
-        pass
     
     def remove(self, obj, commit=True):
         if settings.DEBUG:
             logger.warning('remove is not implemented in this backend')
-        pass
     
     def clear(self, models=[], commit=True):
         if settings.DEBUG:
             logger.warning('clear is not implemented in this backend')
-        pass
     
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,

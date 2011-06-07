@@ -153,6 +153,39 @@ class SolrSearchBackendTestCase(TestCase):
         import haystack
         haystack.site = self.old_site
         super(SolrSearchBackendTestCase, self).tearDown()
+
+    def test_non_silent(self):
+        old_silent = getattr(settings, 'HAYSTACK_SILENTLY_FAIL', True)
+        old_url = settings.HAYSTACK_SOLR_URL
+        settings.HAYSTACK_SILENTLY_FAIL = False
+        settings.HAYSTACK_SOLR_URL = 'http://omg.wtf.bbq:1000/solr'
+        
+        try:
+            bad_sb.update(self.smmi, self.sample_objs)
+            self.fail()
+        except:
+            pass
+
+        try:
+            bad_sb.remove('core.mockmodel.1')
+            self.fail()
+        except:
+            pass
+        
+        try:
+            bad_sb.clear()
+            self.fail()
+        except:
+            pass
+        
+        try:
+            bad_sb.search('foo')
+            self.fail()
+        except:
+            pass
+
+        settings.HAYSTACK_SILENTLY_FAIL = old_silent
+        settings.HAYSTACK_SOLR_URL = old_url
     
     def test_update(self):
         self.sb.update(self.smmi, self.sample_objs)
