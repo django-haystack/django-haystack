@@ -80,6 +80,8 @@ the following:
 Solr
 ~~~~
 
+Example::
+
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
