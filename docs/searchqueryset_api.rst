@@ -204,14 +204,6 @@ string with a ``-``::
     methods on your ``SearchIndex`` objects to transliterate the characters
     as you see fit.
 
-.. warning::
-
-    **Whoosh only** If you're planning on ordering by an ``IntegerField`` using
-    Whoosh, you'll need to adequately zero-pad your numbers in the
-    ``prepare_FOO`` method. This is because Whoosh uses UTF-8 string for
-    everything, and from the schema, there is no way to know how a field should
-    be treated.
-
 ``highlight``
 ~~~~~~~~~~~~~
 
