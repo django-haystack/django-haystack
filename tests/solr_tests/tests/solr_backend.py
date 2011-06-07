@@ -173,6 +173,33 @@ class SolrSearchBackendTestCase(TestCase):
     def tearDown(self):
         connections['default']._index = self.old_ui
         super(SolrSearchBackendTestCase, self).tearDown()
+
+    def test_non_silent(self):
+        bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/solr', SILENTLY_FAIL=False)
+        
+        try:
+            bad_sb.update(self.smmi, self.sample_objs)
+            self.fail()
+        except:
+            pass
+
+        try:
+            bad_sb.remove('core.mockmodel.1')
+            self.fail()
+        except:
+            pass
+        
+        try:
+            bad_sb.clear()
+            self.fail()
+        except:
+            pass
+        
+        try:
+            bad_sb.search('foo')
+            self.fail()
+        except:
+            pass
     
     def test_update(self):
         self.sb.update(self.smmi, self.sample_objs)

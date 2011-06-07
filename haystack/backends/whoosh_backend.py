@@ -177,7 +177,13 @@ class WhooshSearchBackend(BaseSearchBackend):
             for key in doc:
                 doc[key] = self._from_python(doc[key])
             
-            writer.update_document(**doc)
+            try:
+                writer.update_document(**doc)
+            except Exception, e:
+                if not self.silently_fail:
+                    raise
+                
+                self.log.error("Failed to add documents to Whoosh: %s", e)
         
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
@@ -194,7 +200,14 @@ class WhooshSearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         whoosh_id = get_identifier(obj_or_string)
-        self.index.delete_by_query(q=self.parser.parse(u'%s:"%s"' % (ID, whoosh_id)))
+        
+        try:
+            self.index.delete_by_query(q=self.parser.parse(u'%s:"%s"' % (ID, whoosh_id)))
+        except Exception, e:
+            if not self.silently_fail:
+                raise
+            
+            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e)
     
     def clear(self, models=[], commit=True):
         if not self.setup_complete:
@@ -202,15 +215,21 @@ class WhooshSearchBackend(BaseSearchBackend):
         
         self.index = self.index.refresh()
         
-        if not models:
-            self.delete_index()
-        else:
-            models_to_delete = []
+        try:
+            if not models:
+                self.delete_index()
+            else:
+                models_to_delete = []
+                
+                for model in models:
+                    models_to_delete.append(u"%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
+                
+                self.index.delete_by_query(q=self.parser.parse(u" OR ".join(models_to_delete)))
+        except Exception, e:
+            if not self.silently_fail:
+                raise
             
-            for model in models:
-                models_to_delete.append(u"%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
-            
-            self.index.delete_by_query(q=self.parser.parse(u" OR ".join(models_to_delete)))
+            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e)
     
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
@@ -369,6 +388,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             try:
                 raw_page = ResultsPage(raw_results, page_num, page_length)
             except ValueError:
+                if not self.silently_fail:
+                    raise
+                
                 return {
                     'results': [],
                     'hits': 0,
@@ -486,6 +508,9 @@ class WhooshSearchBackend(BaseSearchBackend):
         try:
             raw_page = ResultsPage(raw_results, page_num, page_length)
         except ValueError:
+            if not self.silently_fail:
+                raise
+            
             return {
                 'results': [],
                 'hits': 0,

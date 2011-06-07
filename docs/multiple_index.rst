@@ -25,6 +25,7 @@ complete setup that accesses all backends might look like::
             'TIMEOUT': 60 * 5,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
+            'SILENTLY_FAIL': True,
         },
         'autocomplete': {
             'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
@@ -33,15 +34,18 @@ complete setup that accesses all backends might look like::
             'POST_LIMIT': 128 * 1024 * 1024,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
+            'SILENTLY_FAIL': True,
         },
         'slave': {
             'ENGINE': 'xapian_backend.XapianEngine',
             'PATH': '/home/search/xapian_index',
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
+            'SILENTLY_FAIL': True,
         },
         'db': {
             'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+            'SILENTLY_FAIL': True,
         }
     }
 
