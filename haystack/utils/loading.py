@@ -93,7 +93,7 @@ class ConnectionHandler(object):
         return self._connections[key]
     
     def all(self):
-        return [self[alias] for alias in self._connections]
+        return [self[alias] for alias in self.connections_info]
 
 
 class ConnectionRouter(object):
@@ -133,6 +133,7 @@ class UnifiedIndex(object):
         self.indexes = {}
         self.fields = SortedDict()
         self._built = False
+        self._indexes_setup = False
         self.excluded_indexes = getattr(settings, 'HAYSTACK_EXCLUDED_INDEXES', [])
         self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
         self._fieldnames = {}
@@ -250,10 +251,15 @@ class UnifiedIndex(object):
     def setup_indexes(self):
         if not self._built:
             self.build()
-        
+
+        if self._indexes_setup:
+            return
+
         for model_ct, index in self.indexes.items():
             index._setup_save()
             index._setup_delete()
+
+        self._indexes_setup = True
     
     def teardown_indexes(self):
         if not self._built:
@@ -262,6 +268,8 @@ class UnifiedIndex(object):
         for model_ct, index in self.indexes.items():
             index._teardown_save()
             index._teardown_delete()
+
+        self._indexes_setup = False
     
     def get_indexed_models(self):
         if not self._built:
