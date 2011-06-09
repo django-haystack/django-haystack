@@ -44,6 +44,9 @@ class AutomaticDiscoveryTestCase(TestCase):
         connections['default']._index = old_ui
     
     def test_signal_setup_handling(self):
+        old_ui = connections['default'].get_unified_index()
+        connections['default']._index = UnifiedIndex()
+        self.assertEqual(connections['default'].get_unified_index()._indexes_setup, False)
         foo_1 = Foo.objects.create(
             title='chekin sigalz',
             body='stuff'
@@ -56,12 +59,15 @@ class AutomaticDiscoveryTestCase(TestCase):
         existing_foo = sqs.filter(id='discovery.foo.1')[0]
         self.assertEqual(existing_foo.text, u'stuff')
         
+        fi.clear()
         foo_1 = Foo.objects.get(pk=1)
         foo_1.title = 'Checking signals'
         foo_1.body = 'Stuff.'
         # This save should trigger an update.
         foo_1.save()
+        self.assertEqual(connections['default'].get_unified_index()._indexes_setup, True)
         
         sqs = SearchQuerySet()
         new_foo = sqs.filter(id='discovery.foo.1')[0]
         self.assertEqual(new_foo.text, u'Stuff.')
+        connections['default']._index = old_ui
