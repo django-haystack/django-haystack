@@ -127,7 +127,7 @@ class Command(AppCommand):
         make_option('-r', '--remove', action='store_true', dest='remove',
             default=False, help='Remove objects from the index that are no longer present in the database.'
         ),
-        make_option("-u", "--using", action="store", type="string", dest="using", default=None,
+        make_option("-u", "--using", action="store", type="string", dest="using", default=DEFAULT_ALIAS,
             help='If provided, chooses a connection to work with.'
         ),
         make_option('-k', '--workers', action='store', dest='workers',
@@ -160,7 +160,7 @@ class Command(AppCommand):
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
         self.remove = options.get('remove', False)
-        self.using = options.get('using') or DEFAULT_ALIAS
+        self.using = options.get('using')
         self.workers = int(options.get('workers', 0))
         self.backend = haystack_connections[self.using].get_backend()
         
