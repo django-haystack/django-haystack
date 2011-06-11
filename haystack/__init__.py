@@ -34,9 +34,6 @@ if not hasattr(settings, 'HAYSTACK_CONNECTIONS'):
     raise ImproperlyConfigured('The HAYSTACK_CONNECTIONS setting is required.')
 if DEFAULT_ALIAS not in settings.HAYSTACK_CONNECTIONS:
     raise ImproperlyConfigured("The default alias '%s' must be included in the HAYSTACK_CONNECTIONS setting." % DEFAULT_ALIAS)
-for alias, connection in settings.HAYSTACK_CONNECTIONS.items():
-    if 'ENGINE' not in connection:
-        raise ImproperlyConfigured("You must specify a 'ENGINE' for connection '%s'" % alias)
 
 # Load the connections.
 connections = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)

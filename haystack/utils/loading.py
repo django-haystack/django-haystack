@@ -82,13 +82,20 @@ class ConnectionHandler(object):
         self._connections = {}
         self._index = None
     
+    def ensure_defaults(self, alias):
+        try:
+            conn = self.connections_info[alias]
+        except KeyError:
+            raise ImproperlyConfigured("The key '%s' isn't an available connection." % alias)
+
+        if not conn.get('ENGINE'):
+            conn['ENGINE'] = 'haystack.backends.simple_backend.SimpleEngine'
+
     def __getitem__(self, key):
         if key in self._connections:
             return self._connections[key]
         
-        if not key in self.connections_info:
-            raise ImproperlyConfigured("The key '%s' isn't an available connection." % key)
-        
+        self.ensure_defaults(key)
         self._connections[key] = load_backend(self.connections_info[key]['ENGINE'])(using=key)
         return self._connections[key]
     
