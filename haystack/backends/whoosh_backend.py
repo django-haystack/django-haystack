@@ -632,14 +632,9 @@ class WhooshSearchBackend(BaseSearchBackend):
         if hasattr(value, 'strftime'):
             if not hasattr(value, 'hour'):
                 value = datetime(value.year, value.month, value.day, 0, 0, 0)
-        elif isinstance(value, bool):
-            if value:
-                value = 'true'
-            else:
-                value = 'false'
         elif isinstance(value, (list, tuple)):
             value = u','.join([force_unicode(v) for v in value])
-        elif isinstance(value, (int, long, float)):
+        elif isinstance(value, (bool, int, long, float)):
             # Leave it alone.
             pass
         else:

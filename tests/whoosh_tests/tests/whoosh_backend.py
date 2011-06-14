@@ -1032,6 +1032,8 @@ class LiveWhooshRoundTripTestCase(TestCase):
         # Check boolean filtering...
         results = self.sqs.filter(id='core.mockmodel.1', is_active=True)
         self.assertEqual(results.count(), 1)
+        results = self.sqs.filter(id='core.mockmodel.1', is_active=False)
+        self.assertEqual(results.count(), 0)
 
 
 class LiveWhooshRamStorageTestCase(TestCase):
