@@ -647,11 +647,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         
         A port of the same method in pysolr, as they deal with data the same way.
         """
-        if value == 'true':
-            return True
-        elif value == 'false':
-            return False
-        
         if value and isinstance(value, basestring):
             possible_datetime = DATETIME_REGEX.search(value)
             
@@ -761,6 +756,8 @@ class WhooshSearchQuery(BaseSearchQuery):
                     
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
+                    elif type(pv) == bool:
+                        pv = pv and 't' or 'f'
                     
                     in_options.append('%s:"%s"' % (index_fieldname, pv))
                 
@@ -779,6 +776,8 @@ class WhooshSearchQuery(BaseSearchQuery):
             else:
                 if is_datetime is True:
                     value = self._convert_datetime(value)
+                elif type(value) == bool:
+                    value = value and 't' or 'f'
                 
                 result = filter_types[filter_type] % (index_fieldname, value)
         
