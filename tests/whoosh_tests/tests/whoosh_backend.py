@@ -16,7 +16,7 @@ from core.models import MockModel, AnotherMockModel, AFourthMockModel
 from core.tests.mocks import MockSearchResult
 
 
-class WhooshMockSearchIndex(indexes.SearchIndex):
+class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -25,7 +25,7 @@ class WhooshMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class WhooshAnotherMockSearchIndex(indexes.SearchIndex):
+class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -37,7 +37,7 @@ class WhooshAnotherMockSearchIndex(indexes.SearchIndex):
         return obj.author
 
 
-class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
+class AllTypesWhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -49,7 +49,7 @@ class AllTypesWhooshMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
+class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -64,7 +64,7 @@ class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex):
         return "%02d" % obj.pub_date.month
 
 
-class WhooshBoostMockSearchIndex(indexes.SearchIndex):
+class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(
         document=True, use_template=True,
         template_name='search/indexes/core/mockmodel_template.txt'
@@ -75,9 +75,17 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex):
     
     def get_model(self):
         return AFourthMockModel
+    
+    def prepare(self, obj):
+        data = super(WhooshBoostMockSearchIndex, self).prepare(obj)
+
+        if obj.pk % 2 == 0:
+            data['boost'] = 2.0
+
+        return data
 
 
-class WhooshAutocompleteMockModelSearchIndex(indexes.SearchIndex):
+class WhooshAutocompleteMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -476,6 +484,7 @@ class WhooshBoostBackendTestCase(TestCase):
             'core.afourthmockmodel.2',
             'core.afourthmockmodel.4'
         ])
+        self.assertEqual(results[0].boost, 1.1)
 
 
 class LiveWhooshSearchQueryTestCase(TestCase):
@@ -931,7 +940,7 @@ class LiveWhooshAutocompleteTestCase(TestCase):
         self.assertEqual(len([result.pk for result in autocomplete]), 5)
 
 
-class WhooshRoundTripSearchIndex(indexes.SearchIndex):
+class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default='')
     name = indexes.CharField()
     is_active = indexes.BooleanField()

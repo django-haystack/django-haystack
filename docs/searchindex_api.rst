@@ -26,7 +26,7 @@ For the impatient::
     from myapp.models import Note
     
     
-    class NoteIndex(indexes.SearchIndex):
+    class NoteIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
@@ -124,13 +124,13 @@ contents of that field, which avoids the database hit.:
 
 Within ``myapp/search_indexes.py``::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
         # Define the additional field.
         rendered = CharField(use_template=True, indexed=False)
-    
+
 Then, inside a template named ``search/indexes/myapp/note_rendered.txt``::
 
     <h2>{{ object.title }}</h2>
@@ -224,10 +224,13 @@ To keep with our existing example, one use case might be altering the name
 inside the ``author`` field to be "firstname lastname <email>". In this case,
 you might write the following code::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
+        
+        def get_model(self):
+            return Note
         
         def prepare_author(self, obj):
             return "%s <%s>" % (obj.user.get_full_name(), obj.user.email)
@@ -239,10 +242,13 @@ data may come from the field itself.
 Just like ``Form.clean_FOO``, the field's ``prepare`` runs before the
 ``prepare_FOO``, allowing you to access ``self.prepared_data``. For example::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
+        
+        def get_model(self):
+            return Note
         
         def prepare_author(self, obj):
             # Say we want last name first, the hard way.
@@ -257,11 +263,14 @@ Just like ``Form.clean_FOO``, the field's ``prepare`` runs before the
 This method is fully function with ``model_attr``, so if there's no convenient
 way to access the data you want, this is an excellent way to prepare it::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         categories = MultiValueField()
         pub_date = DateTimeField(model_attr='pub_date')
+        
+        def get_model(self):
+            return Note
         
         def prepare_categories(self, obj):
             # Since we're using a M2M relationship with a complex lookup,
@@ -280,10 +289,13 @@ Overriding this method is useful if you need to collect more than one piece
 of data or need to incorporate additional data that is not well represented
 by a single ``SearchField``. An example might look like::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
+        
+        def get_model(self):
+            return Note
         
         def prepare(self, object):
             self.prepared_data = super(NoteIndex, self).prepare(object)
@@ -511,10 +523,13 @@ By default, returns ``all()`` on the model's default manager.
 
 Example::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
+        
+        def get_model(self):
+            return Note
         
         def load_all_queryset(self):
             # Pull all objects related to the Note in search results.
@@ -585,18 +600,20 @@ For the impatient::
     from myapp.models import Note
     
     # All Fields
-    class AllNoteIndex(indexes.ModelSearchIndex):
+    class AllNoteIndex(indexes.ModelSearchIndex, indexes.Indexable):
         class Meta:
-            pass
+            model = Note
     
     # Blacklisted Fields
-    class LimitedNoteIndex(indexes.ModelSearchIndex):
+    class LimitedNoteIndex(indexes.ModelSearchIndex, indexes.Indexable):
         class Meta:
+            model = Note
             excludes = ['user']
     
     # Whitelisted Fields
-    class NoteIndex(indexes.ModelSearchIndex):
+    class NoteIndex(indexes.ModelSearchIndex, indexes.Indexable):
         class Meta:
+            model = Note
             fields = ['user', 'pub_date']
         
         # Note that regular ``SearchIndex`` methods apply.

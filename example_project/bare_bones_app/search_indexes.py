@@ -6,6 +6,6 @@ from bare_bones_app.models import Cat
 # `haystack.indexes.BasicSearchIndex`, whose only requirement will be that
 # you create a `search/indexes/bare_bones_app/cat_text.txt` data template
 # for indexing.
-class CatIndex(indexes.BasicSearchIndex):
+class CatIndex(indexes.BasicSearchIndex, indexes.Indexable):
     def get_model(self):
         return Cat

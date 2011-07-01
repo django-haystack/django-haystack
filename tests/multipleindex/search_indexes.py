@@ -10,18 +10,15 @@ class BaseIndex(indexes.SearchIndex):
         return Foo
 
 
-class FooIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, model_attr='body')
-    
-    def get_model(self):
-        return Foo
+class FooIndex(BaseIndex, indexes.Indexable):
+    pass
 
 
 # Import the old way & make sure things don't explode.
 from haystack.indexes import SearchIndex, RealTimeSearchIndex
 
 
-class BarIndex(indexes.SearchIndex):
+class BarIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     
     def get_model(self):

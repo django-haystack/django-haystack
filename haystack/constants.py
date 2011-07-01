@@ -22,4 +22,4 @@ ITERATOR_LOAD_PER_QUERY = getattr(settings, 'HAYSTACK_ITERATOR_LOAD_PER_QUERY', 
 
 # A marker class in the hierarchy to indicate that it handles search data.
 class Indexable(object):
-    pass
+    haystack_use_for_indexing = True

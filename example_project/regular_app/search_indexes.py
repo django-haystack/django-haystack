@@ -5,7 +5,7 @@ from regular_app.models import Dog
 # More typical usage involves creating a subclassed `SearchIndex`. This will
 # provide more control over how data is indexed, generally resulting in better
 # search.
-class DogIndex(indexes.RealTimeSearchIndex):
+class DogIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     # We can pull data straight out of the model via `model_attr`.
     breed = indexes.CharField(model_attr='breed')

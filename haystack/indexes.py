@@ -55,7 +55,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(Indexable):
+class SearchIndex(object):
     """
     Base class for building indexes.
     
@@ -65,7 +65,7 @@ class SearchIndex(Indexable):
         from haystack import indexes
         from myapp.models import Note
         
-        class NoteIndex(indexes.SearchIndex):
+        class NoteIndex(indexes.SearchIndex, indexes.Indexable):
             text = indexes.CharField(document=True, use_template=True)
             author = indexes.CharField(model_attr='user')
             pub_date = indexes.DateTimeField(model_attr='pub_date')
@@ -88,7 +88,7 @@ class SearchIndex(Indexable):
                 content_fields.append(field_name)
         
         if not len(content_fields) == 1:
-            raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
+            raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
     
     def _setup_save(self):
         """A hook for controlling what happens when the registered model is saved."""
@@ -376,7 +376,7 @@ class ModelSearchIndex(SearchIndex):
                 content_fields.append(field_name)
         
         if not len(content_fields) == 1:
-            raise SearchFieldError("An index must have one (and only one) SearchField with document=True.")
+            raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
     
     def should_skip_field(self, field):
         """
