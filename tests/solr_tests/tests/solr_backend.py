@@ -31,7 +31,7 @@ def clear_solr_index():
     raw_solr.delete(q='*:*')
 
 
-class SolrMockSearchIndex(indexes.SearchIndex):
+class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -40,7 +40,7 @@ class SolrMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex):
+class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -52,7 +52,7 @@ class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class SolrMockModelSearchIndex(indexes.SearchIndex):
+class SolrMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -61,7 +61,7 @@ class SolrMockModelSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
+class SolrAnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
@@ -73,7 +73,7 @@ class SolrAnotherMockModelSearchIndex(indexes.SearchIndex):
         return u"You might be searching for the user %s" % obj.author
 
 
-class SolrBoostMockSearchIndex(indexes.SearchIndex):
+class SolrBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(
         document=True, use_template=True,
         template_name='search/indexes/core/mockmodel_template.txt'
@@ -86,7 +86,7 @@ class SolrBoostMockSearchIndex(indexes.SearchIndex):
         return AFourthMockModel
 
 
-class SolrRoundTripSearchIndex(indexes.SearchIndex):
+class SolrRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default='')
     name = indexes.CharField()
     is_active = indexes.BooleanField()
@@ -118,7 +118,7 @@ class SolrRoundTripSearchIndex(indexes.SearchIndex):
         return prepped
 
 
-class SolrComplexFacetsMockSearchIndex(indexes.SearchIndex):
+class SolrComplexFacetsMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default='')
     name = indexes.CharField(faceted=True)
     is_active = indexes.BooleanField(faceted=True)
@@ -133,7 +133,7 @@ class SolrComplexFacetsMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class SolrAutocompleteMockModelSearchIndex(indexes.SearchIndex):
+class SolrAutocompleteMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')

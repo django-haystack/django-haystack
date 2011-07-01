@@ -146,7 +146,7 @@ A converted Haystack 2.X index should look like::
     from myapp.models import Note
     
     
-    class NoteIndex(indexes.SearchIndex):
+    class NoteIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
@@ -161,6 +161,13 @@ A converted Haystack 2.X index should look like::
 Note the import on ``site`` & the registration statements are gone. Newly added
 are is the ``NoteIndex.get_model`` method. This is a **required** method &
 should simply return the ``Model`` class the index is for.
+
+There's also a new, additional class added to the ``class`` definition. The
+``indexes.Indexable`` class is a simple mixin that serves to identify the
+classes Haystack should automatically discover & use. If you have a custom
+base class (say ``QueuedSearchIndex``) that other indexes inherit from, simply
+leave the ``indexes.Indexable`` off that declaration & Haystack won't try to
+use it.
 
 Additionally, the name of the ``document=True`` field is now enforced to be
 ``text`` across all indexes. If you need it named something else, you should

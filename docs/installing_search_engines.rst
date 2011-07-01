@@ -56,7 +56,7 @@ that mirrors the ``text`` field, but has ``indexed=False`` on it. This disables
 the post-processing that Solr does, which can mess up your suggestions.
 Something like the following is suggested::
 
-    class MySearchIndex(indexes.SearchIndex):
+    class MySearchIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         # ... normal fields then...
         suggestions = indexes.CharField()

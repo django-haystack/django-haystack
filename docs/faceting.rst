@@ -50,7 +50,7 @@ searchable in the standard ways.
 To inform Haystack of this, you simply pass along a ``faceted=True`` parameter
 on the field(s) you wish to facet on. So to modify our existing example::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user', faceted=True)
         pub_date = DateTimeField(model_attr='pub_date')

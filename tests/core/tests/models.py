@@ -92,7 +92,7 @@ class SearchResultTestCase(TestCase):
         
         from haystack import indexes
         
-        class TestSearchIndex(indexes.SearchIndex):
+        class TestSearchIndex(indexes.SearchIndex, indexes.Indexable):
             stored = indexes.CharField(model_attr='author', document=True)
             
             def get_model(self):

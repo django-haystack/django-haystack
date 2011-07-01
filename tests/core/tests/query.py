@@ -297,7 +297,7 @@ class BaseSearchQueryTestCase(TestCase):
         settings.DEBUG = old_debug
 
 
-class CharPKMockModelSearchIndex(indexes.SearchIndex):
+class CharPKMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, model_attr='key')
     
     def get_model(self):

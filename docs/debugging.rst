@@ -81,10 +81,10 @@ A way to solve this is to subclass ``SearchIndex`` instead::
     
     # Change from:
     # 
-    #   class MySearchIndex(indexes.RealTimeSearchIndex):
+    #   class MySearchIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
     # 
     # to:
-    class MySearchIndex(indexes.SearchIndex):
+    class MySearchIndex(indexes.SearchIndex, indexes.Indexable):
         ...
 
 The final step is to set up a cron job that runs

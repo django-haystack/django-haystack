@@ -18,12 +18,12 @@ class InitialedSearchForm(SearchForm):
     q = forms.CharField(initial='Search for...', required=False, label='Search')
 
 
-class BasicMockModelSearchIndex(indexes.BasicSearchIndex):
+class BasicMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexable):
     def get_model(self):
         return MockModel
 
 
-class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex):
+class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexable):
     def get_model(self):
         return AnotherMockModel
 

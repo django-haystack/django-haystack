@@ -2,7 +2,7 @@ from haystack import indexes
 from core.models import MockModel
 
 
-class SimpleMockSearchIndex(indexes.SearchIndex):
+class SimpleMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')

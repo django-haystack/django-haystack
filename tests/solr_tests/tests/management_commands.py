@@ -8,7 +8,7 @@ from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 
 
-class SolrMockSearchIndex(indexes.SearchIndex):
+class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateField(model_attr='pub_date')

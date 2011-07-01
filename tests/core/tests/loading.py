@@ -122,7 +122,7 @@ class MockNotAModel(object):
     pass
 
 
-class FakeSearchIndex(indexes.BasicSearchIndex):
+class FakeSearchIndex(indexes.BasicSearchIndex, indexes.Indexable):
     def update_object(self, instance, **kwargs):
         # Incorrect behavior but easy to test and all we care about is that we
         # make it here. We rely on the `SearchIndex` tests to ensure correct
@@ -139,24 +139,24 @@ class FakeSearchIndex(indexes.BasicSearchIndex):
         return MockModel
 
 
-class InvalidSearchIndex(indexes.SearchIndex):
+class InvalidSearchIndex(indexes.SearchIndex, indexes.Indexable):
     document = indexes.CharField(document=True)
     
     def get_model(self):
         return MockModel
 
 
-class BasicMockModelSearchIndex(indexes.BasicSearchIndex):
+class BasicMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexable):
     def get_model(self):
         return MockModel
 
 
-class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex):
+class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexable):
     def get_model(self):
         return AnotherMockModel
 
 
-class ValidSearchIndex(indexes.SearchIndex):
+class ValidSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.CharField(index_fieldname='name')
     title = indexes.CharField(indexed=False)
@@ -165,7 +165,7 @@ class ValidSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class AlternateValidSearchIndex(indexes.SearchIndex):
+class AlternateValidSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.CharField(faceted=True)
     title = indexes.CharField(faceted=True)
@@ -174,7 +174,7 @@ class AlternateValidSearchIndex(indexes.SearchIndex):
         return AnotherMockModel
 
 
-class ExplicitFacetSearchIndex(indexes.SearchIndex):
+class ExplicitFacetSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.CharField(faceted=True)
     title = indexes.CharField()
@@ -185,7 +185,7 @@ class ExplicitFacetSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class MultiValueValidSearchIndex(indexes.SearchIndex):
+class MultiValueValidSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.MultiValueField(stored=False)
     title = indexes.CharField(indexed=False)

@@ -7,7 +7,7 @@ from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel, AThirdMockModel, AFifthMockModel
 
 
-class BadSearchIndex1(indexes.SearchIndex):
+class BadSearchIndex1(indexes.SearchIndex, indexes.Indexable):
     author = indexes.CharField(model_attr='author')
     pub_date = indexes.DateTimeField(model_attr='pub_date')
     
@@ -15,7 +15,7 @@ class BadSearchIndex1(indexes.SearchIndex):
         return MockModel
 
 
-class BadSearchIndex2(indexes.SearchIndex):
+class BadSearchIndex2(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     content2 = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='author')
@@ -25,7 +25,7 @@ class BadSearchIndex2(indexes.SearchIndex):
         return MockModel
 
 
-class GoodMockSearchIndex(indexes.SearchIndex):
+class GoodMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='author')
     pub_date = indexes.DateTimeField(model_attr='pub_date')
@@ -36,14 +36,14 @@ class GoodMockSearchIndex(indexes.SearchIndex):
 
 
 # For testing inheritance...
-class AltGoodMockSearchIndex(GoodMockSearchIndex):
+class AltGoodMockSearchIndex(GoodMockSearchIndex, indexes.Indexable):
     additional = indexes.CharField(model_attr='author')
     
     def get_model(self):
         return MockModel
 
 
-class GoodCustomMockSearchIndex(indexes.SearchIndex):
+class GoodCustomMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateTimeField(model_attr='pub_date', faceted=True)
@@ -71,7 +71,7 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex):
         return MockModel.objects.filter(author__in=['daniel1', 'daniel3'])
 
 
-class GoodNullableMockSearchIndex(indexes.SearchIndex):
+class GoodNullableMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='author', null=True, faceted=True)
     
@@ -79,7 +79,7 @@ class GoodNullableMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class GoodOverriddenFieldNameMockSearchIndex(indexes.SearchIndex):
+class GoodOverriddenFieldNameMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True, index_fieldname='more_content')
     author = indexes.CharField(model_attr='author', index_fieldname='name_s')
     hello = indexes.CharField(model_attr='hello')
@@ -88,7 +88,7 @@ class GoodOverriddenFieldNameMockSearchIndex(indexes.SearchIndex):
         return MockModel
 
 
-class GoodFacetedMockSearchIndex(indexes.SearchIndex):
+class GoodFacetedMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr='author')
     author_foo = indexes.FacetCharField(facet_for='author')
@@ -362,24 +362,24 @@ class SearchIndexTestCase(TestCase):
         self.assertEqual(prepared_data['pub_date_exact'], '2010-10-26T01:54:32')
 
 
-class BasicModelSearchIndex(indexes.ModelSearchIndex):
+class BasicModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexable):
     class Meta:
         model = MockModel
 
 
-class FieldsModelSearchIndex(indexes.ModelSearchIndex):
+class FieldsModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexable):
     class Meta:
         model = MockModel
         fields = ['author', 'pub_date']
 
 
-class ExcludesModelSearchIndex(indexes.ModelSearchIndex):
+class ExcludesModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexable):
     class Meta:
         model = MockModel
         excludes = ['author', 'foo']
 
 
-class FieldsWithOverrideModelSearchIndex(indexes.ModelSearchIndex):
+class FieldsWithOverrideModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexable):
     foo = indexes.IntegerField(model_attr='foo')
     
     class Meta:
@@ -393,14 +393,14 @@ class FieldsWithOverrideModelSearchIndex(indexes.ModelSearchIndex):
             return f.name
 
 
-class YetAnotherBasicModelSearchIndex(indexes.ModelSearchIndex):
+class YetAnotherBasicModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     
     class Meta:
         model = AThirdMockModel
 
 
-class GhettoAFifthMockModelSearchIndex(indexes.SearchIndex):
+class GhettoAFifthMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     
     def get_model(self):
@@ -414,7 +414,7 @@ class GhettoAFifthMockModelSearchIndex(indexes.SearchIndex):
         return self.get_model().objects.all()
 
 
-class ReadQuerySetTestSearchIndex(indexes.SearchIndex):
+class ReadQuerySetTestSearchIndex(indexes.SearchIndex, indexes.Indexable):
     author = indexes.CharField(model_attr='author', document=True)
     
     def get_model(self):
@@ -424,7 +424,7 @@ class ReadQuerySetTestSearchIndex(indexes.SearchIndex):
         return self.get_model().objects.complete_set()
 
 
-class TextReadQuerySetTestSearchIndex(indexes.SearchIndex):
+class TextReadQuerySetTestSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='author', document=True)
     
     def get_model(self):

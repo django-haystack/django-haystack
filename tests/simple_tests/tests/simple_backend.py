@@ -9,7 +9,7 @@ from core.models import MockModel
 from core.tests.mocks import MockSearchResult
 
 
-class SimpleMockSearchIndex(indexes.SearchIndex):
+class SimpleMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateField(model_attr='pub_date')

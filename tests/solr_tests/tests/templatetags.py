@@ -9,7 +9,7 @@ from core.models import MockModel
 from solr_tests.tests.solr_backend import clear_solr_index
 
 
-class MLTSearchIndex(indexes.RealTimeSearchIndex):
+class MLTSearchIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, model_attr='foo')
     
     def get_model(self):

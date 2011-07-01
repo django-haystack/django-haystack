@@ -65,7 +65,7 @@ Document boosting is done by adding a ``boost`` field to the prepared data
     from notes.models import Note
     
     
-    class NoteSearchIndex(indexes.SearchIndex):
+    class NoteSearchIndex(indexes.SearchIndex, indexes.Indexable):
         # Your regular fields here then...
         
         def prepare(self, obj):
@@ -88,6 +88,9 @@ An example of this might be increasing the significance of a ``title``::
     from notes.models import Note
     
     
-    class NoteSearchIndex(indexes.SearchIndex):
+    class NoteSearchIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         title = indexes.CharField(model_attr='title', boost=1.125)
+        
+        def get_model(self):
+            return Note
