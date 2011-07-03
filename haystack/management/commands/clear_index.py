@@ -21,7 +21,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         """Clears out the search index completely."""
         # Cause the default site to load.
-        site = get_site(options.get('site')
+        site = get_site(options.get('site'))
         self.verbosity = int(options.get('verbosity', 1))
         
         if options.get('interactive', True):
