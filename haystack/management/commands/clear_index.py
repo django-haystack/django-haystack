@@ -40,7 +40,7 @@ class Command(BaseCommand):
             print "Removing all documents from your index because you said so."
         
         from haystack import backend
-        sb = backend.SearchBackend()
+        sb = backend.SearchBackend(site=site)
         sb.clear()
         
         if self.verbosity >= 1:
