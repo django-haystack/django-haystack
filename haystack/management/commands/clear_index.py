@@ -2,6 +2,9 @@ from optparse import make_option
 import sys
 from django.core.management.base import BaseCommand
 
+# TODO: move into more appropriate shared location
+from .update_index import get_site
+
 
 class Command(BaseCommand):
     help = "Clears out the search index completely."
@@ -9,13 +12,16 @@ class Command(BaseCommand):
         make_option('--noinput', action='store_false', dest='interactive', default=True,
             help='If provided, no prompts will be issued to the user and the data will be wiped out.'
         ),
+        make_option('-s', '--site', action='store', dest='site',
+            type='string', help='The site object to use when reindexing (like `search_sites.mysite`).'
+        ),
     )
     option_list = BaseCommand.option_list + base_options
     
     def handle(self, **options):
         """Clears out the search index completely."""
         # Cause the default site to load.
-        from haystack import site
+        site = get_site(options.get('site'))
         self.verbosity = int(options.get('verbosity', 1))
         
         if options.get('interactive', True):
@@ -34,7 +40,7 @@ class Command(BaseCommand):
             print "Removing all documents from your index because you said so."
         
         from haystack import backend
-        sb = backend.SearchBackend()
+        sb = backend.SearchBackend(site=site)
         sb.clear()
         
         if self.verbosity >= 1:

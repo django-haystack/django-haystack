@@ -204,6 +204,10 @@ class Command(AppCommand):
         for model in get_models(app):
             try:
                 index = site.get_index(model)
+
+                # Hacky way to make sure that the backend was configured with
+                # with the correct site (see commit message).
+                index.backend.site = site
             except NotRegistered:
                 if self.verbosity >= 2:
                     print "Skipping '%s' - no index." % model
