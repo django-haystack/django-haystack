@@ -119,3 +119,16 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'(why AND (title:"1" OR title:"2" OR title:"3"))')
+
+    def test_function_query(self):
+        self.sq.add_filter(SQ(content='bacon'))
+        #self.sq.add_function('_query_:"{!bbox pt=33.748131,-84.390869 sfield=location_coordinates d=100}"')
+        kwargs = {'pt': '33.748131,-84.390869',
+                  'sfield': 'location_coordinates',
+                  'd': '100'}
+        self.sq.add_function_query('bbox', **kwargs)
+        self.assertNotEqual(-1, self.sq.build_query().find('bacon'))
+        self.assertNotEqual(-1, self.sq.build_query().find('pt=33.748131,-84.390869'))
+        self.assertNotEqual(-1, self.sq.build_query().find('sfield=location_coordinates'))
+        self.assertNotEqual(-1, self.sq.build_query().find('d=100'))
+        self.assertNotEqual(-1, self.sq.build_query().find('AND _query_:"{!bbox'))

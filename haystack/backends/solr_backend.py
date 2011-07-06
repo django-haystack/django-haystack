@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_ALIAS
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
@@ -379,6 +379,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
 
 class SolrSearchQuery(BaseSearchQuery):
+
+    def __init__(self, using=DEFAULT_ALIAS):
+        super(SolrSearchQuery, self).__init__(using=DEFAULT_ALIAS)
+        self.function_query = None
+    
     def matching_all_fragment(self):
         return '*:*'
 
@@ -494,6 +499,15 @@ class SolrSearchQuery(BaseSearchQuery):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
 
+    def add_function_query(self, function_name, **kwargs):
+        params = ' '.join([ '%s=%s' % (key,kwargs[key]) for key in kwargs])
+        self.function_query = '_query_:"{!%s %s}"' % (function_name, params)
+
+    def build_query(self):
+        query = super(SolrSearchQuery, self).build_query()
+        if self.function_query:
+            query = '%s AND %s' % (query, self.function_query)
+        return query
 
 class SolrEngine(BaseEngine):
     backend = SolrSearchBackend
