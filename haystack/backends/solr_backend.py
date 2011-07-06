@@ -513,7 +513,7 @@ class SearchQuery(BaseSearchQuery):
         self.function_query = '_query_:"{!%s %s}"' % (function_name, params)
 
     def build_query(self):
-        query = super(SolrSearchQuery, self).build_query()
+        query = super(SearchQuery, self).build_query()
         if self.function_query:
             query = '%s AND %s' % (query, self.function_query)
         return query
