@@ -392,6 +392,8 @@ class SearchQuery(BaseSearchQuery):
         else:
             self.backend = SearchBackend(site=site)
 
+        self.function_query = None
+
     def matching_all_fragment(self):
         return '*:*'
 
@@ -505,3 +507,13 @@ class SearchQuery(BaseSearchQuery):
         results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
+
+    def add_function_query(self, function_name, **kwargs):
+        params = ' '.join([ '%s=%s' % (key,kwargs[key]) for key in kwargs])
+        self.function_query = '_query_:"{!%s %s}"' % (function_name, params)
+
+    def build_query(self):
+        query = super(SolrSearchQuery, self).build_query()
+        if self.function_query:
+            query = '%s AND %s' % (query, self.function_query)
+        return query
