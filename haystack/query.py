@@ -304,6 +304,13 @@ class SearchQuerySet(object):
             clone.query.add_order_by(field)
         
         return clone
+        
+    def collapse_by(self, field_name):
+        """Group results by a field"""
+        clone = self._clone()
+        clone.query.add_collapse(field_name)
+        return clone
+ 
     
     def highlight(self):
         """Adds highlighting to the results."""
