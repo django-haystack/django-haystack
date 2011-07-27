@@ -103,7 +103,8 @@ class BaseSearchBackend(object):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+               limit_to_registered_models=None, result_class=None,
+               collapse=None, **kwargs):
         """
         Takes a query to search on and returns dictionary.
         
@@ -264,6 +265,7 @@ class BaseSearchQuery(object):
         self.start_offset = 0
         self.end_offset = None
         self.highlight = False
+        self.collapse = None
         self.facets = set()
         self.date_facets = {}
         self.query_facets = []
@@ -315,6 +317,9 @@ class BaseSearchQuery(object):
         
         if self.highlight:
             kwargs['highlight'] = self.highlight
+            
+        if self.collapse:
+            kwargs['collapse'] = self.collapse 
         
         if self.facets:
             kwargs['facets'] = list(self.facets)
@@ -561,13 +566,21 @@ class BaseSearchQuery(object):
     def add_order_by(self, field):
         """Orders the search result by a field."""
         self.order_by.append(field)
-    
+
     def clear_order_by(self):
         """
         Clears out all ordering that has been already added, reverting the
         query to relevancy.
         """
         self.order_by = []
+        
+    def add_collapse(self, collapse):
+        """Group the search results by a field and display only the first result of the group"""
+        self.collapse = collapse
+              
+    def clear_collapse(self):
+        """Cancel field collapsing"""
+        self.collapse = None
     
     def add_model(self, model):
         """
@@ -721,6 +734,7 @@ class BaseSearchQuery(object):
         clone.models = self.models.copy()
         clone.boost = self.boost.copy()
         clone.highlight = self.highlight
+        clone.collapse = self.collapse
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()
         clone.query_facets = self.query_facets[:]

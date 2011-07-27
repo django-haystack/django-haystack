@@ -199,7 +199,10 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
     else:
         form = form_class(searchqueryset=searchqueryset, load_all=load_all)
     
-    paginator = Paginator(results, results_per_page or RESULTS_PER_PAGE)
+    # this should not be necessary, but somehow when using field collapsing some None results are returned.
+    results_list = filter(None,results)
+    
+    paginator = Paginator(results_list, results_per_page or RESULTS_PER_PAGE)
     
     try:
         page = paginator.page(int(request.GET.get('page', 1)))
