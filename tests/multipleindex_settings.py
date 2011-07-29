@@ -13,10 +13,7 @@ HAYSTACK_CONNECTIONS = {
     'whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
         'PATH': os.path.join('tmp', 'test_whoosh_query'),
+        'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BarIndex'],
     },
 }
-
-HAYSTACK_EXCLUDED_INDEXES = [
-    'multipleindex.search_indexes.BaseIndex',
-]
 

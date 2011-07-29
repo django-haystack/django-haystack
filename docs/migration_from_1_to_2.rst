@@ -30,7 +30,7 @@ look like::
     HAYSTACK_SOLR_TIMEOUT = 60 * 5
     HAYSTACK_INCLUDE_SPELLING = True
     HAYSTACK_BATCH_SIZE = 100
-    
+
     # Or...
     HAYSTACK_SEARCH_ENGINE = 'whoosh'
     HAYSTACK_WHOOSH_PATH = '/home/search/whoosh_index'
@@ -38,7 +38,7 @@ look like::
     HAYSTACK_WHOOSH_POST_LIMIT = 128 * 1024 * 1024
     HAYSTACK_INCLUDE_SPELLING = True
     HAYSTACK_BATCH_SIZE = 100
-    
+
     # Or...
     HAYSTACK_SEARCH_ENGINE = 'xapian'
     HAYSTACK_XAPIAN_PATH = '/home/search/xapian_index'
@@ -125,18 +125,18 @@ A Haystack 1.X index might've looked like::
     from haystack.indexes import *
     from haystack import site
     from myapp.models import Note
-    
-    
+
+
     class NoteIndex(SearchIndex):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def get_queryset(self):
             """Used when the entire index for model is updated."""
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
-    
-    
+
+
     site.register(Note, NoteIndex)
 
 A converted Haystack 2.X index should look like::
@@ -144,16 +144,16 @@ A converted Haystack 2.X index should look like::
     import datetime
     from haystack import indexes
     from myapp.models import Note
-    
-    
+
+
     class NoteIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
+
         def index_queryset(self):
             """Used when the entire index for model is updated."""
             return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
@@ -180,15 +180,21 @@ method. This was present in the Haystack 1.2.X series (with a deprecation warnin
 in 1.2.4+) but has been removed in Haystack v2.
 
 Finally, if you were unregistering other indexes before, you should make use of
-the new ``HAYSTACK_EXCLUDED_INDEXES`` setting. It should be a list of strings
-that contain the Python import path to the indexes that should not be loaded &
-used. For example::
+the new ``EXCLUDED_INDEXES`` setting available in each backend's settings. It
+should be a list of strings that contain the Python import path to the indexes
+that should not be loaded & used. For example::
 
-    HAYSTACK_EXCLUDED_INDEXES = [
-        # Imagine that these indexes exist. They don't.
-        'django.contrib.auth.search_indexes.UserIndex',
-        'third_party_blog_app.search_indexes.EntryIndex',
-    ]
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+            'URL': 'http://localhost:9001/solr/default',
+            'EXCLUDED_INDEXES': [
+                # Imagine that these indexes exist. They don't.
+                'django.contrib.auth.search_indexes.UserIndex',
+                'third_party_blog_app.search_indexes.EntryIndex',
+            ]
+        }
+    }
 
 This allows for reliable swapping of the index that handles a model without
 relying on correct import order.
@@ -239,9 +245,9 @@ that the classes are defined above it) and should look like::
 
     from haystack.backends import BaseEngine
     from haystack.backends.solr_backend import SolrSearchQuery
-    
+
     # Code then...
-    
+
     class MyCustomSolrEngine(BaseEngine):
         # Use our custom backend.
         backend = MySolrBackend
