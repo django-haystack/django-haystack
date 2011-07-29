@@ -170,7 +170,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         writer = AsyncWriter(self.index)
         
         for obj in iterable:
-            doc = index.full_prepare(obj)print
+            doc = index.full_prepare(obj)
             
             # Really make sure it's unicode, because Whoosh won't have it any
             # other way.
