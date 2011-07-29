@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
+from django.utils.translation import get_language
 from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
@@ -68,6 +69,7 @@ class BaseSearchBackend(object):
         self.include_spelling = connection_options.get('INCLUDE_SPELLING', False)
         self.batch_size = connection_options.get('BATCH_SIZE', 1000)
         self.silently_fail = connection_options.get('SILENTLY_FAIL', True)
+        self.language = connection_options.get('LANGUAGE', get_language())
     
     def update(self, index, iterable):
         """

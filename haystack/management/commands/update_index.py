@@ -7,6 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import AppCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+from django.utils.translation import activate
 from haystack import connections as haystack_connections
 from haystack.constants import DEFAULT_ALIAS
 from haystack.query import SearchQuerySet
@@ -126,7 +127,7 @@ class Command(AppCommand):
             default=False, help='Remove objects from the index that are no longer present in the database.'
         ),
         make_option("-u", "--using", action="store", type="string", dest="using", default=DEFAULT_ALIAS,
-            help='If provided, chooses a connection to work with.'
+            help="If provided, chooses a connection to work with. If set to 'all' the command will iterate on all available connections."
         ),
         make_option('-k', '--workers', action='store', dest='workers',
             default=0, type='int', 
@@ -155,10 +156,13 @@ class Command(AppCommand):
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.age = options.get('age', DEFAULT_AGE)
         self.remove = options.get('remove', False)
-        self.using = options.get('using')
         self.workers = int(options.get('workers', 0))
-        self.backend = haystack_connections[self.using].get_backend()
-        
+        using = options.get('using')
+        if using == 'all':
+            self.connections = [conn for conn in haystack_connections]
+        else:
+            self.connections = [using]
+                
         if not apps:
             from django.db.models import get_app
             # Do all, in an INSTALLED_APPS sorted order.
@@ -179,62 +183,71 @@ class Command(AppCommand):
         from django.db.models import get_models
         from haystack.exceptions import NotHandled
         
-        unified_index = haystack_connections[self.using].get_unified_index()
-        
-        if self.workers > 0:
-            import multiprocessing
-        
-        for model in get_models(app):
-            try:
-                index = unified_index.get_index(model)
-            except NotHandled:
-                if self.verbosity >= 2:
-                    print "Skipping '%s' - no index." % model
-                continue
-                
-            qs = build_queryset(index, model, age=self.age, verbosity=self.verbosity)
-            total = qs.count()
+        for using in self.connections:
+
+            backend = haystack_connections[using].get_backend()
+            unified_index = haystack_connections[using].get_unified_index()
             
-            if self.verbosity >= 1:
-                print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
-            
-            pks_seen = set([smart_str(pk) for pk in qs.values_list('pk', flat=True)])
-            batch_size = self.batchsize or self.backend.batch_size
+            # activate the appropriate language for the current backend so that automatic translation shall be supported
+            activate(backend.language)
             
             if self.workers > 0:
-                ghetto_queue = []
+                import multiprocessing
             
-            for start in range(0, total, batch_size):
-                end = min(start + batch_size, total)
+            for model in get_models(app):
+                try:
+                    index = unified_index.get_index(model)
+                except NotHandled:
+                    if self.verbosity >= 2:
+                        print "Skipping '%s' - no index." % model
+                    continue
                 
-                if self.workers == 0:
-                    do_update(self.backend, index, qs, start, end, total, self.verbosity)
-                else:
-                    ghetto_queue.append(('do_update', model, start, end, total, self.using, self.age, self.verbosity))
-            
-            if self.workers > 0:
-                pool = multiprocessing.Pool(self.workers)
-                pool.map(worker, ghetto_queue)
-            
-            if self.remove:
-                if self.age or total <= 0:
-                    # They're using a reduced set, which may not incorporate
-                    # all pks. Rebuild the list with everything.
-                    qs = index.index_queryset().values_list('pk', flat=True)
-                    pks_seen = set([smart_str(pk) for pk in qs])
-                    total = len(pks_seen)
+                if self.verbosity >= 1:
+                    print "Updating '%s' backend with data from '%s'" % (using,app.__name__)
+                    
+                qs = build_queryset(index, model, age=self.age, verbosity=self.verbosity)
+                total = qs.count()
+                
+                if self.verbosity >= 1:
+                    print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
+                
+                pks_seen = set([smart_str(pk) for pk in qs.values_list('pk', flat=True)])
+                batch_size = self.batchsize or backend.batch_size
                 
                 if self.workers > 0:
                     ghetto_queue = []
                 
                 for start in range(0, total, batch_size):
-                    upper_bound = start + batch_size
+                    end = min(start + batch_size, total)
                     
                     if self.workers == 0:
-                        do_remove(self.backend, index, model, pks_seen, start, upper_bound)
+                        do_update(backend, index, qs, start, end, total, self.verbosity)
                     else:
-                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, self.using, self.verbosity))
+                        ghetto_queue.append(('do_update', model, start, end, total, using, self.age, self.verbosity))
                 
                 if self.workers > 0:
                     pool = multiprocessing.Pool(self.workers)
                     pool.map(worker, ghetto_queue)
+                
+                if self.remove:
+                    if self.age or total <= 0:
+                        # They're using a reduced set, which may not incorporate
+                        # all pks. Rebuild the list with everything.
+                        qs = index.index_queryset().values_list('pk', flat=True)
+                        pks_seen = set([smart_str(pk) for pk in qs])
+                        total = len(pks_seen)
+                    
+                    if self.workers > 0:
+                        ghetto_queue = []
+                    
+                    for start in range(0, total, batch_size):
+                        upper_bound = start + batch_size
+                        
+                        if self.workers == 0:
+                            do_remove(backend, index, model, pks_seen, start, upper_bound)
+                        else:
+                            ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, self.using, self.verbosity))
+                    
+                    if self.workers > 0:
+                        pool = multiprocessing.Pool(self.workers)
+                        pool.map(worker, ghetto_queue)

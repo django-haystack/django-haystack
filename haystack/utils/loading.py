@@ -98,6 +98,12 @@ class ConnectionHandler(object):
         self.ensure_defaults(key)
         self._connections[key] = load_backend(self.connections_info[key]['ENGINE'])(using=key)
         return self._connections[key]
+     
+    def __iter__(self):
+        return self.iterkeys()
+        
+    def iterkeys(self):
+        return self.connections_info.iterkeys()
     
     def all(self):
         return [self[alias] for alias in self.connections_info]

@@ -170,7 +170,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         writer = AsyncWriter(self.index)
         
         for obj in iterable:
-            doc = index.full_prepare(obj)
+            doc = index.full_prepare(obj)print
             
             # Really make sure it's unicode, because Whoosh won't have it any
             # other way.
@@ -256,6 +256,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                limit_to_registered_models=None, result_class=None, **kwargs):
         if not self.setup_complete:
             self.setup()
+
         
         # A zero length query should return no results.
         if len(query_string) == 0:
@@ -363,6 +364,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 end_offset = 1
             
             raw_results = searcher.search(parsed_query, limit=end_offset, sortedby=sort_by, reverse=reverse)
+
             
             # Handle the case where the results have been narrowed.
             if narrowed_results:
