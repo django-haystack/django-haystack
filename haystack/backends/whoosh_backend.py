@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -74,6 +75,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         self.use_file_storage = True
         self.post_limit = getattr(connection_options, 'POST_LIMIT', 128 * 1024 * 1024)
         self.path = connection_options.get('PATH')
+        self.log = logging.getLogger('haystack')
 
         if connection_options.get('STORAGE', 'file') != 'file':
             self.use_file_storage = False
