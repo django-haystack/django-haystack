@@ -376,7 +376,7 @@ class SearchQuerySet(object):
         clone._load_all = True
         return clone
 
-    def auto_query(self, query_string):
+    def auto_query(self, query_string, fieldname=None):
         """
         Performs a best guess constructing the search query.
 
@@ -389,13 +389,19 @@ class SearchQuerySet(object):
         open_quote_position = None
         non_exact_query = query_string
 
+        if fieldname is None:
+            fieldname = 'content'
+
         for offset, char in enumerate(query_string):
             if char == '"':
                 if open_quote_position != None:
                     current_match = non_exact_query[open_quote_position + 1:offset]
 
                     if current_match:
-                        clone = clone.filter(content__exact=clone.query.clean(current_match))
+                        current_kwargs = {
+                            "%s__exact" % fieldname: clone.query.clean(current_match),
+                        }
+                        clone = clone.filter(**current_kwargs)
 
                     non_exact_query = non_exact_query.replace('"%s"' % current_match, '', 1)
                     open_quote_position = None
@@ -414,11 +420,14 @@ class SearchQuerySet(object):
                 exclude = True
 
             cleaned_keyword = clone.query.clean(keyword)
+            keyword_kwargs = {
+                fieldname: cleaned_keyword,
+            }
 
             if exclude:
-                clone = clone.exclude(content=cleaned_keyword)
+                clone = clone.exclude(**keyword_kwargs)
             else:
-                clone = clone.filter(content=cleaned_keyword)
+                clone = clone.filter(**keyword_kwargs)
 
         return clone
 
