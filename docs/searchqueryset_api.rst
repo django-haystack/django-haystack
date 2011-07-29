@@ -408,7 +408,7 @@ Please see the docs on ``RelatedSearchQuerySet``.
 ``auto_query``
 ~~~~~~~~~~~~~~
 
-.. method:: SearchQuerySet.auto_query(self, query_string)
+.. method:: SearchQuerySet.auto_query(self, query_string, fieldname=None)
 
 Performs a best guess constructing the search query.
 
@@ -420,12 +420,21 @@ It handles exact matches (specified with single or double quotes), negation (
 using a ``-`` immediately before the term) and joining remaining terms with the
 operator specified in ``HAYSTACK_DEFAULT_OPERATOR``.
 
+If a ``fieldname`` is provided, the ``auto_query`` will be applied to that
+field instead of the default ``content`` field.
+
 Example::
 
     SearchQuerySet().auto_query('goldfish "old one eye" -tank')
 
     # ... is identical to...
     SearchQuerySet().filter(content__exact='old one eye').filter(content='goldfish').exclude(content='tank')
+
+    # Against a different field.
+    SearchQuerySet().auto_query('goldfish -tank', fieldname='title')
+
+    # ... is identical to...
+    SearchQuerySet().filter(title='goldfish').exclude(title='tank')
 
 This method is somewhat naive but works well enough for simple, common cases.
 

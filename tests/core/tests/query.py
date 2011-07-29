@@ -613,6 +613,15 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__exact=pants:rule>')
 
+        # Now with a different fieldname
+        sqs = self.msqs.auto_query('test search -stuff', fieldname='title')
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (title__contains=test AND title__contains=search AND NOT (title__contains=stuff))>')
+
+        sqs = self.msqs.auto_query('test "my thing" search -stuff', fieldname='title')
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (title__exact=my thing AND title__contains=test AND title__contains=search AND NOT (title__contains=stuff))>')
+
     def test_count(self):
         self.assertEqual(self.msqs.count(), 23)
 
