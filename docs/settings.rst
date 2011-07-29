@@ -40,6 +40,7 @@ dictionary of dictionaries resembling the following (complete) example::
             'TIMEOUT': 60 * 5,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
+            'EXCLUDED_INDEXES': ['thirdpartyapp.search_indexes.BarIndex'],
         },
         'autocomplete': {
             'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
@@ -48,15 +49,18 @@ dictionary of dictionaries resembling the following (complete) example::
             'POST_LIMIT': 128 * 1024 * 1024,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
+            'EXCLUDED_INDEXES': ['thirdpartyapp.search_indexes.BarIndex'],
         },
         'slave': {
             'ENGINE': 'xapian_backend.XapianEngine',
             'PATH': '/home/search/xapian_index',
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
+            'EXCLUDED_INDEXES': ['thirdpartyapp.search_indexes.BarIndex'],
         },
         'db': {
             'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+            'EXCLUDED_INDEXES': ['thirdpartyapp.search_indexes.BarIndex'],
         }
     }
 
@@ -96,6 +100,9 @@ The following options are optional:
 * ``POST_LIMIT`` - (Whoosh-only) How large the file sizes can be. Default is
   ``128 * 1024 * 1024``.
 * ``FLAGS`` - (Xapian-only) A list of flags to use when querying the index.
+* ``EXCLUDED_INDEXES`` - A list of strings (as Python import paths) to indexes
+  you do **NOT** want included. Useful for omitting third-party things you
+  don't want indexed or for when you want to replace an index.
 
 
 ``HAYSTACK_ROUTERS``
@@ -103,15 +110,14 @@ The following options are optional:
 
 **Optional**
 
+This setting controls how routing is performed to allow different backends to
+handle updates/deletes/reads.
 
+An example::
 
+    HAYSTACK_ROUTERS = ['search_routers.MasterSlaveRouter', 'haystack.routers.DefaultRouter']
 
-``HAYSTACK_EXCLUDED_INDEXES``
-=============================
-
-**Optional**
-
-
+Defaults to ``['haystack.routers.DefaultRouter']``.
 
 
 ``HAYSTACK_DOCUMENT_FIELD``
@@ -119,7 +125,14 @@ The following options are optional:
 
 **Optional**
 
+This setting controls what fieldname Haystack relies on as the default field
+for searching within.
 
+An example::
+
+    HAYSTACK_DOCUMENT_FIELD = 'wall_o_text'
+
+Defaults to ``text``.
 
 
 ``HAYSTACK_SEARCH_RESULTS_PER_PAGE``
