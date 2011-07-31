@@ -11,24 +11,32 @@ Useful for essentially extending what Haystack can do.
 queued_search
 -------------
 
-http://github.com/toastdriven/queued_search
+http://github.com/toastdriven/queued_search (2.X compatible)
 
 Provides a queue-based setup as an alternative to ``RealTimeSearchIndex`` or
 constantly running the ``update_index`` command. Useful for high-load, short
 update time situations.
+
+celery-haystack
+---------------
+
+https://github.com/ennio/celery-haystack (2.X compatible)
+
+Also provides a queue-based setup, this time centered around Celery. Useful
+for keeping the index fresh.
 
 django-celery-haystack
 ----------------------
 
 https://github.com/mixcloud/django-celery-haystack-SearchIndex
 
-Also provides a queue-based setup, this time centered around Celery. Useful
+Another queue-based setup, also around Celery. Useful
 for keeping the index fresh.
 
 saved_searches
 --------------
 
-http://github.com/toastdriven/saved_searches
+http://github.com/toastdriven/saved_searches (2.X compatible)
 
 Adds personalization to search. Retains a history of queries run by the various
 users on the site (including anonymous users). This can be used to present the
