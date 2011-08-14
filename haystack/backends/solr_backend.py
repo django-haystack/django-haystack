@@ -445,6 +445,11 @@ class SolrSearchQuery(BaseSearchQuery):
                     order_by_list.append('%s asc' % order_by)
 
             kwargs['sort_by'] = ", ".join(order_by_list)
+        
+        if self.fields_list:
+            # add haystack must have fields
+            fields_list = [ID, DJANGO_CT, DJANGO_ID, 'score'] + self.fields_list
+            kwargs['fields'] = ", ".join(fields_list)
 
         if self.end_offset is not None:
             kwargs['end_offset'] = self.end_offset

@@ -305,6 +305,15 @@ class SearchQuerySet(object):
 
         return clone
 
+    def values(self, *args):
+        """Alters the return fields."""
+        clone = self._clone()
+
+        for field in args:
+            clone.query.add_fields_list(field)
+
+        return clone
+
     def highlight(self):
         """Adds highlighting to the results."""
         clone = self._clone()

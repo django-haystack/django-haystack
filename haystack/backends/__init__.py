@@ -264,6 +264,7 @@ class BaseSearchQuery(object):
     def __init__(self, using=DEFAULT_ALIAS):
         self.query_filter = SearchNode()
         self.order_by = []
+        self.fields_list = []
         self.models = set()
         self.boost = {}
         self.start_offset = 0
@@ -573,6 +574,10 @@ class BaseSearchQuery(object):
         query to relevancy.
         """
         self.order_by = []
+    
+    def add_fields_list(self, field):
+        """Add search result field."""
+        self.fields_list.append(field)
 
     def add_model(self, model):
         """
