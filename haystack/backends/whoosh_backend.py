@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -80,6 +81,8 @@ class SearchBackend(BaseSearchBackend):
 
         if self.use_file_storage and not hasattr(settings, 'HAYSTACK_WHOOSH_PATH'):
             raise ImproperlyConfigured('You must specify a HAYSTACK_WHOOSH_PATH in your settings.')
+
+        self.log = logging.getLogger('haystack')
 
     def setup(self):
         """
