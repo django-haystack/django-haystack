@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -80,6 +81,8 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         if self.use_file_storage and not self.path:
             raise ImproperlyConfigured("You must specify a 'PATH' in your settings for connection '%s'." % connection_alias)
+
+        self.log = logging.getLogger('haystack')
 
     def setup(self):
         """
