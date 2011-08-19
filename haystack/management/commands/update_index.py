@@ -47,6 +47,43 @@ def worker(bits):
     elif bits[0] == 'do_remove':
         do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity)
 
+def fast_worker(bits):
+    # We need to reset the connections, otherwise the different processes
+    # will try to share the connection, which causes things to blow up.
+    # use start_id, better use the SQL server primary index for very large data update
+    from django.db import connections
+    
+    for alias, info in connections.databases.items():
+        # We need to also tread lightly with SQLite, because blindly wiping
+        # out connections (via ``... = {}``) destroys in-memory DBs.
+        if not 'sqlite3' in info['ENGINE']:
+            try:
+                del(connections._connections[alias])
+            except KeyError:
+                pass
+    
+    if bits[0] == 'do_update':
+        func, model, start, end, total, using, age, verbosity = bits
+    elif bits[0] == 'do_remove':
+        func, model, pks_seen, start, upper_bound, using, verbosity = bits
+    elif bits[0] == 'fast_update':
+        func, model, start_id, sql_batch_size, total, using, age, verbosity = bits
+    else:
+        return
+    
+    unified_index = haystack_connections[using].get_unified_index()
+    index = unified_index.get_index(model)
+    backend = haystack_connections[using].get_backend()
+    
+    if func == 'do_update':
+        qs = build_queryset(index, model, age=age, verbosity=verbosity)
+        do_update(backend, index, qs, start, end, total, verbosity=verbosity)
+    elif bits[0] == 'do_remove':
+        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity)
+    elif func == 'fast_update':
+        qs = build_queryset(index, model, age=age, verbosity=verbosity)
+        fast_update(backend, index, qs, start_id, sql_batch_size, total, verbosity=verbosity)
+
 
 def build_queryset(index, model, age=DEFAULT_AGE, verbosity=1):
     extra_lookup_kwargs = {}
@@ -86,6 +123,24 @@ def do_update(backend, index, qs, start, end, total, verbosity=1):
             print "  indexed %s - %d of %d." % (start+1, end, total)
         else:
             print "  indexed %s - %d of %d (by %s)." % (start+1, end, total, os.getpid())
+    
+    # FIXME: Get the right backend.
+    backend.update(index, current_qs)
+    
+    # Clear out the DB connections queries because it bloats up RAM.
+    reset_queries()
+
+def fast_update(backend, index, qs, start_id, sql_batch_size, total, verbosity=1):
+    # Get a clone of the QuerySet so that the cache doesn't bloat up
+    # in memory. Useful when reindexing large amounts of data.
+    small_cache_qs = qs.all()
+    current_qs = qs.filter(pk__gte=start_id)[:sql_batch_size]
+    
+    if verbosity >= 2:
+        if os.getpid() == os.getppid():
+            print "  indexed pk start from %s limit %d of %d." % (start_id, sql_batch_size, total)
+        else:
+            print "  indexed pk start from %s limit %d of %d (by %s)." % (start_id, sql_batch_size, total, os.getpid())
     
     # FIXME: Get the right backend.
     backend.update(index, current_qs)
@@ -198,23 +253,33 @@ class Command(AppCommand):
             if self.verbosity >= 1:
                 print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
             
-            pks_seen = set([smart_str(pk) for pk in qs.values_list('pk', flat=True)])
+            pks_id = [smart_str(pk) for pk in qs.values_list('pk', flat=True)]
+            pks_seen = set(pks_id)
             batch_size = self.batchsize or self.backend.batch_size
             
             if self.workers > 0:
                 ghetto_queue = []
             
+            #for start in range(0, total, batch_size):
+            #    end = min(start + batch_size, total)
             for start in range(0, total, batch_size):
                 end = min(start + batch_size, total)
+                start_id = pks_id[start]
+                sql_batch_size = end - start
                 
+                #if self.workers == 0:
+                #    do_update(self.backend, index, qs, start, end, total, self.verbosity)
+                #else:
+                #    ghetto_queue.append(('do_update', model, start, end, total, self.using, self.age, self.verbosity))
                 if self.workers == 0:
-                    do_update(self.backend, index, qs, start, end, total, self.verbosity)
+                    fast_update(self.backend, index, qs, start_id, sql_batch_size, total, self.verbosity)
                 else:
-                    ghetto_queue.append(('do_update', model, start, end, total, self.using, self.age, self.verbosity))
+                    ghetto_queue.append(('fast_update', model, start_id, sql_batch_size, total, self.using, self.age, self.verbosity))
             
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
-                pool.map(worker, ghetto_queue)
+                #pool.map(worker, ghetto_queue)
+                pool.map(fast_worker, ghetto_queue)
             
             if self.remove:
                 if self.age or total <= 0:
@@ -237,4 +302,5 @@ class Command(AppCommand):
                 
                 if self.workers > 0:
                     pool = multiprocessing.Pool(self.workers)
-                    pool.map(worker, ghetto_queue)
+                    #pool.map(worker, ghetto_queue)
+                    pool.map(fast_worker, ghetto_queue)
