@@ -61,6 +61,8 @@ Installation
 
 It is easiest to install Haystack using pip or easy_install
 
+Example::
+
     pip install django-haystack
 
     easy_install django-haystack
@@ -74,6 +76,8 @@ Add Haystack To ``INSTALLED_APPS``
 
 As with most Django applications, you should add Haystack to the
 ``INSTALLED_APPS`` within your settings file (usually ``settings.py``).
+
+Example::
 
     INSTALLED_APPS = (
         ...
