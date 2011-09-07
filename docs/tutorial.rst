@@ -59,7 +59,7 @@ official instructions.
 Installation
 ============
 
-It is easiest to install Haystack using pip or easy_install
+It is easiest to install Haystack using ``pip`` or ``easy_install``
 
 Example::
 
@@ -67,6 +67,10 @@ Example::
 
     easy_install django-haystack
 
+.. note::
+
+    You should uninstall ``haystack`` if it is installed since ``django-haystack`` 
+    will conflict with the ``haystack`` package.
 
 Configuration
 =============
