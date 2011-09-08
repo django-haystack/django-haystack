@@ -1,6 +1,5 @@
 from django.contrib.admin.options import ModelAdmin
-from django.contrib.admin.views.main import (ChangeList, MAX_SHOW_ALL_ALLOWED,
-                                             SEARCH_VAR)
+from django.contrib.admin.views.main import ChangeList, SEARCH_VAR
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, InvalidPage
 from django.shortcuts import render_to_response
@@ -21,7 +20,10 @@ except ImportError:
         return wraps
     
     csrf_protect_m = method_decorator(csrf_protect)
-
+try:
+    from django.contrib.admin.views.main import MAX_SHOW_ALL_ALLOWED
+except ImportError:
+    pass
 
 class SearchChangeList(ChangeList):
     def get_results(self, request):
@@ -36,7 +38,7 @@ class SearchChangeList(ChangeList):
         result_count = paginator.count
         full_result_count = SearchQuerySet().models(self.model).all().count()
         
-        can_show_all = result_count <= MAX_SHOW_ALL_ALLOWED
+        can_show_all = result_count <= getattr(self, 'list_max_show_all', MAX_SHOW_ALL_ALLOWED)
         multi_page = result_count > self.list_per_page
         
         # Get the list of objects to display on this page.
