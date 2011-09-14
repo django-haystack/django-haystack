@@ -378,9 +378,9 @@ class SearchBackend(BaseSearchBackend):
                 if field_data['type'] == 'text':
                     field_data['type'] = 'string'
             
-             # Let the class have the final say on its type.
-             if field_class.index_fieldtype is not None:
-                 field_data['type'] = field_class.index_fieldtype
+            # Let the class have the final say on its type.
+            if field_class.index_fieldtype is not None:
+                field_data['type'] = field_class.index_fieldtype
             
             schema_fields.append(field_data)
         
