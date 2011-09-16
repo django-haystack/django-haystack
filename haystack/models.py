@@ -27,7 +27,7 @@ class SearchResult(object):
         self._model = None
         self._verbose_name = None
         self._additional_fields = []
-        self.stored_fields = None
+        self._stored_fields = None
         self.log = self._get_log()
         
         if searchsite:
@@ -36,7 +36,13 @@ class SearchResult(object):
             from haystack import site
             self.searchsite = site
         
+        fieldmap = {}
+        for fieldname, field in self.searchindex.fields.items():
+            fieldmap[field.index_fieldname] = fieldname
+        
         for key, value in kwargs.items():
+            if key in fieldmap:
+                key = fieldmap[key]
             if not key in self.__dict__:
                 self.__dict__[key] = value
                 self._additional_fields.append(key)
