@@ -281,8 +281,16 @@ class SearchQuerySet(object):
         """Alters the order in which the results should appear."""
         clone = self._clone()
         
-        for field in args:
-            clone.query.add_order_by(field)
+        fieldmap = {}
+        for fieldname, field in self.site.all_searchfields().items():
+            fieldmap[field.instance_name] = field.index_fieldname
+        
+        for arg in args:
+            if arg.startswith('-'):
+                arg = '-' + fieldmap[arg[1:]]
+            else:
+                arg = fieldmap[arg]
+            clone.query.add_order_by(arg)
         
         return clone
     
