@@ -2,6 +2,8 @@
 import datetime
 from decimal import Decimal
 import logging
+import os
+
 import pysolr
 from django.conf import settings
 from django.test import TestCase
@@ -1208,3 +1210,22 @@ class SolrBoostBackendTestCase(TestCase):
             'core.afourthmockmodel.2',
             'core.afourthmockmodel.4'
         ])
+
+
+class LiveSolrContentExtractionTestCase(TestCase):
+    def setUp(self):
+        super(LiveSolrContentExtractionTestCase, self).setUp()
+
+        self.sb = connections['default'].get_backend()
+
+    def test_content_extraction(self):
+        f = open(os.path.join(os.path.dirname(__file__),
+                              "..", "..", "content_extraction", "test.pdf"),
+                 "rb")
+
+        data = self.sb.extract_file_contents(f)
+
+        self.assertTrue("haystack" in data['contents'])
+        self.assertEqual(data['metadata']['Content-Type'], [u'application/pdf'])
+        self.assertTrue(any(i for i in data['metadata']['Keywords'] if 'SolrCell' in i))
+
