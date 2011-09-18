@@ -1,3 +1,4 @@
+import logging
 import operator
 import warnings
 from haystack import connections, connection_router
@@ -29,6 +30,7 @@ class SearchQuerySet(object):
         self._cache_full = False
         self._load_all = False
         self._ignored_result_count = 0
+        self.log = logging.getLogger('haystack')
 
     def _determine_backend(self):
         # A backend has been manually selected. Use it instead.
@@ -58,6 +60,7 @@ class SearchQuerySet(object):
         len(self)
         obj_dict = self.__dict__.copy()
         obj_dict['_iter'] = None
+        obj_dict['log'] = None
         return obj_dict
 
     def __setstate__(self, data_dict):
@@ -65,6 +68,7 @@ class SearchQuerySet(object):
         For unpickling.
         """
         self.__dict__ = data_dict
+        self.log = logging.getLogger('haystack')
 
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
