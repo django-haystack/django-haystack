@@ -20,12 +20,12 @@ Haystack requires Solr 1.3+. Installation is relatively simple::
     java -jar start.jar
 
 You'll need to revise your schema. You can generate this from your application
-(once Haystack is installed and setup) by running 
+(once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
 it in ``apache-solr-1.4.1/example/solr/conf/schema.xml``. Then restart Solr.
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
-distributed via PyPI, is the best version to use (2.0.13+). Place ``pysolr.py``
+distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
 somewhere on your ``PYTHONPATH``.
 
 .. note::
@@ -60,7 +60,7 @@ Something like the following is suggested::
         text = indexes.CharField(document=True, use_template=True)
         # ... normal fields then...
         suggestions = indexes.CharField()
-        
+
         def prepare(self, obj):
             prepared_data = super(NoteIndex, self).prepare(object)
             prepared_data['suggestions'] = prepared_data['text']
@@ -128,15 +128,15 @@ package for it). Installation looks like::
 
     curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-core-1.0.11.tar.gz
     curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-bindings-1.0.11.tar.gz
-    
+
     tar xvzf xapian-core-1.0.11.tar.gz
     tar xvzf xapian-bindings-1.0.11.tar.gz
-    
+
     cd xapian-core-1.0.11
     ./configure
     make
     sudo make install
-    
+
     cd ..
     cd xapian-bindings-1.0.11
     ./configure
