@@ -3,7 +3,7 @@ Haystack
 ========
 
 :author: Daniel Lindsley
-:date: 2011/05/02
+:date: 2011/09/18
 
 Haystack provides modular search for Django. It features a unified, familiar
 API that allows you to plug in different search backends (such as Solr_,
