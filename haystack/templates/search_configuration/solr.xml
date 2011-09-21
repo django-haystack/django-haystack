@@ -86,6 +86,13 @@
         <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
       </analyzer>
     </fieldType>
+    <fieldType name="non_tokenized_string" class="solr.TextField" sortMissingLast="true" omitNorms="true">
+      <analyzer>
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.TrimFilterFactory"/>
+      </analyzer>
+    </fieldType>
   </types>
 
   <fields>   

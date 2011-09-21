@@ -351,6 +351,9 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'ngram'
             elif field_class.field_type == 'edge_ngram':
                 field_data['type'] = 'edge_ngram'
+            elif field_class.field_type == 'non_tokenized_string':
+                field_data['type'] = 'non_tokenized_string'
+
 
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
