@@ -162,7 +162,7 @@ class NonTokenizedField(SearchField):
     field_type = 'non_tokenized_string'
 
     def prepare(self, obj):
-        return self.convert(super(CharField, self).prepare(obj))
+        return self.convert(super(NonTokenizedField, self).prepare(obj))
 
     def convert(self, value):
         if value is None:
