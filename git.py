@@ -10,17 +10,6 @@ def main_thread(callback, *args, **kwargs):
     # most sublime.[something] calls need to be on the main thread
     sublime.set_timeout(functools.partial(callback, *args, **kwargs), 0)
 
-def scratch(window, output, title = False):
-    f = window.new_file()
-    if title:
-        f.set_name(title)
-    f.set_scratch(True)
-    f.set_syntax_file("Packages/Diff/Diff.tmLanguage")
-    e = f.begin_edit()
-    f.insert(e, 0, output)
-    f.end_edit(e);
-    return f
-
 def open_url(url):
     sublime.active_window().run_command('open_url', {"url": url})
 
@@ -55,14 +44,37 @@ class GitCommand(sublime_plugin.TextCommand):
         if show_status:
             message = kwargs.get('status_message', False) or ' '.join(command)
             sublime.status_message(message)
+
+    def scratch(self, output, title = False):
+        scratch_file = self.view.window().new_file()
+        if title:
+            scratch_file.set_name(title)
+        scratch_file.set_scratch(True)
+        scratch_file.set_syntax_file("Packages/Diff/Diff.tmLanguage")
+        edit = scratch_file.begin_edit()
+        scratch_file.insert(edit, 0, output)
+        scratch_file.end_edit(edit)
+        scratch_file.set_read_only(True)
+        return scratch_file
     
+    def panel(self, output):
+        if not hasattr(self, 'output_view'):
+            self.output_view = self.view.window().get_output_panel("git")
+        region = sublime.Region(0, self.output_view.size())
+        self.output_view.set_read_only(False)
+        edit = self.output_view.begin_edit()
+        self.output_view.replace(edit, region, output)
+        self.output_view.end_edit(edit)
+        self.output_view.set_read_only(True)
+        self.view.window().run_command("show_panel", {"panel": "output.git"})
+
     def is_enabled(self):
         # Just "is the file a saved file?"
         return self.view.file_name() and len(self.view.file_name()) > 0
     def get_file_name(self):
-        return os.path.split(self.view.file_name())[1]
+        return os.path.basename(self.view.file_name())
     def get_file_location(self):
-        return os.path.split(self.view.file_name())[0]
+        return os.path.dirname(self.view.file_name())
 
 class GitBlameCommand(GitCommand):
     def run(self, edit):
@@ -83,7 +95,7 @@ class GitBlameCommand(GitCommand):
         command.append(self.get_file_name())
         self.run_command(command, self.blame_done)
     def blame_done(self, success, result):
-        self.diff_file = f = scratch(self.view.window(), result, title = "Git Blame")
+        self.scratch(result, title = "Git Blame")
 
 class GitLogCommand(GitCommand):
     def run(self, edit):
@@ -111,7 +123,7 @@ class GitLogCommand(GitCommand):
         self.run_command(['git', 'log', '-p', ref, self.get_file_name()], self.details_done)
     
     def details_done(self, success, result):
-        scratch(self.view.window(), result, title = "Git Commit Details")
+        self.scratch(result, title = "Git Commit Details")
 
 class GitLogAllCommand(GitLogCommand):
     def get_file_name(self):
@@ -122,7 +134,7 @@ class GitDiffCommand(GitCommand):
         self.run_command(['git', 'diff', self.get_file_name()], self.diff_done)
     
     def diff_done(self, success, result):
-        scratch(self.view.window(), result, title = "Git Diff")
+        self.scratch(result, title = "Git Diff")
 
 class GitDiffAllCommand(GitDiffCommand):
     def get_file_name(self):
