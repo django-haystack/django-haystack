@@ -5,11 +5,36 @@ import threading
 import subprocess
 import functools
 
-def selection(view):
-    pass
+def main_thread(callback, *args, **kwargs):
+    # sublime.set_timeout gets used to send things onto the main thread
+    # most sublime.[something] calls need to be on the main thread
+    sublime.set_timeout(functools.partial(callback, *args, **kwargs), 0)
+
+def run_command(command, callback, show_status = True, filter_empty_args = True, **kwargs):
+    if filter_empty_args:
+        command = [arg for arg in command if arg]
+    thread = CommandThread(command, callback, **kwargs)
+    thread.start()
+    if show_status:
+        message = ' '.join(command)
+        sublime.status_message(message)
+
+def scratch(window, output, title = False):
+    f = window.new_file()
+    if title:
+        f.set_name(title)
+    f.set_scratch(True)
+    f.set_syntax_file("Packages/Diff/Diff.tmLanguage")
+    e = f.begin_edit()
+    f.insert(e, 0, output)
+    f.end_edit(e);
+    return f
+
+def open_url(url):
+    sublime.active_window().run_command('open_url', {"url": url})
 
 class CommandThread(threading.Thread):
-    def __init__(self, command, on_done, working_dir = ""):
+    def __init__(self, command, on_done, working_dir = "", ):
         threading.Thread.__init__(self)
         self.command = command
         self.on_done = on_done
@@ -19,38 +44,27 @@ class CommandThread(threading.Thread):
         try:
             if self.working_dir != "":
                 os.chdir(self.working_dir)
-            output = subprocess.Popen(self.command, stdout=subprocess.PIPE).communicate()[0]
-            # if st's python gets bumped to 2.7 we can just do:
+            output = subprocess.Popen(self.command, stdout=subprocess.PIPE, shell=False).communicate()[0]
+            # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
-            sublime.set_timeout(functools.partial(self.on_done, True, output), 0)
+            main_thread(self.on_done, True, output)
         except subprocess.CalledProcessError, e:
-            sublime.set_timeout(functools.partial(self.on_done, False, e.returncode), 0)
+            main_thread(self.on_done, False, e.returncode)
 
-        # self.package_list = self.make_package_list(override_action='visit')
-        # def show_quick_panel():
-        #     if not self.package_list:
-        #         sublime.error_message(__name__ + ': There are no packages ' +
-        #             'available for discovery.')
-        #         return
-        #     self.window.show_quick_panel(self.package_list, self.on_done)
-        # sublime.set_timeout(show_quick_panel, 10)
-        
-        # def on_done(self, picked):
-        #     if picked == -1:
-        #         return
-        #     package_name = self.package_list[picked][0]
-        #     packages = self.manager.list_available_packages()
-        #     def open_url():
-        #         sublime.active_window().run_command('open_url',
-        #             {"url": packages.get(package_name).get('url')})
-        #     sublime.set_timeout(open_url, 10)
-
-class BaseGitCommand(sublime_plugin.TextCommand):
+class GitCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        pass
+    def command_done(self, success, result):
+        pass
     def is_enabled(self):
         # Just "is the file a saved file?"
         return self.view.file_name() and len(self.view.file_name()) > 0
+    def get_file_name(self):
+        return os.path.split(self.view.file_name())[1]
+    def get_file_location(self):
+        return os.path.split(self.view.file_name())[0]
 
-class GitBlameCommand(BaseGitCommand):
+class GitBlameCommand(GitCommand):
     def run(self, edit):
         folder_name, file_name = os.path.split(self.view.file_name())
         begin_line, begin_column = self.view.rowcol(self.view.sel()[0].begin())
@@ -61,27 +75,45 @@ class GitBlameCommand(BaseGitCommand):
         self.view.window().run_command('exec', {'cmd': ['git', 'blame', '-L', lines, file_name], 'working_dir': folder_name})
         sublime.status_message("git blame -L " + lines + " " + file_name)
 
-class GitLogCommand(BaseGitCommand):
+class GitLogCommand(GitCommand):
     def run(self, edit):
-        folder_name, file_name = os.path.split(self.view.file_name())
-        # self.view.window().run_command('exec', {'cmd': ['git', 'log', file_name], 'working_dir': folder_name})
-        # sublime.status_message("git log " + file_name)
-        thread = CommandThread(['git', 'log', '--oneline', file_name], self.command_done, working_dir=folder_name)
-        thread.start()
-        # ThreadProgress(thread, 'Loading repositories', '')
-    def command_done(self, success, result):
+        ## the ASCII bell (\a) is just a convenient character I'm pretty sure won't ever come
+        ## up in the subject of the commit (and if it does then you positively deserve broken
+        ## output...)
+        run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', self.get_file_name()], self.log_done, working_dir = self.get_file_location())
+    
+    def log_done(self, success, result):
         if not success:
             return
-        self.results = result.strip().split('\n')
+        self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
         self.view.window().show_quick_panel(self.results, self.panel_done)
+    
     def panel_done(self, picked):
         if picked == -1:
-            return;
-        print "done", picked
+            return
+        if 0 > picked > len(self.results):
+            return
+        item = self.results[picked]
+        # the commit hash is the first thing on the second line
+        ref = item[1].split(' ')[0]
+        # I'm not certain I should have the file name here; it restricts the details to just
+        # the current file. Depends on what the user expects... which I'm not sure of.
+        run_command(['git', 'log', '-p', ref, self.get_file_name()], self.details_done, working_dir = self.get_file_location())
+    
+    def details_done(self, success, result):
+        self.diff_file = f = scratch(self.view.window(), result, title = "Git Commit Details")
 
+class GitLogAllCommand(GitLogCommand):
+    def get_file_name(self):
+        return ''
 
-class GitDiffCommand(BaseGitCommand):
+class GitDiffCommand(GitCommand):
     def run(self, edit):
-        folder_name, file_name = os.path.split(self.view.file_name())
-        self.view.window().run_command('exec', {'cmd': ['git', 'diff', file_name], 'working_dir': folder_name})
-        sublime.status_message("git diff " + file_name)
+        run_command(['git', 'diff', self.get_file_name()], self.diff_done, working_dir = self.get_file_location())
+    
+    def diff_done(self, success, result):
+        self.diff_file = f = scratch(self.view.window(), result, title = "Git Diff")
+
+class GitDiffAllCommand(GitDiffCommand):
+    def get_file_name(self):
+        return ''
