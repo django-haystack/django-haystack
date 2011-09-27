@@ -10,15 +10,6 @@ def main_thread(callback, *args, **kwargs):
     # most sublime.[something] calls need to be on the main thread
     sublime.set_timeout(functools.partial(callback, *args, **kwargs), 0)
 
-def run_command(command, callback, show_status = True, filter_empty_args = True, **kwargs):
-    if filter_empty_args:
-        command = [arg for arg in command if arg]
-    thread = CommandThread(command, callback, **kwargs)
-    thread.start()
-    if show_status:
-        message = ' '.join(command)
-        sublime.status_message(message)
-
 def scratch(window, output, title = False):
     f = window.new_file()
     if title:
@@ -52,10 +43,19 @@ class CommandThread(threading.Thread):
             main_thread(self.on_done, False, e.returncode)
 
 class GitCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        pass
-    def command_done(self, success, result):
-        pass
+    def run_command(self, command, callback, show_status = True, filter_empty_args = True, **kwargs):
+        if filter_empty_args:
+            command = [arg for arg in command if arg]
+        if 'working_dir' not in kwargs:
+            kwargs['working_dir'] = self.get_file_location()
+        
+        thread = CommandThread(command, callback, **kwargs)
+        thread.start()
+
+        if show_status:
+            message = kwargs.get('status_message', False) or ' '.join(command)
+            sublime.status_message(message)
+    
     def is_enabled(self):
         # Just "is the file a saved file?"
         return self.view.file_name() and len(self.view.file_name()) > 0
@@ -66,21 +66,31 @@ class GitCommand(sublime_plugin.TextCommand):
 
 class GitBlameCommand(GitCommand):
     def run(self, edit):
-        folder_name, file_name = os.path.split(self.view.file_name())
-        begin_line, begin_column = self.view.rowcol(self.view.sel()[0].begin())
-        end_line, end_column = self.view.rowcol(self.view.sel()[0].end())
-        begin_line = str(begin_line)
-        end_line = str(end_line)
-        lines = begin_line + ',' + end_line
-        self.view.window().run_command('exec', {'cmd': ['git', 'blame', '-L', lines, file_name], 'working_dir': folder_name})
-        sublime.status_message("git blame -L " + lines + " " + file_name)
+        # somewhat custom blame command:
+        # -w: ignore whitespace changes
+        # -M: retain blame when moving lines
+        # -C: retain blame when copying lines between files
+        command = ['git', 'blame', '-w', '-M', '-C']
+
+        selection = self.view.sel()[0] # todo: multi-select support?
+        if not selection.empty():
+            # just the lines we have a selection on
+            begin_line, begin_column = self.view.rowcol(selection.begin())
+            end_line, end_column = self.view.rowcol(selection.end())
+            lines = str(begin_line) + ',' + str(end_line)
+            command.extend(('-L', lines))
+
+        command.append(self.get_file_name())
+        self.run_command(command, self.blame_done)
+    def blame_done(self, success, result):
+        self.diff_file = f = scratch(self.view.window(), result, title = "Git Blame")
 
 class GitLogCommand(GitCommand):
     def run(self, edit):
         ## the ASCII bell (\a) is just a convenient character I'm pretty sure won't ever come
         ## up in the subject of the commit (and if it does then you positively deserve broken
         ## output...)
-        run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', self.get_file_name()], self.log_done, working_dir = self.get_file_location())
+        self.run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', self.get_file_name()], self.log_done)
     
     def log_done(self, success, result):
         if not success:
@@ -98,10 +108,10 @@ class GitLogCommand(GitCommand):
         ref = item[1].split(' ')[0]
         # I'm not certain I should have the file name here; it restricts the details to just
         # the current file. Depends on what the user expects... which I'm not sure of.
-        run_command(['git', 'log', '-p', ref, self.get_file_name()], self.details_done, working_dir = self.get_file_location())
+        self.run_command(['git', 'log', '-p', ref, self.get_file_name()], self.details_done)
     
     def details_done(self, success, result):
-        self.diff_file = f = scratch(self.view.window(), result, title = "Git Commit Details")
+        scratch(self.view.window(), result, title = "Git Commit Details")
 
 class GitLogAllCommand(GitLogCommand):
     def get_file_name(self):
@@ -109,10 +119,10 @@ class GitLogAllCommand(GitLogCommand):
 
 class GitDiffCommand(GitCommand):
     def run(self, edit):
-        run_command(['git', 'diff', self.get_file_name()], self.diff_done, working_dir = self.get_file_location())
+        self.run_command(['git', 'diff', self.get_file_name()], self.diff_done)
     
     def diff_done(self, success, result):
-        self.diff_file = f = scratch(self.view.window(), result, title = "Git Diff")
+        scratch(self.view.window(), result, title = "Git Diff")
 
 class GitDiffAllCommand(GitDiffCommand):
     def get_file_name(self):
