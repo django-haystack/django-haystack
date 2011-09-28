@@ -132,8 +132,8 @@ class GitLogCommand(GitCommand):
         # up in the subject of the commit (and if it does then you positively deserve broken
         # output...)
         # 9000 is a pretty arbitrarily chosen limit; picked entirely because it's about the size
-        # of the largest repo I've tested this on... and there's a definitely hiccup when it's
-        # loading
+        # of the largest repo I've tested this on... and there's a definite hiccup when it's
+        # loading that
         self.run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', '--max-count=9000', '--', self.get_file_name()], self.log_done)
     
     def log_done(self, result):
@@ -210,6 +210,8 @@ class GitStatusCommand(GitCommand):
         self.run_command(['git', 'diff', '--no-color', picked_file], self.diff_done, working_dir = git_root(self.get_file_location()))
     
     def diff_done(self, result):
+        if not result.strip():
+            return
         self.scratch(result, title = "Git Diff")
 
 class GitAddChoiceCommand(GitStatusCommand):

@@ -1,0 +1,45 @@
+[
+    {
+        "id": "tools",
+        "children":
+        [
+            {
+                "caption": "Git",
+                "children":
+                [
+                    {
+                        "caption": "This file",
+                        "children":
+                        [
+                            { "caption": "Log", "command": "git_log" }
+                            ,{ "caption": "Diff", "command": "git_diff" }
+                            ,{ "caption": "Add", "command": "git_add" }
+                            ,{ "caption": "Quick Commit", "command": "git_commit" }
+                            ,{ "caption": "Blame", "command": "git_blame" }
+                        ]
+                    }
+                    ,{
+                        "caption": "Whole repo",
+                        "children":
+                        [
+                            { "caption": "Log", "command": "git_log_all" }
+                            ,{ "caption": "Diff", "command": "git_diff_all" }
+                            ,{ "caption": "Add...", "command": "git_add_choice" }
+                        ]
+                    }
+                    ,{
+                        "caption": "Stash",
+                        "children":
+                        [
+                            { "caption": "Save", "command": "git_stash" }
+                            ,{ "caption": "Pop", "command": "git_stash_pop" }
+                        ]
+                    }
+                    ,{ "caption": "-" }
+                    ,{ "caption": "Status...", "command": "git_status" }
+                    ,{ "caption": "Branches...", "command": "git_branch" }
+                ]
+            }
+        ]
+    }
+]
