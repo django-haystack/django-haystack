@@ -199,3 +199,35 @@ class GitStatusCommand(GitCommand):
     
     def diff_done(self, success, result):
         self.scratch(result, title = "Git Diff")
+
+class GitStashCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'stash'], self.stash_done)
+    def stash_done(self, success, result):
+        self.panel(result)
+
+class GitStashPopCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'stash', 'pop'], self.stash_done)
+    def stash_done(self, success, result):
+        self.panel(result)
+
+class GitBranchCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'branch'], self.branch_done)
+    def branch_done(self, success, result):
+        self.results = result.decode('utf-8').rstrip().split('\n')
+        self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
+    def panel_done(self, picked):
+        if picked == -1:
+            return
+        if 0 > picked > len(self.results):
+            return
+        picked_branch = self.results[picked]
+        if picked_branch.startswith("*"):
+            return
+        picked_branch = picked_branch.strip()
+        self.run_command(['git', 'checkout', picked_branch], self.change_branch_done)
+    
+    def change_branch_done(self, success, result):
+        self.panel(result)
