@@ -45,26 +45,29 @@ class GitCommand(sublime_plugin.TextCommand):
             message = kwargs.get('status_message', False) or ' '.join(command)
             sublime.status_message(message)
 
-    def scratch(self, output, title = False):
+    def _output_to_view(self, output_file, output, syntax = "Packages/Diff/Diff.tmLanguage"):
+        output_file.set_syntax_file(syntax)
+        edit = output_file.begin_edit()
+        # The unicode cast here is because sublime converts to unicode inside insert,
+        # and there's no way to tell what's coming out of git in output. So...
+        output_file.insert(edit, 0, unicode(output, errors="replace"))
+        output_file.end_edit(edit)
+
+    def scratch(self, output, title = False, **kwargs):
         scratch_file = self.view.window().new_file()
         if title:
             scratch_file.set_name(title)
         scratch_file.set_scratch(True)
-        scratch_file.set_syntax_file("Packages/Diff/Diff.tmLanguage")
-        edit = scratch_file.begin_edit()
-        scratch_file.insert(edit, 0, output)
-        scratch_file.end_edit(edit)
+        self._output_to_view(scratch_file, output, **kwargs)
         scratch_file.set_read_only(True)
         return scratch_file
     
-    def panel(self, output):
+    def panel(self, output, **kwargs):
         if not hasattr(self, 'output_view'):
             self.output_view = self.view.window().get_output_panel("git")
         region = sublime.Region(0, self.output_view.size())
         self.output_view.set_read_only(False)
-        edit = self.output_view.begin_edit()
-        self.output_view.replace(edit, region, output)
-        self.output_view.end_edit(edit)
+        self._output_to_view(self.output_view, output, **kwargs)
         self.output_view.set_read_only(True)
         self.view.window().run_command("show_panel", {"panel": "output.git"})
 
