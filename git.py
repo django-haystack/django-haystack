@@ -139,3 +139,16 @@ class GitDiffCommand(GitCommand):
 class GitDiffAllCommand(GitDiffCommand):
     def get_file_name(self):
         return ''
+
+class GitCommitCommand(GitCommand):
+    def run(self, edit):
+        self.view.window().show_input_panel("Message", "", self.on_input, None, None)
+    
+    def on_input(self, message):
+        if message.strip() == "":
+            # Okay, technically an empty commit message is allowed, but I don't want to encourage that sort of thing
+            return
+        self.run_command(['git', 'commit', '-am', message, self.get_file_name()], self.commit_done)
+    
+    def commit_done(self, success, result):
+        self.panel(result)

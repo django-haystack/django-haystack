@@ -19,4 +19,8 @@
         "caption": "Git: Diff (repo)",
         "command": "git_diff_all"
     }
+    ,{
+        "caption": "Git: Quick Commit",
+        "command": "git_commit"
+    }
 ]
