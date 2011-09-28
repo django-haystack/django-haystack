@@ -24,7 +24,6 @@ def git_root(directory):
         directory = parent
     return False
 
-
 def _make_text_safeish(text):
     # The unicode decode here is because sublime converts to unicode inside insert in such a way
     # that unknown characters will cause errors, which is distinctly non-ideal...
@@ -40,9 +39,11 @@ class CommandThread(threading.Thread):
 
     def run(self):
         try:
+            # Per http://bugs.python.org/issue8557 shell=True is required to get
+            # $PATH on Windows. Yay portable code.
             if self.working_dir != "":
                 os.chdir(self.working_dir)
-            output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False).communicate()[0]
+            output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True).communicate()[0]
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done, _make_text_safeish(output))
