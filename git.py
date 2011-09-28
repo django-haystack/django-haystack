@@ -24,18 +24,23 @@ def git_root(directory):
         directory = parent
     return False
 
-def _make_text_safeish(text):
+def _make_text_safeish(text, fallback_encoding):
     # The unicode decode here is because sublime converts to unicode inside insert in such a way
     # that unknown characters will cause errors, which is distinctly non-ideal...
     # and there's no way to tell what's coming out of git in output. So...
-    return text.decode('utf-8')
+    try:
+        unitext = text.decode('utf-8')
+    except UnicodeDecodeError:
+        unitext = text.decode(fallback_encoding)
+    return unitext
 
 class CommandThread(threading.Thread):
-    def __init__(self, command, on_done, working_dir = "", ):
+    def __init__(self, command, on_done, working_dir = "", fallback_encoding = ""):
         threading.Thread.__init__(self)
         self.command = command
         self.on_done = on_done
         self.working_dir = working_dir
+        self.fallback_encoding = fallback_encoding
 
     def run(self):
         try:
@@ -47,7 +52,7 @@ class CommandThread(threading.Thread):
             output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=shell).communicate()[0]
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
-            main_thread(self.on_done, _make_text_safeish(output))
+            main_thread(self.on_done, _make_text_safeish(output, self.fallback_encoding))
         except subprocess.CalledProcessError, e:
             main_thread(self.on_done, e.returncode)
 
@@ -57,6 +62,8 @@ class GitCommand(sublime_plugin.TextCommand):
             command = [arg for arg in command if arg]
         if 'working_dir' not in kwargs:
             kwargs['working_dir'] = self.get_file_location()
+        if 'fallback_encoding' not in kwargs and self.view.settings().get('fallback_encoding'):
+            kwargs['fallback_encoding'] = self.view.settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
         
         thread = CommandThread(command, callback or self.generic_done, **kwargs)
         thread.start()
