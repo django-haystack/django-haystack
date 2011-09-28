@@ -176,8 +176,9 @@ class GitStatusCommand(GitCommand):
             return
         if 0 > picked > len(self.results):
             return
-        picked_file = self.results[picked]
-        self.run_command(['git', 'diff', self.get_file_name()], self.diff_done)
+        # first 3 characters are status codes
+        picked_file = self.results[picked][3:]
+        self.run_command(['git', 'diff', picked_file], self.diff_done)
     
     def diff_done(self, success, result):
         self.scratch(result, title = "Git Diff")
