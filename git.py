@@ -24,7 +24,7 @@ class CommandThread(threading.Thread):
         try:
             if self.working_dir != "":
                 os.chdir(self.working_dir)
-            output = subprocess.Popen(self.command, stdout=subprocess.PIPE, shell=False).communicate()[0]
+            output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False).communicate()[0]
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done, True, output)
@@ -45,9 +45,12 @@ class GitCommand(sublime_plugin.TextCommand):
             message = kwargs.get('status_message', False) or ' '.join(command)
             sublime.status_message(message)
 
-    def _output_to_view(self, output_file, output, syntax = "Packages/Diff/Diff.tmLanguage"):
+    def _output_to_view(self, output_file, output, clear = False, syntax = "Packages/Diff/Diff.tmLanguage"):
         output_file.set_syntax_file(syntax)
         edit = output_file.begin_edit()
+        if clear:
+            region = sublime.Region(0, self.output_view.size())
+            output_file.erase(edit, region)
         # The unicode cast here is because sublime converts to unicode inside insert,
         # and there's no way to tell what's coming out of git in output. So...
         output_file.insert(edit, 0, unicode(output, errors="replace"))
@@ -65,9 +68,8 @@ class GitCommand(sublime_plugin.TextCommand):
     def panel(self, output, **kwargs):
         if not hasattr(self, 'output_view'):
             self.output_view = self.view.window().get_output_panel("git")
-        region = sublime.Region(0, self.output_view.size())
         self.output_view.set_read_only(False)
-        self._output_to_view(self.output_view, output, **kwargs)
+        self._output_to_view(self.output_view, output, clear = True, **kwargs)
         self.output_view.set_read_only(True)
         self.view.window().run_command("show_panel", {"panel": "output.git"})
 
@@ -150,8 +152,15 @@ class GitCommitCommand(GitCommand):
     def on_input(self, message):
         if message.strip() == "":
             # Okay, technically an empty commit message is allowed, but I don't want to encourage that sort of thing
+            sublime.error_message("No commit message provided")
             return
-        self.run_command(['git', 'commit', '-am', message, self.get_file_name()], self.commit_done)
+        self.run_command(['git', 'add', self.get_file_name()], functools.partial(self.add_done, message))
+    
+    def add_done(self, message, success, result):
+        if result.strip():
+            sublime.error_message("Error adding file:\n" + result)
+            return
+        self.run_command(['git', 'commit', '-m', message], self.commit_done)
     
     def commit_done(self, success, result):
         self.panel(result)
