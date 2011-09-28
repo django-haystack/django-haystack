@@ -12,7 +12,7 @@
         "command": "git_log_all"
     }
     ,{
-        "caption": "Git: Diff",
+        "caption": "Git: Diff (file)",
         "command": "git_diff"
     }
     ,{
