@@ -78,8 +78,18 @@ class GitCommand(sublime_plugin.TextCommand):
         self.view.window().run_command("show_panel", {"panel": "output.git"})
 
     def is_enabled(self):
-        # Just "is the file a saved file?"
-        return self.view.file_name() and len(self.view.file_name()) > 0
+        # First, is this actually a file on the file system?
+        if self.view.file_name() and len(self.view.file_name()) > 0:
+            directory = self.get_file_location()
+            while directory:
+                if os.path.exists(os.path.join(directory, '.git')):
+                    return True
+                parent = os.path.realpath(os.path.join(directory, os.path.pardir))
+                if parent == directory:
+                    return False
+                directory = parent
+            return False
+        return False
     def get_file_name(self):
         return os.path.basename(self.view.file_name())
     def get_file_location(self):
