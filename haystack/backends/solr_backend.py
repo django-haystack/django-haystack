@@ -115,13 +115,11 @@ class SolrSearchBackend(BaseSearchBackend):
                 'hits': 0,
             }
 
-        kwargs = {
-            'fl': '* score',
-        }
-
         if fields:
             kwargs['fl'] = fields
-
+        else:
+            kwargs['fl'] = '* score'
+            
         if sort_by is not None:
             kwargs['sort'] = sort_by
 
