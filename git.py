@@ -45,23 +45,28 @@ class CommandThread(threading.Thread):
             output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False).communicate()[0]
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
-            main_thread(self.on_done, True, _make_text_safeish(output))
+            main_thread(self.on_done, _make_text_safeish(output))
         except subprocess.CalledProcessError, e:
-            main_thread(self.on_done, False, e.returncode)
+            main_thread(self.on_done, e.returncode)
 
 class GitCommand(sublime_plugin.TextCommand):
-    def run_command(self, command, callback, show_status = True, filter_empty_args = True, **kwargs):
+    def run_command(self, command, callback = None, show_status = True, filter_empty_args = True, **kwargs):
         if filter_empty_args:
             command = [arg for arg in command if arg]
         if 'working_dir' not in kwargs:
             kwargs['working_dir'] = self.get_file_location()
         
-        thread = CommandThread(command, callback, **kwargs)
+        thread = CommandThread(command, callback or self.generic_done, **kwargs)
         thread.start()
 
         if show_status:
             message = kwargs.get('status_message', False) or ' '.join(command)
             sublime.status_message(message)
+
+    def generic_done(self, result):
+        if not result.strip():
+            return
+        self.panel(result)
 
     def _output_to_view(self, output_file, output, clear = False, syntax = "Packages/Diff/Diff.tmLanguage"):
         output_file.set_syntax_file(syntax)
@@ -116,7 +121,7 @@ class GitBlameCommand(GitCommand):
 
         command.append(self.get_file_name())
         self.run_command(command, self.blame_done)
-    def blame_done(self, success, result):
+    def blame_done(self, result):
         self.scratch(result, title = "Git Blame")
 
 class GitLogCommand(GitCommand):
@@ -126,9 +131,7 @@ class GitLogCommand(GitCommand):
         ## output...)
         self.run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', self.get_file_name()], self.log_done)
     
-    def log_done(self, success, result):
-        if not success:
-            return
+    def log_done(self, result):
         self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
         self.view.window().show_quick_panel(self.results, self.panel_done)
     
@@ -144,7 +147,7 @@ class GitLogCommand(GitCommand):
         # the current file. Depends on what the user expects... which I'm not sure of.
         self.run_command(['git', 'log', '-p', ref, self.get_file_name()], self.details_done)
     
-    def details_done(self, success, result):
+    def details_done(self, result):
         self.scratch(result, title = "Git Commit Details")
 
 class GitLogAllCommand(GitLogCommand):
@@ -155,7 +158,7 @@ class GitDiffCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'diff', self.get_file_name()], self.diff_done)
     
-    def diff_done(self, success, result):
+    def diff_done(self, result):
         self.scratch(result, title = "Git Diff")
 
 class GitDiffAllCommand(GitDiffCommand):
@@ -173,19 +176,16 @@ class GitCommitCommand(GitCommand):
             return
         self.run_command(['git', 'add', self.get_file_name()], functools.partial(self.add_done, message))
     
-    def add_done(self, message, success, result):
+    def add_done(self, message, result):
         if result.strip():
             sublime.error_message("Error adding file:\n" + result)
             return
-        self.run_command(['git', 'commit', '-m', message], self.commit_done)
-    
-    def commit_done(self, success, result):
-        self.panel(result)
+        self.run_command(['git', 'commit', '-m', message])
 
 class GitStatusCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'status', '--porcelain'], self.status_done)
-    def status_done(self, success, result):
+    def status_done(self, result):
         self.results = result.rstrip().split('\n')
         self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
     def panel_done(self, picked):
@@ -197,25 +197,21 @@ class GitStatusCommand(GitCommand):
         picked_file = self.results[picked][3:]
         self.run_command(['git', 'diff', picked_file], self.diff_done, working_dir = git_root(self.get_file_location()))
     
-    def diff_done(self, success, result):
+    def diff_done(self, result):
         self.scratch(result, title = "Git Diff")
 
 class GitStashCommand(GitCommand):
     def run(self, edit):
-        self.run_command(['git', 'stash'], self.stash_done)
-    def stash_done(self, success, result):
-        self.panel(result)
+        self.run_command(['git', 'stash'])
 
 class GitStashPopCommand(GitCommand):
     def run(self, edit):
-        self.run_command(['git', 'stash', 'pop'], self.stash_done)
-    def stash_done(self, success, result):
-        self.panel(result)
+        self.run_command(['git', 'stash', 'pop'])
 
 class GitBranchCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'branch'], self.branch_done)
-    def branch_done(self, success, result):
+    def branch_done(self, result):
         self.results = result.rstrip().split('\n')
         self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
     def panel_done(self, picked):
@@ -227,7 +223,4 @@ class GitBranchCommand(GitCommand):
         if picked_branch.startswith("*"):
             return
         picked_branch = picked_branch.strip()
-        self.run_command(['git', 'checkout', picked_branch], self.change_branch_done)
-    
-    def change_branch_done(self, success, result):
-        self.panel(result)
+        self.run_command(['git', 'checkout', picked_branch])
