@@ -23,4 +23,8 @@
         "caption": "Git: Quick Commit",
         "command": "git_commit"
     }
+    ,{
+        "caption": "Git: Status",
+        "command": "git_status"
+    }
 ]

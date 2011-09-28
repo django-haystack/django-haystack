@@ -164,3 +164,20 @@ class GitCommitCommand(GitCommand):
     
     def commit_done(self, success, result):
         self.panel(result)
+
+class GitStatusCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'status', '--porcelain'], self.status_done)
+    def status_done(self, success, result):
+        self.results = result.rstrip().split('\n')
+        self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
+    def panel_done(self, picked):
+        if picked == -1:
+            return
+        if 0 > picked > len(self.results):
+            return
+        picked_file = self.results[picked]
+        self.run_command(['git', 'diff', self.get_file_name()], self.diff_done)
+    
+    def diff_done(self, success, result):
+        self.scratch(result, title = "Git Diff")
