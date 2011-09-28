@@ -145,7 +145,7 @@ class GitLogCommand(GitCommand):
         ref = item[1].split(' ')[0]
         # I'm not certain I should have the file name here; it restricts the details to just
         # the current file. Depends on what the user expects... which I'm not sure of.
-        self.run_command(['git', 'log', '-p', ref, self.get_file_name()], self.details_done)
+        self.run_command(['git', 'log', '-p', '-1', ref, self.get_file_name()], self.details_done)
     
     def details_done(self, result):
         self.scratch(result, title = "Git Commit Details")
@@ -186,15 +186,19 @@ class GitStatusCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'status', '--porcelain'], self.status_done)
     def status_done(self, result):
-        self.results = result.rstrip().split('\n')
+        self.results = filter(self.status_filter, result.rstrip().split('\n'))
         self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
+    def status_filter(self, item):
+        # for this class we don't actually care
+        return True
     def panel_done(self, picked):
         if picked == -1:
             return
         if 0 > picked > len(self.results):
             return
+        picked_file = self.results[picked]
         # first 3 characters are status codes
-        picked_file = self.results[picked][3:]
+        picked_file = picked_file[3:]
         self.panel_followup(picked_file)
     def panel_followup(self, picked_file):
         # split out solely so I can override it for laughs
@@ -204,6 +208,8 @@ class GitStatusCommand(GitCommand):
         self.scratch(result, title = "Git Diff")
 
 class GitAddChoiceCommand(GitStatusCommand):
+    def status_filter(self, item):
+        return not item[1].isspace()
     def panel_followup(self, picked_file):
         self.run_command(['git', 'add', picked_file], working_dir = git_root(self.get_file_location()))
 
