@@ -126,10 +126,13 @@ class GitBlameCommand(GitCommand):
 
 class GitLogCommand(GitCommand):
     def run(self, edit):
-        ## the ASCII bell (\a) is just a convenient character I'm pretty sure won't ever come
-        ## up in the subject of the commit (and if it does then you positively deserve broken
-        ## output...)
-        self.run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', self.get_file_name()], self.log_done)
+        # the ASCII bell (\a) is just a convenient character I'm pretty sure won't ever come
+        # up in the subject of the commit (and if it does then you positively deserve broken
+        # output...)
+        # 9000 is a pretty arbitrarily chosen limit; picked entirely because it's about the size
+        # of the largest repo I've tested this on... and there's a definitely hiccup when it's
+        # loading
+        self.run_command(['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)', '--date=local', '--max-count=9000', '--', self.get_file_name()], self.log_done)
     
     def log_done(self, result):
         self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
@@ -145,7 +148,7 @@ class GitLogCommand(GitCommand):
         ref = item[1].split(' ')[0]
         # I'm not certain I should have the file name here; it restricts the details to just
         # the current file. Depends on what the user expects... which I'm not sure of.
-        self.run_command(['git', 'log', '-p', '-1', ref, self.get_file_name()], self.details_done)
+        self.run_command(['git', 'log', '-p', '-1', ref, '--', self.get_file_name()], self.details_done)
     
     def details_done(self, result):
         self.scratch(result, title = "Git Commit Details")
