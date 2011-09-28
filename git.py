@@ -112,7 +112,7 @@ class GitLogCommand(GitCommand):
     def log_done(self, success, result):
         if not success:
             return
-        self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
+        self.results = [r.split('\a', 2) for r in result.decode('utf-8').strip().split('\n')]
         self.view.window().show_quick_panel(self.results, self.panel_done)
     
     def panel_done(self, picked):
@@ -169,7 +169,7 @@ class GitStatusCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'status', '--porcelain'], self.status_done)
     def status_done(self, success, result):
-        self.results = result.rstrip().split('\n')
+        self.results = result.decode('utf-8').rstrip().split('\n')
         self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
     def panel_done(self, picked):
         if picked == -1:
