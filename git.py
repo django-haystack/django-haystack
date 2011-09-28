@@ -51,9 +51,9 @@ class GitCommand(sublime_plugin.TextCommand):
         if clear:
             region = sublime.Region(0, self.output_view.size())
             output_file.erase(edit, region)
-        # The unicode cast here is because sublime converts to unicode inside insert,
+        # The unicode decode here is because sublime converts to unicode inside insert,
         # and there's no way to tell what's coming out of git in output. So...
-        output_file.insert(edit, 0, unicode(output, errors="replace"))
+        output_file.insert(edit, 0, output.decode('utf-8'))
         output_file.end_edit(edit)
 
     def scratch(self, output, title = False, **kwargs):
