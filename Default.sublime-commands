@@ -39,4 +39,12 @@
         "caption": "Git: Stash Pop",
         "command": "git_stash_pop"
     }
+    ,{
+        "caption": "Git: Add Current File",
+        "command": "git_add"
+    }
+    ,{
+        "caption": "Git: Choose File To Add",
+        "command": "git_add_choice"
+    }
 ]

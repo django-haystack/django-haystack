@@ -195,10 +195,21 @@ class GitStatusCommand(GitCommand):
             return
         # first 3 characters are status codes
         picked_file = self.results[picked][3:]
+        self.panel_followup(picked_file)
+    def panel_followup(self, picked_file):
+        # split out solely so I can override it for laughs
         self.run_command(['git', 'diff', picked_file], self.diff_done, working_dir = git_root(self.get_file_location()))
     
     def diff_done(self, result):
         self.scratch(result, title = "Git Diff")
+
+class GitAddChoiceCommand(GitStatusCommand):
+    def panel_followup(self, picked_file):
+        self.run_command(['git', 'add', picked_file], working_dir = git_root(self.get_file_location()))
+
+class GitAdd(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'add', self.get_file_name()])
 
 class GitStashCommand(GitCommand):
     def run(self, edit):
