@@ -13,6 +13,12 @@ def main_thread(callback, *args, **kwargs):
 def open_url(url):
     sublime.active_window().run_command('open_url', {"url": url})
 
+def _make_text_safeish(text):
+    # The unicode decode here is because sublime converts to unicode inside insert in such a way
+    # that unknown characters will cause errors, which is distinctly non-ideal...
+    # and there's no way to tell what's coming out of git in output. So...
+    return text.decode('utf-8')
+
 class CommandThread(threading.Thread):
     def __init__(self, command, on_done, working_dir = "", ):
         threading.Thread.__init__(self)
@@ -27,7 +33,7 @@ class CommandThread(threading.Thread):
             output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False).communicate()[0]
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
-            main_thread(self.on_done, True, output)
+            main_thread(self.on_done, True, _make_text_safeish(output))
         except subprocess.CalledProcessError, e:
             main_thread(self.on_done, False, e.returncode)
 
@@ -51,9 +57,7 @@ class GitCommand(sublime_plugin.TextCommand):
         if clear:
             region = sublime.Region(0, self.output_view.size())
             output_file.erase(edit, region)
-        # The unicode decode here is because sublime converts to unicode inside insert,
-        # and there's no way to tell what's coming out of git in output. So...
-        output_file.insert(edit, 0, output.decode('utf-8'))
+        output_file.insert(edit, 0, output)
         output_file.end_edit(edit)
 
     def scratch(self, output, title = False, **kwargs):
