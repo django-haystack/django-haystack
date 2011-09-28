@@ -13,6 +13,18 @@ def main_thread(callback, *args, **kwargs):
 def open_url(url):
     sublime.active_window().run_command('open_url', {"url": url})
 
+def git_root(directory):
+    while directory:
+        if os.path.exists(os.path.join(directory, '.git')):
+            return directory
+        parent = os.path.realpath(os.path.join(directory, os.path.pardir))
+        if parent == directory:
+            # /.. == /
+            return False
+        directory = parent
+    return False
+
+
 def _make_text_safeish(text):
     # The unicode decode here is because sublime converts to unicode inside insert in such a way
     # that unknown characters will cause errors, which is distinctly non-ideal...
@@ -80,16 +92,7 @@ class GitCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         # First, is this actually a file on the file system?
         if self.view.file_name() and len(self.view.file_name()) > 0:
-            directory = self.get_file_location()
-            while directory:
-                if os.path.exists(os.path.join(directory, '.git')):
-                    return True
-                parent = os.path.realpath(os.path.join(directory, os.path.pardir))
-                if parent == directory:
-                    return False
-                directory = parent
-            return False
-        return False
+            return git_root(self.get_file_location())
     def get_file_name(self):
         return os.path.basename(self.view.file_name())
     def get_file_location(self):
@@ -192,7 +195,7 @@ class GitStatusCommand(GitCommand):
             return
         # first 3 characters are status codes
         picked_file = self.results[picked][3:]
-        self.run_command(['git', 'diff', picked_file], self.diff_done)
+        self.run_command(['git', 'diff', picked_file], self.diff_done, working_dir = git_root(self.get_file_location()))
     
     def diff_done(self, success, result):
         self.scratch(result, title = "Git Diff")
