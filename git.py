@@ -216,7 +216,7 @@ class GitBranchCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'branch'], self.branch_done)
     def branch_done(self, success, result):
-        self.results = result.decode('utf-8').rstrip().split('\n')
+        self.results = result.rstrip().split('\n')
         self.view.window().show_quick_panel(self.results, self.panel_done, sublime.MONOSPACE_FONT)
     def panel_done(self, picked):
         if picked == -1:

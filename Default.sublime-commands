@@ -27,4 +27,16 @@
         "caption": "Git: Status",
         "command": "git_status"
     }
+    ,{
+        "caption": "Git: Change Branch",
+        "command": "git_branch"
+    }
+    ,{
+        "caption": "Git: Stash Changes",
+        "command": "git_stash"
+    }
+    ,{
+        "caption": "Git: Stash Pop",
+        "command": "git_stash_pop"
+    }
 ]
