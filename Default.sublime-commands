@@ -4,19 +4,19 @@
         "command": "git_blame"
     }
     ,{
-        "caption": "Git: Log (file)",
+        "caption": "Git: Log Current File",
         "command": "git_log"
     }
     ,{
-        "caption": "Git: Log (repo)",
+        "caption": "Git: Log All",
         "command": "git_log_all"
     }
     ,{
-        "caption": "Git: Diff (file)",
+        "caption": "Git: Diff Current File",
         "command": "git_diff"
     }
     ,{
-        "caption": "Git: Diff (repo)",
+        "caption": "Git: Diff All",
         "command": "git_diff_all"
     }
     ,{
