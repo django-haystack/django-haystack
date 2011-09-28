@@ -161,7 +161,7 @@ class GitLogAllCommand(GitLogCommand):
 
 class GitDiffCommand(GitCommand):
     def run(self, edit):
-        self.run_command(['git', 'diff', self.get_file_name()], self.diff_done)
+        self.run_command(['git', 'diff', '--no-color', self.get_file_name()], self.diff_done)
     
     def diff_done(self, result):
         self.scratch(result, title = "Git Diff")
@@ -207,7 +207,7 @@ class GitStatusCommand(GitCommand):
         self.panel_followup(picked_file)
     def panel_followup(self, picked_file):
         # split out solely so I can override it for laughs
-        self.run_command(['git', 'diff', picked_file], self.diff_done, working_dir = git_root(self.get_file_location()))
+        self.run_command(['git', 'diff', '--no-color', picked_file], self.diff_done, working_dir = git_root(self.get_file_location()))
     
     def diff_done(self, result):
         self.scratch(result, title = "Git Diff")
