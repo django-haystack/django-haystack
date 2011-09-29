@@ -105,7 +105,7 @@ class GitCommand(sublime_plugin.TextCommand):
         self.panel(result)
 
     def _output_to_view(self, output_file, output, clear=False,
-            syntax="Packages/Diff/Diff.tmLanguage"):
+            syntax="Packages/Git/Git Commit Message.tmLanguage"):
         output_file.set_syntax_file(syntax)
         edit = output_file.begin_edit()
         if clear:
@@ -308,7 +308,7 @@ class GitCommitCommand(GitCommand):
         ])
         msg = self.window().new_file()
         msg.set_scratch(True)
-        msg.set_name("GIT_COMMIT_MESSAGE")
+        msg.set_name("COMMIT_EDITMSG")
         self._output_to_view(msg, template)
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
@@ -317,7 +317,7 @@ class GitCommitCommand(GitCommand):
     def message_done(self, message):
         # filter out the comments (git commit doesn't do this automatically)
         lines = [line for line in message.split("\n")
-            if not line.startswith('#')]
+            if not line.lstrip().startswith('#')]
         message = '\n'.join(lines)
         # write the temp file
         message_file = tempfile.NamedTemporaryFile(delete=False)
@@ -335,7 +335,7 @@ class GitCommitCommand(GitCommand):
 
 class GitCommitMessageListener(sublime_plugin.EventListener):
     def on_close(self, view):
-        if view.name() != "GIT_COMMIT_MESSAGE":
+        if view.name() != "COMMIT_EDITMSG":
             return
         command = GitCommitCommand.active_message
         if not command:
