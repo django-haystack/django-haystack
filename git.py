@@ -65,6 +65,12 @@ class GitCommand(sublime_plugin.TextCommand):
         if 'fallback_encoding' not in kwargs and self.view.settings().get('fallback_encoding'):
             kwargs['fallback_encoding'] = self.view.settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
         
+        s = sublime.load_settings("Git.sublime-settings")
+        if s.get('save_first', False) and self.view.is_dirty():
+            self.view.run_command('save')
+        if command[0] == 'git' and s.get('git_command', False):
+            command[0] = s.get('git_command')
+
         thread = CommandThread(command, callback or self.generic_done, **kwargs)
         thread.start()
 
