@@ -4,6 +4,7 @@ import sublime_plugin
 import threading
 import subprocess
 import functools
+import tempfile
 
 def main_thread(callback, *args, **kwargs):
     # sublime.set_timeout gets used to send things onto the main thread
@@ -23,6 +24,10 @@ def git_root(directory):
             return False
         directory = parent
     return False
+
+def view_contents(view):
+    region = sublime.Region(0, view.size())
+    return view.substr(region)
 
 def _make_text_safeish(text, fallback_encoding):
     # The unicode decode here is because sublime converts to unicode inside insert in such a way
@@ -49,7 +54,10 @@ class CommandThread(threading.Thread):
             shell = os.name == 'nt'
             if self.working_dir != "":
                 os.chdir(self.working_dir)
-            output = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=shell).communicate()[0]
+
+            proc = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                shell=shell, universal_newlines = True)
+            output = proc.communicate()[0]
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done, _make_text_safeish(output, self.fallback_encoding))
@@ -66,9 +74,9 @@ class GitCommand(sublime_plugin.TextCommand):
             kwargs['fallback_encoding'] = self.view.settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
         
         s = sublime.load_settings("Git.sublime-settings")
-        if s.get('save_first', False) and self.view.is_dirty():
+        if s.get('save_first') and self.view.is_dirty():
             self.view.run_command('save')
-        if command[0] == 'git' and s.get('git_command', False):
+        if command[0] == 'git' and s.get('git_command'):
             command[0] = s.get('git_command')
 
         thread = CommandThread(command, callback or self.generic_done, **kwargs)
@@ -183,14 +191,14 @@ class GitDiffAllCommand(GitDiffCommand):
     def get_file_name(self):
         return ''
 
-class GitCommitCommand(GitCommand):
+class GitQuickCommitCommand(GitCommand):
     def run(self, edit):
         self.view.window().show_input_panel("Message", "", self.on_input, None, None)
     
     def on_input(self, message):
         if message.strip() == "":
             # Okay, technically an empty commit message is allowed, but I don't want to encourage that sort of thing
-            sublime.error_message("No commit message provided")
+            self.panel("No commit message provided")
             return
         self.run_command(['git', 'add', self.get_file_name()], functools.partial(self.add_done, message))
     
@@ -199,6 +207,71 @@ class GitCommitCommand(GitCommand):
             sublime.error_message("Error adding file:\n" + result)
             return
         self.run_command(['git', 'commit', '-m', message])
+
+# Commit is complicated. It'd be easy if I just wanted to let it run on OSX, and assume
+# that subl was in the $PATH. However... I can't do that. Second choice was to set $GIT_EDITOR
+# to sublime text for the call to commit, and let that Just Work. However, on Windows you
+# can't pass -w to sublime, which means the editor won't wait, and so the commit will fail
+# with an empty message.
+# Thus this flow:
+# 1. `status --porcelain --untracked-files=no` to know whether files need to be committed
+# 2. `status` to get a template commit message (not the exact one git uses; I can't
+#    see a way to ask it to output that, which is not quite ideal)
+# 3. Create a scratch buffer containing the template
+# 4. When this buffer is closed, get its contents with an event handler and pass
+#    execution back to the original command. (I feel that the way this is done is
+#    a total hack. Unfortunately, I cannot see a better way right now.)
+# 5. Strip lines beginning with # from the message, and save in a temporary file
+# 6. `commit -F [tempfile]`
+class GitCommitCommand(GitCommand):
+    active_message = False
+    def run(self, edit):
+        self.run_command(['git', 'status', '--untracked-files=no', '--porcelain'], self.porcelain_status_done)
+    def porcelain_status_done(self, result):
+        # todo: split out these status-parsing things...
+        has_files = len([l for l in result.strip().split('\n') if not l[1].isspace()])
+        if not has_files:
+            self.panel("Nothing to commit")
+            return
+        # Okay, get the template!
+        self.run_command(['git', 'status'], self.status_done)
+    def status_done(self, result):
+        template = "\n".join([
+            "",
+            "# Please enter the commit message for your changes. Lines starting",
+            "# with '#' will be ignored, and an empty message aborts the commit.",
+            "# Just close the window to accept your message.",
+            result.strip()
+        ])
+        msg = self.view.window().new_file()
+        msg.set_scratch(True)
+        msg.set_name("GIT_COMMIT_MESSAGE")
+        self._output_to_view(msg, template)
+        msg.sel().clear()
+        msg.sel().add(sublime.Region(0, 0))
+        GitCommitCommand.active_message = self
+    def message_done(self, message):
+        # filter out the comments (git commit doesn't do this automatically)
+        message = '\n'.join([line for line in message.split("\n") if not line.startswith('#')])
+        # write the temp file
+        message_file = tempfile.NamedTemporaryFile(delete = False)
+        message_file.write(message)
+        message_file.close()
+        self.message_file = message_file
+        # and actually commit
+        self.run_command(['git', 'commit', '-F', message_file.name], self.commit_done)
+    def commit_done(self, result):
+        os.remove(self.message_file.name)
+        self.panel(result)
+class GitCommitMessageListener(sublime_plugin.EventListener):
+    def on_close(self, view):
+        if view.name() != "GIT_COMMIT_MESSAGE":
+            return
+        command = GitCommitCommand.active_message
+        if not command:
+            return
+        message = view_contents(view)
+        command.message_done(message)
 
 class GitStatusCommand(GitCommand):
     def run(self, edit):

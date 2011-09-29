@@ -20,8 +20,12 @@
         "command": "git_diff_all"
     }
     ,{
-        "caption": "Git: Quick Commit",
+        "caption": "Git: Commit",
         "command": "git_commit"
+    }
+    ,{
+        "caption": "Git: Quick Commit",
+        "command": "git_quick_commit"
     }
     ,{
         "caption": "Git: Status",

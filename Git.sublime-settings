@@ -1,6 +1,7 @@
 {
 	// save before running commands
 	"save_first": true
+
 	// if present, use this command instead of plain "git"
 	// e.g. "/Users/kemayo/bin/git" or "C:\bin\git.exe"
 	,"git_command": false
