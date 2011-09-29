@@ -48,7 +48,7 @@
         "command": "git_add"
     }
     ,{
-        "caption": "Git: Choose File To Add",
+        "caption": "Git: Add...",
         "command": "git_add_choice"
     }
 ]
