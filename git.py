@@ -115,7 +115,7 @@ class GitCommand(sublime_plugin.TextCommand):
         output_file.end_edit(edit)
 
     def scratch(self, output, title=False, **kwargs):
-        scratch_file = self.view.window().new_file()
+        scratch_file = self.window().new_file()
         if title:
             scratch_file.set_name(title)
         scratch_file.set_scratch(True)
@@ -125,11 +125,26 @@ class GitCommand(sublime_plugin.TextCommand):
 
     def panel(self, output, **kwargs):
         if not hasattr(self, 'output_view'):
-            self.output_view = self.view.window().get_output_panel("git")
+            self.output_view = self.window().get_output_panel("git")
         self.output_view.set_read_only(False)
         self._output_to_view(self.output_view, output, clear=True, **kwargs)
         self.output_view.set_read_only(True)
-        self.view.window().run_command("show_panel", {"panel": "output.git"})
+        self.window().run_command("show_panel", {"panel": "output.git"})
+
+    def window(self):
+        # Fun discovery: if you switch tabs while a command is working,
+        # self.view.window() is None. (Admittedly this is a consequence
+        # of my deciding to do async command processing... but, hey,
+        # got to live with that now.)
+        # I did try tracking the window used at the start of the command
+        # and using it instead of view.window() later, but that results
+        # panels on a non-visible window, which is especially useless in
+        # the case of the quick panel.
+        # So, this is not necessarily ideal, but it does work.
+        return self.view.window() or sublime.active_window()
+
+    def quick_panel(self, *args, **kwargs):
+        self.window().show_quick_panel(*args, **kwargs)
 
     def is_enabled(self):
         # First, is this actually a file on the file system?
@@ -181,7 +196,7 @@ class GitLogCommand(GitCommand):
 
     def log_done(self, result):
         self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
-        self.view.window().show_quick_panel(self.results, self.panel_done)
+        self.quick_panel(self.results, self.panel_done)
 
     def panel_done(self, picked):
         if 0 > picked < len(self.results):
@@ -224,7 +239,7 @@ class GitDiffAllCommand(GitDiffCommand):
 
 class GitQuickCommitCommand(GitCommand):
     def run(self, edit):
-        self.view.window().show_input_panel("Message", "",
+        self.window().show_input_panel("Message", "",
             self.on_input, None, None)
 
     def on_input(self, message):
@@ -291,7 +306,7 @@ class GitCommitCommand(GitCommand):
             "# Just close the window to accept your message.",
             result.strip()
         ])
-        msg = self.view.window().new_file()
+        msg = self.window().new_file()
         msg.set_scratch(True)
         msg.set_name("GIT_COMMIT_MESSAGE")
         self._output_to_view(msg, template)
@@ -339,7 +354,7 @@ class GitStatusCommand(GitCommand):
             self.show_status_list()
 
     def show_status_list(self):
-        self.view.window().show_quick_panel(self.results, self.panel_done,
+        self.quick_panel(self.results, self.panel_done,
             sublime.MONOSPACE_FONT)
 
     def status_filter(self, item):
@@ -371,7 +386,7 @@ class GitAddChoiceCommand(GitStatusCommand):
 
     def show_status_list(self):
         self.results.insert(0, [" + All Files", "apart from untracked files"])
-        self.view.window().show_quick_panel(self.results, self.panel_done,
+        self.quick_panel(self.results, self.panel_done,
             sublime.MONOSPACE_FONT)
 
     def panel_followup(self, picked_file, picked_index):
@@ -402,7 +417,7 @@ class GitBranchCommand(GitCommand):
 
     def branch_done(self, result):
         self.results = result.rstrip().split('\n')
-        self.view.window().show_quick_panel(self.results, self.panel_done,
+        self.quick_panel(self.results, self.panel_done,
             sublime.MONOSPACE_FONT)
 
     def panel_done(self, picked):
