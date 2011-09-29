@@ -229,8 +229,13 @@ class GitCommitCommand(GitCommand):
         self.run_command(['git', 'status', '--untracked-files=no', '--porcelain'], self.porcelain_status_done)
     def porcelain_status_done(self, result):
         # todo: split out these status-parsing things...
-        has_files = len([l for l in result.strip().split('\n') if not l[1].isspace()])
-        if not has_files:
+        has_staged_files = False
+        result_lines = result.rstrip().split('\n')
+        for line in result_lines:
+            if not line[0].isspace():
+                has_staged_files = True
+                break
+        if not has_staged_files:
             self.panel("Nothing to commit")
             return
         # Okay, get the template!
