@@ -398,7 +398,7 @@ class GitStashPopCommand(GitCommand):
 
 class GitBranchCommand(GitCommand):
     def run(self, edit):
-        self.run_command(['git', 'branch'], self.branch_done)
+        self.run_command(['git', 'branch', '--no-color'], self.branch_done)
 
     def branch_done(self, result):
         self.results = result.rstrip().split('\n')
