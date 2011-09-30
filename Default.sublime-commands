@@ -59,4 +59,8 @@
         "caption": "Git: Pull",
         "command": "git_pull"
     }
+    ,{
+        "caption": "Git: Push",
+        "command": "git_push"
+    }
 ]

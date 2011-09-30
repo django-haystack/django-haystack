@@ -441,3 +441,7 @@ class GitCheckoutCommand(GitCommand):
 class GitPullCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'pull'])
+
+class GitPushCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'push'])
