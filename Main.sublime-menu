@@ -16,6 +16,7 @@
                             ,{ "caption": "Add", "command": "git_add" }
                             ,{ "caption": "Quick Commit", "command": "git_commit" }
                             ,{ "caption": "Blame", "command": "git_blame" }
+                            ,{ "caption": "Checkout", "command": "git_checkout" }
                         ]
                     }
                     ,{

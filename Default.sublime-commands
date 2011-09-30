@@ -51,4 +51,8 @@
         "caption": "Git: Add...",
         "command": "git_add_choice"
     }
+    ,{
+        "caption": "Git: Checkout Current File",
+        "command": "git_checkout"
+    }
 ]
