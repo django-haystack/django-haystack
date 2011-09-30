@@ -55,4 +55,8 @@
         "caption": "Git: Checkout Current File",
         "command": "git_checkout"
     }
+    ,{
+        "caption": "Git: Pull",
+        "command": "git_pull"
+    }
 ]

@@ -429,9 +429,15 @@ class GitBranchCommand(GitCommand):
         picked_branch = picked_branch.strip()
         self.run_command(['git', 'checkout', picked_branch])
 
+
 class GitCheckoutCommand(GitCommand):
     def run(self, edit):
         self.run_command(['git', 'checkout', self.get_file_name()], self.checkout_done)
 
     def checkout_done(self, result):
         self.view.run_command('revert')
+
+
+class GitPullCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(['git', 'pull'])
