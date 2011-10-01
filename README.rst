@@ -54,6 +54,8 @@ details.
 SPECIFIC TO THIS FORK
 ========
 
+:author: __jnaut__
+
 Additional Requirements
 ============
 Minimum Solr version is 3.2 
@@ -88,7 +90,7 @@ e.g.::
 
 Search
 ============
-The search method for spatial search is: ``haystack.query.SearchQuerySet.spatial(**kwargs)`` .
+The search method for spatial search is: ``haystack.query.SearchQuerySet().spatial(**kwargs)`` .
 
 It works just like filter method and returns a SearchQuerySet instance.
 
