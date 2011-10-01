@@ -1,3 +1,5 @@
+For specific instructions on this fork, scroll down.
+
 ========
 Haystack
 ========
@@ -47,3 +49,12 @@ Haystack has a relatively easily-met set of requirements.
 Additionally, each backend has its own requirements. You should refer to
 http://docs.haystacksearch.org/dev/installing_search_engines.html for more
 details.
+
+========
+SPECIFIC TO THIS FORK
+========
+
+Additional Requirements
+============
+Minimum Solr version is 3.2 
+Note: Even though native spatial search was introduced in Solr 3.1 but it turned out to be too buggy and it is highly advised that min. version 3.2 be used.

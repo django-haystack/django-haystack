@@ -114,10 +114,10 @@ class SolrSearchBackend(BaseSearchBackend):
                 'results': [],
                 'hits': 0,
             }
-
-        kwargs = {
-            'fl': '* score',
-        }
+        
+        if not kwargs:
+            kwargs = {}
+        kwargs.update({'fl': '* score', })
 
         if fields:
             kwargs['fl'] = fields
@@ -181,7 +181,7 @@ class SolrSearchBackend(BaseSearchBackend):
             if len(registered_models) > 0:
                 narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
 
-        if narrow_queries is not None:
+        if narrow_queries is not None and not kwargs.get('fq'):
             kwargs['fq'] = list(narrow_queries)
 
         try:
@@ -351,6 +351,8 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'ngram'
             elif field_class.field_type == 'edge_ngram':
                 field_data['type'] = 'edge_ngram'
+            elif field_class.field_type == 'location':
+                field_data['type'] = 'location'
 
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
@@ -466,7 +468,7 @@ class SolrSearchQuery(BaseSearchQuery):
             'start_offset': self.start_offset,
             'result_class': self.result_class,
         }
-
+        
         if self.order_by:
             order_by_list = []
 
@@ -498,6 +500,23 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if spelling_query:
             kwargs['spelling_query'] = spelling_query
+            
+        if self.spatial_query:
+            spatial_kwargs = {
+                "fq": "{!geofilt}", 
+                "pt": "%.6f,%.6f" % (self.spatial_query['lat'], self.spatial_query['lng']),
+                "d": self.spatial_query['radius'],
+                "sfield": self.spatial_query['sfield'],
+                }
+            kwargs.update(spatial_kwargs)
+            if self.spatial_query.get('sort_by_distance'):
+                if not self.order_by:
+                    order_by_list = []
+                sort_order = 'asc'
+                if self.spatial_query.get('sort_order') == 'desc':
+                    sort_order = 'desc'
+                order_by_list.insert(0, 'geodist() %s' % sort_order)
+                kwargs['sort_by'] = ", ".join(order_by_list)
 
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])
