@@ -103,5 +103,6 @@ e.g.::
 
     sqs = SearchQuerySet()
     sqs = sqs.spatial(lat=-34.7777, lng=138.534556, sfield='geocode', radius=10.8)
+    sqs = sqs.spatial(lat=-34.7777, lng=138.534556, sfield='geocode', radius=10.8, sort_by_distance=True, sort_order='asc')
 
 (see example at example_project_with_spatial_solr/spatial_app/views.py)
