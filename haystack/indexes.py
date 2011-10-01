@@ -216,7 +216,7 @@ class SearchIndex(object):
         """
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
-            self._get_backend(using).update(self, [instance])
+            self._get_backend(using).update(self, [instance], **kwargs)
 
     def remove_object(self, instance, using=None, **kwargs):
         """
