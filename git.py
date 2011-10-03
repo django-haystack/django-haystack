@@ -105,7 +105,7 @@ class GitCommand(sublime_plugin.TextCommand):
         self.panel(result)
 
     def _output_to_view(self, output_file, output, clear=False,
-            syntax="Packages/Git/Git Commit Message.tmLanguage"):
+            syntax="Packages/Diff/Diff.tmLanguage"):
         output_file.set_syntax_file(syntax)
         edit = output_file.begin_edit()
         if clear:
@@ -212,7 +212,7 @@ class GitLogCommand(GitCommand):
             self.details_done)
 
     def details_done(self, result):
-        self.scratch(result, title="Git Commit Details")
+        self.scratch(result, title="Git Commit Details", syntax="Packages/Git/Git Commit Message.tmLanguage")
 
 
 class GitLogAllCommand(GitLogCommand):
@@ -309,7 +309,7 @@ class GitCommitCommand(GitCommand):
         msg = self.window().new_file()
         msg.set_scratch(True)
         msg.set_name("COMMIT_EDITMSG")
-        self._output_to_view(msg, template)
+        self._output_to_view(msg, template, syntax="Packages/Git/Git Commit Message.tmLanguage")
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
