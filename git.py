@@ -208,7 +208,7 @@ class GitLogCommand(GitCommand):
         # details to just the current file. Depends on what the user expects...
         # which I'm not sure of.
         self.run_command(
-            ['git', 'log', '-p', '-1', ref, '--', self.get_file_name()],
+            ['git', 'log', '-p', '-1', ref, '--'],
             self.details_done)
 
     def details_done(self, result):
@@ -216,6 +216,23 @@ class GitLogCommand(GitCommand):
 
 
 class GitLogAllCommand(GitLogCommand):
+    def get_file_name(self):
+        return ''
+
+
+class GitGraphCommand(GitCommand):
+    def run(self, edit):
+        self.run_command(
+            ['git', 'log', '--graph', '--pretty=%h %aN %ci%d %s', '--abbrev-commit', '--no-color', '--decorate',
+            '--date-order', '--', self.get_file_name()],
+            self.log_done
+        )
+
+    def log_done(self, result):
+        self.scratch(result, title="Git Log Graph", syntax="Packages/Git/Git Graph.tmLanguage")
+
+
+class GitGraphAllCommand(GitGraphCommand):
     def get_file_name(self):
         return ''
 

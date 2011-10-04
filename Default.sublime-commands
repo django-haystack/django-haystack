@@ -12,6 +12,14 @@
         "command": "git_log_all"
     }
     ,{
+        "caption": "Git: Graph Current File",
+        "command": "git_graph"
+    }
+    ,{
+        "caption": "Git: Graph All",
+        "command": "git_graph_all"
+    }
+    ,{
         "caption": "Git: Diff Current File",
         "command": "git_diff"
     }

@@ -17,6 +17,7 @@
                             ,{ "caption": "Quick Commit", "command": "git_commit" }
                             ,{ "caption": "Blame", "command": "git_blame" }
                             ,{ "caption": "Checkout", "command": "git_checkout" }
+                            ,{ "caption": "Graph", "command": "git_graph" }
                         ]
                     }
                     ,{
@@ -25,6 +26,7 @@
                         [
                             { "caption": "Log", "command": "git_log_all" }
                             ,{ "caption": "Diff", "command": "git_diff_all" }
+                            ,{ "caption": "Graph", "command": "git_graph_all" }
                             ,{ "caption": "Add...", "command": "git_add_choice" }
                         ]
                     }
