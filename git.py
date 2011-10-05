@@ -388,7 +388,7 @@ class GitStatusCommand(GitCommand):
 
     def panel_followup(self, picked_file, picked_index):
         # split out solely so I can override it for laughs
-        self.run_command(['git', 'diff', '--no-color', picked_file],
+        self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
             self.diff_done, working_dir=git_root(self.get_file_location()))
 
     def diff_done(self, result):
