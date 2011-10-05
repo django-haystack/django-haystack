@@ -369,6 +369,8 @@ class GitStatusCommand(GitCommand):
         self.results = filter(self.status_filter, result.rstrip().split('\n'))
         if len(self.results):
             self.show_status_list()
+        else:
+            sublime.status_message("Nothing to show")
 
     def show_status_list(self):
         self.quick_panel(self.results, self.panel_done,
@@ -376,7 +378,7 @@ class GitStatusCommand(GitCommand):
 
     def status_filter(self, item):
         # for this class we don't actually care
-        return True
+        return len(item) > 0
 
     def panel_done(self, picked):
         if 0 > picked < len(self.results):
