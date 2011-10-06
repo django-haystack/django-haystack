@@ -389,6 +389,8 @@ class SearchQuerySet(object):
         """
         clone = self._clone()
 
+        query_string = normalize(query_string)
+
         # Pull out anything wrapped in quotes and do an exact match on it.
         open_quote_position = None
         non_exact_query = query_string
@@ -425,7 +427,7 @@ class SearchQuerySet(object):
 
             cleaned_keyword = clone.query.clean(keyword)
             keyword_kwargs = {
-                fieldname: cleaned_keyword,
+                "%s__exact" % fieldname: cleaned_keyword,
             }
 
             if exclude:
@@ -445,11 +447,12 @@ class SearchQuerySet(object):
         clone = self._clone()
         query_bits = []
 
-        for field_name, query in kwargs.items():
-            for word in query.split(' '):
-                bit = clone.query.clean(word.strip())
+        for fieldname, query in kwargs.items():
+            query = normalize(query)
+            for word in query.split():
+                bit = clone.query.clean(word)
                 kwargs = {
-                    field_name: bit,
+                    '%s__exact' % fieldname: bit,
                 }
                 query_bits.append(SQ(**kwargs))
 
