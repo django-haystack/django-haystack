@@ -5,6 +5,88 @@ from haystack import connections, connection_router
 from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotHandled
+from haystack.utils import normalize
+
+
+class BoolOperand(object):
+    def __init__(self, t):
+        self.args = t[0][0::2]
+
+    def __str__(self):
+        sep = " %s " % self.reprsymbol
+        return "(" + sep.join(map(str, self.args)) + ")"
+
+
+class BoolAnd(BoolOperand):
+    reprsymbol = '&'
+
+    def query(self, clone):
+        q = None
+        for a in self.args:
+            if isinstance(a, basestring):
+                sq = SQ(tag__exact=clone.query.clean(a))
+            else:
+                sq = a.query(clone)
+            if q is None:
+                q = sq
+            else:
+                q &= sq
+        return q
+
+
+class BoolOr(BoolOperand):
+    reprsymbol = '|'
+
+    def query(self, clone):
+        q = None
+        for a in self.args:
+            if isinstance(a, basestring):
+                sq = SQ(tag__exact=clone.query.clean(a))
+            else:
+                sq = a.query(clone)
+            if q is None:
+                q = sq
+            else:
+                q |= sq
+        return q
+
+
+class BoolNot(BoolOperand):
+    def __init__(self, t):
+        self.arg = t[0][1]
+
+    def __str__(self):
+        return "~" + str(self.arg)
+
+    def query(self, clone):
+        a = self.arg
+        if isinstance(a, basestring):
+            q = ~SQ(tag__exact=clone.query.clean(a))
+        else:
+            q = ~a.query(clone)
+        return q
+
+try:
+    from pyparsing import operatorPrecedence, opAssoc, Word, alphanums
+    boolExpr = operatorPrecedence(Word(alphanums + '_-:=.'), [
+        ("NOT", 1, opAssoc.RIGHT, BoolNot),
+        ("AND", 2, opAssoc.LEFT,  BoolAnd),
+        ("OR",  2, opAssoc.LEFT,  BoolOr),
+    ])
+except ImportError:
+    boolExpr = None
+
+
+def bool_query(query_string, clone):
+    if boolExpr:
+        a = boolExpr.parseString(query_string)[0]
+        if isinstance(a, basestring):
+            q = SQ(tag__exact=clone.query.clean(a))
+        else:
+            q = a.query(clone)
+        return q
+    else:
+        return SQ(tag__exact=clone.query.clean(query_string))
 
 
 class SearchQuerySet(object):
@@ -405,7 +487,7 @@ class SearchQuerySet(object):
 
                     if current_match:
                         current_kwargs = {
-                            "%s__exact" % fieldname: clone.query.clean(current_match),
+                            "%s__like" % fieldname: clone.query.clean(current_match),
                         }
                         clone = clone.filter(**current_kwargs)
 
@@ -427,7 +509,7 @@ class SearchQuerySet(object):
 
             cleaned_keyword = clone.query.clean(keyword)
             keyword_kwargs = {
-                "%s__exact" % fieldname: cleaned_keyword,
+                "%s__like" % fieldname: cleaned_keyword,
             }
 
             if exclude:
@@ -437,15 +519,19 @@ class SearchQuerySet(object):
 
         return clone
 
-    def autocomplete(self, **kwargs):
+
+    def autocomplete(self, ac=None, **kwargs):
         """
         A shortcut method to perform an autocomplete search.
 
         Must be run against fields that are either ``NgramField`` or
-        ``EdgeNgramField``.
+        ``EdgeNgramField`` or marked with `mode=autocomplete`.
         """
         clone = self._clone()
         query_bits = []
+
+        if ac is not None:
+            kwargs['ac'] = ac
 
         for fieldname, query in kwargs.items():
             query = normalize(query)
@@ -457,6 +543,18 @@ class SearchQuerySet(object):
                 query_bits.append(SQ(**kwargs))
 
         return clone.filter(reduce(operator.__and__, query_bits))
+
+    def tagged(self, query_string):
+        """
+        A shortcut method to perform tags search.
+        """
+        clone = self._clone()
+
+        query_string = query_string.lower().replace(' or ', ' OR ').replace(' and ', ' AND ').replace(' not ', ' NOT ')
+
+        query = bool_query(query_string, clone)
+
+        return clone.filter(query)
 
     def using(self, connection_name):
         """

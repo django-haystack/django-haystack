@@ -430,6 +430,7 @@ class SolrSearchQuery(BaseSearchQuery):
 
         filter_types = {
             'contains': u'%s:%s',
+            'like': u'%s:"%s"',
             'exact': u'%s:"%s"',
             'gt': u'%s:{"%s" TO *}',
             'gte': u'%s:["%s" TO *]',
