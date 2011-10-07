@@ -212,7 +212,8 @@ class GitLogCommand(GitCommand):
             self.details_done)
 
     def details_done(self, result):
-        self.scratch(result, title="Git Commit Details", syntax="Packages/Git/Git Commit Message.tmLanguage")
+        print os.getcwd()
+        self.scratch(result, title="Git Commit Details", syntax="Git Commit Message.tmLanguage")
 
 
 class GitLogAllCommand(GitLogCommand):
@@ -229,7 +230,7 @@ class GitGraphCommand(GitCommand):
         )
 
     def log_done(self, result):
-        self.scratch(result, title="Git Log Graph", syntax="Packages/Git/Git Graph.tmLanguage")
+        self.scratch(result, title="Git Log Graph", syntax="Git Graph.tmLanguage")
 
 
 class GitGraphAllCommand(GitGraphCommand):
@@ -326,7 +327,7 @@ class GitCommitCommand(GitCommand):
         msg = self.window().new_file()
         msg.set_scratch(True)
         msg.set_name("COMMIT_EDITMSG")
-        self._output_to_view(msg, template, syntax="Packages/Git/Git Commit Message.tmLanguage")
+        self._output_to_view(msg, template, syntax="Git Commit Message.tmLanguage")
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
