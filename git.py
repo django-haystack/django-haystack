@@ -46,6 +46,14 @@ def _make_text_safeish(text, fallback_encoding):
     return unitext
 
 
+def syntax_file(language, view):
+    return os.path.join(
+        sublime.packages_path(),
+        view.settings().get('git_package_dir') or 'Git',
+        language + ".tmLanguage"
+    )
+
+
 class CommandThread(threading.Thread):
     def __init__(self, command, on_done, working_dir="", fallback_encoding=""):
         threading.Thread.__init__(self)
@@ -212,8 +220,7 @@ class GitLogCommand(GitCommand):
             self.details_done)
 
     def details_done(self, result):
-        print os.getcwd()
-        self.scratch(result, title="Git Commit Details", syntax="Git Commit Message.tmLanguage")
+        self.scratch(result, title="Git Commit Details", syntax=syntax_file("Git Commit Message", self.view))
 
 
 class GitLogAllCommand(GitLogCommand):
@@ -230,7 +237,7 @@ class GitGraphCommand(GitCommand):
         )
 
     def log_done(self, result):
-        self.scratch(result, title="Git Log Graph", syntax="Git Graph.tmLanguage")
+        self.scratch(result, title="Git Log Graph", syntax=syntax_file('Git Graph', self.view))
 
 
 class GitGraphAllCommand(GitGraphCommand):
@@ -327,7 +334,8 @@ class GitCommitCommand(GitCommand):
         msg = self.window().new_file()
         msg.set_scratch(True)
         msg.set_name("COMMIT_EDITMSG")
-        self._output_to_view(msg, template, syntax="Git Commit Message.tmLanguage")
+
+        self._output_to_view(msg, template, syntax=syntax_file("Git Commit Message", self.view))
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
