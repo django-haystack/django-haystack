@@ -130,6 +130,8 @@ class SearchQuerySet(object):
         else:
             self.query = connections[backend_alias].get_query()
 
+        return backend_alias
+    
     def __getstate__(self):
         """
         For pickling.
@@ -615,7 +617,7 @@ class SearchQuerySet(object):
             klass = self.__class__
 
         query = self.query._clone()
-        clone = klass(query=query)
+        clone = klass(using=self._using, query=query)
         clone._load_all = self._load_all
         return clone
 
@@ -808,7 +810,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
             klass = self.__class__
 
         query = self.query._clone()
-        clone = klass(query=query)
+        clone = klass(using=self._using, query=query)
         clone._load_all = self._load_all
         clone._load_all_querysets = self._load_all_querysets
         return clone
