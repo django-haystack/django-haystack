@@ -6,6 +6,11 @@ import subprocess
 import functools
 import tempfile
 
+# when sublime loads a plugin it's cd'd into the plugin directory. Thus
+# __file__ is useless for my purposes. What I want is "Packages/Git", but
+# allowing for the possibility that someone has renamed the file.
+PLUGIN_DIRECTORY = os.getcwd().replace(os.path.normpath(os.path.join(os.getcwd(), '..', '..')) + os.path.sep, '')
+
 
 def main_thread(callback, *args, **kwargs):
     # sublime.set_timeout gets used to send things onto the main thread
@@ -32,6 +37,10 @@ def git_root(directory):
 def view_contents(view):
     region = sublime.Region(0, view.size())
     return view.substr(region)
+
+
+def plugin_file(name):
+    return os.path.join(PLUGIN_DIRECTORY, name)
 
 
 def _make_text_safeish(text, fallback_encoding):
@@ -212,8 +221,7 @@ class GitLogCommand(GitCommand):
             self.details_done)
 
     def details_done(self, result):
-        print os.getcwd()
-        self.scratch(result, title="Git Commit Details", syntax="Git Commit Message.tmLanguage")
+        self.scratch(result, title="Git Commit Details", syntax=plugin_file("Git Commit Message.tmLanguage"))
 
 
 class GitLogAllCommand(GitLogCommand):
@@ -230,7 +238,7 @@ class GitGraphCommand(GitCommand):
         )
 
     def log_done(self, result):
-        self.scratch(result, title="Git Log Graph", syntax="Git Graph.tmLanguage")
+        self.scratch(result, title="Git Log Graph", syntax=plugin_file("Git Graph.tmLanguage"))
 
 
 class GitGraphAllCommand(GitGraphCommand):
@@ -327,7 +335,7 @@ class GitCommitCommand(GitCommand):
         msg = self.window().new_file()
         msg.set_scratch(True)
         msg.set_name("COMMIT_EDITMSG")
-        self._output_to_view(msg, template, syntax="Git Commit Message.tmLanguage")
+        self._output_to_view(msg, template, syntax=plugin_file("Git Commit Message.tmLanguage"))
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
