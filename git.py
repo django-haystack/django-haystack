@@ -9,7 +9,8 @@ import tempfile
 # when sublime loads a plugin it's cd'd into the plugin directory. Thus
 # __file__ is useless for my purposes. What I want is "Packages/Git", but
 # allowing for the possibility that someone has renamed the file.
-PLUGIN_DIRECTORY = os.getcwd().replace(os.path.normpath(os.path.join(os.getcwd(), '..', '..')) + os.path.sep, '')
+# Fun discovery: Sublime on windows still requires posix path separators.
+PLUGIN_DIRECTORY = os.getcwd().replace(os.path.normpath(os.path.join(os.getcwd(), '..', '..')) + os.path.sep, '').replace(os.path.sep, '/')
 
 
 def main_thread(callback, *args, **kwargs):
