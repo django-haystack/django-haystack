@@ -84,7 +84,7 @@ class CommandThread(threading.Thread):
             main_thread(self.on_done, e.returncode)
         except OSError, e:
             if e.errno == 2:
-                main_thread(sublime.error_message, "Git binary could not be found in PATH\nPATH is: %s" % os.environ['PATH'])
+                main_thread(sublime.error_message, "Git binary could not be found in PATH\n\nConsider using the git_command setting for the Git plugin\n\nPATH is: %s" % os.environ['PATH'])
             else:
                 raise e
 
