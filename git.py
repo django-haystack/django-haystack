@@ -84,19 +84,20 @@ class CommandThread(threading.Thread):
             main_thread(self.on_done, e.returncode)
 
 
-class GitCommand(sublime_plugin.TextCommand):
+# A base for all commands
+class GitCommand:
     def run_command(self, command, callback=None, show_status=True,
             filter_empty_args=True, **kwargs):
         if filter_empty_args:
             command = [arg for arg in command if arg]
         if 'working_dir' not in kwargs:
-            kwargs['working_dir'] = self.get_file_location()
-        if 'fallback_encoding' not in kwargs and self.view.settings().get('fallback_encoding'):
-            kwargs['fallback_encoding'] = self.view.settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
+            kwargs['working_dir'] = self.get_working_dir()
+        if 'fallback_encoding' not in kwargs and self.active_view() and self.active_view().settings().get('fallback_encoding'):
+           kwargs['fallback_encoding'] = self.active_view().settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
 
         s = sublime.load_settings("Git.sublime-settings")
-        if s.get('save_first') and self.view.is_dirty():
-            self.view.run_command('save')
+        if s.get('save_first') and self.active_view() and self.active_view().is_dirty():
+           self.active_view().run_command('save')
         if command[0] == 'git' and s.get('git_command'):
             command[0] = s.get('git_command')
         if not callback:
@@ -125,7 +126,7 @@ class GitCommand(sublime_plugin.TextCommand):
         output_file.end_edit(edit)
 
     def scratch(self, output, title=False, **kwargs):
-        scratch_file = self.window().new_file()
+        scratch_file = self.get_window().new_file()
         if title:
             scratch_file.set_name(title)
         scratch_file.set_scratch(True)
@@ -135,13 +136,70 @@ class GitCommand(sublime_plugin.TextCommand):
 
     def panel(self, output, **kwargs):
         if not hasattr(self, 'output_view'):
-            self.output_view = self.window().get_output_panel("git")
+            self.output_view = self.get_window().get_output_panel("git")
         self.output_view.set_read_only(False)
         self._output_to_view(self.output_view, output, clear=True, **kwargs)
         self.output_view.set_read_only(True)
-        self.window().run_command("show_panel", {"panel": "output.git"})
+        self.get_window().run_command("show_panel", {"panel": "output.git"})
 
-    def window(self):
+    def quick_panel(self, *args, **kwargs):
+        self.get_window().show_quick_panel(*args, **kwargs)
+
+
+
+# A base for all git commands that work with the entire repository
+class GitWindowCommand(GitCommand, sublime_plugin.WindowCommand):
+    def active_view(self):
+        return self.window.active_view()
+
+    def _active_file_name(self):
+        view = self.active_view()
+        if view and view.file_name() and len(view.file_name()) > 0:
+            return view.file_name()
+
+
+    # If there's no active view or the active view is not a file on the
+    # filesystem (e.g. a search results view), we can infer the folder
+    # that the user intends Git commands to run against when there's only
+    # only one.
+    def is_enabled(self):
+        if self._active_file_name() or len(self.window.folders()) == 1:
+            return git_root(self.get_working_dir())
+
+    def get_file_name(self):
+        return ''
+
+    # If there is a file in the active view use that file's directory to
+    # search for the Git root.  Otherwise, use the only folder that is
+    # open.
+    def get_working_dir(self):
+        file_name = self._active_file_name()
+        if file_name:
+            return os.path.dirname(file_name)
+        else:
+            return self.window.folders()[0]
+
+    def get_window(self):
+        return self.window
+
+
+# A base for all git commands that work with the file in the active view
+class GitTextCommand(GitCommand, sublime_plugin.TextCommand):
+    def active_view(self):
+        return self.view
+
+    def is_enabled(self):
+        # First, is this actually a file on the file system?
+        if self.view.file_name() and len(self.view.file_name()) > 0:
+            return git_root(self.get_working_dir())
+
+    def get_file_name(self):
+        return os.path.basename(self.view.file_name())
+
+    def get_working_dir(self):
+        return os.path.dirname(self.view.file_name())
+
+    def get_window(self):
         # Fun discovery: if you switch tabs while a command is working,
         # self.view.window() is None. (Admittedly this is a consequence
         # of my deciding to do async command processing... but, hey,
@@ -153,22 +211,9 @@ class GitCommand(sublime_plugin.TextCommand):
         # So, this is not necessarily ideal, but it does work.
         return self.view.window() or sublime.active_window()
 
-    def quick_panel(self, *args, **kwargs):
-        self.window().show_quick_panel(*args, **kwargs)
-
-    def is_enabled(self):
-        # First, is this actually a file on the file system?
-        if self.view.file_name() and len(self.view.file_name()) > 0:
-            return git_root(self.get_file_location())
-
-    def get_file_name(self):
-        return os.path.basename(self.view.file_name())
-
-    def get_file_location(self):
-        return os.path.dirname(self.view.file_name())
 
 
-class GitBlameCommand(GitCommand):
+class GitBlameCommand(GitTextCommand):
     def run(self, edit):
         # somewhat custom blame command:
         # -w: ignore whitespace changes
@@ -191,8 +236,8 @@ class GitBlameCommand(GitCommand):
         self.scratch(result, title="Git Blame")
 
 
-class GitLogCommand(GitCommand):
-    def run(self, edit):
+class GitLog:
+    def run(self, edit=None):
         # the ASCII bell (\a) is just a convenient character I'm pretty sure
         # won't ever come up in the subject of the commit (and if it does then
         # you positively deserve broken output...)
@@ -224,14 +269,15 @@ class GitLogCommand(GitCommand):
     def details_done(self, result):
         self.scratch(result, title="Git Commit Details", syntax=plugin_file("Git Commit Message.tmLanguage"))
 
+class GitLogCommand(GitLog, GitTextCommand):
+    pass
 
-class GitLogAllCommand(GitLogCommand):
-    def get_file_name(self):
-        return ''
+class GitLogAllCommand(GitLog, GitWindowCommand):
+    pass
 
 
-class GitGraphCommand(GitCommand):
-    def run(self, edit):
+class GitGraph:
+    def run(self, edit=None):
         self.run_command(
             ['git', 'log', '--graph', '--pretty=%h %aN %ci%d %s', '--abbrev-commit', '--no-color', '--decorate',
             '--date-order', '--', self.get_file_name()],
@@ -242,13 +288,15 @@ class GitGraphCommand(GitCommand):
         self.scratch(result, title="Git Log Graph", syntax=plugin_file("Git Graph.tmLanguage"))
 
 
-class GitGraphAllCommand(GitGraphCommand):
-    def get_file_name(self):
-        return ''
+class GitGraphCommand(GitGraph, GitTextCommand):
+    pass
+
+class GitGraphAllCommand(GitGraph, GitWindowCommand):
+    pass
 
 
-class GitDiffCommand(GitCommand):
-    def run(self, edit):
+class GitDiff:
+    def run(self, edit=None):
         self.run_command(['git', 'diff', '--no-color', self.get_file_name()],
             self.diff_done)
 
@@ -258,15 +306,16 @@ class GitDiffCommand(GitCommand):
             return
         self.scratch(result, title="Git Diff")
 
+class GitDiffCommand(GitDiff, GitTextCommand):
+    pass
 
-class GitDiffAllCommand(GitDiffCommand):
-    def get_file_name(self):
-        return ''
+class GitDiffAllCommand(GitDiff, GitWindowCommand):
+    pass
 
 
-class GitQuickCommitCommand(GitCommand):
+class GitQuickCommitCommand(GitTextCommand):
     def run(self, edit):
-        self.window().show_input_panel("Message", "",
+        self.get_window().show_input_panel("Message", "",
             self.on_input, None, None)
 
     def on_input(self, message):
@@ -302,10 +351,10 @@ class GitQuickCommitCommand(GitCommand):
 # 5. Strip lines beginning with # from the message, and save in a temporary
 #    file
 # 6. `commit -F [tempfile]`
-class GitCommitCommand(GitCommand):
+class GitCommitCommand(GitWindowCommand):
     active_message = False
 
-    def run(self, edit):
+    def run(self):
         self.run_command(
             ['git', 'status', '--untracked-files=no', '--porcelain'],
             self.porcelain_status_done
@@ -333,7 +382,7 @@ class GitCommitCommand(GitCommand):
             "# Just close the window to accept your message.",
             result.strip()
         ])
-        msg = self.window().new_file()
+        msg = self.window.new_file()
         msg.set_scratch(True)
         msg.set_name("COMMIT_EDITMSG")
         self._output_to_view(msg, template, syntax=plugin_file("Git Commit Message.tmLanguage"))
@@ -371,8 +420,8 @@ class GitCommitMessageListener(sublime_plugin.EventListener):
         command.message_done(message)
 
 
-class GitStatusCommand(GitCommand):
-    def run(self, edit):
+class GitStatusCommand(GitWindowCommand):
+    def run(self):
         self.run_command(['git', 'status', '--porcelain'], self.status_done)
 
     def status_done(self, result):
@@ -401,7 +450,7 @@ class GitStatusCommand(GitCommand):
     def panel_followup(self, picked_file, picked_index):
         # split out solely so I can override it for laughs
         self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
-            self.diff_done, working_dir=git_root(self.get_file_location()))
+            self.diff_done, working_dir=git_root(self.get_working_dir()))
 
     def diff_done(self, result):
         if not result.strip():
@@ -422,26 +471,26 @@ class GitAddChoiceCommand(GitStatusCommand):
         if picked_index == 0:
             picked_file = '.'
         self.run_command(['git', 'add', "--", picked_file.strip('"')],
-            working_dir=git_root(self.get_file_location()))
+            working_dir=git_root(self.get_working_dir()))
 
 
-class GitAdd(GitCommand):
+class GitAdd(GitTextCommand):
     def run(self, edit):
         self.run_command(['git', 'add', self.get_file_name()])
 
 
-class GitStashCommand(GitCommand):
-    def run(self, edit):
+class GitStashCommand(GitWindowCommand):
+    def run(self):
         self.run_command(['git', 'stash'])
 
 
-class GitStashPopCommand(GitCommand):
-    def run(self, edit):
+class GitStashPopCommand(GitWindowCommand):
+    def run(self):
         self.run_command(['git', 'stash', 'pop'])
 
 
-class GitBranchCommand(GitCommand):
-    def run(self, edit):
+class GitBranchCommand(GitWindowCommand):
+    def run(self):
         self.run_command(['git', 'branch', '--no-color'], self.branch_done)
 
     def branch_done(self, result):
@@ -459,7 +508,7 @@ class GitBranchCommand(GitCommand):
         self.run_command(['git', 'checkout', picked_branch])
 
 
-class GitCheckoutCommand(GitCommand):
+class GitCheckoutCommand(GitTextCommand):
     def run(self, edit):
         self.run_command(['git', 'checkout', self.get_file_name()], self.checkout_done)
 
@@ -467,10 +516,10 @@ class GitCheckoutCommand(GitCommand):
         self.view.run_command('revert')
 
 
-class GitPullCommand(GitCommand):
-    def run(self, edit):
+class GitPullCommand(GitWindowCommand):
+    def run(self):
         self.run_command(['git', 'pull'])
 
-class GitPushCommand(GitCommand):
-    def run(self, edit):
+class GitPushCommand(GitWindowCommand):
+    def run(self):
         self.run_command(['git', 'push'])
