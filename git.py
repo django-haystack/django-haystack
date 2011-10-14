@@ -82,6 +82,11 @@ class CommandThread(threading.Thread):
                 _make_text_safeish(output, self.fallback_encoding))
         except subprocess.CalledProcessError, e:
             main_thread(self.on_done, e.returncode)
+        except OSError, e:
+            if e.errno == 2:
+                main_thread(sublime.error_message, "Git binary could not be found in PATH\nPATH is: %s" % os.environ['PATH'])
+            else:
+                raise e
 
 
 # A base for all commands
@@ -93,11 +98,11 @@ class GitCommand:
         if 'working_dir' not in kwargs:
             kwargs['working_dir'] = self.get_working_dir()
         if 'fallback_encoding' not in kwargs and self.active_view() and self.active_view().settings().get('fallback_encoding'):
-           kwargs['fallback_encoding'] = self.active_view().settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
+            kwargs['fallback_encoding'] = self.active_view().settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
 
         s = sublime.load_settings("Git.sublime-settings")
         if s.get('save_first') and self.active_view() and self.active_view().is_dirty():
-           self.active_view().run_command('save')
+            self.active_view().run_command('save')
         if command[0] == 'git' and s.get('git_command'):
             command[0] = s.get('git_command')
         if not callback:
