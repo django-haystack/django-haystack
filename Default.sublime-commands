@@ -71,4 +71,8 @@
         "caption": "Git: Push",
         "command": "git_push"
     }
+    ,{
+        "caption": "Git: Show Current File",
+        "command": "git_show"
+    }
 ]
