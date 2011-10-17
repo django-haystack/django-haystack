@@ -151,7 +151,6 @@ class GitCommand:
         self.get_window().show_quick_panel(*args, **kwargs)
 
 
-
 # A base for all git commands that work with the entire repository
 class GitWindowCommand(GitCommand, sublime_plugin.WindowCommand):
     def active_view(self):
@@ -161,7 +160,6 @@ class GitWindowCommand(GitCommand, sublime_plugin.WindowCommand):
         view = self.active_view()
         if view and view.file_name() and len(view.file_name()) > 0:
             return view.file_name()
-
 
     # If there's no active view or the active view is not a file on the
     # filesystem (e.g. a search results view), we can infer the folder
@@ -215,7 +213,6 @@ class GitTextCommand(GitCommand, sublime_plugin.TextCommand):
         # the case of the quick panel.
         # So, this is not necessarily ideal, but it does work.
         return self.view.window() or sublime.active_window()
-
 
 
 class GitBlameCommand(GitTextCommand):
@@ -274,14 +271,16 @@ class GitLog:
     def details_done(self, result):
         self.scratch(result, title="Git Commit Details", syntax=plugin_file("Git Commit Message.tmLanguage"))
 
+
 class GitLogCommand(GitLog, GitTextCommand):
     pass
+
 
 class GitLogAllCommand(GitLog, GitWindowCommand):
     pass
 
 
-class GitGraph:
+class GitGraph(object):
     def run(self, edit=None):
         self.run_command(
             ['git', 'log', '--graph', '--pretty=%h %aN %ci%d %s', '--abbrev-commit', '--no-color', '--decorate',
@@ -296,11 +295,12 @@ class GitGraph:
 class GitGraphCommand(GitGraph, GitTextCommand):
     pass
 
+
 class GitGraphAllCommand(GitGraph, GitWindowCommand):
     pass
 
 
-class GitDiff:
+class GitDiff (object):
     def run(self, edit=None):
         self.run_command(['git', 'diff', '--no-color', self.get_file_name()],
             self.diff_done)
@@ -311,8 +311,10 @@ class GitDiff:
             return
         self.scratch(result, title="Git Diff")
 
+
 class GitDiffCommand(GitDiff, GitTextCommand):
     pass
+
 
 class GitDiffAllCommand(GitDiff, GitWindowCommand):
     pass
@@ -524,6 +526,7 @@ class GitCheckoutCommand(GitTextCommand):
 class GitPullCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'pull'])
+
 
 class GitPushCommand(GitWindowCommand):
     def run(self):
