@@ -21,21 +21,26 @@
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>support.function.author.git-blame</string>
+					<string>string.path.git-blame</string>
 				</dict>
 				<key>3</key>
 				<dict>
 					<key>name</key>
-					<string>constant.numeric.date.git-blame</string>
+					<string>support.function.author.git-blame</string>
 				</dict>
 				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>constant.numeric.date.git-blame</string>
+				</dict>
+				<key>5</key>
 				<dict>
 					<key>name</key>
 					<string>variable.parameter.line-number.git-blame</string>
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>^(\^?[a-f0-9]+)\s+\((.*?)\s+(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [+-]\d{4})\s+(\d+)\)</string>
+			<string>^(\^?[a-f0-9]+)\s+([a-zA-Z0-9\.\/]*)\s*\((.*?)\s+(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [+-]\d{4})\s+(\d+)\)</string>
 			<key>name</key>
 			<string>line.comment.git-blame</string>
 		</dict>

@@ -3,13 +3,14 @@
   "fileTypes": ["git-blame"],
   "patterns": [
     {
-        "match": "^(\\^?[a-f0-9]+)\\s+\\((.*?)\\s+(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d [+-]\\d{4})\\s+(\\d+)\\)",
+        "match": "^(\\^?[a-f0-9]+)\\s+([a-zA-Z0-9\\.\\/]*)\\s*\\((.*?)\\s+(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d [+-]\\d{4})\\s+(\\d+)\\)",
         "name": "line.comment.git-blame",
         "captures": {
             "1": {"name": "string.sha.git-blame"},
-            "2": {"name": "support.function.author.git-blame"},
-            "3": {"name": "constant.numeric.date.git-blame"},
-            "4": {"name": "variable.parameter.line-number.git-blame"}
+            "2": {"name": "string.path.git-blame"},
+            "3": {"name": "support.function.author.git-blame"},
+            "4": {"name": "constant.numeric.date.git-blame"},
+            "5": {"name": "variable.parameter.line-number.git-blame"}
         }
     }
   ],
