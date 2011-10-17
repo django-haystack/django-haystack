@@ -450,14 +450,20 @@ class GitStatusCommand(GitWindowCommand):
         if 0 > picked < len(self.results):
             return
         picked_file = self.results[picked]
-        # first 3 characters are status codes
+        # first 2 characters are status codes, the third is a space
+        picked_status = picked_file[:2]
         picked_file = picked_file[3:]
-        self.panel_followup(picked_file, picked)
+        self.panel_followup(picked_status, picked_file, picked)
 
-    def panel_followup(self, picked_file, picked_index):
+    def panel_followup(self, picked_status, picked_file, picked_index):
         # split out solely so I can override it for laughs
-        self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
-            self.diff_done, working_dir=git_root(self.get_working_dir()))
+
+        root = git_root(self.get_working_dir())
+        if picked_status == '??':
+            self.window.open_file(os.path.join(root, picked_file))
+        else:
+            self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
+                self.diff_done, working_dir=root)
 
     def diff_done(self, result):
         if not result.strip():
@@ -474,7 +480,7 @@ class GitAddChoiceCommand(GitStatusCommand):
         self.quick_panel(self.results, self.panel_done,
             sublime.MONOSPACE_FONT)
 
-    def panel_followup(self, picked_file, picked_index):
+    def panel_followup(self, picked_status, picked_file, picked_index):
         if picked_index == 0:
             picked_file = '.'
         self.run_command(['git', 'add', "--", picked_file.strip('"')],
