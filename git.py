@@ -188,7 +188,7 @@ class GitBlameCommand(GitCommand):
         self.run_command(command, self.blame_done)
 
     def blame_done(self, result):
-        self.scratch(result, title="Git Blame")
+        self.scratch(result, title="Git Blame", syntax=plugin_file("Git Blame.tmLanguage"))
 
 
 class GitLogCommand(GitCommand):
