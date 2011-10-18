@@ -21,7 +21,7 @@ class SearchField(object):
     def __init__(self, model_attr=None, use_template=False, template_name=None,
                  document=False, indexed=True, stored=True, faceted=False,
                  default=NOT_PROVIDED, null=False, index_fieldname=None,
-                 facet_class=None, boost=1.0, weight=None):
+                 facet_class=None, boost=1.0, weight=None, must_exist=True):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -36,6 +36,7 @@ class SearchField(object):
         self.index_fieldname = index_fieldname
         self.boost = weight or boost
         self.is_multivalued = False
+        self.must_exist = must_exist
         
         # We supply the facet_class for making it easy to create a faceted
         # field based off of this field.
@@ -78,7 +79,7 @@ class SearchField(object):
             current_object = obj
             
             for attr in attrs:
-                if not hasattr(current_object, attr):
+                if self.must_exist and not hasattr(current_object, attr):
                     raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(obj), attr))
                 
                 current_object = getattr(current_object, attr, None)
