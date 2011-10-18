@@ -476,8 +476,11 @@ class GitAddChoiceCommand(GitStatusCommand):
 
     def panel_followup(self, picked_file, picked_index):
         if picked_index == 0:
-            picked_file = '.'
-        self.run_command(['git', 'add', "--", picked_file.strip('"')],
+            args = ["--update"]
+        else:
+            args = ["--", picked_file.strip('"')]
+
+        self.run_command(['git', 'add'] + args,
             working_dir=git_root(self.get_working_dir()))
 
 
