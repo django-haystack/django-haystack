@@ -99,12 +99,14 @@ class SearchField(object):
                         # accesses will fail misreably.
                         break
                     elif self.null:
-                        current_object = None
                         # Fall out of the loop, given any further attempts at
                         # accesses will fail misreably.
                         break
-                    else:
+                    elif self.must_exist:
                         raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(obj), attr))
+                    else:
+                        # does not exist, no further lookup attempts on None
+                        break
             
             if callable(current_object):
                 return current_object()
