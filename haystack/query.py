@@ -403,7 +403,7 @@ class SearchQuerySet(object):
                 warnings.warn('The model %r is not registered for search.' % model)
 
             clone.query.add_model(model)
-
+        clone._determine_backend()
         return clone
 
     def result_class(self, klass):
