@@ -231,7 +231,7 @@ class GitBlameCommand(GitTextCommand):
             # just the lines we have a selection on
             begin_line, begin_column = self.view.rowcol(selection.begin())
             end_line, end_column = self.view.rowcol(selection.end())
-            lines = str(begin_line) + ',' + str(end_line)
+            lines = str(begin_line + 1) + ',' + str(end_line + 1)
             command.extend(('-L', lines))
 
         command.append(self.get_file_name())
