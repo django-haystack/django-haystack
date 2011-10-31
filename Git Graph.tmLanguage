@@ -40,7 +40,7 @@
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>^([| *\\]+)([0-9a-f]{4,40}) (.*?) (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [+-]\d{4}) (?:\(((?:[a-zA-Z0-9_\-\/]+(?:, )?)+)\) )?</string>
+			<string>^([| *\\]+)([0-9a-f]{4,40}) (.*?) (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [+-]\d{4}) (?:\(((?:[a-zA-Z0-9._\-\/]+(?:, )?)+)\) )?</string>
 			<key>name</key>
 			<string>log-entry.git-graph</string>
 		</dict>

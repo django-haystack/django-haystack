@@ -151,7 +151,6 @@ class GitCommand:
         self.get_window().show_quick_panel(*args, **kwargs)
 
 
-
 # A base for all git commands that work with the entire repository
 class GitWindowCommand(GitCommand, sublime_plugin.WindowCommand):
     def active_view(self):
@@ -161,7 +160,6 @@ class GitWindowCommand(GitCommand, sublime_plugin.WindowCommand):
         view = self.active_view()
         if view and view.file_name() and len(view.file_name()) > 0:
             return view.file_name()
-
 
     # If there's no active view or the active view is not a file on the
     # filesystem (e.g. a search results view), we can infer the folder
@@ -217,7 +215,6 @@ class GitTextCommand(GitCommand, sublime_plugin.TextCommand):
         return self.view.window() or sublime.active_window()
 
 
-
 class GitBlameCommand(GitTextCommand):
     def run(self, edit):
         # somewhat custom blame command:
@@ -238,7 +235,7 @@ class GitBlameCommand(GitTextCommand):
         self.run_command(command, self.blame_done)
 
     def blame_done(self, result):
-        self.scratch(result, title="Git Blame")
+        self.scratch(result, title="Git Blame", syntax=plugin_file("Git Blame.tmLanguage"))
 
 
 class GitLog:
@@ -274,14 +271,16 @@ class GitLog:
     def details_done(self, result):
         self.scratch(result, title="Git Commit Details", syntax=plugin_file("Git Commit Message.tmLanguage"))
 
+
 class GitLogCommand(GitLog, GitTextCommand):
     pass
+
 
 class GitLogAllCommand(GitLog, GitWindowCommand):
     pass
 
 
-class GitGraph:
+class GitGraph(object):
     def run(self, edit=None):
         self.run_command(
             ['git', 'log', '--graph', '--pretty=%h %aN %ci%d %s', '--abbrev-commit', '--no-color', '--decorate',
@@ -296,11 +295,12 @@ class GitGraph:
 class GitGraphCommand(GitGraph, GitTextCommand):
     pass
 
+
 class GitGraphAllCommand(GitGraph, GitWindowCommand):
     pass
 
 
-class GitDiff:
+class GitDiff (object):
     def run(self, edit=None):
         self.run_command(['git', 'diff', '--no-color', self.get_file_name()],
             self.diff_done)
@@ -311,8 +311,10 @@ class GitDiff:
             return
         self.scratch(result, title="Git Diff")
 
+
 class GitDiffCommand(GitDiff, GitTextCommand):
     pass
+
 
 class GitDiffAllCommand(GitDiff, GitWindowCommand):
     pass
@@ -448,14 +450,20 @@ class GitStatusCommand(GitWindowCommand):
         if 0 > picked < len(self.results):
             return
         picked_file = self.results[picked]
-        # first 3 characters are status codes
+        # first 2 characters are status codes, the third is a space
+        picked_status = picked_file[:2]
         picked_file = picked_file[3:]
-        self.panel_followup(picked_file, picked)
+        self.panel_followup(picked_status, picked_file, picked)
 
-    def panel_followup(self, picked_file, picked_index):
+    def panel_followup(self, picked_status, picked_file, picked_index):
         # split out solely so I can override it for laughs
-        self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
-            self.diff_done, working_dir=git_root(self.get_working_dir()))
+
+        root = git_root(self.get_working_dir())
+        if picked_status == '??':
+            self.window.open_file(os.path.join(root, picked_file))
+        else:
+            self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
+                self.diff_done, working_dir=root)
 
     def diff_done(self, result):
         if not result.strip():
@@ -472,10 +480,13 @@ class GitAddChoiceCommand(GitStatusCommand):
         self.quick_panel(self.results, self.panel_done,
             sublime.MONOSPACE_FONT)
 
-    def panel_followup(self, picked_file, picked_index):
+    def panel_followup(self, picked_status, picked_file, picked_index):
         if picked_index == 0:
-            picked_file = '.'
-        self.run_command(['git', 'add', "--", picked_file.strip('"')],
+            args = ["--update"]
+        else:
+            args = ["--", picked_file.strip('"')]
+
+        self.run_command(['git', 'add'] + args,
             working_dir=git_root(self.get_working_dir()))
 
 
@@ -524,6 +535,7 @@ class GitCheckoutCommand(GitTextCommand):
 class GitPullCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'pull'])
+
 
 class GitPushCommand(GitWindowCommand):
     def run(self):

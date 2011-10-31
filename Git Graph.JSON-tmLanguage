@@ -2,7 +2,7 @@
   "scopeName": "text.git-graph",
   "fileTypes": ["git-graph"],
   "patterns": [
-    { "match": "^([| *\\\\]+)([0-9a-f]{4,40}) (.*?) (\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d [+-]\\d{4}) (?:\\(((?:[a-zA-Z0-9_\\-\\/]+(?:, )?)+)\\) )?",
+    { "match": "^([| *\\\\]+)([0-9a-f]{4,40}) (.*?) (\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d [+-]\\d{4}) (?:\\(((?:[a-zA-Z0-9._\\-\\/]+(?:, )?)+)\\) )?",
       "name": "log-entry.git-graph",
       "captures": {
         "1": {"name": "comment.git-graph"            },
