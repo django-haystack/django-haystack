@@ -309,7 +309,12 @@ class GitDiff (object):
         if not result.strip():
             self.panel("No output")
             return
-        self.scratch(result, title="Git Diff")
+        view = self.scratch(result, title="Git Diff")
+        lines_inserted = view.find_all(r'^\+[^+]{2} ')
+        lines_deleted = view.find_all(r'^-[^-]{2} ')
+
+        view.add_regions("inserted", lines_inserted, "markup.inserted.diff", "dot", sublime.HIDDEN)
+        view.add_regions("deleted", lines_deleted, "markup.deleted.diff", "dot", sublime.HIDDEN)
 
 
 class GitDiffCommand(GitDiff, GitTextCommand):
