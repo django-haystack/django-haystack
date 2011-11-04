@@ -541,3 +541,19 @@ class GitPullCommand(GitWindowCommand):
 class GitPushCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'push'])
+
+
+class GitCustomCommand(GitTextCommand):
+    def run(self, edit):
+        self.get_window().show_input_panel("Git command", "",
+            self.on_input, None, None)
+
+    def on_input(self, command):
+        command = str(command) # avoiding unicode
+        if command.strip() == "":
+            self.panel("No git command provided")
+            return
+        import shlex
+        command_splitted = ['git'] + shlex.split(command)
+        print command_splitted
+        self.run_command(command_splitted)
