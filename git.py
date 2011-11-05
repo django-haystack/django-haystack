@@ -534,7 +534,7 @@ class GitNewBranchCommand(GitWindowCommand):
         if branchname.strip() == "":
             self.panel("No branch name provided")
             return
-            self.run_command(['git', 'branch', branchname])
+        self.run_command(['git', 'branch', branchname])
         
 
 class GitCheckoutCommand(GitTextCommand):
