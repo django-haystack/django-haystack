@@ -72,6 +72,14 @@
         "command": "git_push"
     }
     ,{
+        "caption": "Git: Annotate",
+        "command": "git_annotate"
+    }
+    ,{
+        "caption": "Git: Clear Annotation",
+        "command": "git_clear_annotation"
+    }
+    ,{
         "caption": "Git: Custom Command",
         "command": "git_custom"
     }

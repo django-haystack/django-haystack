@@ -5,10 +5,10 @@ import threading
 import subprocess
 import functools
 import tempfile
+import re
 
 # when sublime loads a plugin it's cd'd into the plugin directory. Thus
 # __file__ is useless for my purposes. What I want is "Packages/Git", but
-# allowing for the possibility that someone has renamed the file.
 # Fun discovery: Sublime on windows still requires posix path separators.
 PLUGIN_DIRECTORY = os.getcwd().replace(os.path.normpath(os.path.join(os.getcwd(), '..', '..')) + os.path.sep, '').replace(os.path.sep, '/')
 
@@ -57,11 +57,12 @@ def _make_text_safeish(text, fallback_encoding):
 
 
 class CommandThread(threading.Thread):
-    def __init__(self, command, on_done, working_dir="", fallback_encoding=""):
+    def __init__(self, command, on_done, working_dir="", fallback_encoding="", stdin=""):
         threading.Thread.__init__(self)
         self.command = command
         self.on_done = on_done
         self.working_dir = working_dir
+        self.stdin = stdin
         self.fallback_encoding = fallback_encoding
 
     def run(self):
@@ -74,8 +75,12 @@ class CommandThread(threading.Thread):
 
             proc = subprocess.Popen(self.command,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdin=subprocess.PIPE,
                 shell=shell, universal_newlines=True)
-            output = proc.communicate()[0]
+            output = proc.communicate(self.stdin)[0]
+
+
+
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done,
@@ -92,7 +97,7 @@ class CommandThread(threading.Thread):
 # A base for all commands
 class GitCommand:
     def run_command(self, command, callback=None, show_status=True,
-            filter_empty_args=True, **kwargs):
+            filter_empty_args=True, stdin="", **kwargs):
         if filter_empty_args:
             command = [arg for arg in command if arg]
         if 'working_dir' not in kwargs:
@@ -557,3 +562,88 @@ class GitCustomCommand(GitTextCommand):
         command_splitted = ['git'] + shlex.split(command)
         print command_splitted
         self.run_command(command_splitted)
+
+
+class GitClearAnnotationCommand(GitTextCommand):
+    def run(self, view):
+        self.view.erase_regions('git.changes.x')
+        self.view.erase_regions('git.changes.+')
+        self.view.erase_regions('git.changes.-')
+
+
+class GitAnnotateCommand(GitTextCommand):
+    # Unfortunately, git diff does not support text from stdin, making a *live* annotation
+    # difficult. It might be possible to instead grab the latest committed version and compare
+    # that one using normal diff with stdin. Need to investigate.
+    def run(self, view):
+        all_text = self.view.substr(sublime.Region(0, min(self.view.size(), 2 ** 14)))
+        filename = self.get_file_name()
+        self.run_command(['git', 'diff', filename], stdin=all_text, callback=self.parse_diff)
+
+    # This is where the magic happens. At the moment, only one chunk format is supported. While
+    # the unified diff format theoritaclly supports more, I don't think git diff creates them.
+    def parse_diff(self, result):
+        self.panel(result)
+        lines = result.splitlines()
+        matcher = re.compile('^@@ -([0-9]*),([0-9]*) \+([0-9]*),([0-9]*) @@')
+        diff = []
+        for line_index in range(0, len(lines)):
+            line = lines[line_index]
+            if not line.startswith('@'):
+                continue
+            match = matcher.match(line)
+            if not match:
+                continue
+            line_before, len_before, line_after, len_after = [int(match.group(x)) for x in [1, 2, 3, 4]]
+            chunk_index = line_index + 1
+            tracked_line_index = line_after - 1
+            deletion = False
+            insertion = False
+            while True:
+                line = lines[chunk_index]
+                if line.startswith('@'):
+                    break
+                elif line.startswith('-'):
+                    deletion = True
+                    tracked_line_index -= 1
+                elif line.startswith('+'):
+                    insertion = True
+                    if deletion:
+                        diff.append(['x', tracked_line_index])
+                    else:
+                        diff.append(['+', tracked_line_index])
+                else:
+                    if not insertion and deletion:
+                        diff.append(['-', tracked_line_index])
+                    insertion = deletion = False
+                tracked_line_index += 1
+                chunk_index += 1
+                if chunk_index >= len(lines):
+                    break
+
+        self.annotate(diff)
+
+    # Once we got all lines with their specific change types (either x, +, or - for
+    # modified, added, or removed) we can create our regions and do the actual annotation.
+    def annotate(self, diff):
+        self.view.erase_regions('git.changes.x')
+        self.view.erase_regions('git.changes.+')
+        self.view.erase_regions('git.changes.-')
+        typed_diff = {'x': [], '+': [], '-': []}
+        for change_type, line in diff:
+            if change_type == '-':
+                full_region = self.view.full_line(self.view.text_point(line-1, 0))
+                position = full_region.begin()
+                for i in xrange(full_region.size()):
+                    typed_diff[change_type].append(sublime.Region(position + i))
+            else:
+                point = self.view.text_point(line, 0)
+                region = self.view.full_line(point)
+                if change_type == '-':
+                    region = sublime.Region(point, point + 5)
+                typed_diff[change_type].append(region)
+
+        for change in ['x', '+']:
+            self.view.add_regions("git.changes.{0}".format(change), typed_diff[change], 'git.changes.{0}'.format(change), 'dot')
+
+        self.view.add_regions("git.changes.-", typed_diff['-'], 'git.changes.-', 'dot', sublime.DRAW_EMPTY_AS_OVERWRITE)
