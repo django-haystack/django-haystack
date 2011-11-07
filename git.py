@@ -9,6 +9,7 @@ import re
 
 # when sublime loads a plugin it's cd'd into the plugin directory. Thus
 # __file__ is useless for my purposes. What I want is "Packages/Git", but
+# allowing for the possibility that someone has renamed the file.
 # Fun discovery: Sublime on windows still requires posix path separators.
 PLUGIN_DIRECTORY = os.getcwd().replace(os.path.normpath(os.path.join(os.getcwd(), '..', '..')) + os.path.sep, '').replace(os.path.sep, '/')
 
@@ -57,12 +58,13 @@ def _make_text_safeish(text, fallback_encoding):
 
 
 class CommandThread(threading.Thread):
-    def __init__(self, command, on_done, working_dir="", fallback_encoding="", stdin=""):
+    def __init__(self, command, on_done, working_dir="", fallback_encoding="", stdin="", stdout=subprocess.PIPE):
         threading.Thread.__init__(self)
         self.command = command
         self.on_done = on_done
         self.working_dir = working_dir
         self.stdin = stdin
+        self.stdout = stdout
         self.fallback_encoding = fallback_encoding
 
     def run(self):
@@ -74,13 +76,12 @@ class CommandThread(threading.Thread):
                 os.chdir(self.working_dir)
 
             proc = subprocess.Popen(self.command,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdout=self.stdout, stderr=subprocess.STDOUT,
                 stdin=subprocess.PIPE,
                 shell=shell, universal_newlines=True)
             output = proc.communicate(self.stdin)[0]
-
-
-
+            if not output:
+                output = ''
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done,
@@ -97,7 +98,7 @@ class CommandThread(threading.Thread):
 # A base for all commands
 class GitCommand:
     def run_command(self, command, callback=None, show_status=True,
-            filter_empty_args=True, stdin="", **kwargs):
+            filter_empty_args=True, no_save=False, **kwargs):
         if filter_empty_args:
             command = [arg for arg in command if arg]
         if 'working_dir' not in kwargs:
@@ -106,7 +107,7 @@ class GitCommand:
             kwargs['fallback_encoding'] = self.active_view().settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
 
         s = sublime.load_settings("Git.sublime-settings")
-        if s.get('save_first') and self.active_view() and self.active_view().is_dirty():
+        if s.get('save_first') and self.active_view() and self.active_view().is_dirty() and not no_save:
             self.active_view().run_command('save')
         if command[0] == 'git' and s.get('git_command'):
             command[0] = s.get('git_command')
@@ -566,24 +567,44 @@ class GitCustomCommand(GitTextCommand):
 
 class GitClearAnnotationCommand(GitTextCommand):
     def run(self, view):
+        self.active_view().settings().set('live_git_annotations', False)
         self.view.erase_regions('git.changes.x')
         self.view.erase_regions('git.changes.+')
         self.view.erase_regions('git.changes.-')
 
 
+class GitAnnotationListener(sublime_plugin.EventListener):
+    def on_modified(self, view):
+        if not view.settings().get('live_git_annotations'):
+            return
+        view.run_command('git_annotate')
+
+
 class GitAnnotateCommand(GitTextCommand):
     # Unfortunately, git diff does not support text from stdin, making a *live* annotation
-    # difficult. It might be possible to instead grab the latest committed version and compare
-    # that one using normal diff with stdin. Need to investigate.
+    # difficult. Therefore I had to resort to the system diff command. (Problems on win?)
+    # This works as follows:
+    # 1. When the command is run for the first time for this file, a temporary file with the
+    #    current state of the HEAD is being pulled from git.
+    # 2. All consecutive runs will pass the current buffer into diffs stdin. The resulting
+    #    output is then parsed and regions are set accordingly.
     def run(self, view):
-        all_text = self.view.substr(sublime.Region(0, min(self.view.size(), 2 ** 14)))
+        # If the annotations are already running, we dont have to create a new tmpfile
+        if self.active_view().settings().get('live_git_annotations'):
+            self.compare_tmp(None)
+            return
+        self.tmp = tempfile.NamedTemporaryFile()
+        self.active_view().settings().set('live_git_annotations', True)
         filename = self.get_file_name()
-        self.run_command(['git', 'diff', filename], stdin=all_text, callback=self.parse_diff)
+        self.run_command(['git', 'show', 'HEAD:{0}'.format(filename)], show_status=False, no_save=True, callback=self.compare_tmp, stdout=self.tmp)
+
+    def compare_tmp(self, result):
+        all_text = self.view.substr(sublime.Region(0, self.view.size()))
+        self.run_command(['diff', '-u', self.tmp.name, '-'], stdin=all_text, no_save=True, show_status=False, callback=self.parse_diff)
 
     # This is where the magic happens. At the moment, only one chunk format is supported. While
     # the unified diff format theoritaclly supports more, I don't think git diff creates them.
     def parse_diff(self, result):
-        self.panel(result)
         lines = result.splitlines()
         matcher = re.compile('^@@ -([0-9]*),([0-9]*) \+([0-9]*),([0-9]*) @@')
         diff = []
@@ -604,13 +625,15 @@ class GitAnnotateCommand(GitTextCommand):
                 if line.startswith('@'):
                     break
                 elif line.startswith('-'):
-                    deletion = True
+                    if not line.strip() == '-':
+                        deletion = True
                     tracked_line_index -= 1
                 elif line.startswith('+'):
-                    insertion = True
-                    if deletion:
+                    if deletion and not line.strip() == '+':
                         diff.append(['x', tracked_line_index])
-                    else:
+                        insertion = True
+                    elif not deletion:
+                        insertion = True
                         diff.append(['+', tracked_line_index])
                 else:
                     if not insertion and deletion:
