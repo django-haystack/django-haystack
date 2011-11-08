@@ -598,7 +598,6 @@ class GitAnnotateCommand(GitTextCommand):
         self.active_view().settings().set('live_git_annotations', True)
         root = git_root(self.get_working_dir())
         repo_file = os.path.relpath(self.view.file_name(), root)
-        print repo_file
         self.run_command(['git', 'show', 'HEAD:{0}'.format(repo_file)], show_status=False, no_save=True, callback=self.compare_tmp, stdout=self.tmp)
 
     def compare_tmp(self, result):
