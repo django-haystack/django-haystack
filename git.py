@@ -5,6 +5,7 @@ import threading
 import subprocess
 import functools
 import tempfile
+import os.path
 import re
 
 # when sublime loads a plugin it's cd'd into the plugin directory. Thus
@@ -595,8 +596,10 @@ class GitAnnotateCommand(GitTextCommand):
             return
         self.tmp = tempfile.NamedTemporaryFile()
         self.active_view().settings().set('live_git_annotations', True)
-        filename = self.get_file_name()
-        self.run_command(['git', 'show', 'HEAD:{0}'.format(filename)], show_status=False, no_save=True, callback=self.compare_tmp, stdout=self.tmp)
+        root = git_root(self.get_working_dir())
+        repo_file = os.path.relpath(self.view.file_name(), root)
+        print repo_file
+        self.run_command(['git', 'show', 'HEAD:{0}'.format(repo_file)], show_status=False, no_save=True, callback=self.compare_tmp, stdout=self.tmp)
 
     def compare_tmp(self, result):
         all_text = self.view.substr(sublime.Region(0, self.view.size()))
