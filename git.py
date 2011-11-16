@@ -302,7 +302,7 @@ class GitGraphAllCommand(GitGraph, GitWindowCommand):
 
 class GitDiff (object):
     def run(self, edit=None):
-        self.run_command(['git', 'diff', '--no-color', self.get_file_name()],
+        self.run_command(['git', 'diff', '--no-color', '--', self.get_file_name()],
             self.diff_done)
 
     def diff_done(self, result):
