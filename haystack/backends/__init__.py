@@ -288,6 +288,9 @@ class BaseSearchQuery(object):
         self.highlight = False
         self.facets = set()
         self.date_facets = {}
+        self.facet_mincount = None
+        self.facet_limit = None
+        self.facet_prefix = None
         self.query_facets = []
         self.narrow_queries = set()
         self._raw_query = None
@@ -346,6 +349,15 @@ class BaseSearchQuery(object):
 
         if self.query_facets:
             kwargs['query_facets'] = self.query_facets
+
+        if self.facet_mincount:
+            kwargs['facet_mincount'] = self.facet_mincount
+
+        if self.facet_limit:
+            kwargs['facet_limit'] = self.facet_limit
+
+        if self.facet_prefix:
+            kwargs['facet_prefix'] = self.facet_prefix
 
         if self.narrow_queries:
             kwargs['narrow_queries'] = self.narrow_queries
@@ -584,6 +596,15 @@ class BaseSearchQuery(object):
         """Orders the search result by a field."""
         self.order_by.append(field)
 
+    def set_facet_mincount(self, mincount):
+        self.facet_mincount = mincount
+
+    def set_facet_limit(self, limit):
+        self.facet_limit = limit
+
+    def set_facet_prefix(self, prefix):
+        self.facet_prefix = prefix
+        
     def clear_order_by(self):
         """
         Clears out all ordering that has been already added, reverting the
@@ -746,6 +767,9 @@ class BaseSearchQuery(object):
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()
         clone.query_facets = self.query_facets[:]
+        clone.facet_mincount = self.facet_mincount
+        clone.facet_limit = self.facet_limit
+        clone.facet_prefix = self.facet_prefix
         clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset
