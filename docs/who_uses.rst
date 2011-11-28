@@ -229,3 +229,33 @@ Using: Solr
 
 * http://www.todaslasrecetas.es/receta/s/?q=langostinos
 * http://www.todaslasrecetas.es/receta/9526/brochetas-de-langostinos
+
+
+AstroBin
+--------
+
+For general search.
+
+Using: ???
+
+* http://www.astrobin.com/
+
+
+European Paper Company
+----------------------
+
+For general search.
+
+Using: ???
+
+* http://europeanpaper.com/
+
+
+mtn-op
+------
+
+For general search.
+
+Using: ???
+
+* http://mountain-op.com/
