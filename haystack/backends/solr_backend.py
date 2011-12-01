@@ -109,6 +109,7 @@ class SolrSearchBackend(BaseSearchBackend):
                fields='', highlight=False, facets=None, date_facets=None,
                query_facets=None, narrow_queries=None, spelling_query=None,
                facet_mincount=None, facet_limit=None, facet_prefix=None,
+               facet_sort=None, facet_offset=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
         if len(query_string) == 0:
             return {
@@ -159,6 +160,14 @@ class SolrSearchBackend(BaseSearchBackend):
         if facet_prefix is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.prefix'] = facet_prefix
+
+        if facet_sort is not None:
+            kwargs['facet'] = 'on'
+            kwargs['facet.sort'] = facet_sort
+
+        if facet_offset is not None:
+            kwargs['facet'] = 'on'
+            kwargs['facet.offset'] = facet_offset
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -511,6 +520,12 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.facet_prefix:
             kwargs['facet_prefix'] = self.facet_prefix
+            
+        if self.facet_sort:
+            kwargs['facet_sort'] = self.facet_sort
+            
+        if self.facet_offset:
+            kwargs['facet_offset'] = self.facet_offset
             
         if self.query_facets:
             kwargs['query_facets'] = self.query_facets
