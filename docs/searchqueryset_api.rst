@@ -66,7 +66,7 @@ search the main documents.
 For example::
 
     from haystack.query import SearchQuerySet
-    
+
     # This searches whatever fields were marked ``document=True``.
     results = SearchQuerySet().exclude(content='hello')
 
@@ -131,12 +131,12 @@ match will be performed on that phrase.
 Example::
 
     SearchQuerySet().filter(content='foo')
-    
+
     SearchQuerySet().filter(content='foo', pub_date__lte=datetime.date(2008, 1, 1))
-    
+
     # Identical to the previous example.
     SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
-    
+
     # To escape user data:
     sqs = SearchQuerySet()
     sqs = sqs.filter(title=sqs.query.clean(user_query))
@@ -199,7 +199,7 @@ string with a ``-``::
     reconcile differences between characters from different languages. This
     means that accented characters will sort closely with the same character
     and **NOT** necessarily close to the unaccented form of the character.
-    
+
     If you want this kind of behavior, you should override the ``prepare_FOO``
     methods on your ``SearchIndex`` objects to transliterate the characters
     as you see fit.
@@ -327,7 +327,7 @@ Example::
 
     # Search, from recipes containing 'blend', for recipes containing 'banana'.
     SearchQuerySet().narrow('blend').filter(content='banana')
-    
+
     # Using a fielded search where the recipe's title contains 'smoothie', find all recipes published before 2009.
     SearchQuerySet().narrow('title:smoothie').filter(pub_date__lte=datetime.datetime(2009, 1, 1))
 
@@ -418,7 +418,7 @@ operator specified in ``HAYSTACK_DEFAULT_OPERATOR``.
 Example::
 
     SearchQuerySet().auto_query('goldfish "old one eye" -tank')
-    
+
     # ... is identical to...
     SearchQuerySet().filter(content='old one eye').filter(content='goldfish').exclude(content='tank')
 
@@ -457,7 +457,7 @@ Example::
     mlt = SearchQuerySet().more_like_this(entry)
     mlt.count() # 5
     mlt[0].object.title # "Haystack Beta 1 Released"
-    
+
     # ...or...
     mlt = SearchQuerySet().filter(public=True).exclude(pub_date__lte=datetime.date(2009, 7, 21)).more_like_this(entry)
     mlt.count() # 2
@@ -493,7 +493,7 @@ a ``SearchResult`` object that is the best match the search backend found::
 
     foo = SearchQuerySet().filter(content='foo').best_match()
     foo.id # Something like 5.
-    
+
     # Identical to:
     foo = SearchQuerySet().filter(content='foo')[0]
 
@@ -510,7 +510,7 @@ found::
 
     foo = SearchQuerySet().filter(content='foo').latest('pub_date')
     foo.id # Something like 3.
-    
+
     # Identical to:
     foo = SearchQuerySet().filter(content='foo').order_by('-pub_date')[0]
 
@@ -537,7 +537,7 @@ Example::
 
     # Count document hits for each author.
     sqs = SearchQuerySet().filter(content='foo').facet('author')
-    
+
     sqs.facet_counts()
     # Gives the following response:
     # {
@@ -577,10 +577,55 @@ Example::
 
     sqs = SearchQuerySet().auto_query('mor exmples')
     sqs.spelling_suggestion() # u'more examples'
-    
+
     # ...or...
     suggestion = SearchQuerySet().spelling_suggestion('moar exmples')
     suggestion # u'more examples'
+
+
+``values``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.values(self, *fields)
+
+Returns a list of dictionaries, each containing the key/value pairs for the
+result, exactly like Django's ``ValuesQuerySet``.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run.
+
+You must provide a list of one or more fields as arguments. These fields will
+be the ones included in the individual results.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('banana').values('title', 'description')
+
+
+``values_list``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.values_list(self, *fields, **kwargs)
+
+Returns a list of field values as tuples, exactly like Django's
+``ValuesListQuerySet``.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run.
+
+You must provide a list of one or more fields as arguments. These fields will
+be the ones included in the individual results.
+
+You may optionally also provide a ``flat=True`` kwarg, which in the case of a
+single field being provided, will return a flat list of that field rather than
+a list of tuples.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('banana').values_list('title', 'description')
+
+    # ...or just the titles as a flat list...
+    sqs = SearchQuerySet().auto_query('banana').values_list('title', flat=True)
 
 
 .. _field-lookups:
@@ -608,17 +653,17 @@ The actual behavior of these lookups is backend-specific.
     parses data, especially in regards to stemming (see :doc:`glossary`). This
     can mean that if the query ends in a vowel or a plural form, it may get
     stemmed before being evaluated.
-    
+
     This is both backend-specific and yet fairly consistent between engines,
     and may be the cause of sometimes unexpected results.
 
 Example::
 
     SearchQuerySet().filter(content='foo')
-    
+
     # Identical to:
     SearchQuerySet().filter(content__exact='foo')
-    
+
     # Other usages look like:
     SearchQuerySet().filter(pub_date__gte=datetime.date(2008, 1, 1), pub_date__lt=datetime.date(2009, 1, 1))
     SearchQuerySet().filter(author__in=['daniel', 'john', 'jane'])
@@ -649,7 +694,7 @@ calling ``load_all_queryset``.
     entire cache that appears before the offset you request must be filled in
     order to produce consistent results. On large result sets and at higher
     slices, this can take time.
-    
+
     This is the old behavior of ``SearchQuerySet``, so performance is no worse
     than the early days of Haystack.
 

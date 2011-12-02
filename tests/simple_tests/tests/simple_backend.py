@@ -123,3 +123,15 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
         self.assertTrue(len(self.sqs.exclude(name='daniel')) > 0)
         self.assertTrue(len(self.sqs.order_by('-pub_date')) > 0)
 
+    def test_values_queries(self):
+        sqs = self.sqs.auto_query('daniel')
+        self.assertTrue(len(sqs) > 0)
+
+        flat_scores = sqs.values_list("score", flat=True)
+        self.assertEqual(flat_scores[0], 0)
+
+        scores = sqs.values_list("id", "score")
+        self.assertEqual(scores[0], [1, 0])
+
+        scores_dict = sqs.values("id", "score")
+        self.assertEqual(scores_dict[0], {"id": 1, "score": 0})

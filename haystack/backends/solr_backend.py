@@ -124,6 +124,8 @@ class SearchBackend(BaseSearchBackend):
         }
         
         if fields:
+            if isinstance(fields, (list, set)):
+                fields = " ".join(fields)
             kwargs['fl'] = fields
         
         if sort_by is not None:
@@ -442,10 +444,11 @@ class SearchQuery(BaseSearchQuery):
         
         return result
     
-    def run(self, spelling_query=None):
+    def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        kwargs = {
+
+        search_kwargs = {
             'start_offset': self.start_offset,
             'result_class': self.result_class,
         }
@@ -459,30 +462,35 @@ class SearchQuery(BaseSearchQuery):
                 else:
                     order_by_list.append('%s asc' % order_by)
             
-            kwargs['sort_by'] = ", ".join(order_by_list)
+            search_kwargs['sort_by'] = ", ".join(order_by_list)
         
         if self.end_offset is not None:
-            kwargs['end_offset'] = self.end_offset
+            search_kwargs['end_offset'] = self.end_offset
         
         if self.highlight:
-            kwargs['highlight'] = self.highlight
+            search_kwargs['highlight'] = self.highlight
         
         if self.facets:
-            kwargs['facets'] = list(self.facets)
+            search_kwargs['facets'] = list(self.facets)
         
         if self.date_facets:
-            kwargs['date_facets'] = self.date_facets
+            search_kwargs['date_facets'] = self.date_facets
         
         if self.query_facets:
-            kwargs['query_facets'] = self.query_facets
+            search_kwargs['query_facets'] = self.query_facets
         
         if self.narrow_queries:
-            kwargs['narrow_queries'] = self.narrow_queries
+            search_kwargs['narrow_queries'] = self.narrow_queries
+        
+        if self.fields:
+            search_kwargs['fields'] = self.fields
         
         if spelling_query:
-            kwargs['spelling_query'] = spelling_query
+            search_kwargs['spelling_query'] = spelling_query
         
-        results = self.backend.search(final_query, **kwargs)
+        search_kwargs.update(kwargs)
+        
+        results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)

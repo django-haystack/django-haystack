@@ -43,10 +43,10 @@ different combinations, you should use ``SQ`` objects. Like
 Example::
 
     from haystack.query import SQ
-    
+
     # We want "title: Foo AND (tags:bar OR tags:moof)"
     sqs = SearchQuerySet().filter(title='Foo').filter(SQ(tags='bar') | SQ(tags='moof'))
-    
+
     # To clean user-provided data:
     sqs = SearchQuerySet()
     clean_query = sqs.query.clean(user_query)
@@ -109,16 +109,18 @@ A basic (override-able) implementation is provided.
 ``run``
 ~~~~~~~
 
-.. method:: SearchQuery.run(self, spelling_query=None)
+.. method:: SearchQuery.run(self, spelling_query=None, **kwargs)
 
 Builds and executes the query. Returns a list of search results.
 
 Optionally passes along an alternate query for spelling suggestions.
 
+Optionally passes along more kwargs for controlling the search query.
+
 ``run_mlt``
 ~~~~~~~~~~~
 
-.. method:: SearchQuery.run_mlt(self)
+.. method:: SearchQuery.run_mlt(self, **kwargs)
 
 Executes the More Like This. Returns a list of search results similar
 to the provided document (and optionally query).
@@ -126,7 +128,7 @@ to the provided document (and optionally query).
 ``run_raw``
 ~~~~~~~~~~~
 
-.. method:: SearchQuery.run_raw(self)
+.. method:: SearchQuery.run_raw(self, **kwargs)
 
 Executes a raw query. Returns a list of search results.
 
@@ -143,7 +145,7 @@ the results.
 ``get_results``
 ~~~~~~~~~~~~~~~
 
-.. method:: SearchQuery.get_results(self)
+.. method:: SearchQuery.get_results(self, **kwargs)
 
 Returns the results received from the backend.
 

@@ -9,7 +9,8 @@ from haystack.backends.dummy_backend import SearchBackend as DummySearchBackend
 from haystack.backends.dummy_backend import SearchQuery as DummySearchQuery
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet, EmptySearchQuerySet
+from haystack.query import (SearchQuerySet, EmptySearchQuerySet,
+                            ValuesSearchQuerySet, ValuesListSearchQuerySet)
 from haystack.sites import SearchSite
 from core.models import MockModel, AnotherMockModel, CharPKMockModel, AFifthMockModel
 from core.tests.indexes import ReadQuerySetTestSearchIndex
@@ -726,6 +727,33 @@ class EmptySearchQuerySetTestCase(TestCase):
         EmptySearchQuerySets can be used in templates.
         """
         self.assertRaises(TypeError, lambda: self.esqs['count'])
+
+
+class ValuesQuerySetTestCase(SearchQuerySetTestCase):
+    def test_values_sqs(self):
+        sqs = self.msqs.auto_query("test").values("id")
+        self.assert_(isinstance(sqs, ValuesSearchQuerySet))
+
+        # We'll do a basic test to confirm that slicing works as expected:
+        self.assert_(isinstance(sqs[0], dict))
+        self.assert_(isinstance(sqs[0:5][0], dict))
+
+    def test_valueslist_sqs(self):
+        sqs = self.msqs.auto_query("test").values_list("id")
+
+        self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
+        self.assert_(isinstance(sqs[0], (list, tuple)))
+        self.assert_(isinstance(sqs[0:1][0], (list, tuple)))
+
+        self.assertRaises(TypeError, self.msqs.auto_query("test").values_list, "id", "score", flat=True)
+
+        flat_sqs = self.msqs.auto_query("test").values_list("id", flat=True)
+        self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
+
+        # Note that this will actually be None because a mocked sqs lacks
+        # anything else:
+        self.assert_(flat_sqs[0] is None)
+        self.assert_(flat_sqs[0:1][0] is None)
 
 
 if test_pickling:
