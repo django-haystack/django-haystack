@@ -289,6 +289,11 @@ class BaseSearchQuery(object):
         self.date_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
+        #: If defined, fields should be a list of field names - no other values
+        #: will be retrieved so the caller must be careful to include django_ct
+        #: and django_id when using code which expects those to be included in
+        #: the results
+        self.fields = []
         self._raw_query = None
         self._raw_query_params = {}
         self._more_like_this = False
@@ -369,14 +374,20 @@ class BaseSearchQuery(object):
         if self.result_class:
             kwargs['result_class'] = self.result_class
         
+        if self.fields:
+            kwargs['fields'] = self.fields
+        
         return kwargs
     
-    def run(self, spelling_query=None):
+    def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        kwargs = self.build_params(spelling_query=spelling_query)
+
+        search_kwargs = self.build_params(spelling_query=spelling_query)
+        if kwargs:
+            search_kwargs.update(kwargs)
         
-        results = self.backend.search(final_query, **kwargs)
+        results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
