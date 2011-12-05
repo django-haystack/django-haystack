@@ -473,6 +473,21 @@ class SearchQuerySet(object):
         clone = self._clone()
         return clone.query.get_spelling_suggestion(preferred_query)
     
+    def values(self, *fields):
+        qs = self._clone(klass=ValuesSearchQuerySet)
+        qs._fields.extend(fields)
+        return qs
+
+    def values_list(self, *fields, **kwargs):
+        flat = kwargs.pop("flat", False)
+
+        if flat and len(fields) > 1:
+            raise TypeError("'flat' is not valid when values_list is called with more than one field.")
+
+        qs = self._clone(klass=ValuesListSearchQuerySet)
+        qs._fields.extend(fields)
+        qs._flat = flat
+        return qs
     
     # Utility methods.
     
@@ -678,3 +693,114 @@ class RelatedSearchQuerySet(SearchQuerySet):
         clone._load_all = self._load_all
         clone._load_all_querysets = self._load_all_querysets
         return clone
+
+
+class ValuesListSearchQuerySet(SearchQuerySet):
+    """
+    A SearchQuerySet which returns a list of field values as tuples, exactly
+    like Django's ValuesListQuerySet
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ValuesListSearchQuerySet, self).__init__(*args, **kwargs)
+        self._flat = False
+        self._fields = []
+
+        # Removing this dependency would require refactoring much of the backend
+        # code (_process_results, etc.) and these aren't large enough to make it
+        # an immediate priority:
+        self._internal_fields = ['id', 'django_ct', 'django_id', 'score']
+
+    def _clone(self, klass=None):
+        clone = super(ValuesListSearchQuerySet, self)._clone(klass=klass)
+        clone._fields = self._fields
+        clone._flat = self._flat
+        return clone
+
+    def _fill_cache(self, start, end):
+        # Tell the query where to start from and how many we'd like.
+        self.query._reset()
+        self.query.set_limits(start, end)
+
+        query_fields = set(self._internal_fields)
+        query_fields.update(self._fields)
+
+        results = self.query.get_results(fields=query_fields)
+
+        if results == None or len(results) == 0:
+            return False
+
+        # Setup the full cache now that we know how many results there are.
+        # We need the ``None``s as placeholders to know what parts of the
+        # cache we have/haven't filled.
+        # Using ``None`` like this takes up very little memory. In testing,
+        # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
+        # to be an acceptable loss for consistent and more efficient caching.
+        if len(self._result_cache) == 0:
+            self._result_cache = [None for i in xrange(self.query.get_count())]
+
+        if start is None:
+            start = 0
+
+        if end is None:
+            end = self.query.get_count()
+
+        to_cache = []
+
+        # This is still wasteful and should be replaced with a different result
+        # class:
+        if self._flat:
+            accum = to_cache.extend
+        else:
+            accum = to_cache.append
+
+        for result in results:
+            accum([getattr(result, i, None) for i in self._fields])
+
+        # Assign by slice.
+        self._result_cache[start:start + len(to_cache)] = to_cache
+        return True
+
+
+class ValuesSearchQuerySet(ValuesListSearchQuerySet):
+    def _fill_cache(self, start, end):
+        # Eeek, this is horribly redundant between ValuesSearchQuerySet,
+        # ValuesListSearchQuerySet, and a regular QuerySet. This should be
+        # refactored so we can change the result processing loop without having
+        # to bundle everything else.
+
+        # Tell the query where to start from and how many we'd like.
+        self.query._reset()
+        self.query.set_limits(start, end)
+
+        query_fields = set(self._internal_fields)
+        query_fields.update(self._fields)
+
+        results = self.query.get_results(fields=query_fields)
+
+        if results == None or len(results) == 0:
+            return False
+
+        # Setup the full cache now that we know how many results there are.
+        # We need the ``None``s as placeholders to know what parts of the
+        # cache we have/haven't filled.
+        # Using ``None`` like this takes up very little memory. In testing,
+        # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
+        # to be an acceptable loss for consistent and more efficient caching.
+        if len(self._result_cache) == 0:
+            self._result_cache = [None for i in xrange(self.query.get_count())]
+
+        if start is None:
+            start = 0
+
+        if end is None:
+            end = self.query.get_count()
+
+        to_cache = []
+
+        for result in results:
+            to_cache.append(dict((i, getattr(result, i, None)) for i in self._fields))
+
+        # Assign by slice.
+        self._result_cache[start:start + len(to_cache)] = to_cache
+        return True

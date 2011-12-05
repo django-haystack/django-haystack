@@ -124,7 +124,7 @@ class SearchBackend(BaseSearchBackend):
         }
         
         if fields:
-            if isinstance(fields, list):
+            if isinstance(fields, (list, set)):
                 fields = " ".join(fields)
             kwargs['fl'] = fields
         

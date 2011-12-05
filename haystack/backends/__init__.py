@@ -445,7 +445,7 @@ class BaseSearchQuery(object):
         
         return self._hit_count
     
-    def get_results(self):
+    def get_results(self, **kwargs):
         """
         Returns the results received from the backend.
         
@@ -455,12 +455,12 @@ class BaseSearchQuery(object):
         if self._results is None:
             if self._more_like_this:
                 # Special case for MLT.
-                self.run_mlt()
+                self.run_mlt(**kwargs)
             elif self._raw_query:
                 # Special case for raw queries.
-                self.run_raw()
+                self.run_raw(**kwargs)
             else:
-                self.run()
+                self.run(**kwargs)
         
         return self._results
     
