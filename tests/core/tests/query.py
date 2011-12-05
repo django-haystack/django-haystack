@@ -745,6 +745,8 @@ class ValuesQuerySetTestCase(SearchQuerySetTestCase):
         self.assert_(isinstance(sqs[0], (list, tuple)))
         self.assert_(isinstance(sqs[0:1][0], (list, tuple)))
 
+        self.assertRaises(TypeError, self.msqs.auto_query("test").values_list, "id", "score", flat=True)
+
         flat_sqs = self.msqs.auto_query("test").values_list("id", flat=True)
         self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
 
