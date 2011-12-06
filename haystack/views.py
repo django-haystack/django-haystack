@@ -99,7 +99,7 @@ class SearchView(object):
         try:
             page_no = int(self.request.GET.get('page', 1))
         except (TypeError, ValueError):
-            page_no = 1
+            raise Http404
 
         start_offset = (page_no - 1) * self.results_per_page
         self.results[start_offset:start_offset + self.results_per_page]
