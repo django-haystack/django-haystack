@@ -300,14 +300,14 @@ class SearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self.conn._to_python(value)
                 
-                del(additional_fields[DJANGO_CT])
-                del(additional_fields[DJANGO_ID])
-                del(additional_fields['score'])
+                for name in [DJANGO_CT, DJANGO_ID, 'score']:
+                    if name in additional_fields:
+                        del(additional_fields[name])
                 
                 if raw_result[ID] in getattr(raw_results, 'highlighting', {}):
                     additional_fields['highlighted'] = raw_results.highlighting[raw_result[ID]]
                 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], searchsite=self.site, **additional_fields)
+                result = result_class(app_label, model_name, raw_result.get(DJANGO_ID), raw_result.get('score'), searchsite=self.site, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
