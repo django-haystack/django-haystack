@@ -192,7 +192,11 @@ class SearchIndex(threading.local):
 
     def _get_backend(self, using):
         if using is None:
-            using = connection_router.for_write(index=self)
+            hints = {
+                'index': self,
+                'models': [self.get_model()]
+            }
+            using = connection_router.for_write(**hints)
 
         return connections[using].get_backend()
 

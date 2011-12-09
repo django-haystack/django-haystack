@@ -740,6 +740,7 @@ class WhooshSearchQuery(BaseSearchQuery):
 
         filter_types = {
             'contains': '%s:%s',
+            'like': '%s:"%s"',
             'exact': '%s:"%s"',
             'gt': "%s:{%s to}",
             'gte': "%s:[%s to]",

@@ -7,8 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import AppCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
-from haystack import connections as haystack_connections
-from haystack.constants import DEFAULT_ALIAS
+from haystack import connection_router, connections as haystack_connections
 from haystack.query import SearchQuerySet
 
 
@@ -37,9 +36,10 @@ def worker(bits):
     else:
         return
     
-    unified_index = haystack_connections[using].get_unified_index()
+    backend_alias = using or connection_router.for_write(**{'models': [model]})
+    unified_index = haystack_connections[backend_alias].get_unified_index()
+    backend = haystack_connections[backend_alias].get_backend()
     index = unified_index.get_index(model)
-    backend = haystack_connections[using].get_backend()
     
     if func == 'do_update':
         qs = build_queryset(index, model, age=age, verbosity=verbosity)
@@ -125,7 +125,7 @@ class Command(AppCommand):
         make_option('-r', '--remove', action='store_true', dest='remove',
             default=False, help='Remove objects from the index that are no longer present in the database.'
         ),
-        make_option("-u", "--using", action="store", type="string", dest="using", default=DEFAULT_ALIAS,
+        make_option("-u", "--using", action="store", type="string", dest="using", default=None,
             help='If provided, chooses a connection to work with.'
         ),
         make_option('-k', '--workers', action='store', dest='workers',
@@ -157,7 +157,6 @@ class Command(AppCommand):
         self.remove = options.get('remove', False)
         self.using = options.get('using')
         self.workers = int(options.get('workers', 0))
-        self.backend = haystack_connections[self.using].get_backend()
         
         if not apps:
             from django.db.models import get_app
@@ -179,12 +178,13 @@ class Command(AppCommand):
         from django.db.models import get_models
         from haystack.exceptions import NotHandled
         
-        unified_index = haystack_connections[self.using].get_unified_index()
-        
         if self.workers > 0:
             import multiprocessing
         
         for model in get_models(app):
+            backend_alias = self.using or connection_router.for_write(**{'models': [model]})
+            unified_index = haystack_connections[backend_alias].get_unified_index()
+            backend = haystack_connections[backend_alias].get_backend()
             try:
                 index = unified_index.get_index(model)
             except NotHandled:
@@ -199,7 +199,7 @@ class Command(AppCommand):
                 print "Indexing %d %s." % (total, smart_str(model._meta.verbose_name_plural))
             
             pks_seen = set([smart_str(pk) for pk in qs.values_list('pk', flat=True)])
-            batch_size = self.batchsize or self.backend.batch_size
+            batch_size = self.batchsize or backend.batch_size
             
             if self.workers > 0:
                 ghetto_queue = []
@@ -208,7 +208,7 @@ class Command(AppCommand):
                 end = min(start + batch_size, total)
                 
                 if self.workers == 0:
-                    do_update(self.backend, index, qs, start, end, total, self.verbosity)
+                    do_update(backend, index, qs, start, end, total, self.verbosity)
                 else:
                     ghetto_queue.append(('do_update', model, start, end, total, self.using, self.age, self.verbosity))
             
@@ -231,7 +231,7 @@ class Command(AppCommand):
                     upper_bound = start + batch_size
                     
                     if self.workers == 0:
-                        do_remove(self.backend, index, model, pks_seen, start, upper_bound)
+                        do_remove(backend, index, model, pks_seen, start, upper_bound)
                     else:
                         ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, self.using, self.verbosity))
                 
