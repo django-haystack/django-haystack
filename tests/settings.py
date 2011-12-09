@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'core',
 ]
 
+SITE_ID = 1
 ROOT_URLCONF = 'core.urls'
 
 HAYSTACK_SITECONF = 'core.search_sites'

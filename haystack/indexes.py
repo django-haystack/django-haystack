@@ -1,5 +1,6 @@
 import copy
 import sys
+import threading
 from django.db.models import signals
 from django.utils.encoding import force_unicode
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
@@ -56,7 +57,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(object):
+class SearchIndex(threading.local):
     """
     Base class for building indexes.
 
