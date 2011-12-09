@@ -1,4 +1,7 @@
 import datetime
+import Queue
+from threading import Thread
+import time
 from django.test import TestCase
 from haystack import connections, connection_router
 from haystack.exceptions import SearchFieldError
@@ -237,6 +240,54 @@ class SearchIndexTestCase(TestCase):
 
         self.assertEqual(len(self.cmi.full_prepare(mock)), 11)
         self.assertEqual(sorted(self.cmi.full_prepare(mock).keys()), ['author', 'author_exact', 'django_ct', 'django_id', 'extra', 'hello', 'id', 'pub_date', 'pub_date_exact', 'text', 'whee'])
+
+    def test_thread_safety(self):
+        # This is a regression. ``SearchIndex`` used to write to
+        # ``self.prepared_data``, which would leak between threads if things
+        # went too fast.
+        exceptions = []
+
+        def threaded_prepare(queue, index, model):
+            try:
+                index.queue = queue
+                prepped = index.prepare(model)
+            except Exception, e:
+                exceptions.append(e)
+                raise
+
+        class ThreadedSearchIndex(GoodMockSearchIndex):
+            def prepare_author(self, obj):
+                if obj.pk == 20:
+                    time.sleep(0.1)
+                else:
+                    time.sleep(0.5)
+
+                queue.put(self.prepared_data['author'])
+                return self.prepared_data['author']
+
+        tmi = ThreadedSearchIndex()
+        queue = Queue.Queue()
+        mock_1 = MockModel()
+        mock_1.pk = 20
+        mock_1.author = 'foo'
+        mock_1.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+        mock_2 = MockModel()
+        mock_2.pk = 21
+        mock_2.author = 'daniel%s' % mock_2.id
+        mock_2.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+
+        th1 = Thread(target=threaded_prepare, args=(queue, tmi, mock_1))
+        th2 = Thread(target=threaded_prepare, args=(queue, tmi, mock_2))
+
+        th1.start()
+        th2.start()
+        th1.join()
+        th2.join()
+
+        mock_1_result = queue.get()
+        mock_2_result = queue.get()
+        self.assertEqual(mock_1_result, u'foo')
+        self.assertEqual(mock_2_result, u'daniel21')
 
     def test_custom_prepare_author(self):
         mock = MockModel()
