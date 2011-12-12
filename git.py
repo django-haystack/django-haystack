@@ -505,6 +505,62 @@ class GitStashPopCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'stash', 'pop'])
 
+class GitOpenFileCommand(GitWindowCommand):
+    def run(self):
+        self.run_command(['git', 'branch', '--no-color'], self.branch_done)
+
+    def branch_done(self, result):
+        self.results = result.rstrip().split('\n')
+        self.quick_panel(self.results, self.branch_panel_done,
+            sublime.MONOSPACE_FONT)
+
+    def branch_panel_done(self, picked):
+        if 0 > picked < len(self.results):
+            return
+        self.branch = self.results[picked].split(' ')[-1]
+        self.run_command(
+            ['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)',
+            '--date=local', '--max-count=9000', self.branch],
+            self.log_done)
+
+    def log_done(self, result):
+        self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
+        self.quick_panel(self.results, self.log_panel_done)
+
+    def log_panel_done(self, picked):
+        if 0 > picked < len(self.results):
+            return
+        item = self.results[picked]
+        # the commit hash is the first thing on the second line
+        self.ref = item[1].split(' ')[0]
+        self.run_command(
+            ['git', 'ls-tree', '-r', '--full-tree', self.ref],
+            self.ls_done)
+
+    def ls_done(self, result):
+        # Last two items are the ref and the file name
+        self.results = [r.split()[-2:] for r in result.strip().split('\n')]
+
+        # We want the file name first, then the ref.
+        for r in self.results:
+            r.reverse()
+
+        self.quick_panel(self.results, self.ls_panel_done)
+
+    def ls_panel_done(self, picked):
+        if 0 > picked < len(self.results):
+            return
+        item = self.results[picked]
+
+        self.filename = item[0]
+        self.fileRef = item[1]
+
+        self.run_command(
+            ['git', 'show', self.fileRef],
+            self.show_done)
+
+    def show_done(self, result):
+        self.scratch(result, title="%s:%s" % (self.fileRef,self.filename))
 
 class GitBranchCommand(GitWindowCommand):
     def run(self):
