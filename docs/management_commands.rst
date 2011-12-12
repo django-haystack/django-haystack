@@ -45,11 +45,17 @@ arguments::
     ``--age``:
         Number of hours back to consider objects new. Useful for nightly
         reindexes (``--age=24``). Requires ``SearchIndexes`` to implement
-        the ``get_updated_field`` method.
+        the ``get_updated_field`` method. Default is ``None``.
+    ``--start``:
+        The start date for indexing within. Can be any dateutil-parsable string,
+        recommended to be YYYY-MM-DDTHH:MM:SS. Requires ``SearchIndexes`` to
+        implement the ``get_updated_field`` method. Default is ``None``.
+    ``--end``:
+        The end date for indexing within. Can be any dateutil-parsable string,
+        recommended to be YYYY-MM-DDTHH:MM:SS. Requires ``SearchIndexes`` to
+        implement the ``get_updated_field`` method. Default is ``None``.
     ``--batch-size``:
         Number of items to index at once. Default is 1000.
-    ``--site``:
-        The site object to use when reindexing (like `search_sites.mysite`).
     ``--remove``:
         Remove objects from the index that are no longer present in the
         database.
@@ -58,7 +64,7 @@ arguments::
         ``multiprocessing``.
     ``--verbosity``:
         If provided, dumps out more information about what's being done.
-        
+
           * ``0`` = No output
           * ``1`` = Minimal output describing what models were indexed
             and how many records.
@@ -75,7 +81,7 @@ arguments::
     a queue consumer if the memory requirements for ``--remove`` don't
     fit your needs. Alternatively, you can use the
     ``RealTimeSearchIndex``, which will automatically handle deletions.
-    
+
 
 ``rebuild_index``
 =================
@@ -99,7 +105,7 @@ of the arguments of the following arguments::
         database.
     ``--verbosity``:
         If provided, dumps out more information about what's being done.
-        
+
           * ``0`` = No output
           * ``1`` = Minimal output describing what models were indexed
             and how many records.
