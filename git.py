@@ -507,7 +507,7 @@ class GitStashPopCommand(GitWindowCommand):
 
 class GitOpenFileCommand(GitWindowCommand):
     def run(self):
-        self.run_command(['git', 'branch', '--no-color'], self.branch_done)
+        self.run_command(['git', 'branch', '-a', '--no-color'], self.branch_done)
 
     def branch_done(self, result):
         self.results = result.rstrip().split('\n')
