@@ -76,7 +76,7 @@
         "command": "git_custom"
     }
     ,{
-        "caption": "Git: Open File",
+        "caption": "Git: Open...",
         "command": "git_open_file"
     }
 ]

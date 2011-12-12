@@ -28,6 +28,7 @@
                             ,{ "caption": "Diff", "command": "git_diff_all" }
                             ,{ "caption": "Graph", "command": "git_graph_all" }
                             ,{ "caption": "Add...", "command": "git_add_choice" }
+                            ,{ "caption": "Open...", "command": "git_open_file" }
                         ]
                     }
                     ,{
