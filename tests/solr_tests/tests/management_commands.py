@@ -1,12 +1,13 @@
 import datetime
 import pysolr
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.test import TestCase
 from haystack import connections
 from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
-from core.models import MockModel
+from core.models import MockModel, MockTag
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -19,6 +20,13 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_updated_field(self):
         return 'pub_date'
+
+
+class SolrMockTagSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, model_attr='name')
+
+    def get_model(self):
+        return MockTag
 
 
 class ManagementCommandTestCase(TestCase):
@@ -114,3 +122,68 @@ class ManagementCommandTestCase(TestCase):
         # Watch the output, make sure there are multiple pids.
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
         self.assertEqual(self.solr.search('*:*').hits, 23)
+
+
+class AppModelManagementCommandTestCase(TestCase):
+    fixtures = ['bulk_data.json']
+
+    def setUp(self):
+        super(AppModelManagementCommandTestCase, self).setUp()
+        self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+
+        # Stow.
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = SolrMockSearchIndex()
+        self.smtmi = SolrMockTagSearchIndex()
+        self.ui.build(indexes=[self.smmi, self.smtmi])
+        connections['default']._index = self.ui
+
+    def tearDown(self):
+        connections['default']._index = self.old_ui
+        super(AppModelManagementCommandTestCase, self).tearDown()
+
+    def test_app_model_variations(self):
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', 'core', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        self.assertRaises(ImproperlyConfigured, call_command, 'update_index', 'fake_app_thats_not_there', interactive=False)
+
+        call_command('update_index', 'core', 'solr_tests', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', 'solr_tests', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', 'core.MockModel', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', 'core.MockTag', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 2)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', 'core.MockTag', 'core.MockModel', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
