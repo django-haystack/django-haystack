@@ -19,7 +19,10 @@ setup(
         'haystack.utils',
     ],
     package_data={
-        'haystack': ['templates/search_configuration/*']
+        'haystack': [
+            'templates/panels/*',
+            'templates/search_configuration/*',
+        ]
     },
     requires=[
         'python_dateutil(>=1.5, < 2.0)',
