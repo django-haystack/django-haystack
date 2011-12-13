@@ -35,6 +35,8 @@ def log_query(func):
                     'additional_args': args,
                     'additional_kwargs': kwargs,
                     'time': "%.3f" % (stop - start),
+                    'start': start,
+                    'stop': stop,
                 })
 
     return wrapper
