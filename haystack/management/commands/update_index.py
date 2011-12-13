@@ -5,7 +5,7 @@ import warnings
 from optparse import make_option
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.management.base import AppCommand
+from django.core.management.base import LabelCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
 from haystack import connections as haystack_connections
@@ -15,6 +15,8 @@ from haystack.query import SearchQuerySet
 
 DEFAULT_BATCH_SIZE = None
 DEFAULT_AGE = None
+APP = 'app'
+MODEL = 'model'
 
 
 def worker(bits):
@@ -119,7 +121,7 @@ def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1):
             backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]))
 
 
-class Command(AppCommand):
+class Command(LabelCommand):
     help = "Freshens the index for the given app(s)."
     base_options = (
         make_option('-a', '--age', action='store', dest='age',
@@ -149,9 +151,9 @@ class Command(AppCommand):
             help='Allows for the use multiple workers to parallelize indexing. Requires multiprocessing.'
         ),
     )
-    option_list = AppCommand.option_list + base_options
+    option_list = LabelCommand.option_list + base_options
 
-    def handle(self, *apps, **options):
+    def handle(self, *items, **options):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.start_date = None
@@ -180,24 +182,44 @@ class Command(AppCommand):
             except ValueError:
                 pass
 
-        if not apps:
+        if not items:
             from django.db.models import get_app
             # Do all, in an INSTALLED_APPS sorted order.
-            apps = []
+            items = []
 
             for app in settings.INSTALLED_APPS:
                 try:
                     app_label = app.split('.')[-1]
                     loaded_app = get_app(app_label)
-                    apps.append(app_label)
+                    items.append(app_label)
                 except:
                     # No models, no problem.
                     pass
 
-        return super(Command, self).handle(*apps, **options)
+        return super(Command, self).handle(*items, **options)
 
-    def handle_app(self, app, **options):
-        from django.db.models import get_models
+    def is_app_or_model(self, label):
+        label_bits = label.split('.')
+
+        if len(label_bits) == 1:
+            return APP
+        elif len(label_bits) == 2:
+            return MODEL
+        else:
+            raise ImproperlyConfigured("'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
+
+    def get_models(self, label):
+        from django.db.models import get_app, get_models, get_model
+        app_or_model = self.is_app_or_model(label)
+
+        if app_or_model == APP:
+            app_mod = get_app(label)
+            return get_models(app_mod)
+        else:
+            app_label, model_name = label.split('.')
+            return [get_model(app_label, model_name)]
+
+    def handle_label(self, label, **options):
         from haystack.exceptions import NotHandled
 
         unified_index = haystack_connections[self.using].get_unified_index()
@@ -205,7 +227,7 @@ class Command(AppCommand):
         if self.workers > 0:
             import multiprocessing
 
-        for model in get_models(app):
+        for model in self.get_models(label):
             try:
                 index = unified_index.get_index(model)
             except NotHandled:

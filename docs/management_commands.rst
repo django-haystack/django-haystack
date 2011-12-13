@@ -74,6 +74,32 @@ arguments::
         If provided, determines which connection should be used. Default is
         ``default``.
 
+Examples::
+
+    # Update everything.
+    ./manage.py update_index --settings=settings.prod
+
+    # Update everything with lots of information about what's going on.
+    ./manage.py update_index --settings=settings.prod --verbosity=2
+
+    # Update everything, cleaning up after deleted models.
+    ./manage.py update_index --remove --settings=settings.prod
+
+    # Update everything changed in the last 2 hours.
+    ./manage.py update_index --age=2 --settings=settings.prod
+
+    # Update everything between Dec. 1, 2011 & Dec 31, 2011
+    ./manage.py update_index --start='2011-12-01T00:00:00' --end='2011-12-31T23:59:59' --settings=settings.prod
+
+    # Update just a couple apps.
+    ./manage.py update_index blog auth comments --settings=settings.prod
+
+    # Update just a single model (in a complex app).
+    ./manage.py update_index auth.User --settings=settings.prod
+
+    # Crazy Go-Nuts University
+    ./manage.py update_index events.Event media news.Story --start='2011-01-01T00:00:00 --remove --using=hotbackup --workers=12 --verbosity=2 --settings=settings.prod
+
 .. note::
 
     This command *ONLY* updates records in the index. It does *NOT* handle
