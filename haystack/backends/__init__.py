@@ -298,6 +298,7 @@ class BaseSearchQuery(object):
         self._facet_counts = None
         self._spelling_suggestion = None
         self.result_class = SearchResult
+        self.function_query = None
         
         if backend is not None:
             self.backend = backend
@@ -514,7 +515,10 @@ class BaseSearchQuery(object):
                 boost_list.append(self.boost_fragment(boost_word, boost_value))
             
             final_query = "%s %s" % (final_query, " ".join(boost_list))
-        
+
+        if self.function_query:
+            final_query = '%s AND %s' % (final_query, self.function_query)
+
         return final_query
     
     def combine(self, rhs, connector=SQ.AND):
@@ -744,4 +748,5 @@ class BaseSearchQuery(object):
         clone.result_class = self.result_class
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+        clone.function_query = self.function_query
         return clone

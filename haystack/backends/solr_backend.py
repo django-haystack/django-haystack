@@ -505,3 +505,7 @@ class SearchQuery(BaseSearchQuery):
         results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
+
+    def add_function_query(self, function_name, **kwargs):
+        params = ' '.join([ '%s=%s' % (key,kwargs[key]) for key in kwargs])
+        self.function_query = '_query_:"{!%s %s}"' % (function_name, params)
