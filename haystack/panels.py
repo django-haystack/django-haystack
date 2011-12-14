@@ -57,6 +57,10 @@ class HaystackDebugPanel(DebugPanel):
             query['alias'] = alias
             query['query'] = query['query_string']
 
+            if query.get('additional_kwargs'):
+                if query['additional_kwargs'].get('result_class'):
+                    query['additional_kwargs']['result_class'] = unicode(query['additional_kwargs']['result_class'])
+
             try:
                 query['width_ratio'] = (float(query['time']) / self._search_time) * 100
             except ZeroDivisionError:
