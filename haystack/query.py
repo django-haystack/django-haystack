@@ -495,8 +495,11 @@ class SearchQuerySet(object):
         This will cause the query to execute and should generally be used when
         presenting the data.
         """
-        clone = self._clone()
-        return clone.query.get_facet_counts()
+        if self.query.has_run():
+            return self.query.get_facet_counts()
+        else:
+            clone = self._clone()
+            return clone.query.get_facet_counts()
 
     def spelling_suggestion(self, preferred_query=None):
         """
@@ -508,8 +511,11 @@ class SearchQuerySet(object):
         This will cause the query to execute and should generally be used when
         presenting the data.
         """
-        clone = self._clone()
-        return clone.query.get_spelling_suggestion(preferred_query)
+        if self.query.has_run():
+            return self.query.get_spelling_suggestion(preferred_query)
+        else:
+            clone = self._clone()
+            return clone.query.get_spelling_suggestion(preferred_query)
 
 
     # Utility methods.
