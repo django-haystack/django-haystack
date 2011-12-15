@@ -374,6 +374,12 @@ class SearchQuerySet(object):
         clone.query.raw_search(query_string, **kwargs)
         return clone
 
+    def spatial(self, **kwargs):
+        """Adds spatial search fragments to the query"""
+        clone = self._clone()
+        clone.query.add_spatial(**kwargs)
+        return clone
+
     def load_all(self):
         """Efficiently populates the objects in the search results."""
         clone = self._clone()

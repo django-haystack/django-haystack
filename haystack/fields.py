@@ -139,7 +139,7 @@ class SearchField(object):
         """
         return value
 
-
+   
 class CharField(SearchField):
     field_type = 'string'
     
@@ -273,7 +273,6 @@ class DateField(SearchField):
         
         return value
 
-
 class DateTimeField(SearchField):
     field_type = 'datetime'
     
@@ -298,6 +297,14 @@ class DateTimeField(SearchField):
         
         return value
 
+class LocationField(SearchField):
+    field_type = 'location'
+
+    def prepare(self, obj):
+        if getattr(obj, 'latitude') and getattr(obj, 'longitude'):
+            value = "%f,%f" % (obj.latitude, obj.longitude)
+            return value
+        return None
 
 class MultiValueField(SearchField):
     field_type = 'string'

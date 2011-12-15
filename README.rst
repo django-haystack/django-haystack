@@ -1,3 +1,5 @@
+For specific instructions on this fork, scroll down.
+
 ========
 Haystack
 ========
@@ -47,3 +49,60 @@ Haystack has a relatively easily-met set of requirements.
 Additionally, each backend has its own requirements. You should refer to
 http://docs.haystacksearch.org/dev/installing_search_engines.html for more
 details.
+
+========
+SPECIFIC TO THIS FORK
+========
+
+:author: __jnaut__
+
+Additional Requirements
+============
+Minimum Solr version is 3.2 
+
+Note: Even though native spatial search was introduced in Solr 3.1 but it turned out to be too buggy and it is highly advised that min. version 3.2 be used.
+
+Model
+============
+The model should have two attributes named - latitude and longitude.
+
+e.g.::
+
+    class Restaurant(models.Model):
+        name = models.CharField(max_length=255)
+        latitude = models.FloatField(blank=True)
+        longitude = models.FloatField(blank=True)
+
+(see example at example_project_with_spatial_solr/spatial_app/models.py)
+
+SearchIndex
+============
+The searchindex will NOT have latitude or longitude fields. Instead, it will only have one field of type LocationField.
+
+e.g.::
+
+    class RestaurantIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
+        text = indexes.CharField(document=True, use_template=True)
+        name = indexes.CharField(model_attr='name')
+        geocode = indexes.LocationField()
+
+(see example at example_project_with_spatial_solr/spatial_app/search_indexes.py)
+
+Search
+============
+The search method for spatial search is: ``haystack.query.SearchQuerySet().spatial(**kwargs)`` .
+
+It works just like filter method and returns a SearchQuerySet instance.
+
+Syntax::
+
+    spatial(lat=<latitude-float>, lng=<longitude-float>, sfield=<field_of_type_location_in_SearchIndex-string>, 
+            radius=<radius_in_kms-float>, [sort_by_distance=<bool>, [sort_order='asc/desc-string']])
+
+e.g.::
+
+    sqs = SearchQuerySet()
+    sqs = sqs.spatial(lat=-34.7777, lng=138.534556, sfield='geocode', radius=10.8)
+    sqs = sqs.spatial(lat=-34.7777, lng=138.534556, sfield='geocode', radius=10.8, sort_by_distance=True, sort_order='asc')
+
+(see example at example_project_with_spatial_solr/spatial_app/views.py)

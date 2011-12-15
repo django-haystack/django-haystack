@@ -86,6 +86,23 @@
         <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
       </analyzer>
     </fieldType>
+
+    <!-- This point type indexes the coordinates as separate fields (subFields)
+	 If subFieldType is defined, it references a type, and a dynamic field
+	 definition is created matching *___<typename>.  Alternately, if 
+	 subFieldSuffix is defined, that is used to create the subFields.
+	 Example: if subFieldType="double", then the coordinates would be
+         indexed in fields myloc_0___double,myloc_1___double.
+	 Example: if subFieldSuffix="_d" then the coordinates would be indexed
+         in fields myloc_0_d,myloc_1_d
+	 The subFields are an implementation detail of the fieldType, and end
+	 users normally should not need to know about them.
+      -->
+    <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
+    <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
+    <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
+    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
+
   </types>
 
   <fields>   
@@ -102,6 +119,8 @@
     <dynamicField name="*_f"  type="sfloat"  indexed="true"  stored="true"/>
     <dynamicField name="*_d"  type="sdouble" indexed="true"  stored="true"/>
     <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
+    <!-- Type used to index the lat and lon components for the "location" FieldType -->
+    <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
     
 {% for field in fields %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />

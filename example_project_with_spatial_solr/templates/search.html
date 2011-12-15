@@ -1,0 +1,7 @@
+<form >
+  {{form.as_p}}
+  <input type="submit" value="Search">
+</form>
+{% for result in results %}
+{{forloop.counter}}. <font color='green'>{{result.name}}</font>
+{% endfor %}
