@@ -410,10 +410,10 @@ class BaseSearchQuery(object):
         the results.
         """
         if self._hit_count is None:
-            # Limit the slice to 10 so we get a count without consuming
+            # Limit the slice to 1 so we get a count without consuming
             # everything.
             if not self.end_offset:
-                self.end_offset = 10
+                self.end_offset = 1
 
             if self._more_like_this:
                 # Special case for MLT.
