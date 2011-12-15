@@ -110,7 +110,7 @@ class SimpleSearchQuery(BaseSearchQuery):
             else:
                 term_list.append(child[1])
         
-        return (' ').join(term_list)
+        return (' ').join(map(str, term_list))
 
 
 class SimpleEngine(BaseEngine):
