@@ -292,6 +292,11 @@ class BaseSearchQuery(object):
         self.date_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
+        #: If defined, fields should be a list of field names - no other values
+        #: will be retrieved so the caller must be careful to include django_ct
+        #: and django_id when using code which expects those to be included in
+        #: the results
+        self.fields = []
         self._raw_query = None
         self._raw_query_params = {}
         self._more_like_this = False
@@ -361,20 +366,26 @@ class BaseSearchQuery(object):
         if self.result_class:
             kwargs['result_class'] = self.result_class
 
+        if self.fields:
+            kwargs['fields'] = self.fields
+
         return kwargs
 
-    def run(self, spelling_query=None):
+    def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        kwargs = self.build_params(spelling_query=spelling_query)
+        search_kwargs = self.build_params(spelling_query=spelling_query)
 
-        results = self.backend.search(final_query, **kwargs)
+        if kwargs:
+            search_kwargs.update(kwargs)
+
+        results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
         self._spelling_suggestion = results.get('spelling_suggestion', None)
 
-    def run_mlt(self):
+    def run_mlt(self, **kwargs):
         """
         Executes the More Like This. Returns a list of search results similar
         to the provided document (and optionally query).
@@ -382,21 +393,27 @@ class BaseSearchQuery(object):
         if self._more_like_this is False or self._mlt_instance is None:
             raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
 
-        kwargs = {
+        search_kwargs = {
             'result_class': self.result_class,
         }
 
+        if kwargs:
+            search_kwargs.update(kwargs)
+
         additional_query_string = self.build_query()
-        results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
+        results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
 
-    def run_raw(self):
+    def run_raw(self, **kwargs):
         """Executes a raw query. Returns a list of search results."""
-        kwargs = self.build_params()
-        kwargs.update(self._raw_query_params)
+        search_kwargs = self.build_params()
+        search_kwargs.update(self._raw_query_params)
 
-        results = self.backend.search(self._raw_query, **kwargs)
+        if kwargs:
+            search_kwargs.update(kwargs)
+
+        results = self.backend.search(self._raw_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = results.get('facets', {})
@@ -426,7 +443,7 @@ class BaseSearchQuery(object):
 
         return self._hit_count
 
-    def get_results(self):
+    def get_results(self, **kwargs):
         """
         Returns the results received from the backend.
 
@@ -436,12 +453,12 @@ class BaseSearchQuery(object):
         if self._results is None:
             if self._more_like_this:
                 # Special case for MLT.
-                self.run_mlt()
+                self.run_mlt(**kwargs)
             elif self._raw_query:
                 # Special case for raw queries.
-                self.run_raw()
+                self.run_raw(**kwargs)
             else:
-                self.run()
+                self.run(**kwargs)
 
         return self._results
 

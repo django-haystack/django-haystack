@@ -3,7 +3,7 @@ import operator
 import warnings
 from haystack import connections, connection_router
 from haystack.backends import SQ
-from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR, DEFAULT_ALIAS
+from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotHandled
 
 
@@ -151,11 +151,11 @@ class SearchQuerySet(object):
             if not self._fill_cache(current_position, current_position + ITERATOR_LOAD_PER_QUERY):
                 raise StopIteration
 
-    def _fill_cache(self, start, end):
+    def _fill_cache(self, start, end, **kwargs):
         # Tell the query where to start from and how many we'd like.
         self.query._reset()
         self.query.set_limits(start, end)
-        results = self.query.get_results()
+        results = self.query.get_results(**kwargs)
 
         if results == None or len(results) == 0:
             return False
@@ -174,6 +174,15 @@ class SearchQuerySet(object):
 
         if end is None:
             end = self.query.get_count()
+
+        to_cache = self.post_process_results(results)
+
+        # Assign by slice.
+        self._result_cache[start:start + len(to_cache)] = to_cache
+        return True
+
+    def post_process_results(self, results):
+        to_cache = []
 
         # Check if we wish to load all objects.
         if self._load_all:
@@ -198,8 +207,6 @@ class SearchQuerySet(object):
                     # Revert to old behaviour
                     loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
 
-        to_cache = []
-
         for result in results:
             if self._load_all:
                 # We have to deal with integer keys being cast from strings
@@ -219,10 +226,7 @@ class SearchQuerySet(object):
 
             to_cache.append(result)
 
-        # Assign by slice.
-        self._result_cache[start:start + len(to_cache)] = to_cache
-        return True
-
+        return to_cache
 
     def __getitem__(self, k):
         """
@@ -517,6 +521,33 @@ class SearchQuerySet(object):
             clone = self._clone()
             return clone.query.get_spelling_suggestion(preferred_query)
 
+    def values(self, *fields):
+        """
+        Returns a list of dictionaries, each containing the key/value pairs for
+        the result, exactly like Django's ``ValuesQuerySet``.
+        """
+        qs = self._clone(klass=ValuesSearchQuerySet)
+        qs._fields.extend(fields)
+        return qs
+
+    def values_list(self, *fields, **kwargs):
+        """
+        Returns a list of field values as tuples, exactly like Django's
+        ``QuerySet.values``.
+
+        Optionally accepts a ``flat=True`` kwarg, which in the case of a
+        single field being provided, will return a flat list of that field
+        rather than a list of tuples.
+        """
+        flat = kwargs.pop("flat", False)
+
+        if flat and len(fields) > 1:
+            raise TypeError("'flat' is not valid when values_list is called with more than one field.")
+
+        qs = self._clone(klass=ValuesListSearchQuerySet)
+        qs._fields.extend(fields)
+        qs._flat = flat
+        return qs
 
     # Utility methods.
 
@@ -552,6 +583,72 @@ class EmptySearchQuerySet(SearchQuerySet):
 
     def facet_counts(self):
         return {}
+
+
+class ValuesListSearchQuerySet(SearchQuerySet):
+    """
+    A ``SearchQuerySet`` which returns a list of field values as tuples, exactly
+    like Django's ``ValuesListQuerySet``.
+    """
+    def __init__(self, *args, **kwargs):
+        super(ValuesListSearchQuerySet, self).__init__(*args, **kwargs)
+        self._flat = False
+        self._fields = []
+
+        # Removing this dependency would require refactoring much of the backend
+        # code (_process_results, etc.) and these aren't large enough to make it
+        # an immediate priority:
+        self._internal_fields = ['id', 'django_ct', 'django_id', 'score']
+
+    def _clone(self, klass=None):
+        clone = super(ValuesListSearchQuerySet, self)._clone(klass=klass)
+        clone._fields = self._fields
+        clone._flat = self._flat
+        return clone
+
+    def _fill_cache(self, start, end):
+        query_fields = set(self._internal_fields)
+        query_fields.update(self._fields)
+        kwargs = {
+            'fields': query_fields
+        }
+        return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
+
+    def post_process_results(self, results):
+        to_cache = []
+
+        if self._flat:
+            accum = to_cache.extend
+        else:
+            accum = to_cache.append
+
+        for result in results:
+            accum([getattr(result, i, None) for i in self._fields])
+
+        return to_cache
+
+
+class ValuesSearchQuerySet(ValuesListSearchQuerySet):
+    """
+    A ``SearchQuerySet`` which returns a list of dictionaries, each containing
+    the key/value pairs for the result, exactly like Django's
+    ``ValuesQuerySet``.
+    """
+    def _fill_cache(self, start, end):
+        query_fields = set(self._internal_fields)
+        query_fields.update(self._fields)
+        kwargs = {
+            'fields': query_fields
+        }
+        return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
+
+    def post_process_results(self, results):
+        to_cache = []
+
+        for result in results:
+            to_cache.append(dict((i, getattr(result, i, None)) for i in self._fields))
+
+        return to_cache
 
 
 class RelatedSearchQuerySet(SearchQuerySet):
