@@ -611,6 +611,50 @@ Example::
     suggestion = SearchQuerySet().spelling_suggestion('moar exmples')
     suggestion # u'more examples'
 
+``values``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.values(self, *fields)
+
+Returns a list of dictionaries, each containing the key/value pairs for the
+result, exactly like Django's ``ValuesQuerySet``.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run.
+
+You must provide a list of one or more fields as arguments. These fields will
+be the ones included in the individual results.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('banana').values('title', 'description')
+
+
+``values_list``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.values_list(self, *fields, **kwargs)
+
+Returns a list of field values as tuples, exactly like Django's
+``ValuesListQuerySet``.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run.
+
+You must provide a list of one or more fields as arguments. These fields will
+be the ones included in the individual results.
+
+You may optionally also provide a ``flat=True`` kwarg, which in the case of a
+single field being provided, will return a flat list of that field rather than
+a list of tuples.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('banana').values_list('title', 'description')
+
+    # ...or just the titles as a flat list...
+    sqs = SearchQuerySet().auto_query('banana').values_list('title', flat=True)
+
 
 .. _field-lookups:
 
