@@ -366,6 +366,36 @@ class SearchQuerySet(object):
         clone.query.add_query_facet(field, query)
         return clone
 
+    def facet_mincount(self, mincount):
+        """Sets mincount for facet result."""
+        clone = self._clone()
+        clone.query.set_facet_mincount(mincount)
+        return clone
+    
+    def facet_limit(self, limit):
+        """Sets limit for facet result."""
+        clone = self._clone()
+        clone.query.set_facet_limit(limit)
+        return clone
+
+    def facet_prefix(self, prefix):
+        """Sets prefix for facet result."""
+        clone = self._clone()
+        clone.query.set_facet_prefix(prefix)
+        return clone
+        
+    def facet_offset(self, offset):
+        """Sets offset for facet result."""
+        clone = self._clone()
+        clone.query.set_facet_offset(offset)
+        return clone
+        
+    def facet_sort(self, sort):
+        """Sets sort for facet result."""
+        clone = self._clone()
+        clone.query.set_facet_sort(sort)
+        return clone
+        
     def narrow(self, query):
         """Pushes existing facet choices into the search."""
         clone = self._clone()
