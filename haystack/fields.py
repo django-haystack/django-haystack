@@ -158,6 +158,18 @@ class CharField(SearchField):
         
         return unicode(value)
 
+class NonTokenizedField(SearchField):
+    field_type = 'non_tokenized_string'
+
+    def prepare(self, obj):
+        return self.convert(super(NonTokenizedField, self).prepare(obj))
+
+    def convert(self, value):
+        if value is None:
+            return None
+
+        return unicode(value)
+
 
 class NgramField(CharField):
     field_type = 'ngram'
