@@ -1,5 +1,6 @@
 from decimal import Decimal
 import re
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import datetime_safe
 from django.template import loader, Context
 from haystack.exceptions import SearchFieldError
@@ -21,7 +22,7 @@ class SearchField(object):
     def __init__(self, model_attr=None, use_template=False, template_name=None,
                  document=False, indexed=True, stored=True, faceted=False,
                  default=NOT_PROVIDED, null=False, index_fieldname=None,
-                 facet_class=None, boost=1.0, weight=None):
+                 facet_class=None, boost=1.0, weight=None, must_exist=True):
         # Track what the index thinks this field is called.
         self.instance_name = None
         self.model_attr = model_attr
@@ -36,6 +37,7 @@ class SearchField(object):
         self.index_fieldname = index_fieldname
         self.boost = weight or boost
         self.is_multivalued = False
+        self.must_exist = must_exist
         
         # We supply the facet_class for making it easy to create a faceted
         # field based off of this field.
@@ -78,10 +80,17 @@ class SearchField(object):
             current_object = obj
             
             for attr in attrs:
-                if not hasattr(current_object, attr):
+                if self.must_exist and not hasattr(current_object, attr):
                     raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(obj), attr))
                 
-                current_object = getattr(current_object, attr, None)
+                if must_exist:
+                    current_object = getattr(current_object, attr, None)
+                else:
+                    try:
+                        current_object = getattr(current_object, attr, None)
+                    except ObjectDoesNotExist:
+                        # e.g. reverse of ForeignKey before it exists
+                        current_object = None
                 
                 if current_object is None:
                     if self.has_default():
@@ -90,12 +99,14 @@ class SearchField(object):
                         # accesses will fail misreably.
                         break
                     elif self.null:
-                        current_object = None
                         # Fall out of the loop, given any further attempts at
                         # accesses will fail misreably.
                         break
-                    else:
+                    elif self.must_exist:
                         raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(obj), attr))
+                    else:
+                        # does not exist, no further lookup attempts on None
+                        break
             
             if callable(current_object):
                 return current_object()
