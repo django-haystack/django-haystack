@@ -26,12 +26,12 @@ you up and running:
 
 .. toctree::
    :maxdepth: 2
-   
+
    tutorial
-   
+
 .. toctree::
    :maxdepth: 1
-   
+
    views_and_forms
    templatetags
    glossary
@@ -41,7 +41,7 @@ you up and running:
    other_apps
    installing_search_engines
    debugging
-   
+
    migration_from_1_to_2
 
 
@@ -53,7 +53,7 @@ you may want to include in your application.
 
 .. toctree::
    :maxdepth: 1
-   
+
    best_practices
    highlighting
    faceting
@@ -61,6 +61,7 @@ you may want to include in your application.
    boost
    multiple_index
    rich_content_extraction
+   spatial
 
 
 Reference
@@ -71,14 +72,14 @@ looking for API documentation and advanced usage as detailed in:
 
 .. toctree::
    :maxdepth: 2
-   
+
    searchqueryset_api
    searchindex_api
    searchfield_api
    searchresult_api
    searchquery_api
    searchbackend_api
-   
+
    architecture_overview
    backend_support
    settings
@@ -94,7 +95,7 @@ additional backends:
 
 .. toctree::
    :maxdepth: 1
-   
+
    running_tests
    creating_new_backends
 

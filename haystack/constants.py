@@ -23,3 +23,7 @@ ITERATOR_LOAD_PER_QUERY = getattr(settings, 'HAYSTACK_ITERATOR_LOAD_PER_QUERY', 
 # A marker class in the hierarchy to indicate that it handles search data.
 class Indexable(object):
     haystack_use_for_indexing = True
+
+# For the geo bits, since that's what Solr & Elasticsearch seem to silently
+# assume...
+WGS_84_SRID = 4326

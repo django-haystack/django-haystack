@@ -32,6 +32,7 @@ Included with Haystack are the following field types:
 * ``EdgeNgramField``
 * ``FloatField``
 * ``IntegerField``
+* ``LocationField``
 * ``MultiValueField``
 * ``NgramField``
 
@@ -63,13 +64,13 @@ example::
 
     from haystack import indexes
     from myapp.models import Note
-    
-    
+
+
     class NoteIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
 

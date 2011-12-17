@@ -313,6 +313,12 @@ class SearchQuerySet(object):
 
         return clone
 
+    def order_by_distance(self, **kwargs):
+        """Alters the order in which the results should appear."""
+        clone = self._clone()
+        clone.query.add_order_by_distance(**kwargs)
+        return clone
+
     def highlight(self):
         """Adds highlighting to the results."""
         clone = self._clone()
@@ -352,6 +358,27 @@ class SearchQuerySet(object):
         """Adds faceting to a query for the provided field."""
         clone = self._clone()
         clone.query.add_field_facet(field)
+        return clone
+
+    def within(self, field, point_1, point_2):
+        """Spatial: Adds a bounding box search to the query."""
+        clone = self._clone()
+        clone.query.add_within(field, point_1, point_2)
+        return clone
+
+    def dwithin(self, field, point, distance):
+        """Spatial: Adds a distance-based search to the query."""
+        clone = self._clone()
+        clone.query.add_dwithin(field, point, distance)
+        return clone
+
+    def distance(self, field, point):
+        """
+        Spatial: Denotes results must have distance measurements from the
+        provided point.
+        """
+        clone = self._clone()
+        clone.query.add_distance(field, point)
         return clone
 
     def date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):

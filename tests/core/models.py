@@ -60,3 +60,11 @@ class AFifthMockModel(models.Model):
 
     def __unicode__(self):
         return self.author
+
+class ASixthMockModel(models.Model):
+    name = models.CharField(max_length=255)
+    lat = models.FloatField()
+    lon = models.FloatField()
+
+    def __unicode__(self):
+        return self.name

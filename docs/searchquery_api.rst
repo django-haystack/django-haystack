@@ -257,6 +257,28 @@ similar to the provided instance.
 
 Adds highlighting to the search results.
 
+``add_within``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_within(self, field, point_1, point_2):
+
+Adds bounding box parameters to search query.
+
+``add_dwithin``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_dwithin(self, field, point, distance):
+
+Adds radius-based parameters to search query.
+
+``add_distance``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_distance(self, field, point):
+
+Denotes that results should include distance measurements from the
+point passed in.
+
 ``add_field_facet``
 ~~~~~~~~~~~~~~~~~~~
 

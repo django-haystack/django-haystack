@@ -24,3 +24,5 @@ HAYSTACK_CONNECTIONS = {
         'ENGINE': 'core.tests.mocks.MockEngine',
     },
 }
+
+SITE_ID = 1

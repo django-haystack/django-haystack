@@ -25,3 +25,7 @@ class MoreLikeThisError(HaystackError):
 class FacetingError(HaystackError):
     """Raised when incorrect arguments have been provided for faceting."""
     pass
+
+class SpatialError(HaystackError):
+    """Raised when incorrect arguments have been provided for spatial."""
+    pass

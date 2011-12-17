@@ -1,0 +1,112 @@
+[
+    {
+        "pk": 1,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.971955031423384,
+            "longitude": -95.23573637008667,
+            "comment": "Man, I love the coffee at LPT!",
+            "created": "2011-12-13 09:12:23"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.967667537449294,
+            "longitude": -95.23528575897217,
+            "comment": "At the Pig for coffee. No one is here.",
+            "created": "2011-12-13 10:21:23"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.971955031423384,
+            "longitude": -95.23573637008667,
+            "comment": "Back to LPT's coffee.",
+            "created": "2011-12-14 14:53:23"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.92776639117804,
+            "longitude": -95.2584171295166,
+            "comment": "I hate the lines at the post office.",
+            "created": "2011-12-14 10:01:23"
+        }
+    },
+    {
+        "pk": 5,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.96531514451104,
+            "longitude": -95.23622989654541,
+            "comment": "ZOMGEncore!",
+            "created": "2011-12-14 12:30:23"
+        }
+    },
+    {
+        "pk": 6,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.97110422641184,
+            "longitude": -95.23511409759521,
+            "comment": "Trying a little Java Break coffee to get the day going.",
+            "created": "2011-12-15 08:44:23"
+        }
+    },
+    {
+        "pk": 7,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.9128152,
+            "longitude": -94.6373083,
+            "comment": "Apple Store! And they have coffee!",
+            "created": "2011-12-15 11:05:23"
+        }
+    },
+    {
+        "pk": 8,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.97143787665407,
+            "longitude": -95.23622989654541,
+            "comment": "4bucks coffee run. :/",
+            "created": "2011-12-16 10:10:23"
+        }
+    },
+    {
+        "pk": 9,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.97080393984995,
+            "longitude": -95.23573637008667,
+            "comment": "Time for lunch at Rudy's.",
+            "created": "2011-12-16 01:23:23"
+        }
+    },
+    {
+        "pk": 10,
+        "model": "spatial.checkin",
+        "fields": {
+            "username": "daniel",
+            "latitude": 38.92588008485826,
+            "longitude": -95.2640175819397,
+            "comment": "At Target. Again.",
+            "created": "2011-12-16 19:51:23"
+        }
+    }
+]
