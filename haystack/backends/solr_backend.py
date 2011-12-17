@@ -1,4 +1,5 @@
 import logging
+import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
@@ -7,6 +8,7 @@ from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
+from haystack.utils.geo import Distance, generate_bounding_box
 try:
     from django.db.models.sql.query import get_proxied_model
 except ImportError:
@@ -106,7 +108,8 @@ class SolrSearchBackend(BaseSearchBackend):
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None,
+               narrow_queries=None, spelling_query=None, within=None,
+               dwithin=None, distance_point=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
         if len(query_string) == 0:
             return {
@@ -117,6 +120,7 @@ class SolrSearchBackend(BaseSearchBackend):
         kwargs = {
             'fl': '* score',
         }
+        geo_sort = False
 
         if fields:
             if isinstance(fields, (list, set)):
@@ -125,7 +129,23 @@ class SolrSearchBackend(BaseSearchBackend):
             kwargs['fl'] = fields
 
         if sort_by is not None:
-            kwargs['sort'] = sort_by
+            if sort_by in ['distance asc', 'distance desc'] and distance_point:
+                # Do the geo-enabled sort.
+                lng, lat = distance_point['point'].get_coords()
+                kwargs['sfield'] = distance_point['field']
+                kwargs['pt'] = '%s,%s' % (lat, lng)
+                geo_sort = True
+
+                if sort_by == 'distance asc':
+                    kwargs['sort'] = 'geodist() asc'
+                else:
+                    kwargs['sort'] = 'geodist() desc'
+            else:
+                if sort_by.startswith('distance '):
+                    warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
+
+                # Regular sorting.
+                kwargs['sort'] = sort_by
 
         if start_offset is not None:
             kwargs['start'] = start_offset
@@ -186,6 +206,31 @@ class SolrSearchBackend(BaseSearchBackend):
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
 
+        if within is not None:
+            kwargs.setdefault('fq', [])
+            ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
+            # Bounding boxes are min, min TO max, max. Solr's wiki was *NOT*
+            # very clear on this.
+            bbox = '%s:[%s,%s TO %s,%s]' % (within['field'], min_lat, min_lng, max_lat, max_lng)
+            kwargs['fq'].append(bbox)
+
+        if dwithin is not None:
+            kwargs.setdefault('fq', [])
+            lng, lat = dwithin['point'].get_coords()
+            geofilt = '{!geofilt pt=%s,%s sfield=%s d=%s}' % (lat, lng, dwithin['field'], dwithin['distance'].km)
+            kwargs['fq'].append(geofilt)
+
+        # Check to see if the backend should try to include distances
+        # (Solr 4.X+) in the results.
+        if self.distance_available and distance_point:
+            # In early testing, you can't just hand Solr 4.X a proper bounding box
+            # & request distances. To enable native distance would take calculating
+            # a center point & a radius off the user-provided box, which kinda
+            # sucks. We'll avoid it for now, since Solr 4.x's release will be some
+            # time yet.
+            # kwargs['fl'] += ' _dist_:geodist()'
+            pass
+
         try:
             raw_results = self.conn.search(query_string, **kwargs)
         except (IOError, SolrError), e:
@@ -195,7 +240,7 @@ class SolrSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Solr using '%s': %s", query_string, e)
             raw_results = EmptyResults()
 
-        return self._process_results(raw_results, highlight=highlight, result_class=result_class)
+        return self._process_results(raw_results, highlight=highlight, result_class=result_class, distance_point=distance_point)
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
@@ -255,7 +300,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         return self._process_results(raw_results, result_class=result_class)
 
-    def _process_results(self, raw_results, highlight=False, result_class=None):
+    def _process_results(self, raw_results, highlight=False, result_class=None, distance_point=None):
         from haystack import connections
         results = []
         hits = raw_results.hits
@@ -310,6 +355,14 @@ class SolrSearchBackend(BaseSearchBackend):
                 if raw_result[ID] in getattr(raw_results, 'highlighting', {}):
                     additional_fields['highlighted'] = raw_results.highlighting[raw_result[ID]]
 
+                if distance_point:
+                    additional_fields['_point_of_origin'] = distance_point
+
+                    if raw_result.get('__dist__'):
+                        additional_fields['_distance'] = Distance(km=float(raw_result['__dist__']))
+                    else:
+                        additional_fields['_distance'] = None
+
                 result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
                 results.append(result)
             else:
@@ -329,7 +382,7 @@ class SolrSearchBackend(BaseSearchBackend):
         for field_name, field_class in fields.items():
             field_data = {
                 'field_name': field_class.index_fieldname,
-                'type': 'text',
+                'type': 'text_en',
                 'indexed': 'true',
                 'stored': 'true',
                 'multi_valued': 'false',
@@ -344,15 +397,17 @@ class SolrSearchBackend(BaseSearchBackend):
             if field_class.field_type in ['date', 'datetime']:
                 field_data['type'] = 'date'
             elif field_class.field_type == 'integer':
-                field_data['type'] = 'slong'
+                field_data['type'] = 'long'
             elif field_class.field_type == 'float':
-                field_data['type'] = 'sfloat'
+                field_data['type'] = 'float'
             elif field_class.field_type == 'boolean':
                 field_data['type'] = 'boolean'
             elif field_class.field_type == 'ngram':
                 field_data['type'] = 'ngram'
             elif field_class.field_type == 'edge_ngram':
                 field_data['type'] = 'edge_ngram'
+            elif field_class.field_type == 'location':
+                field_data['type'] = 'location'
 
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
@@ -366,13 +421,13 @@ class SolrSearchBackend(BaseSearchBackend):
 
                 # If it's text and not being indexed, we probably don't want
                 # to do the normal lowercase/tokenize/stemming/etc. dance.
-                if field_data['type'] == 'text':
+                if field_data['type'] == 'text_en':
                     field_data['type'] = 'string'
 
             # If it's a ``FacetField``, make sure we don't postprocess it.
             if hasattr(field_class, 'facet_for'):
                 # If it's text, it ought to be a string.
-                if field_data['type'] == 'text':
+                if field_data['type'] == 'text_en':
                     field_data['type'] = 'string'
 
             schema_fields.append(field_data)
@@ -415,6 +470,25 @@ class SolrSearchBackend(BaseSearchBackend):
 class SolrSearchQuery(BaseSearchQuery):
     def matching_all_fragment(self):
         return '*:*'
+
+    def add_spatial(self, lat, lon, sfield, distance, filter='bbox'):
+        """Adds spatial query parameters to search query"""
+        kwargs = {
+            'lat': lat,
+            'long': long,
+            'sfield': sfield,
+            'distance': distance,
+        }
+        self.spatial_query.update(kwargs)
+
+    def add_order_by_distance(self, lat, long, sfield):
+        """Orders the search result by distance from point."""
+        kwargs = {
+            'lat': lat,
+            'long': long,
+            'sfield': sfield,
+        }
+        self.order_by_distance.update(kwargs)
 
     def build_query_fragment(self, field, filter_type, value):
         from haystack import connections
@@ -469,8 +543,11 @@ class SolrSearchQuery(BaseSearchQuery):
             'result_class': self.result_class,
         }
 
+        order_by_list = None
+
         if self.order_by:
-            order_by_list = []
+            if order_by_list is None:
+                order_by_list = []
 
             for order_by in self.order_by:
                 if order_by.startswith('-'):
@@ -503,6 +580,15 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
+
+        if self.within:
+            search_kwargs['within'] = self.within
+
+        if self.dwithin:
+            search_kwargs['dwithin'] = self.dwithin
+
+        if self.distance_point:
+            search_kwargs['distance_point'] = self.distance_point
 
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])

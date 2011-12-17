@@ -26,3 +26,7 @@ echo ""
 echo "** MULTIPLE INDEX **"
 django-admin.py test multipleindex --settings=multipleindex_settings
 echo ""
+
+echo "** SPATIAL **"
+django-admin.py test spatial --settings=spatial_settings
+echo ""

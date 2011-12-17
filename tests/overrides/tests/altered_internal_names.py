@@ -13,7 +13,7 @@ class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
     pub_date = indexes.DateField(model_attr='pub_date')
-    
+
     def get_model(self):
         return MockModel
 
@@ -21,26 +21,26 @@ class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class AlteredInternalNamesTestCase(TestCase):
     def setUp(self):
         super(AlteredInternalNamesTestCase, self).setUp()
-        
+
         self.old_ui = connections['default'].get_unified_index()
         ui = UnifiedIndex()
         ui.build(indexes=[MockModelSearchIndex()])
         connections['default']._index = ui
-    
+
     def tearDown(self):
         connections['default']._index = self.old_ui
         super(AlteredInternalNamesTestCase, self).tearDown()
-    
+
     def test_altered_names(self):
         sq = connections['default'].get_query()
-        
+
         sq.add_filter(SQ(content='hello'))
         sq.add_model(MockModel)
         self.assertEqual(sq.build_query(), u'(hello) AND (my_django_ct:core.mockmodel)')
-        
+
         sq.add_model(AnotherMockModel)
         self.assertEqual(sq.build_query(), u'(hello) AND (my_django_ct:core.anothermockmodel OR my_django_ct:core.mockmodel)')
-    
+
     def test_solr_schema(self):
         command = Command()
         self.assertEqual(command.build_context(using=DEFAULT_ALIAS).dicts[0], {
@@ -49,7 +49,7 @@ class AlteredInternalNamesTestCase(TestCase):
             'fields': [
                 {
                     'indexed': 'true',
-                    'type': 'text',
+                    'type': 'text_en',
                     'stored': 'true',
                     'field_name': 'text',
                     'multi_valued': 'false'
@@ -63,7 +63,7 @@ class AlteredInternalNamesTestCase(TestCase):
                 },
                 {
                     'indexed': 'true',
-                    'type': 'text',
+                    'type': 'text_en',
                     'stored': 'true',
                     'field_name': 'name',
                     'multi_valued': 'false'
@@ -73,9 +73,8 @@ class AlteredInternalNamesTestCase(TestCase):
             'default_operator': 'AND',
             'ID': 'my_id'
         })
-        
+
         schema_xml = command.build_template(using=DEFAULT_ALIAS)
         self.assertTrue('<uniqueKey>my_id</uniqueKey>' in schema_xml)
         self.assertTrue('<field name="my_id" type="string" indexed="true" stored="true" multiValued="false" required="true"/>' in schema_xml)
-        self.assertTrue('<field name="my_django_ct" type="string" indexed="true" stored="true" multiValued="false" />' in schema_xml)
-        self.assertTrue('<field name="my_django_id" type="string" indexed="true" stored="true" multiValued="false" />' in schema_xml)
+        self.assertTrue('<field name="my_django_ct" type="string" indexed="true" stored="true" multiValued="false"/>' in schema_xml)

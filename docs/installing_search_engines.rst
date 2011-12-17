@@ -11,18 +11,19 @@ Official Download Location: http://www.apache.org/dyn/closer.cgi/lucene/solr/
 
 Solr is Java but comes in a pre=packaged form that requires very little other
 than the JRE and Jetty. It's very performant and has an advanced featureset.
-Haystack requires Solr 1.3+. Installation is relatively simple::
+Haystack suggests using Solr 3.5+, though it's possible to get it working on
+Solr 1.4 with a little effort. Installation is relatively simple::
 
-    curl -O http://apache.mirrors.tds.net/lucene/solr/1.4.1/apache-solr-1.4.1.tgz
-    tar xvzf apache-solr-1.4.1.tgz
-    cd apache-solr-1.4.1
+    curl -O http://apache.mirrors.tds.net/lucene/solr/3.5.0/apache-solr-3.5.0.tgz
+    tar xvzf apache-solr-3.5.0.tgz
+    cd apache-solr-3.5.0
     cd example
     java -jar start.jar
 
 You'll need to revise your schema. You can generate this from your application
 (once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
-it in ``apache-solr-1.4.1/example/solr/conf/schema.xml``. Then restart Solr.
+it in ``apache-solr-3.5.0/example/solr/conf/schema.xml``. Then restart Solr.
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
 distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``

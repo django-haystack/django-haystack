@@ -320,6 +320,34 @@ Example::
     # Count document hits for authors that start with 'jo' within the index.
     SearchQuerySet().filter(content='foo').query_facet('author', 'jo*')
 
+``query_facet``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.within(self, field, point_1, point_2):
+
+Spatial: Adds a bounding box search to the query.
+
+See the :ref:`spatial` docs for more information.
+
+``query_facet``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.dwithin(self, field, point, distance):
+
+Spatial: Adds a distance-based search to the query.
+
+See the :ref:`spatial` docs for more information.
+
+``query_facet``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.distance(self, field, point):
+
+Spatial: Denotes results must have distance measurements from the
+provided point.
+
+See the :ref:`spatial` docs for more information.
+
 ``narrow``
 ~~~~~~~~~~
 
