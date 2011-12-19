@@ -43,18 +43,18 @@ For Elasticsearch, you'll need...
 
 .. _Solr: http://lucene.apache.org/solr/
 
-====================== ====== =============== ======== ======== ========
+====================== ====== =============== ======== ======== ======
 Lookup Type            Solr   Elasticsearch   Whoosh   Xapian   Simple
-====================== ====== =============== ======== ======== ========
-:lookup:`within`       X      X
-:lookup:`dwithin`      X      X
+====================== ====== =============== ======== ======== ======
+`within`               X      X
+`dwithin`              X      X
 `distance`             X      X
 `order_by('distance')` X      X
-:lookup:`polygon`             X
+`polygon`              X
+====================== ====== =============== ======== ======== ======
 
 For more details, you can inspect http://wiki.apache.org/solr/SpatialSearch
 or http://www.elasticsearch.org/guide/reference/query-dsl/geo-bounding-box-filter.html.
-
 
 Geospatial Assumptions
 ======================
@@ -202,11 +202,11 @@ Querying
 ========
 
 There are two types of geospatial queries you can run, ``within`` & ``dwithin``.
-Like their GeoDjango_ counterparts_, these methods focus on finding results
-within an area.
+Like their GeoDjango counterparts (within_ & dwithin_), these methods focus on
+finding results within an area.
 
-.. _GeoDjango: https://docs.djangoproject.com/en/dev/ref/contrib/gis/geoquerysets/#within
-.. _counterparts: https://docs.djangoproject.com/en/dev/ref/contrib/gis/geoquerysets/#dwithin
+.. _within: https://docs.djangoproject.com/en/dev/ref/contrib/gis/geoquerysets/#within
+.. _dwithin: https://docs.djangoproject.com/en/dev/ref/contrib/gis/geoquerysets/#dwithin
 
 
 ``within``
@@ -250,7 +250,7 @@ Examples::
 
 
 ``dwithin``
-----------
+-----------
 
 .. method:: SearchQuerySet.dwithin(self, field, point, distance)
 
