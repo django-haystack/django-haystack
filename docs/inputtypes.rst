@@ -105,7 +105,7 @@ query syntax bits) & forms a proper query out of them. It also handles
 sanitizing that query using ``Clean`` to ensure the query doesn't break.
 
 ``AutoQuery`` accommodates for handling regular words, NOT-ing words &
-extracting exact phrases. For example::
+extracting exact phrases.
 
 Example::
 
