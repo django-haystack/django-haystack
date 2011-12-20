@@ -6,6 +6,7 @@ from django.db.models.loading import get_model
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
 from haystack.utils.geo import Distance, generate_bounding_box
@@ -492,48 +493,95 @@ class SolrSearchQuery(BaseSearchQuery):
 
     def build_query_fragment(self, field, filter_type, value):
         from haystack import connections
-        result = ''
+        query_frag = ''
 
-        # Handle when we've got a ``ValuesListQuerySet``...
-        if hasattr(value, 'values_list'):
-            value = list(value)
+        if not hasattr(value, 'input_type_name'):
+            # Handle when we've got a ``ValuesListQuerySet``...
+            if hasattr(value, 'values_list'):
+                value = list(value)
 
-        if not isinstance(value, (set, list, tuple)):
-            # Convert whatever we find to what pysolr wants.
-            value = self.backend.conn._from_python(value)
+            if isinstance(value, basestring):
+                # It's not an ``InputType``. Assume ``Clean``.
+                value = Clean(value)
+            else:
+                value = PythonData(value)
 
-        index_fieldname = connections[self._using].get_unified_index().get_index_fieldname(field)
+        # Prepare the query using the InputType.
+        prepared_value = value.prepare(self)
 
-        filter_types = {
-            'contains': u'%s:%s',
-            'exact': u'%s:"%s"',
-            'gt': u'%s:{"%s" TO *}',
-            'gte': u'%s:["%s" TO *]',
-            'lt': u'%s:{* TO "%s"}',
-            'lte': u'%s:[* TO "%s"]',
-            'startswith': u"%s:%s*",
-        }
-
-        if filter_type == 'in':
-            in_options = []
-
-            for possible_value in value:
-                in_options.append(u'%s:"%s"' % (index_fieldname, self.backend.conn._from_python(possible_value)))
-
-            result = u"(%s)" % " OR ".join(in_options)
-        elif filter_type == 'range':
-            start = self.backend.conn._from_python(value[0])
-            end = self.backend.conn._from_python(value[1])
-            return u'%s:["%s" TO "%s"]' % (index_fieldname, start, end)
-        else:
-            result = filter_types[filter_type] % (index_fieldname, value)
+        if not isinstance(prepared_value, (set, list, tuple)):
+            # Then convert whatever we get back to what pysolr wants if needed.
+            prepared_value = self.backend.conn._from_python(prepared_value)
 
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
         if field == 'content':
-            result = result.replace('content:', '')
+            index_fieldname = ''
+        else:
+            index_fieldname = u'%s:' % connections[self._using].get_unified_index().get_index_fieldname(field)
 
-        return result
+        filter_types = {
+            'contains': u'%s',
+            'startswith': u'%s*',
+            'exact': u'%s',
+            'gt': u'{%s TO *}',
+            'gte': u'[%s TO *]',
+            'lt': u'{* TO %s}',
+            'lte': u'[* TO %s]',
+        }
+
+        if value.post_process is False:
+            query_frag = prepared_value
+        else:
+            if filter_type in ['contains', 'startswith']:
+                # Iterate over terms & incorportate the converted form of each into the query.
+                terms = []
+
+                for possible_value in prepared_value.split(' '):
+                    terms.append(filter_types[filter_type] % self.backend.conn._from_python(possible_value))
+
+                if len(terms) == 1:
+                    query_frag = terms[0]
+                else:
+                    query_frag = u"(%s)" % " AND ".join(terms)
+            elif filter_type == 'in':
+                in_options = []
+
+                for possible_value in prepared_value:
+                    in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
+
+                query_frag = u"(%s)" % " OR ".join(in_options)
+            elif filter_type == 'range':
+                start = self.backend.conn._from_python(prepared_value[0])
+                end = self.backend.conn._from_python(prepared_value[1])
+                query_frag = u'["%s" TO "%s"]' % (start, end)
+            elif filter_type == 'exact':
+                if value.input_type_name == 'exact':
+                    query_frag = prepared_value
+                else:
+                    prepared_value = Exact(prepared_value).prepare(self)
+                    query_frag = filter_types[filter_type] % prepared_value
+            else:
+                if value.input_type_name != 'exact':
+                    prepared_value = Exact(prepared_value).prepare(self)
+
+                query_frag = filter_types[filter_type] % prepared_value
+
+        return u"%s%s" % (index_fieldname, query_frag)
+
+    def build_alt_parser_query(self, parser_name, query_string='', **kwargs):
+        if query_string:
+            kwargs['v'] = query_string
+
+        kwarg_bits = []
+
+        for key in sorted(kwargs.keys()):
+            if isinstance(kwargs[key], basestring) and ' ' in kwargs[key]:
+                kwarg_bits.append(u"%s='%s'" % (key, kwargs[key]))
+            else:
+                kwarg_bits.append(u"%s=%s" % (key, kwargs[key]))
+
+        return u"{!%s %s}" % (parser_name, ' '.join(kwarg_bits))
 
     def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
@@ -542,7 +590,6 @@ class SolrSearchQuery(BaseSearchQuery):
             'start_offset': self.start_offset,
             'result_class': self.result_class,
         }
-
         order_by_list = None
 
         if self.order_by:

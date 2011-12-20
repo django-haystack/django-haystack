@@ -97,7 +97,7 @@ class BaseSearchQueryTestCase(TestCase):
 
         self.bsq.add_filter(SQ(claris='wtf mate'))
 
-        self.assertEqual(repr(self.bsq.query_filter), '<SQ: AND (((foo__contains=bar AND foo__lt=10 AND NOT (claris__contains=moof)) OR claris__contains=moof) AND claris__contains=moof AND claris__contains=wtf AND claris__contains=mate)>')
+        self.assertEqual(repr(self.bsq.query_filter), '<SQ: AND (((foo__contains=bar AND foo__lt=10 AND NOT (claris__contains=moof)) OR claris__contains=moof) AND claris__contains=moof AND claris__contains=wtf mate)>')
 
     def test_add_order_by(self):
         self.assertEqual(len(self.bsq.order_by), 0)
@@ -591,37 +591,37 @@ class SearchQuerySetTestCase(TestCase):
     def test_auto_query(self):
         sqs = self.msqs.auto_query('test search -stuff')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__contains=test AND content__contains=search AND NOT (content__contains=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains=test search -stuff>')
 
         sqs = self.msqs.auto_query('test "my thing" search -stuff')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__contains=test AND content__contains=search AND NOT (content__contains=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains=test "my thing" search -stuff>')
 
         sqs = self.msqs.auto_query('test "my thing" search \'moar quotes\' -stuff')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), "<SQ: AND (content__exact=my thing AND content__contains=test AND content__contains=search AND content__contains='moar AND content__contains=quotes' AND NOT (content__contains=stuff))>")
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains=test "my thing" search \'moar quotes\' -stuff>')
 
         sqs = self.msqs.auto_query('test "my thing" search \'moar quotes\' "foo -stuff')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__exact=my thing AND content__contains=test AND content__contains=search AND content__contains=\'moar AND content__contains=quotes\' AND content__contains="foo AND NOT (content__contains=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains=test "my thing" search \'moar quotes\' "foo -stuff>')
 
         sqs = self.msqs.auto_query('test - stuff')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (content__contains=test AND content__contains=- AND content__contains=stuff)>')
+        self.assertEqual(repr(sqs.query.query_filter), "<SQ: AND content__contains=test - stuff>")
 
         # Ensure bits in exact matches get escaped properly as well.
         sqs = self.msqs.auto_query('"pants:rule"')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__exact=pants:rule>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains="pants:rule">')
 
         # Now with a different fieldname
         sqs = self.msqs.auto_query('test search -stuff', fieldname='title')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (title__contains=test AND title__contains=search AND NOT (title__contains=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), "<SQ: AND title__contains=test search -stuff>")
 
         sqs = self.msqs.auto_query('test "my thing" search -stuff', fieldname='title')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND (title__exact=my thing AND title__contains=test AND title__contains=search AND NOT (title__contains=stuff))>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND title__contains=test "my thing" search -stuff>')
 
     def test_count(self):
         self.assertEqual(self.msqs.count(), 23)

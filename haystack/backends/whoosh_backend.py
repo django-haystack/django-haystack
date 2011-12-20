@@ -12,6 +12,7 @@ from django.utils.encoding import force_unicode
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, SearchBackendError
+from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
 try:
@@ -232,7 +233,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e)
+            self.log.error("Failed to clear documents from Whoosh: %s", e)
 
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
@@ -721,74 +722,117 @@ class WhooshSearchQuery(BaseSearchQuery):
 
     def build_query_fragment(self, field, filter_type, value):
         from haystack import connections
-        result = ''
+        query_frag = ''
         is_datetime = False
 
-        # Handle when we've got a ``ValuesListQuerySet``...
-        if hasattr(value, 'values_list'):
-            value = list(value)
+        if not hasattr(value, 'input_type_name'):
+            # Handle when we've got a ``ValuesListQuerySet``...
+            if hasattr(value, 'values_list'):
+                value = list(value)
 
-        if hasattr(value, 'strftime'):
-            is_datetime = True
+            if hasattr(value, 'strftime'):
+                is_datetime = True
 
-        if not filter_type in ('in', 'range'):
-            # 'in' is a bit of a special case, as we don't want to
-            # convert a valid list/tuple to string. Defer handling it
-            # until later...
-            value = self.backend._from_python(value)
+            if isinstance(value, basestring) and value != ' ':
+                # It's not an ``InputType``. Assume ``Clean``.
+                value = Clean(value)
+            else:
+                value = PythonData(value)
 
-        index_fieldname = connections[self._using].get_unified_index().get_index_fieldname(field)
+        # Prepare the query using the InputType.
+        prepared_value = value.prepare(self)
 
-        filter_types = {
-            'contains': '%s:%s',
-            'exact': '%s:"%s"',
-            'gt': "%s:{%s to}",
-            'gte': "%s:[%s to]",
-            'lt': "%s:{to %s}",
-            'lte': "%s:[to %s]",
-            'startswith': "%s:%s*",
-        }
-
-        if filter_type == 'in':
-            in_options = []
-
-            for possible_value in value:
-                is_datetime = False
-
-                if hasattr(possible_value, 'strftime'):
-                    is_datetime = True
-
-                pv = self.backend._from_python(possible_value)
-
-                if is_datetime is True:
-                    pv = self._convert_datetime(pv)
-
-                in_options.append('%s:"%s"' % (index_fieldname, pv))
-
-            result = "(%s)" % " OR ".join(in_options)
-        elif filter_type == 'range':
-            start = self.backend._from_python(value[0])
-            end = self.backend._from_python(value[1])
-
-            if hasattr(value[0], 'strftime'):
-                start = self._convert_datetime(start)
-
-            if hasattr(value[1], 'strftime'):
-                end = self._convert_datetime(end)
-
-            return "%s:[%s to %s]" % (index_fieldname, start, end)
-        else:
-            if is_datetime is True:
-                value = self._convert_datetime(value)
-
-            result = filter_types[filter_type] % (index_fieldname, value)
+        if not isinstance(prepared_value, (set, list, tuple)):
+            # Then convert whatever we get back to what pysolr wants if needed.
+            prepared_value = self.backend._from_python(prepared_value)
 
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
         if field == 'content':
-            result = result.replace('content:', '')
+            index_fieldname = ''
+        else:
+            index_fieldname = u'%s:' % connections[self._using].get_unified_index().get_index_fieldname(field)
 
-        return result
+        filter_types = {
+            'contains': '%s',
+            'startswith': "%s*",
+            'exact': '%s',
+            'gt': "{%s to}",
+            'gte': "[%s to]",
+            'lt': "{to %s}",
+            'lte': "[to %s]",
+        }
+
+        if value.post_process is False:
+            query_frag = prepared_value
+        else:
+            if filter_type in ['contains', 'startswith']:
+                # Iterate over terms & incorportate the converted form of each into the query.
+                terms = []
+
+                if isinstance(prepared_value, basestring):
+                    possible_values = prepared_value.split(' ')
+                else:
+                    if is_datetime is True:
+                        prepared_value = self._convert_datetime(prepared_value)
+
+                    possible_values = [prepared_value]
+
+                for possible_value in possible_values:
+                    terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
+
+                if len(terms) == 1:
+                    query_frag = terms[0]
+                else:
+                    query_frag = u"(%s)" % " AND ".join(terms)
+            elif filter_type == 'in':
+                in_options = []
+
+                for possible_value in prepared_value:
+                    is_datetime = False
+
+                    if hasattr(possible_value, 'strftime'):
+                        is_datetime = True
+
+                    pv = self.backend._from_python(possible_value)
+
+                    if is_datetime is True:
+                        pv = self._convert_datetime(pv)
+
+                    in_options.append('"%s"' % pv)
+
+                query_frag = "(%s)" % " OR ".join(in_options)
+            elif filter_type == 'range':
+                start = self.backend._from_python(prepared_value[0])
+                end = self.backend._from_python(prepared_value[1])
+
+                if hasattr(prepared_value[0], 'strftime'):
+                    start = self._convert_datetime(start)
+
+                if hasattr(prepared_value[1], 'strftime'):
+                    end = self._convert_datetime(end)
+
+                query_frag = u"[%s to %s]" % (start, end)
+            elif filter_type == 'exact':
+                if value.input_type_name == 'exact':
+                    query_frag = prepared_value
+                else:
+                    prepared_value = Exact(prepared_value).prepare(self)
+                    query_frag = filter_types[filter_type] % prepared_value
+            else:
+                if is_datetime is True:
+                    prepared_value = self._convert_datetime(prepared_value)
+
+                query_frag = filter_types[filter_type] % prepared_value
+
+        return u"%s%s" % (index_fieldname, query_frag)
+
+
+        # if not filter_type in ('in', 'range'):
+        #     # 'in' is a bit of a special case, as we don't want to
+        #     # convert a valid list/tuple to string. Defer handling it
+        #     # until later...
+        #     value = self.backend._from_python(value)
 
 
 class WhooshEngine(BaseEngine):

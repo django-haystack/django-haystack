@@ -6,8 +6,9 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
+from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS, DEFAULT_OPERATOR
 from haystack.exceptions import MoreLikeThisError, FacetingError
+from haystack.inputs import Clean
 from haystack.models import SearchResult
 from haystack.utils.geo import ensure_point, ensure_distance
 from haystack.utils.loading import UnifiedIndex
@@ -207,7 +208,7 @@ class SearchNode(tree.Node):
         return '<SQ: %s %s>' % (self.connector, self.as_query_string(self._repr_query_fragment_callback))
 
     def _repr_query_fragment_callback(self, field, filter_type, value):
-        return '%s%s%s=%s' % (field, FILTER_SEPARATOR, filter_type, force_unicode(value).encode('utf8'))
+        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, force_unicode(value).encode('utf8'))
 
     def as_query_string(self, query_fragment_callback):
         """
@@ -222,12 +223,7 @@ class SearchNode(tree.Node):
             else:
                 expression, value = child
                 field, filter_type = self.split_expression(expression)
-
-                if filter_type in ['contains', 'startswith'] and isinstance(value, basestring):
-                    for token in value.split(' '):
-                        result.append(query_fragment_callback(field, filter_type, token))
-                else:
-                    result.append(query_fragment_callback(field, filter_type, value))
+                result.append(query_fragment_callback(field, filter_type, value))
 
         conn = ' %s ' % self.connector
         query_string = conn.join(result)
@@ -569,6 +565,9 @@ class BaseSearchQuery(object):
 
         A basic (override-able) implementation is provided.
         """
+        if not isinstance(query_fragment, basestring):
+            return query_fragment
+
         words = query_fragment.split()
         cleaned_words = []
 
@@ -583,11 +582,19 @@ class BaseSearchQuery(object):
 
         return ' '.join(cleaned_words)
 
+    def build_not_query(self, query_string):
+        if ' ' in query_string:
+            query_string = "(%s)" % query_string
+
+        return u"NOT %s" % query_string
+
+    def build_exact_query(self, query_string):
+        return u'"%s"' % query_string
+
     def add_filter(self, query_filter, use_or=False):
         """
         Adds a SQ to the current query.
         """
-        # TODO: consider supporting add_to_query callbacks on q objects
         if use_or:
             connector = SQ.OR
         else:
