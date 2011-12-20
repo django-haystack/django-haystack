@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 from haystack import connections
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, SearchNode, log_query
+from haystack.inputs import PythonData
 from haystack.models import SearchResult
 
 
@@ -109,7 +110,12 @@ class SimpleSearchQuery(BaseSearchQuery):
             if isinstance(child, SearchNode):
                 term_list.append(self._build_sub_query(child))
             else:
-                term_list.append(child[1])
+                value = child[1]
+
+                if not hasattr(value, 'input_type_name'):
+                    value = PythonData(value)
+
+                term_list.append(value.prepare(self))
 
         return (' ').join(term_list)
 

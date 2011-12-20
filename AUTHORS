@@ -55,5 +55,6 @@ Thanks to
         * a multiprocessing-enabled version of ``update_index``.
         * the addition of ``--start/--end`` options in ``update_index``.
         * the ability to specify both apps & models to ``update_index``.
-        * A significant portion of the geospatial & function query features.
+        * A significant portion of the geospatial feature.
+        * A significant portion of the input types feature.
     * Aram Dulyan (Aramgutang) for fixing the included admin class to be Django 1.4 compatible.

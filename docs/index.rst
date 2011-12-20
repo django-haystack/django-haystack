@@ -75,6 +75,7 @@ looking for API documentation and advanced usage as detailed in:
 
    searchqueryset_api
    searchindex_api
+   inputtypes
    searchfield_api
    searchresult_api
    searchquery_api

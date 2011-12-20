@@ -32,6 +32,7 @@ Table Of Contents
 
    searchqueryset_api
    searchindex_api
+   inputtypes
    searchfield_api
    searchresult_api
    searchquery_api

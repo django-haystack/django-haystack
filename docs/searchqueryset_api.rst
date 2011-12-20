@@ -37,6 +37,16 @@ For the impatient::
     unfriendly_results = SearchQuerySet().exclude(content='hello').filter(content='world')
     recent_results = SearchQuerySet().order_by('-pub_date')[:5]
 
+    # Using the new input types...
+    from haystack.inputs import AutoQuery, Exact, Clean
+    sqs = SearchQuerySet().filter(content=AutoQuery(request.GET['q']), product_type=Exact('ancient book'))
+
+    if request.GET['product_url']:
+        sqs = sqs.filter(product_url=Clean(request.GET['product_url']))
+
+For more on the ``AutoQuery``, ``Exact``, ``Clean`` classes & friends, see the
+:ref:`ref-inputtypes` documentation.
+
 
 ``SearchQuerySet``
 ==================
@@ -118,33 +128,38 @@ The lookup parameters (``**kwargs``) should follow the `Field lookups`_ below.
 If you specify more than one pair, they will be joined in the query according to
 the ``HAYSTACK_DEFAULT_OPERATOR`` setting (defaults to ``AND``).
 
+You can pass it either strings or a variety of :ref:`ref-inputtypes` if you
+need more advanced query behavior.
+
 .. warning::
 
-    Any data you pass to ``filter`` is passed along **unescaped**. If
-    you don't trust the data you're passing along, you should either use
-    ``auto_query`` or use the ``clean`` method on your ``SearchQuery`` to
-    sanitize the data.
+    Any data you pass to ``filter`` gets auto-escaped. If you need to send
+    non-escaped data, use the ``Raw`` input type (:ref:`ref-inputtypes`).
 
-..warning::
-
-    If a string with one or more spaces in it is specified as the value, the
+    Also, if a string with one or more spaces in it is specified as the value, the
     string will get passed along **AS IS**. This will mean that it will **NOT**
     be treated as a phrase (like Haystack 1.X's behavior).
 
-    If you want to match a phrase, you should use the ``__exact`` filter type.
+    If you want to match a phrase, you should use either the ``__exact`` filter
+    type or the ``Exact`` input type (:ref:`ref-inputtypes`).
 
-Example::
+Examples::
 
-    SearchQuerySet().filter(content='foo')
+    sqs = SearchQuerySet().filter(content='foo')
 
-    SearchQuerySet().filter(content='foo', pub_date__lte=datetime.date(2008, 1, 1))
+    sqs = SearchQuerySet().filter(content='foo', pub_date__lte=datetime.date(2008, 1, 1))
 
     # Identical to the previous example.
-    SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
+    sqs = SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
 
-    # To escape user data:
-    sqs = SearchQuerySet()
-    sqs = sqs.filter(title=sqs.query.clean(user_query))
+    # To send unescaped data:
+    from haystack.inputs import Raw
+    sqs = SearchQuerySet().filter(title=Raw(trusted_query))
+
+    # To use auto-query behavior on a non-``document=True`` field.
+    from haystack.inputs import AutoQuery
+    sqs = SearchQuerySet().filter(title=AutoQuery(user_query))
+
 
 ``exclude``
 ~~~~~~~~~~~
@@ -155,14 +170,13 @@ Narrows the search by ensuring certain attributes are not included.
 
 .. warning::
 
-    Any data you pass to ``exclude`` is passed along **unescaped**. If
-    you don't trust the data you're passing along, you should either use
-    ``auto_query`` or use the ``clean`` method on your ``SearchQuery`` to
-    sanitize the data.
+    Any data you pass to ``exclude`` gets auto-escaped. If you need to send
+    non-escaped data, use the ``Raw`` input type (:ref:`ref-inputtypes`).
 
 Example::
 
-    SearchQuerySet().exclude(content='foo')
+    sqs = SearchQuerySet().exclude(content='foo')
+
 
 ``filter_and``
 ~~~~~~~~~~~~~~
@@ -388,16 +402,22 @@ searched. Generally speaking, if you're in doubt of whether to use
 Passes a raw query directly to the backend. This is for advanced usage, where
 the desired query can not be expressed via ``SearchQuerySet``.
 
+This method is still supported, however it now uses the much more flexible
+``Raw`` input type (:ref:`ref-inputtypes`).
+
 .. warning::
 
-    Unlike many of the other methods on ``SearchQuerySet``, this method does
-    not chain by default (depends on the backend). Any other attributes on the
-    ``SearchQuerySet`` are ignored and only the provided query is run.
+    Different from Haystack 1.X, this method no longer causes immediate
+    evaluation & now chains appropriately.
 
 Example::
 
     # In the case of Solr... (this example could be expressed with SearchQuerySet)
     SearchQuerySet().raw_search('django_ct:blog.blogentry "However, it is"')
+
+    # Equivalent.
+    from haystack.inputs import Raw
+    sqs = SearchQuerySet().filter(content=Raw('django_ct:blog.blogentry "However, it is"'))
 
 Please note that this is **NOT** portable between backends. The syntax is entirely
 dependent on the backend. No validation/cleansing is performed and it is up to
@@ -440,31 +460,25 @@ Please see the docs on ``RelatedSearchQuerySet``.
 
 Performs a best guess constructing the search query.
 
-This method is intended for common use directly with a user's query. It is a
-shortcut to the other API methods that follows generally established search
-syntax without requiring each developer to implement their own parser.
+This method is intended for common use directly with a user's query. This
+method is still supported, however it now uses the much more flexible
+``AutoQuery`` input type (:ref:`ref-inputtypes`).
 
 It handles exact matches (specified with single or double quotes), negation (
 using a ``-`` immediately before the term) and joining remaining terms with the
 operator specified in ``HAYSTACK_DEFAULT_OPERATOR``.
 
-If a ``fieldname`` is provided, the ``auto_query`` will be applied to that
-field instead of the default ``content`` field.
-
 Example::
 
-    SearchQuerySet().auto_query('goldfish "old one eye" -tank')
+    sqs = SearchQuerySet().auto_query('goldfish "old one eye" -tank')
 
-    # ... is identical to...
-    SearchQuerySet().filter(content__exact='old one eye').filter(content='goldfish').exclude(content='tank')
+    # Equivalent.
+    from haystack.inputs import AutoQuery
+    sqs = SearchQuerySet().filter(content=AutoQuery('goldfish "old one eye" -tank'))
 
     # Against a different field.
-    SearchQuerySet().auto_query('goldfish -tank', fieldname='title')
+    sqs = SearchQuerySet().filter(title=AutoQuery('goldfish "old one eye" -tank'))
 
-    # ... is identical to...
-    SearchQuerySet().filter(title='goldfish').exclude(title='tank')
-
-This method is somewhat naive but works well enough for simple, common cases.
 
 ``autocomplete``
 ~~~~~~~~~~~~~~~~

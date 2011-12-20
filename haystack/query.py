@@ -5,6 +5,7 @@ from haystack import connections, connection_router
 from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotHandled
+from haystack.inputs import Raw, Clean, AutoQuery
 
 
 class SearchQuerySet(object):
@@ -401,9 +402,7 @@ class SearchQuerySet(object):
 
     def raw_search(self, query_string, **kwargs):
         """Passes a raw query directly to the backend."""
-        clone = self._clone()
-        clone.query.raw_search(query_string, **kwargs)
-        return clone
+        return self.filter(content=Raw(query_string, **kwargs))
 
     def load_all(self):
         """Efficiently populates the objects in the search results."""
@@ -411,60 +410,17 @@ class SearchQuerySet(object):
         clone._load_all = True
         return clone
 
-    def auto_query(self, query_string, fieldname=None):
+    def auto_query(self, query_string, fieldname='content'):
         """
         Performs a best guess constructing the search query.
 
         This method is somewhat naive but works well enough for the simple,
         common cases.
         """
-        clone = self._clone()
-
-        # Pull out anything wrapped in quotes and do an exact match on it.
-        open_quote_position = None
-        non_exact_query = query_string
-
-        if fieldname is None:
-            fieldname = 'content'
-
-        for offset, char in enumerate(query_string):
-            if char == '"':
-                if open_quote_position != None:
-                    current_match = non_exact_query[open_quote_position + 1:offset]
-
-                    if current_match:
-                        current_kwargs = {
-                            "%s__exact" % fieldname: clone.query.clean(current_match),
-                        }
-                        clone = clone.filter(**current_kwargs)
-
-                    non_exact_query = non_exact_query.replace('"%s"' % current_match, '', 1)
-                    open_quote_position = None
-                else:
-                    open_quote_position = offset
-
-        # Pseudo-tokenize the rest of the query.
-        keywords = non_exact_query.split()
-
-        # Loop through keywords and add filters to the query.
-        for keyword in keywords:
-            exclude = False
-
-            if keyword.startswith('-') and len(keyword) > 1:
-                keyword = keyword[1:]
-                exclude = True
-
-            cleaned_keyword = clone.query.clean(keyword)
-            keyword_kwargs = {
-                fieldname: cleaned_keyword,
-            }
-
-            if exclude:
-                clone = clone.exclude(**keyword_kwargs)
-            else:
-                clone = clone.filter(**keyword_kwargs)
-
-        return clone
+        kwargs = {
+            fieldname: AutoQuery(query_string)
+        }
+        return self.filter(**kwargs)
 
     def autocomplete(self, **kwargs):
         """
