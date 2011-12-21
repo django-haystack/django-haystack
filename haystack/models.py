@@ -5,7 +5,6 @@ from django.db import models
 from django.utils.encoding import force_unicode
 from django.utils.text import capfirst
 from haystack.exceptions import NotHandled, SpatialError
-from haystack.utils.geo import Distance
 
 try:
     from geopy import distance as geopy_distance
@@ -99,6 +98,8 @@ class SearchResult(object):
     model = property(_get_model, _set_model)
 
     def _get_distance(self):
+        from haystack.utils.geo import Distance
+
         if self._distance is None:
             # We didn't get it from the backend & we haven't tried calculating
             # it yet. Check if geopy is available to do it the "slow" way

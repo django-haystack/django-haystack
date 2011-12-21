@@ -10,9 +10,7 @@ from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR, DEFAU
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.inputs import Clean
 from haystack.models import SearchResult
-from haystack.utils.geo import ensure_point, ensure_distance
 from haystack.utils.loading import UnifiedIndex
-
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
@@ -700,6 +698,7 @@ class BaseSearchQuery(object):
 
     def add_within(self, field, point_1, point_2):
         """Adds bounding box parameters to search query."""
+        from haystack.utils.geo import ensure_point
         self.within = {
             'field': field,
             'point_1': ensure_point(point_1),
@@ -708,6 +707,7 @@ class BaseSearchQuery(object):
 
     def add_dwithin(self, field, point, distance):
         """Adds radius-based parameters to search query."""
+        from haystack.utils.geo import ensure_point, ensure_distance
         self.dwithin = {
             'field': field,
             'point': ensure_point(point),
@@ -719,6 +719,7 @@ class BaseSearchQuery(object):
         Denotes that results should include distance measurements from the
         point passed in.
         """
+        from haystack.utils.geo import ensure_point
         self.distance_point = {
             'field': field,
             'point': ensure_point(point),
