@@ -42,7 +42,7 @@ Example::
 .. class:: haystack.inputs.Clean
 
 ``Clean`` takes standard user (untrusted) input and sanitizes it. It ensures
-that no unintented orerators or special characters make it into the query.
+that no unintended operators or special characters make it into the query.
 
 This is roughly analogous to Django's ``autoescape`` support.
 
