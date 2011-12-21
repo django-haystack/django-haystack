@@ -14,17 +14,17 @@ class Command(BaseCommand):
                     help='If provided, chooses a connection to work with.'),
     )
     option_list = BaseCommand.option_list + base_options
-    
+
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
         using = options.get('using')
         schema_xml = self.build_template(using=using)
-        
+
         if options.get('filename'):
             self.write_file(options.get('filename'), schema_xml)
         else:
             self.print_stdout(schema_xml)
-    
+
     def build_context(self, using):
         from haystack import connections, connection_router
         backend = connections[using].get_backend()
@@ -37,12 +37,12 @@ class Command(BaseCommand):
             'DJANGO_CT': DJANGO_CT,
             'DJANGO_ID': DJANGO_ID,
         })
-    
+
     def build_template(self, using):
         t = loader.get_template('search_configuration/solr.xml')
         c = self.build_context(using=using)
         return t.render(c)
-    
+
     def print_stdout(self, schema_xml):
         sys.stderr.write("\n")
         sys.stderr.write("\n")
@@ -51,7 +51,7 @@ class Command(BaseCommand):
         sys.stderr.write("--------------------------------------------------------------------------------------------\n")
         sys.stderr.write("\n")
         print schema_xml
-    
+
     def write_file(self, filename, schema_xml):
         schema_file = open(filename, 'w')
         schema_file.write(schema_xml)

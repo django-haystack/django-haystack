@@ -9,7 +9,6 @@ from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
-from haystack.utils.geo import Distance, generate_bounding_box
 try:
     from django.db.models.sql.query import get_proxied_model
 except ImportError:
@@ -208,6 +207,8 @@ class SolrSearchBackend(BaseSearchBackend):
             kwargs['fq'] = list(narrow_queries)
 
         if within is not None:
+            from haystack.utils.geo import generate_bounding_box
+
             kwargs.setdefault('fq', [])
             ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
             # Bounding boxes are min, min TO max, max. Solr's wiki was *NOT*
@@ -360,6 +361,7 @@ class SolrSearchBackend(BaseSearchBackend):
                     additional_fields['_point_of_origin'] = distance_point
 
                     if raw_result.get('__dist__'):
+                        from haystack.utils.geo import Distance
                         additional_fields['_distance'] = Distance(km=float(raw_result['__dist__']))
                     else:
                         additional_fields['_distance'] = None
