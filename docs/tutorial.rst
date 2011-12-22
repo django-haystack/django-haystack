@@ -56,6 +56,21 @@ backend to get started. There is a quick-start guide to
 :doc:`installing_search_engines`, though you may want to defer to each engine's
 official instructions.
 
+Installation
+============
+
+It is easiest to install Haystack using ``pip`` or ``easy_install``
+
+Example::
+
+    pip install django-haystack
+
+    easy_install django-haystack
+
+.. note::
+
+    You should uninstall ``haystack`` if it is installed since ``django-haystack`` 
+    will conflict with the ``haystack`` package.
 
 Configuration
 =============
@@ -65,6 +80,13 @@ Add Haystack To ``INSTALLED_APPS``
 
 As with most Django applications, you should add Haystack to the
 ``INSTALLED_APPS`` within your settings file (usually ``settings.py``).
+
+Example::
+
+    INSTALLED_APPS = (
+        ...
+        'haystack',
+    )
 
 
 Modify Your ``settings.py``
