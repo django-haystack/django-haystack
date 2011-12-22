@@ -23,40 +23,40 @@ class SearchViewTestCase(TestCase):
         mock_index_site = SearchSite()
         mock_index_site.register(MockModel)
         mock_index_site.register(AnotherMockModel)
-        
+
         # Stow.
         self.old_site = haystack.site
         haystack.site = mock_index_site
-        
+
         self.old_engine = getattr(settings, 'HAYSTACK_SEARCH_ENGINE')
         settings.HAYSTACK_SEARCH_ENGINE = 'dummy'
-    
+
     def tearDown(self):
         haystack.site = self.old_site
         settings.HAYSTACK_SEARCH_ENGINE = self.old_engine
         super(SearchViewTestCase, self).tearDown()
-    
+
     def test_search_no_query(self):
         response = self.client.get(reverse('haystack_search'))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_search_query(self):
         response = self.client.get(reverse('haystack_search'), {'q': 'hello world'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context[-1]['page'].object_list), 1)
         self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), 'haystack.dummymodel')
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, 1)
-    
+
     def test_invalid_page(self):
         response = self.client.get(reverse('haystack_search'), {'q': 'hello world', 'page': '165233'})
         self.assertEqual(response.status_code, 404)
-    
+
     def test_empty_results(self):
         sv = SearchView()
         sv.request = HttpRequest()
         sv.form = sv.build_form()
         self.assert_(isinstance(sv.get_results(), EmptySearchQuerySet))
-    
+
     def test_initial_data(self):
         sv = SearchView(form_class=InitialedSearchForm)
         sv.request = HttpRequest()
@@ -64,10 +64,19 @@ class SearchViewTestCase(TestCase):
         self.assert_(isinstance(form, InitialedSearchForm))
         self.assertEqual(form.fields['q'].initial, 'Search for...')
         self.assertEqual(form.as_p(), u'<p><label for="id_q">Search:</label> <input type="text" name="q" value="Search for..." id="id_q" /></p>')
-    
+
+    def test_pagination(self):
+        response = self.client.get(reverse('haystack_search'), {'q': 'hello world', 'page': 0})
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('haystack_search'), {'q': 'hello world', 'page': 1})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context[-1]['page'].object_list), 1)
+        response = self.client.get(reverse('haystack_search'), {'q': 'hello world', 'page': 2})
+        self.assertEqual(response.status_code, 404)
+
     def test_thread_safety(self):
         exceptions = []
-        
+
         def threaded_view(queue, view, request):
             import time; time.sleep(2)
             try:
@@ -76,27 +85,27 @@ class SearchViewTestCase(TestCase):
             except Exception, e:
                 exceptions.append(e)
                 raise
-        
+
         class ThreadedSearchView(SearchView):
             def __call__(self, request):
                 print "Name: %s" % request.GET['name']
                 return super(ThreadedSearchView, self).__call__(request)
-        
+
         view = search_view_factory(view_class=ThreadedSearchView)
         queue = Queue.Queue()
         request_1 = HttpRequest()
         request_1.GET = {'name': 'foo'}
         request_2 = HttpRequest()
         request_2.GET = {'name': 'bar'}
-        
+
         th1 = Thread(target=threaded_view, args=(queue, view, request_1))
         th2 = Thread(target=threaded_view, args=(queue, view, request_2))
-        
+
         th1.start()
         th2.start()
         th1.join()
         th2.join()
-        
+
         foo = queue.get()
         bar = queue.get()
         self.assertNotEqual(foo, bar)
@@ -104,13 +113,13 @@ class SearchViewTestCase(TestCase):
 
 class ResultsPerPageTestCase(TestCase):
     urls = 'core.tests.results_per_page_urls'
-    
+
     def test_custom_results_per_page(self):
         response = self.client.get('/search/', {'q': 'hello world'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context[-1]['page'].object_list), 1)
         self.assertEqual(response.context[-1]['paginator'].per_page, 1)
-        
+
         response = self.client.get('/search2/', {'q': 'hello world'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context[-1]['page'].object_list), 1)
@@ -123,45 +132,45 @@ class FacetedSearchViewTestCase(TestCase):
         mock_index_site = SearchSite()
         mock_index_site.register(MockModel)
         mock_index_site.register(AnotherMockModel)
-        
+
         # Stow.
         self.old_site = haystack.site
         haystack.site = mock_index_site
-        
+
         self.old_engine = getattr(settings, 'HAYSTACK_SEARCH_ENGINE')
         settings.HAYSTACK_SEARCH_ENGINE = 'dummy'
-    
+
     def tearDown(self):
         haystack.site = self.old_site
         settings.HAYSTACK_SEARCH_ENGINE = self.old_engine
         super(FacetedSearchViewTestCase, self).tearDown()
-    
+
     def test_search_no_query(self):
         response = self.client.get(reverse('haystack_faceted_search'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['facets'], {})
-    
+
     def test_empty_results(self):
         fsv = FacetedSearchView()
         fsv.request = HttpRequest()
         fsv.request.GET = QueryDict('')
         fsv.form = fsv.build_form()
         self.assert_(isinstance(fsv.get_results(), EmptySearchQuerySet))
-    
+
     def test_default_form(self):
         fsv = FacetedSearchView()
         fsv.request = HttpRequest()
         fsv.request.GET = QueryDict('')
         fsv.form = fsv.build_form()
         self.assert_(isinstance(fsv.form, FacetedSearchForm))
-    
+
     def test_list_selected_facets(self):
         fsv = FacetedSearchView()
         fsv.request = HttpRequest()
         fsv.request.GET = QueryDict('')
         fsv.form = fsv.build_form()
         self.assertEqual(fsv.form.selected_facets, [])
-        
+
         fsv = FacetedSearchView()
         fsv.request = HttpRequest()
         fsv.request.GET = QueryDict('selected_facets=author:daniel&selected_facets=author:chris')
@@ -175,23 +184,23 @@ class BasicSearchViewTestCase(TestCase):
         mock_index_site = SearchSite()
         mock_index_site.register(MockModel)
         mock_index_site.register(AnotherMockModel)
-        
+
         # Stow.
         self.old_site = haystack.site
         haystack.site = mock_index_site
-        
+
         self.old_engine = getattr(settings, 'HAYSTACK_SEARCH_ENGINE')
         settings.HAYSTACK_SEARCH_ENGINE = 'dummy'
-    
+
     def tearDown(self):
         haystack.site = self.old_site
         settings.HAYSTACK_SEARCH_ENGINE = self.old_engine
         super(BasicSearchViewTestCase, self).tearDown()
-    
+
     def test_search_no_query(self):
         response = self.client.get(reverse('haystack_basic_search'))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_search_query(self):
         response = self.client.get(reverse('haystack_basic_search'), {'q': 'hello world'})
         self.assertEqual(response.status_code, 200)
@@ -200,7 +209,7 @@ class BasicSearchViewTestCase(TestCase):
         self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), 'haystack.dummymodel')
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, 1)
         self.assertEqual(response.context[-1]['query'], 'hello world')
-    
+
     def test_invalid_page(self):
         response = self.client.get(reverse('haystack_basic_search'), {'q': 'hello world', 'page': '165233'})
         self.assertEqual(response.status_code, 404)

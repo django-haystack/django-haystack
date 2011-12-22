@@ -99,7 +99,10 @@ class SearchView(object):
         try:
             page_no = int(self.request.GET.get('page', 1))
         except (TypeError, ValueError):
-            raise Http404
+            raise Http404("Not a valid number for page.")
+
+        if page_no < 1:
+            raise Http404("Pages should be 1 or greater.")
 
         start_offset = (page_no - 1) * self.results_per_page
         self.results[start_offset:start_offset + self.results_per_page]
@@ -109,7 +112,7 @@ class SearchView(object):
         try:
             page = paginator.page(page_no)
         except InvalidPage:
-            raise Http404
+            raise Http404("No such page!")
 
         return (paginator, page)
     
