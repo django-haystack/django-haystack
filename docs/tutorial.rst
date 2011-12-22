@@ -40,14 +40,14 @@ note-taking application. Here is ``myapp/models.py``::
 
     from django.db import models
     from django.contrib.auth.models import User
-    
-    
+
+
     class Note(models.Model):
         user = models.ForeignKey(User)
         pub_date = models.DateTimeField()
         title = models.CharField(max_length=200)
         body = models.TextField()
-        
+
         def __unicode__(self):
             return self.title
 
@@ -65,6 +65,22 @@ Add Haystack To ``INSTALLED_APPS``
 
 As with most Django applications, you should add Haystack to the
 ``INSTALLED_APPS`` within your settings file (usually ``settings.py``).
+
+Example::
+
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.sites',
+
+        # Added.
+        'haystack',
+
+        # Then your usual apps...
+        'blog',
+    ]
 
 
 Modify Your ``settings.py``
@@ -197,18 +213,18 @@ it applies to, though that is not required. This allows
     from haystack.indexes import *
     from haystack import site
     from myapp.models import Note
-    
-    
+
+
     class NoteIndex(SearchIndex):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def index_queryset(self):
             """Used when the entire index for model is updated."""
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
-    
-    
+
+
     site.register(Note, NoteIndex)
 
 Every ``SearchIndex`` requires there be one (and only one) field with
@@ -220,7 +236,7 @@ which field is the primary field for searching within.
     When you choose a ``document=True`` field, it should be consistently named
     across all of your ``SearchIndex`` classes to avoid confusing the backend.
     The convention is to name this field ``text``.
-    
+
     There is nothing special about the ``text`` field name used in all of the
     examples. It could be anything; you could call it ``pink_polka_dot`` and
     it won't matter. It's simply a convention to call it ``text``.
@@ -270,10 +286,10 @@ be very simple. The following is enough to get going (your template/block names
 will likely differ)::
 
     {% extends 'base.html' %}
-    
+
     {% block content %}
         <h2>Search</h2>
-        
+
         <form method="get" action=".">
             <table>
                 {{ form.as_table }}
@@ -284,10 +300,10 @@ will likely differ)::
                     </td>
                 </tr>
             </table>
-            
+
             {% if query %}
                 <h3>Results</h3>
-                
+
                 {% for result in page.object_list %}
                     <p>
                         <a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a>
@@ -295,7 +311,7 @@ will likely differ)::
                 {% empty %}
                     <p>No results found.</p>
                 {% endfor %}
-                
+
                 {% if page.has_previous or page.has_next %}
                     <div>
                         {% if page.has_previous %}<a href="?q={{ query }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
@@ -340,11 +356,11 @@ models were processed and placed in the index.
     Using the standard ``SearchIndex``, your search index content is only
     updated whenever you run either ``./manage.py update_index`` or start
     afresh with ``./manage.py rebuild_index``.
-    
+
     You should cron up a ``./manage.py update_index`` job at whatever interval
     works best for your site (using ``--age=<num_hours>`` reduces the number of
     things to update).
-    
+
     Alternatively, if you have low traffic and/or your search engine can handle
     it, the ``RealTimeSearchIndex`` automatically handles updates/deletes
     for you.
