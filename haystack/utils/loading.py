@@ -142,6 +142,7 @@ class UnifiedIndex(object):
         self._built = False
         self._indexes_setup = False
         self.excluded_indexes = excluded_indexes or []
+        self.excluded_indexes_ids = {}
         self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
         self._fieldnames = {}
         self._facet_fieldnames = {}
@@ -160,7 +161,8 @@ class UnifiedIndex(object):
                     # We've got an index. Check if we should be ignoring it.
                     class_path = "%s.search_indexes.%s" % (app, item_name)
 
-                    if class_path in self.excluded_indexes:
+                    if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(item_name) == id(item):
+                        self.excluded_indexes_ids[str(item_name)] = id(item)
                         continue
 
                     indexes.append(item())
