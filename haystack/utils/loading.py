@@ -99,6 +99,14 @@ class ConnectionHandler(object):
         self._connections[key] = load_backend(self.connections_info[key]['ENGINE'])(using=key)
         return self._connections[key]
 
+    def reload(self, key):
+        try:
+            del self._connections[key]
+        except KeyError:
+            pass
+
+            return self.__getitem__(key)
+
     def all(self):
         return [self[alias] for alias in self.connections_info]
 
