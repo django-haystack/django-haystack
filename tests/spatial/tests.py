@@ -1,3 +1,6 @@
+import httplib2
+import warnings
+from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.test import TestCase
 from haystack import connections
@@ -174,5 +177,21 @@ class SpatialSolrNoDistanceTestCase(TestCase):
         self.assertEqual([result.pk for result in sqs], ['8', '6', '3', '1'])
 
 
-class SpatialSolrNativeDistanceTestCase(SpatialSolrNoDistanceTestCase):
-    using = 'solr_native_distance'
+def check_running(using):
+    http = httplib2.Http(timeout=1)
+    url = settings.HAYSTACK_CONNECTIONS[using]['URL']
+
+    try:
+        resp, content = http.request(url)
+    except Exception, e:
+        warnings.warn("It appears like '%s' is unavailable. Skipping..." % url)
+        raise
+
+
+try:
+    check_running('solr_native_distance')
+except:
+    pass
+else:
+    class SpatialSolrNativeDistanceTestCase(SpatialSolrNoDistanceTestCase):
+        using = 'solr_native_distance'
