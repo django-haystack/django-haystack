@@ -2,7 +2,6 @@ import re
 from django.utils import datetime_safe
 from django.template import loader, Context
 from haystack.exceptions import SearchFieldError
-from haystack.utils.geo import ensure_point, Point
 
 
 class NOT_PROVIDED:
@@ -163,6 +162,8 @@ class LocationField(SearchField):
     field_type = 'location'
 
     def prepare(self, obj):
+        from haystack.utils.geo import ensure_point
+
         value = super(LocationField, self).prepare(obj)
 
         if value is None:
@@ -173,6 +174,8 @@ class LocationField(SearchField):
         return "%s,%s" % (pnt_lat, pnt_lng)
 
     def convert(self, value):
+        from haystack.utils.geo import ensure_point, Point
+
         if value is None:
             return None
 
@@ -185,7 +188,7 @@ class LocationField(SearchField):
         elif isinstance(value, (list, tuple)):
             # GeoJSON-alike
             lat, lng = value[1], value[0]
-        elif ininstance(value, dict):
+        elif isinstance(value, dict):
             lat = value.get('lat', 0)
             lng = value.get('lon', 0)
 
