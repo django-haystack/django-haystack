@@ -105,7 +105,7 @@ class ConnectionHandler(object):
         except KeyError:
             pass
 
-            return self.__getitem__(key)
+        return self.__getitem__(key)
 
     def all(self):
         return [self[alias] for alias in self.connections_info]
