@@ -767,24 +767,27 @@ class WhooshSearchQuery(BaseSearchQuery):
             query_frag = prepared_value
         else:
             if filter_type in ['contains', 'startswith']:
-                # Iterate over terms & incorportate the converted form of each into the query.
-                terms = []
-
-                if isinstance(prepared_value, basestring):
-                    possible_values = prepared_value.split(' ')
+                if value.input_type_name == 'exact':
+                    query_frag = prepared_value
                 else:
-                    if is_datetime is True:
-                        prepared_value = self._convert_datetime(prepared_value)
+                    # Iterate over terms & incorportate the converted form of each into the query.
+                    terms = []
 
-                    possible_values = [prepared_value]
+                    if isinstance(prepared_value, basestring):
+                        possible_values = prepared_value.split(' ')
+                    else:
+                        if is_datetime is True:
+                            prepared_value = self._convert_datetime(prepared_value)
 
-                for possible_value in possible_values:
-                    terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
+                        possible_values = [prepared_value]
 
-                if len(terms) == 1:
-                    query_frag = terms[0]
-                else:
-                    query_frag = u"(%s)" % " AND ".join(terms)
+                    for possible_value in possible_values:
+                        terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
+
+                    if len(terms) == 1:
+                        query_frag = terms[0]
+                    else:
+                        query_frag = u"(%s)" % " AND ".join(terms)
             elif filter_type == 'in':
                 in_options = []
 

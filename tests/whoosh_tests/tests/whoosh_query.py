@@ -4,6 +4,7 @@ import shutil
 from django.conf import settings
 from django.test import TestCase
 from haystack import connections
+from haystack.inputs import Exact
 from haystack.models import SearchResult
 from haystack.query import SQ
 from core.models import MockModel, AnotherMockModel
@@ -64,6 +65,10 @@ class WhooshSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content='hello'))
         self.sq.add_boost('world', 5)
         self.assertEqual(self.sq.build_query(), "hello world^5")
+
+    def test_correct_exact(self):
+        self.sq.add_filter(SQ(content=Exact('hello world')))
+        self.assertEqual(self.sq.build_query(), '"hello world"')
 
     def test_build_query_multiple_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
