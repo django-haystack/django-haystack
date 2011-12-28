@@ -60,6 +60,10 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_boost('world', 5)
         self.assertEqual(self.sq.build_query(), "hello world^5")
 
+    def test_correct_exact(self):
+        self.sq.add_filter(SQ(content=Exact('hello world')))
+        self.assertEqual(self.sq.build_query(), '"hello world"')
+
     def test_build_query_multiple_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(pub_date__lte=Exact('2009-02-10 01:59:00')))

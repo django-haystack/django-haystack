@@ -536,16 +536,19 @@ class SolrSearchQuery(BaseSearchQuery):
             query_frag = prepared_value
         else:
             if filter_type in ['contains', 'startswith']:
-                # Iterate over terms & incorportate the converted form of each into the query.
-                terms = []
-
-                for possible_value in prepared_value.split(' '):
-                    terms.append(filter_types[filter_type] % self.backend.conn._from_python(possible_value))
-
-                if len(terms) == 1:
-                    query_frag = terms[0]
+                if value.input_type_name == 'exact':
+                    query_frag = prepared_value
                 else:
-                    query_frag = u"(%s)" % " AND ".join(terms)
+                    # Iterate over terms & incorportate the converted form of each into the query.
+                    terms = []
+
+                    for possible_value in prepared_value.split(' '):
+                        terms.append(filter_types[filter_type] % self.backend.conn._from_python(possible_value))
+
+                    if len(terms) == 1:
+                        query_frag = terms[0]
+                    else:
+                        query_frag = u"(%s)" % " AND ".join(terms)
             elif filter_type == 'in':
                 in_options = []
 
