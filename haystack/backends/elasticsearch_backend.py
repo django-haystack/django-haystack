@@ -200,7 +200,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 if sort_by == 'distance asc':
                     sort_kwargs['sort']['_geo_distance']['order'] = 'asc'
                 else:
-                    sort_kwargs['sort']['_geo_distance']['order'] = 'asc'
+                    sort_kwargs['sort']['_geo_distance']['order'] = 'desc'
 
                 kwargs['sort'] = [sort_kwargs]
             else:
