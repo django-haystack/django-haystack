@@ -3,19 +3,20 @@ Haystack
 ========
 
 :author: Daniel Lindsley
-:date: 2011/09/18
+:date: 2011/12/31
 
 Haystack provides modular search for Django. It features a unified, familiar
 API that allows you to plug in different search backends (such as Solr_,
-Whoosh_, Xapian_, etc.) without having to modify your code.
+Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
+.. _Elasticsearch: http://elasticsearch.org/
 .. _Whoosh: http://whoosh.ca/
 .. _Xapian: http://xapian.org/
 
 Haystack is BSD licensed, plays nicely with third-party app without needing to
 modify the source and supports advanced features like faceting, More Like This,
-highlighting and spelling suggestions.
+highlighting, spatial search and spelling suggestions.
 
 You can find more information at http://haystacksearch.org/.
 

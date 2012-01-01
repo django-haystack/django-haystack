@@ -9,7 +9,7 @@ Solr
 
 Official Download Location: http://www.apache.org/dyn/closer.cgi/lucene/solr/
 
-Solr is Java but comes in a pre=packaged form that requires very little other
+Solr is Java but comes in a pre-packaged form that requires very little other
 than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 3.5+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple::
@@ -97,6 +97,60 @@ Then change your default handler from::
 Be warned that the ``<str name="field">suggestions</str>`` portion will be specific to
 your ``SearchIndex`` classes (in this case, assuming the main field is called
 ``text``).
+
+
+Elasticsearch
+=============
+
+Official Download Location: http://www.elasticsearch.org/download/
+
+Elasticsearch is Java but comes in a pre-packaged form that requires very
+little other than the JRE. It's also very performant, scales easily and has
+an advanced featureset. Haystack requires at least version 0.17.7 (0.18.6 is
+current as of writing). Installation is best done using a package manager::
+
+    # On Mac OS X...
+    brew install elasticsearch
+
+    # On Ubuntu...
+    apt-get install elasticsearch
+
+    # Then start via:
+    elasticsearch -f -D es.config=<path to YAML config>
+
+    # Example:
+    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.17.7/config/elasticsearch.yml
+
+You may have to alter the configuration to run on ``localhost`` when developing
+locally. Modifications should be done in a YAML file, the stock one being
+``config/elasticsearch.yml``::
+
+    # Unicast Discovery (disable multicast)
+    discovery.zen.ping.multicast.enabled: false
+    discovery.zen.ping.unicast.hosts: ["127.0.0.1"]
+
+    # Name your cluster here to whatever.
+    # My machine is called "Venus", so...
+    cluster:
+      name: venus
+
+    network:
+      host: 127.0.0.1
+
+    path:
+      logs: /usr/local/var/log
+      data: /usr/local/var/data
+
+You'll also need an Elasticsearch binding, ``pyelasticsearch`` (**NOT ``pyes``).
+The unofficial, Haystack-compatible ``pyelasticsearch`` package,
+hosted on GitHub_, is the best version to use. Place ``pyelasticsearch.py``
+somewhere on your ``PYTHONPATH`` (usually ``python setup.py install``).
+
+.. note::
+
+    ``pyelasticsearch`` has it's own dependencies that aren't covered by
+    Haystack. You'll also need ``requests`` & ``simplejson`` for speedier
+    JSON construction/parsing.
 
 
 Whoosh
