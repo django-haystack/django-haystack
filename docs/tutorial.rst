@@ -108,6 +108,20 @@ Example::
     }
 
 
+Elasticsearch
+~~~~~~~~~~~~~
+
+Example::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
+
+
 Whoosh
 ~~~~~~
 
@@ -153,6 +167,13 @@ Simple
 
 The ``simple`` backend using very basic matching via the database itself. It's
 not recommended for production use but it will return results.
+
+.. warning::
+
+    This backend does *NOT* work like the other backends do. Data preparation
+    does nothing & advanced filtering calls do not work. You really probably
+    don't want this unless you're in an environment where you just want to
+    silence Haystack.
 
 Example::
 

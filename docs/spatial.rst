@@ -39,7 +39,8 @@ For Solr_, you'll need at least **v3.5+**. In addition, if you have an existing
 install of Haystack & Solr, you'll need to upgrade the schema & reindex your
 data. If you're adding geospatial data, you would have to reindex anyhow.
 
-For Elasticsearch, you'll need...
+For Elasticsearch, you'll need at least v0.17.7, preferably v0.18.6 or better.
+If you're adding geospatial data, you'll have to reindex as well.
 
 .. _Solr: http://lucene.apache.org/solr/
 
@@ -50,11 +51,12 @@ Lookup Type            Solr   Elasticsearch   Whoosh   Xapian   Simple
 `dwithin`              X      X
 `distance`             X      X
 `order_by('distance')` X      X
-`polygon`              X
+`polygon`                     X
 ====================== ====== =============== ======== ======== ======
 
 For more details, you can inspect http://wiki.apache.org/solr/SpatialSearch
 or http://www.elasticsearch.org/guide/reference/query-dsl/geo-bounding-box-filter.html.
+
 
 Geospatial Assumptions
 ======================
