@@ -199,19 +199,14 @@ You generally create a unique ``SearchIndex`` for each type of ``Model`` you
 wish to index, though you can reuse the same ``SearchIndex`` between different
 models if you take care in doing so and your field names are very standardized.
 
-To use a ``SearchIndex``, you need to register it with the ``Model`` it applies
-to and the ``SearchSite`` it ought to belong to. Registering indexes in Haystack
-is very similar to the way you register models and ``ModelAdmin`` classes with
-the `Django admin site`_.
-
-To build a ``SearchIndex``, all that's necessary is to subclass ``SearchIndex``,
-define the fields you want to store data with and register it.
+To build a ``SearchIndex``, all that's necessary is to subclass both
+``indexes.SearchIndex`` & ``indexes.Indexable``,
+define the fields you want to store data with and define a ``get_model`` method.
 
 We'll create the following ``NoteIndex`` to correspond to our ``Note``
 model. This code generally goes in a ``search_indexes.py`` file within the app
 it applies to, though that is not required. This allows
-``haystack.autodiscover()`` to automatically pick it up. The
-``NoteIndex`` should look like::
+Haystack to automatically pick it up. The ``NoteIndex`` should look like::
 
     import datetime
     from haystack import indexes
