@@ -21,7 +21,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
 
     def test_build_query_boolean(self):
         self.sq.add_filter(SQ(content=True))
-        self.assertEqual(self.sq.build_query(), 'true')
+        self.assertEqual(self.sq.build_query(), 'True')
 
     def test_build_query_datetime(self):
         self.sq.add_filter(SQ(content=datetime.datetime(2009, 5, 8, 11, 28)))
