@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 import haystack
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
+from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact
@@ -132,7 +132,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for model in models:
                     models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
 
-                self.conn.delete_by_query(self.index_name, 'modelresult', " OR ".join(models_to_delete))
+                # Delete by query in Elasticsearch asssumes you're dealing with
+                # a ``query`` root object. :/
+                self.conn.delete_by_query(self.index_name, 'modelresult', {'query_string': {'query': " OR ".join(models_to_delete)}})
 
             if commit:
                 self.conn.refresh(indexes=[self.index_name])
@@ -407,7 +409,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 raise
 
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
-            raw_results = EmptyResults()
+            raw_results = {}
 
         return self._process_results(raw_results, highlight=highlight, result_class=result_class)
 
@@ -438,13 +440,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         doc_id = get_identifier(model_instance)
 
         try:
-            raw_results = self.conn.morelikethis(self.index_name, 'modelresult', doc_id, field_name, **params)
+            raw_results = self.conn.morelikethis(self.index_name, 'modelresult', doc_id, [field_name], **params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
 
             self.log.error("Failed to fetch More Like This from Elasticsearch for document '%s': %s", doc_id, e)
-            raw_results = EmptyResults()
+            raw_results = {}
 
         return self._process_results(raw_results, result_class=result_class)
 
@@ -479,7 +481,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
         content_field = unified_index.document_field
 
-        for raw_result in raw_results['hits']['hits']:
+        for raw_result in raw_results.get('hits', {}).get('hits', []):
             source = raw_result['_source']
             app_label, model_name = source[DJANGO_CT].split('.')
             additional_fields = {}
