@@ -31,8 +31,11 @@ def clear_elasticsearch_index():
     # Wipe it clean.
     print 'Clearing out Elasticsearch...'
     raw_es = pyelasticsearch.ElasticSearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
-    raw_es.delete_by_query(settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'], 'modelresult', {'query_string': {'query': '*:*'}})
-    raw_es.refresh()
+    try:
+        raw_es.delete_by_query(settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'], 'modelresult', {'query_string': {'query': '*:*'}})
+        raw_es.refresh()
+    except pyelasticsearch.ElasticSearchError:
+        pass
 
 
 class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -190,7 +193,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         super(ElasticsearchSearchBackendTestCase, self).tearDown()
 
     def raw_search(self, query):
-        return self.raw_es.search('*:*', indexes=[settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME']])
+        try:
+            return self.raw_es.search('*:*', indexes=[settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME']])
+        except pyelasticsearch.ElasticSearchError:
+            return {}
 
     def test_non_silent(self):
         bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/', INDEX_NAME='whatver', SILENTLY_FAIL=False, TIMEOUT=1)

@@ -70,6 +70,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.content_field_name, current_mapping = self.build_schema(unified_index.all_searchfields())
 
         if current_mapping != self.existing_mapping:
+            self.conn.create_index(self.index_name)
             self.conn.put_mapping('modelresult', {'properties': current_mapping}, indexes=[self.index_name])
             self.existing_mapping = current_mapping
 
