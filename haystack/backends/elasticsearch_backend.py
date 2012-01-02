@@ -70,7 +70,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.content_field_name, current_mapping = self.build_schema(unified_index.all_searchfields())
 
         if current_mapping != self.existing_mapping:
-            self.conn.put_mapping('modelresult', current_mapping, indexes=[self.index_name])
+            self.conn.put_mapping('modelresult', {'properties': current_mapping}, indexes=[self.index_name])
             self.existing_mapping = current_mapping
 
         self.setup_complete = True
@@ -110,6 +110,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             self.conn.delete(self.index_name, 'modelresult', doc_id)
+
+            if commit:
+                self.conn.refresh(indexes=[self.index_name])
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -129,7 +132,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for model in models:
                     models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
 
-                self.conn.delete_by_query(self.index_name, 'modelresult', " OR ".join(models_to_delete)) #, commit=commit)
+                self.conn.delete_by_query(self.index_name, 'modelresult', " OR ".join(models_to_delete))
+
+            if commit:
+                self.conn.refresh(indexes=[self.index_name])
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -160,8 +166,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if query_string == '*:*':
             kwargs = {
                 'query': {
-                    'match_all' : {},
-                }
+                    'query_string': {
+                        'query': '*:*',
+                    },
+                },
             }
         else:
             kwargs = {
@@ -218,11 +226,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 kwargs['sort'] = order_by_list
 
-        if start_offset is not None:
-            kwargs['from'] = start_offset
+        # From/size offsets don't seem to work right in Elasticsearch's DSL. :/
+        # if start_offset is not None:
+        #     kwargs['from'] = start_offset
 
-        if end_offset is not None:
-            kwargs['size'] = end_offset - start_offset
+        # if end_offset is not None:
+        #     kwargs['size'] = end_offset - start_offset
 
         if highlight is True:
             kwargs['highlight'] = {
@@ -383,8 +392,16 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 }
             }
 
+        # Because Elasticsearch.
+        query_params = {
+            'from': start_offset,
+        }
+
+        if end_offset is not None and end_offset > start_offset:
+            query_params['size'] = end_offset - start_offset
+
         try:
-            raw_results = self.conn.search(None, kwargs, indexes=[self.index_name], doc_types=['modelresult'])
+            raw_results = self.conn.search(None, kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -421,7 +438,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         doc_id = get_identifier(model_instance)
 
         try:
-            raw_results = self.conn.more_like_this(self.index_name, 'modelresult', doc_id, field_name, **params)
+            raw_results = self.conn.morelikethis(self.index_name, 'modelresult', doc_id, field_name, **params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -628,16 +645,22 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             query_frag = prepared_value
         else:
             if filter_type in ['contains', 'startswith']:
-                # Iterate over terms & incorportate the converted form of each into the query.
-                terms = []
-
-                for possible_value in prepared_value.split(' '):
-                    terms.append(filter_types[filter_type] % self.backend.conn.from_python(possible_value))
-
-                if len(terms) == 1:
-                    query_frag = terms[0]
+                if value.input_type_name == 'exact':
+                    query_frag = prepared_value
                 else:
-                    query_frag = u"(%s)" % " AND ".join(terms)
+                    # Iterate over terms & incorportate the converted form of each into the query.
+                    terms = []
+
+                    if isinstance(prepared_value, basestring):
+                        for possible_value in prepared_value.split(' '):
+                            terms.append(filter_types[filter_type] % self.backend.conn.from_python(possible_value))
+                    else:
+                        terms.append(filter_types[filter_type] % self.backend.conn.from_python(prepared_value))
+
+                    if len(terms) == 1:
+                        query_frag = terms[0]
+                    else:
+                        query_frag = u"(%s)" % " AND ".join(terms)
             elif filter_type == 'in':
                 in_options = []
 
