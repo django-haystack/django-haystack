@@ -31,7 +31,8 @@ def clear_elasticsearch_index():
     # Wipe it clean.
     print 'Clearing out Elasticsearch...'
     raw_es = pyelasticsearch.ElasticSearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
-    raw_es.delete_by_query(index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'], doc_type='modelresult', query='*:*')
+    raw_es.delete_by_query(settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'], 'modelresult', {'query_string': {'query': '*:*'}})
+    raw_es.refresh()
 
 
 class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -192,7 +193,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         return self.raw_es.search('*:*', indexes=[settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME']])
 
     def test_non_silent(self):
-        bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/', INDEX_NAME='whatver', SILENTLY_FAIL=False)
+        bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/', INDEX_NAME='whatver', SILENTLY_FAIL=False, TIMEOUT=1)
 
         try:
             bad_sb.update(self.smmi, self.sample_objs)
@@ -223,7 +224,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Check what Elasticsearch thinks is there.
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 3)
-        self.assertEqual([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], [
+        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], cmp=lambda x,y: cmp(x['id'], y['id'])), [
             {
                 'django_id': '1',
                 'django_ct': 'core.mockmodel',
@@ -890,19 +891,19 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
 
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(mlt.count(), 22)
-        self.assertEqual([result.pk for result in mlt], ['14', '6', '10', '22', '4', '5', '3', '12', '2', '19', '18', '13', '15', '21', '7', '23', '20', '9', '1', '2', '17', '16'])
-        self.assertEqual(len([result.pk for result in mlt]), 22)
+        self.assertEqual(mlt.count(), 4)
+        self.assertEqual([result.pk for result in mlt], [u'2', u'6', u'16', u'23'])
+        self.assertEqual(len([result.pk for result in mlt]), 4)
 
-        alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
-        self.assertEqual(alt_mlt.count(), 8)
-        self.assertEqual([result.pk for result in alt_mlt], ['17', '16', '19', '23', '22', '13', '1', '2'])
-        self.assertEqual(len([result.pk for result in alt_mlt]), 8)
+        alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=2))
+        self.assertEqual(alt_mlt.count(), 5)
+        self.assertEqual([result.pk for result in alt_mlt], [u'2', u'6', u'1', u'16', u'23'])
+        self.assertEqual(len([result.pk for result in alt_mlt]), 5)
 
         alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(alt_mlt_with_models.count(), 20)
-        self.assertEqual([result.pk for result in alt_mlt_with_models], ['14', '6', '10', '22', '4', '5', '3', '12', '2', '19', '18', '13', '15', '21', '7', '23', '20', '9', '17', '16'])
-        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 20)
+        self.assertEqual(alt_mlt_with_models.count(), 4)
+        self.assertEqual([result.pk for result in alt_mlt_with_models], [u'2', u'6', u'16', u'23'])
+        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 4)
 
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
@@ -1108,8 +1109,8 @@ class ElasticsearchBoostBackendTestCase(TestCase):
         results = SearchQuerySet().filter(SQ(author='daniel') | SQ(editor='daniel'))
 
         self.assertEqual([result.id for result in results], [
-            'core.afourthmockmodel.1',
             'core.afourthmockmodel.3',
             'core.afourthmockmodel.2',
+            'core.afourthmockmodel.1',
             'core.afourthmockmodel.4'
         ])
