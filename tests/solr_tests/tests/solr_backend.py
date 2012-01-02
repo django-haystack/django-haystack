@@ -189,7 +189,7 @@ class SolrSearchBackendTestCase(TestCase):
         super(SolrSearchBackendTestCase, self).tearDown()
 
     def test_non_silent(self):
-        bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/solr', SILENTLY_FAIL=False)
+        bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/solr', SILENTLY_FAIL=False, TIMEOUT=1)
 
         try:
             bad_sb.update(self.smmi, self.sample_objs)
