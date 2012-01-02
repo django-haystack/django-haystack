@@ -100,15 +100,21 @@ The following are search backends that would be nice to have in Haystack but are
 licensed in a way that prevents them from being officially bundled. If the
 community expresses interest in any of these, there may be future development.
 
+* Riak_
+* Lupyne_
 * Sphinx_
-* `Hyper Estraier`_
 
+.. _Riak: http://www.basho.com/
+.. _Lupyne: http://code.google.com/p/lupyne/
 .. _Sphinx: http://www.sphinxsearch.com/
-.. _Hyper Estraier: http://hyperestraier.sourceforge.net/
 
 
 Sphinx
 ------
+
+This backend is unlikely to happy, as Sphinx is pretty gimpy & doesn't do
+blended search results across all models the way the other engines can.
+Very limited featureset as well.
 
 * Full SearchQuerySet support
 * Automatic query building
@@ -116,20 +122,3 @@ Sphinx
 * Stored (non-indexed) fields
 * Highlighting
 * Requires: sphinxapi.py (Comes with Sphinx)
-
-Hyper Estraier
---------------
-
-* Full SearchQuerySet support
-* Automatic query building
-* "More Like This" functionality
-* Highlighting
-* Requires: SWIG bindings
-
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
-| Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting |
-+================+========================+=====================+================+============+==========+===============+==============+
-| Sphinx         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
-| Hyper Estraier | Yes                    | Yes                 | Yes            | No         | No       | No            | Yes (plugin) |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+
