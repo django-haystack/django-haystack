@@ -43,6 +43,14 @@ users on the site (including anonymous users). This can be used to present the
 user with their search history and provide most popular/most recent queries
 on the site.
 
+saved-search
+------------
+
+https://github.com/DirectEmployers/saved-search
+
+An alternate take on persisting user searches, this has a stronger focus
+on locale-based searches as well as further integration.
+
 haystack-static-pages
 ---------------------
 
