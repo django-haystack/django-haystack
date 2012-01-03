@@ -3,6 +3,7 @@ import inspect
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.datastructures import SortedDict
+from django.utils.module_loading import module_has_submodule
 from haystack.constants import Indexable, DEFAULT_ALIAS
 from haystack.exceptions import NotHandled, SearchFieldError
 try:
@@ -159,9 +160,14 @@ class UnifiedIndex(object):
         indexes = []
 
         for app in settings.INSTALLED_APPS:
+            mod = importlib.import_module(app)
+
             try:
                 search_index_module = importlib.import_module("%s.search_indexes" % app)
             except ImportError:
+                if module_has_submodule(mod, 'search_indexes'):
+                    raise
+
                 continue
 
             for item_name, item in inspect.getmembers(search_index_module, inspect.isclass):
