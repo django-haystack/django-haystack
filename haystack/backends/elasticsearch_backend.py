@@ -42,6 +42,51 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         '[', ']', '^', '"', '~', '*', '?', ':',
     )
 
+    # Settings to add an n-gram & edge n-gram analyzer.
+    DEFAULT_SETTINGS = {
+        'settings': {
+            "analysis": {
+                "analyzer": {
+                    "ngram_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "lowercase",
+                        "filter": ["haystack_ngram"]
+                    },
+                    "edgengram_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "lowercase",
+                        "filter": ["haystack_edgengram"]
+                    }
+                },
+                "tokenizer": {
+                    "haystack_ngram_tokenizer": {
+                        "type": "nGram",
+                        "min_gram" : 3,
+                        "max_gram" : 15,
+                    },
+                    "haystack_edgengram_tokenizer": {
+                        "type": "edgeNGram",
+                        "min_gram" : 2,
+                        "max_gram" : 15,
+                        "side": "front"
+                    }
+                },
+                "filter" : {
+                    "haystack_ngram" : {
+                        "type" : "nGram",
+                        "min_gram" : 3,
+                        "max_gram" : 15
+                    },
+                    "haystack_edgengram" : {
+                        "type" : "edgeNGram",
+                        "min_gram" : 2,
+                        "max_gram" : 15
+                    }
+                }
+            }
+        }
+    }
+
     def __init__(self, connection_alias, **connection_options):
         super(ElasticsearchSearchBackend, self).__init__(connection_alias, **connection_options)
 
@@ -64,21 +109,42 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # Get the existing mapping & cache it. We'll compare it
         # during the ``update`` & if it doesn't match, we'll put the new
         # mapping.
-        self.existing_mapping = self.conn.get_mapping(indexes=[self.index_name])
+        try:
+            self.existing_mapping = self.conn.get_mapping(indexes=[self.index_name])
+        except Exception, e:
+            if not self.silently_fail:
+                raise
 
         unified_index = haystack.connections[self.connection_alias].get_unified_index()
-        self.content_field_name, current_mapping = self.build_schema(unified_index.all_searchfields())
+        self.content_field_name, field_mapping = self.build_schema(unified_index.all_searchfields())
+        current_mapping = {
+            'modelresult': {
+                'properties': field_mapping
+            }
+        }
 
         if current_mapping != self.existing_mapping:
-            self.conn.create_index(self.index_name)
-            self.conn.put_mapping('modelresult', {'properties': current_mapping}, indexes=[self.index_name])
-            self.existing_mapping = current_mapping
+            try:
+                # Make sure the index is there first.
+                self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
+                self.conn.put_mapping('modelresult', current_mapping, indexes=[self.index_name])
+                self.existing_mapping = current_mapping
+            except Exception, e:
+                if not self.silently_fail:
+                    raise
 
         self.setup_complete = True
 
     def update(self, index, iterable, commit=True):
         if not self.setup_complete:
-            self.setup()
+            try:
+                self.setup()
+            except pyelasticsearch.ElasticSearchError, e:
+                if not self.silently_fail:
+                    raise
+
+                self.log.error("Failed to add documents to Elasticsearch: %s", e)
+                return
 
         try:
             prepped_docs = []
@@ -104,10 +170,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to add documents to Elasticsearch: %s", e)
 
     def remove(self, obj_or_string, commit=True):
-        if not self.setup_complete:
-            self.setup()
-
         doc_id = get_identifier(obj_or_string)
+
+        if not self.setup_complete:
+            try:
+                self.setup()
+            except pyelasticsearch.ElasticSearchError, e:
+                if not self.silently_fail:
+                    raise
+
+                self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
+                return
 
         try:
             self.conn.delete(self.index_name, 'modelresult', doc_id)
@@ -121,8 +194,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
 
     def clear(self, models=[], commit=True):
-        if not self.setup_complete:
-            self.setup()
+        # We actually don't want to do this here, as mappings could be
+        # very different.
+        # if not self.setup_complete:
+        #     self.setup()
 
         try:
             if not models:
@@ -169,20 +244,28 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if query_string == '*:*':
             kwargs = {
                 'query': {
-                    'query_string': {
-                        'query': '*:*',
+                    'filtered': {
+                        'query': {
+                            'query_string': {
+                                'query': '*:*',
+                            },
+                        },
                     },
                 },
             }
         else:
             kwargs = {
                 'query': {
-                    'query_string': {
-                        'default_field': content_field,
-                        'default_operator': DEFAULT_OPERATOR,
-                        'query': query_string,
-                        'analyze_wildcard': True,
-                        'auto_generate_phrase_queries': True,
+                    'filtered': {
+                        'query': {
+                            'query_string': {
+                                'default_field': content_field,
+                                'default_operator': DEFAULT_OPERATOR,
+                                'query': query_string,
+                                'analyze_wildcard': True,
+                                'auto_generate_phrase_queries': True,
+                            },
+                        },
                     },
                 },
             }
@@ -259,19 +342,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     },
                 }
 
-                # This kinda sucks.
-                # Elasticsearch does faceting restriction (query does/narrow does not)
-                # the *exact* opposite way Solr/Whoosh do (query does not/narrow does).
-                # Worse still, we have to do it for each field.
-                if narrow_queries:
-                    kwargs['facets'][facet_fieldname]['query'] = {
-                        'query_string': {
-                            'query': u' AND '.join(list(narrow_queries)),
-                        },
-                    }
-                else:
-                    kwargs['facets'][facet_fieldname]['global'] = True
-
         if date_facets is not None:
             kwargs.setdefault('facets', {})
 
@@ -292,25 +362,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     'facet_filter': {
                         "range": {
                             facet_fieldname: {
-                                'from': self.conn._from_python(value.get('start_date')),
-                                'to': self.conn._from_python(value.get('end_date')),
+                                'from': self.conn.from_python(value.get('start_date')),
+                                'to': self.conn.from_python(value.get('end_date')),
                             }
                         }
                     }
                 }
-
-                # This kinda sucks.
-                # Elasticsearch does faceting restriction (query does/narrow does not)
-                # the *exact* opposite way Solr/Whoosh do (query does not/narrow does).
-                # Worse still, we have to do it for each field.
-                if narrow_queries:
-                    kwargs['facets'][facet_fieldname]['query'] = {
-                        'query_string': {
-                            'query': u' AND '.join(list(narrow_queries)),
-                        },
-                    }
-                else:
-                    kwargs['facets'][facet_fieldname]['global'] = True
 
         if query_facets is not None:
             kwargs.setdefault('facets', {})
@@ -323,19 +380,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                         }
                     },
                 }
-
-                # This kinda sucks.
-                # Elasticsearch does faceting restriction (query does/narrow does not)
-                # the *exact* opposite way Solr/Whoosh do (query does not/narrow does).
-                # Worse still, we have to do it for each field.
-                if narrow_queries:
-                    kwargs['facets'][facet_fieldname]['query'] = {
-                        'query_string': {
-                            'query': u' AND '.join(list(narrow_queries)),
-                        },
-                    }
-                else:
-                    kwargs['facets'][facet_fieldname]['global'] = True
 
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
@@ -352,11 +396,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             kwargs['query'].setdefault('filtered', {})
             kwargs['query']['filtered'].setdefault('filter', {})
             kwargs['query']['filtered']['filter'] = {
-                'query': {
-                    'query_string': {
-                        'query': u' AND '.join(list(narrow_queries)),
+                'fquery': {
+                    'query': {
+                        'query_string': {
+                            'query': u' AND '.join(list(narrow_queries)),
+                        },
                     },
-                    '_name': 'narrow'
+                    '_cache': True,
                 }
             }
 
@@ -394,6 +440,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 }
             }
+
+        # Remove the "filtered" key if we're not filtering. Otherwise,
+        # Elasticsearch will blow up.
+        if not kwargs['query']['filtered'].get('filter'):
+            kwargs['query'] = kwargs['query']['filtered']['query']
 
         # Because Elasticsearch.
         query_params = {
@@ -474,7 +525,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 elif facet_info.get('_type', 'terms') == 'date_histogram':
                     # Elasticsearch provides UTC timestamps with an extra three
                     # decimals of precision, which datetime barfs on.
-                    facets['dates'][facet_fieldname] = [(individual['term'], datetime.datetime.utcfromtimestamp(individual['count'] / 1000)) for individual in facet_info['entries']]
+                    facets['dates'][facet_fieldname] = [(datetime.datetime.utcfromtimestamp(individual['time'] / 1000), individual['count']) for individual in facet_info['entries']]
                 elif facet_info.get('_type', 'terms') == 'query':
                     facets['queries'][facet_fieldname] = facet_info['count']
 
@@ -543,21 +594,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             elif field_class.field_type == 'boolean':
                 field_mapping['type'] = 'boolean'
             elif field_class.field_type == 'ngram':
-                field_mapping['analyzer'] = {
-                    "ngram_analyzer": {
-                        "type": "custom",
-                        "tokenizer": "nGram",
-                        "filter": ["standard", "lowercase", "nGram"]
-                    }
-                }
+                field_mapping['analyzer'] = "ngram_analyzer"
             elif field_class.field_type == 'edge_ngram':
-                field_mapping['analyzer'] = {
-                    "edgengram_analyzer": {
-                        "type": "custom",
-                        "tokenizer": "edgeNGram",
-                        "filter": ["standard", "lowercase", "edgeNGram"]
-                    }
-                }
+                field_mapping['analyzer'] = "edgengram_analyzer"
             elif field_class.field_type == 'location':
                 field_mapping['type'] = 'geo_point'
 
@@ -569,11 +608,14 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 field_mapping['store'] = 'no'
 
             # Do this last to override `text` fields.
-            if field_class.indexed is False:
+            if field_class.indexed is False or hasattr(field_class, 'facet_for'):
                 field_mapping['index'] = 'not_analyzed'
 
-            if field_mapping['type'] == 'string':
+            if field_mapping['type'] == 'string' and field_class.indexed:
                 field_mapping["term_vector"] = "with_positions_offsets"
+
+                if not hasattr(field_class, 'facet_for') and not field_class.field_type in('ngram', 'edge_ngram'):
+                    field_mapping["analyzer"] = "snowball"
 
             mapping[field_class.index_fieldname] = field_mapping
 
