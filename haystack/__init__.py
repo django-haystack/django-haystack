@@ -7,7 +7,7 @@ from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 0, 0, 'alpha')
+__version__ = (2, 0, 0, 'beta')
 __all__ = ['backend']
 
 
@@ -44,7 +44,7 @@ connection_router = loading.ConnectionRouter()
 if hasattr(settings, 'HAYSTACK_ROUTERS'):
     if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
         raise ImproperlyConfigured("The HAYSTACK_ROUTERS setting must be either a list or tuple.")
-    
+
     connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
 
 
