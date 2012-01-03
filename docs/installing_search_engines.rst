@@ -53,14 +53,14 @@ To enable the spelling suggestion functionality in Haystack, you'll need to
 enable the ``SpellCheckComponent``.
 
 The first thing to do is create a special field on your ``SearchIndex`` class
-that mirrors the ``text`` field, but has ``indexed=False`` on it. This disables
+that mirrors the ``text`` field, but uses ``FacetCharField``. This disables
 the post-processing that Solr does, which can mess up your suggestions.
 Something like the following is suggested::
 
     class MySearchIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         # ... normal fields then...
-        suggestions = indexes.CharField()
+        suggestions = indexes.FacetCharField()
 
         def prepare(self, obj):
             prepared_data = super(NoteIndex, self).prepare(object)
