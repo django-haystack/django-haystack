@@ -1,5 +1,4 @@
 import datetime
-from dateutil.parser import parse as dateutil_parse
 import os
 import warnings
 from optparse import make_option
@@ -171,12 +170,16 @@ class Command(LabelCommand):
             self.start_date = datetime.datetime.now() - datetime.timedelta(hours=int(age))
 
         if start_date is not None:
+            from dateutil.parser import parse as dateutil_parse
+
             try:
                 self.start_date = dateutil_parse(start_date)
             except ValueError:
                 pass
 
         if end_date is not None:
+            from dateutil.parser import parse as dateutil_parse
+
             try:
                 self.end_date = dateutil_parse(end_date)
             except ValueError:
