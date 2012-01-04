@@ -37,6 +37,13 @@ wish to delete the entire index.
 ``update_index``
 ================
 
+.. note::
+
+    If you use the ``--start/--end`` flags on this command, you'll need to
+    install dateutil_ to handle the datetime parsing.
+
+    .. _dateutil: http://pypi.python.org/pypi/python-dateutil/1.5
+
 The ``update_index`` command will freshen all of the content in your index. It
 iterates through all indexed models and updates the records in the index. In
 addition to the standard management command options, it accepts the following

@@ -24,12 +24,6 @@ setup(
             'templates/search_configuration/*',
         ]
     },
-    requires=[
-        'python_dateutil(>=1.5, < 2.0)',
-    ],
-    install_requires=[
-        'python_dateutil >= 1.5, < 2.0',
-    ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
