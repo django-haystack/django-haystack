@@ -112,7 +112,7 @@ community expresses interest in any of these, there may be future development.
 Sphinx
 ------
 
-This backend is unlikely to happy, as Sphinx is pretty gimpy & doesn't do
+This backend is unlikely to be built. Sphinx is pretty gimpy & doesn't do
 blended search results across all models the way the other engines can.
 Very limited featureset as well.
 
