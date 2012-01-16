@@ -57,12 +57,13 @@ def _make_text_safeish(text, fallback_encoding):
 
 
 class CommandThread(threading.Thread):
-    def __init__(self, command, on_done, working_dir="", fallback_encoding=""):
+    def __init__(self, command, on_done, working_dir="", fallback_encoding="", **kwargs):
         threading.Thread.__init__(self)
         self.command = command
         self.on_done = on_done
         self.working_dir = working_dir
         self.fallback_encoding = fallback_encoding
+        self.kwargs = kwargs
 
     def run(self):
         try:
@@ -79,7 +80,7 @@ class CommandThread(threading.Thread):
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done,
-                _make_text_safeish(output, self.fallback_encoding))
+                _make_text_safeish(output, self.fallback_encoding), **self.kwargs)
         except subprocess.CalledProcessError, e:
             main_thread(self.on_done, e.returncode)
         except OSError, e:
@@ -280,7 +281,46 @@ class GitLogAllCommand(GitLog, GitWindowCommand):
     pass
 
 
-class GitGraph(object):
+class GitShow:
+    def run(self, edit=None):
+        # GitLog Copy-Past
+        self.run_command(
+            ['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)',
+            '--date=local', '--max-count=9000', '--', self.get_file_name()],
+            self.show_done)
+
+    def show_done(self, result):
+        # GitLog Copy-Past
+        self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
+        self.quick_panel(self.results, self.panel_done)
+
+    def panel_done(self, picked):
+        if 0 > picked < len(self.results):
+            return
+        item = self.results[picked]
+        # the commit hash is the first thing on the second line
+        ref = item[1].split(' ')[0]
+        # Make full file name
+        working_dir = self.get_working_dir()
+        file_path = working_dir.replace(git_root(working_dir), '')[1:]
+        file_name = os.path.join(file_path, self.get_file_name())
+        self.run_command(
+            ['git', 'show', '%s:%s' %(ref, file_name)],
+            self.details_done,
+            ref=ref)
+
+    def details_done(self, result, ref):
+        syntax = self.view.settings().get('syntax')
+        self.scratch(result, title="%s:%s" % (ref, self.get_file_name()), syntax=syntax)
+
+class GitShowCommand(GitShow, GitTextCommand):
+    pass
+
+class GitShowAllCommand(GitShow, GitWindowCommand):
+    pass
+
+
+class GitGraph (object):
     def run(self, edit=None):
         self.run_command(
             ['git', 'log', '--graph', '--pretty=%h %aN %ci%d %s', '--abbrev-commit', '--no-color', '--decorate',
