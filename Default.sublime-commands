@@ -44,6 +44,10 @@
         "command": "git_status"
     }
     ,{
+        "caption": "Git: New Branch",
+        "command": "git_new_branch"
+    }
+    ,{
         "caption": "Git: Change Branch",
         "command": "git_branch"
     }

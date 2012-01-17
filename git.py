@@ -584,6 +584,18 @@ class GitBranchCommand(GitWindowCommand):
         self.run_command(['git', 'checkout', picked_branch])
 
 
+class GitNewBranchCommand(GitWindowCommand):
+    def run(self):
+        self.get_window().show_input_panel("Branch name", "",
+            self.on_input, None, None)
+
+    def on_input(self, branchname):
+        if branchname.strip() == "":
+            self.panel("No branch name provided")
+            return
+        self.run_command(['git', 'checkout', '-b', branchname])
+        
+
 class GitCheckoutCommand(GitTextCommand):
     def run(self, edit):
         self.run_command(['git', 'checkout', self.get_file_name()], self.checkout_done)
