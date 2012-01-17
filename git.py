@@ -240,27 +240,34 @@ class GitBlameCommand(GitTextCommand):
 
 class GitLog:
     def run(self, edit=None):
+        return self.run_log('--', self.get_file_name())
+
+    def run_log(self, *args):
         # the ASCII bell (\a) is just a convenient character I'm pretty sure
         # won't ever come up in the subject of the commit (and if it does then
         # you positively deserve broken output...)
         # 9000 is a pretty arbitrarily chosen limit; picked entirely because
         # it's about the size of the largest repo I've tested this on... and
         # there's a definite hiccup when it's loading that
+        command = ['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)',
+            '--date=local', '--max-count=9000']
+        command.extend(args)
         self.run_command(
-            ['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)',
-            '--date=local', '--max-count=9000', '--', self.get_file_name()],
+            command,
             self.log_done)
 
     def log_done(self, result):
         self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
-        self.quick_panel(self.results, self.panel_done)
+        self.quick_panel(self.results, self.log_panel_done)
 
-    def panel_done(self, picked):
+    def log_panel_done(self, picked):
         if 0 > picked < len(self.results):
             return
         item = self.results[picked]
         # the commit hash is the first thing on the second line
-        ref = item[1].split(' ')[0]
+        self.log_result(item[1].split(' ')[0])
+
+    def log_result(self, ref):
         # I'm not certain I should have the file name here; it restricts the
         # details to just the current file. Depends on what the user expects...
         # which I'm not sure of.
@@ -510,7 +517,8 @@ class GitStashPopCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'stash', 'pop'])
 
-class GitOpenFileCommand(GitWindowCommand):
+
+class GitOpenFileCommand(GitLog, GitWindowCommand):
     def run(self):
         self.run_command(['git', 'branch', '-a', '--no-color'], self.branch_done)
 
@@ -523,21 +531,11 @@ class GitOpenFileCommand(GitWindowCommand):
         if 0 > picked < len(self.results):
             return
         self.branch = self.results[picked].split(' ')[-1]
-        self.run_command(
-            ['git', 'log', '--pretty=%s\a%h %an <%aE>\a%ad (%ar)',
-            '--date=local', '--max-count=9000', self.branch],
-            self.log_done)
+        self.run_log(self.branch)
 
-    def log_done(self, result):
-        self.results = [r.split('\a', 2) for r in result.strip().split('\n')]
-        self.quick_panel(self.results, self.log_panel_done)
-
-    def log_panel_done(self, picked):
-        if 0 > picked < len(self.results):
-            return
-        item = self.results[picked]
+    def log_result(self, result_hash):
         # the commit hash is the first thing on the second line
-        self.ref = item[1].split(' ')[0]
+        self.ref = result_hash
         self.run_command(
             ['git', 'ls-tree', '-r', '--full-tree', self.ref],
             self.ls_done)
@@ -565,7 +563,8 @@ class GitOpenFileCommand(GitWindowCommand):
             self.show_done)
 
     def show_done(self, result):
-        self.scratch(result, title="%s:%s" % (self.fileRef,self.filename))
+        self.scratch(result, title="%s:%s" % (self.fileRef, self.filename))
+
 
 class GitBranchCommand(GitWindowCommand):
     def run(self):
