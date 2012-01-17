@@ -319,6 +319,9 @@ class GitDiffCommand(GitDiff, GitTextCommand):
 class GitDiffAllCommand(GitDiff, GitWindowCommand):
     pass
 
+class GitDiffTool(GitWindowCommand):
+    def run(self):
+        self.run_command(['git', 'difftool'])
 
 class GitQuickCommitCommand(GitTextCommand):
     def run(self, edit):
