@@ -79,4 +79,8 @@
         "caption": "Git: Custom Command",
         "command": "git_custom"
     }
+    ,{
+        "caption": "Git: Open...",
+        "command": "git_open_file"
+    }
 ]
