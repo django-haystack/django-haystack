@@ -76,6 +76,10 @@
         "command": "git_push"
     }
     ,{
+        "caption": "Git: Show Current File",
+        "command": "git_show"
+    }
+    ,{
         "caption": "Git: Custom Command",
         "command": "git_custom"
     }
