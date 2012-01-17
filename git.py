@@ -118,7 +118,7 @@ class GitCommand:
     def generic_done(self, result):
         if not result.strip():
             return
-        self.panel(result)
+        self.scratch(result)
 
     def _output_to_view(self, output_file, output, clear=False,
             syntax="Packages/Diff/Diff.tmLanguage"):
