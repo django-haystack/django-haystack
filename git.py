@@ -385,14 +385,16 @@ class GitCommitCommand(GitWindowCommand):
             self.panel("Nothing to commit")
             return
         # Okay, get the template!
-        self.run_command(['git', 'status'], self.status_done)
+        self.run_command(['git', 'diff', '--staged'], self.diff_done)
 
-    def status_done(self, result):
+    def diff_done(self, result):
         template = "\n".join([
             "",
             "# Please enter the commit message for your changes. Lines starting",
-            "# with '#' will be ignored, and an empty message aborts the commit.",
+            "# with '#' and everything after the 'END' statement below will be ",
+            "# ignored, and an empty message aborts the commit.",
             "# Just close the window to accept your message.",
+            "# END--------------",
             result.strip()
         ])
         msg = self.window.new_file()
@@ -405,7 +407,7 @@ class GitCommitCommand(GitWindowCommand):
 
     def message_done(self, message):
         # filter out the comments (git commit doesn't do this automatically)
-        lines = [line for line in message.split("\n")
+        lines = [line for line in message.split("\n# END---")[0].split("\n")
             if not line.lstrip().startswith('#')]
         message = '\n'.join(lines)
         # write the temp file
