@@ -672,3 +672,11 @@ class GitCustomCommand(GitTextCommand):
         command_splitted = ['git'] + shlex.split(command)
         print command_splitted
         self.run_command(command_splitted)
+	
+		
+class GitResetHeadCommand(GitCommand):
+	def run(self, edit):
+		self.run_command(['git', 'reset', 'HEAD', self.get_file_name()])
+	
+	def generic_done(self, result):
+		pass

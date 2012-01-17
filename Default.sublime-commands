@@ -87,4 +87,8 @@
         "caption": "Git: Open...",
         "command": "git_open_file"
     }
+	,{
+		"caption": "Git: Reset (unstage) Current File",
+		"command": "git_reset_head"
+	}
 ]
