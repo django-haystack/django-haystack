@@ -714,23 +714,23 @@ class GitAnnotateCommand(GitTextCommand):
     # 2. All consecutive runs will pass the current buffer into diffs stdin. The resulting
     #    output is then parsed and regions are set accordingly.
     def run(self, view):
+        self.tmp = tempfile.NamedTemporaryFile()
         # If the annotations are already running, we dont have to create a new tmpfile
         if self.active_view().settings().get('live_git_annotations'):
             self.compare_tmp(None)
             return
-        self.tmp = tempfile.NamedTemporaryFile()
         self.active_view().settings().set('live_git_annotations', True)
         root = git_root(self.get_working_dir())
         repo_file = os.path.relpath(self.view.file_name(), root)
         self.run_command(['git', 'show', 'HEAD:{0}'.format(repo_file)], show_status=False, no_save=True, callback=self.compare_tmp, stdout=self.tmp)
 
-    def compare_tmp(self, result):
+    def compare_tmp(self, result, stdout=None):
         all_text = self.view.substr(sublime.Region(0, self.view.size()))
         self.run_command(['diff', '-u', self.tmp.name, '-'], stdin=all_text, no_save=True, show_status=False, callback=self.parse_diff)
 
     # This is where the magic happens. At the moment, only one chunk format is supported. While
     # the unified diff format theoritaclly supports more, I don't think git diff creates them.
-    def parse_diff(self, result):
+    def parse_diff(self, result, stdin=None):
         lines = result.splitlines()
         matcher = re.compile('^@@ -([0-9]*),([0-9]*) \+([0-9]*),([0-9]*) @@')
         diff = []
