@@ -682,7 +682,7 @@ class GitCustomCommand(GitTextCommand):
         self.run_command(command_splitted)
 	
 		
-class GitResetHeadCommand(GitCommand):
+class GitResetHeadCommand(GitTextCommand):
 	def run(self, edit):
 		self.run_command(['git', 'reset', 'HEAD', self.get_file_name()])
 	
