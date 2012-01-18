@@ -18,6 +18,8 @@
                             ,{ "caption": "Blame", "command": "git_blame" }
                             ,{ "caption": "Checkout", "command": "git_checkout" }
                             ,{ "caption": "Graph", "command": "git_graph" }
+                            ,{ "caption": "Annotate", "command": "git_annotate" }
+                            ,{ "caption": "Clear Annotation", "command": "git_clear_annotation" }
                         ]
                     }
                     ,{

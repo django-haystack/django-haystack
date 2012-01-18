@@ -5,6 +5,7 @@ import threading
 import subprocess
 import functools
 import tempfile
+import os.path
 import re
 
 # when sublime loads a plugin it's cd'd into the plugin directory. Thus
@@ -63,6 +64,10 @@ class CommandThread(threading.Thread):
         self.command = command
         self.on_done = on_done
         self.working_dir = working_dir
+        if "stdin" in kwargs: self.stdin = kwargs["stdin"]
+        else: self.stdin = None;
+        if "stdout" in kwargs: self.stdout = kwargs["stdout"]
+        else: self.stdout = subprocess.PIPE
         self.fallback_encoding = fallback_encoding
         self.kwargs = kwargs
 
@@ -75,9 +80,12 @@ class CommandThread(threading.Thread):
                 os.chdir(self.working_dir)
 
             proc = subprocess.Popen(self.command,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdout=self.stdout, stderr=subprocess.STDOUT,
+                stdin=subprocess.PIPE,
                 shell=shell, universal_newlines=True)
-            output = proc.communicate()[0]
+            output = proc.communicate(self.stdin)[0]
+            if not output:
+                output = ''
             # if sublime's python gets bumped to 2.7 we can just do:
             # output = subprocess.check_output(self.command)
             main_thread(self.on_done,
@@ -94,7 +102,7 @@ class CommandThread(threading.Thread):
 # A base for all commands
 class GitCommand:
     def run_command(self, command, callback=None, show_status=True,
-            filter_empty_args=True, **kwargs):
+            filter_empty_args=True, no_save=False, **kwargs):
         if filter_empty_args:
             command = [arg for arg in command if arg]
         if 'working_dir' not in kwargs:
@@ -103,7 +111,7 @@ class GitCommand:
             kwargs['fallback_encoding'] = self.active_view().settings().get('fallback_encoding').rpartition('(')[2].rpartition(')')[0]
 
         s = sublime.load_settings("Git.sublime-settings")
-        if s.get('save_first') and self.active_view() and self.active_view().is_dirty():
+        if s.get('save_first') and self.active_view() and self.active_view().is_dirty() and not no_save:
             self.active_view().run_command('save')
         if command[0] == 'git' and s.get('git_command'):
             command[0] = s.get('git_command')
@@ -680,3 +688,111 @@ class GitResetHeadCommand(GitCommand):
 	
 	def generic_done(self, result):
 		pass
+
+
+class GitClearAnnotationCommand(GitTextCommand):
+    def run(self, view):
+        self.active_view().settings().set('live_git_annotations', False)
+        self.view.erase_regions('git.changes.x')
+        self.view.erase_regions('git.changes.+')
+        self.view.erase_regions('git.changes.-')
+
+
+class GitAnnotationListener(sublime_plugin.EventListener):
+    def on_modified(self, view):
+        if not view.settings().get('live_git_annotations'):
+            return
+        view.run_command('git_annotate')
+
+
+class GitAnnotateCommand(GitTextCommand):
+    # Unfortunately, git diff does not support text from stdin, making a *live* annotation
+    # difficult. Therefore I had to resort to the system diff command. (Problems on win?)
+    # This works as follows:
+    # 1. When the command is run for the first time for this file, a temporary file with the
+    #    current state of the HEAD is being pulled from git.
+    # 2. All consecutive runs will pass the current buffer into diffs stdin. The resulting
+    #    output is then parsed and regions are set accordingly.
+    def run(self, view):
+        # If the annotations are already running, we dont have to create a new tmpfile
+        if self.active_view().settings().get('live_git_annotations'):
+            self.compare_tmp(None)
+            return
+        self.tmp = tempfile.NamedTemporaryFile()
+        self.active_view().settings().set('live_git_annotations', True)
+        root = git_root(self.get_working_dir())
+        repo_file = os.path.relpath(self.view.file_name(), root)
+        self.run_command(['git', 'show', 'HEAD:{0}'.format(repo_file)], show_status=False, no_save=True, callback=self.compare_tmp, stdout=self.tmp)
+
+    def compare_tmp(self, result):
+        all_text = self.view.substr(sublime.Region(0, self.view.size()))
+        self.run_command(['diff', '-u', self.tmp.name, '-'], stdin=all_text, no_save=True, show_status=False, callback=self.parse_diff)
+
+    # This is where the magic happens. At the moment, only one chunk format is supported. While
+    # the unified diff format theoritaclly supports more, I don't think git diff creates them.
+    def parse_diff(self, result):
+        lines = result.splitlines()
+        matcher = re.compile('^@@ -([0-9]*),([0-9]*) \+([0-9]*),([0-9]*) @@')
+        diff = []
+        for line_index in range(0, len(lines)):
+            line = lines[line_index]
+            if not line.startswith('@'):
+                continue
+            match = matcher.match(line)
+            if not match:
+                continue
+            line_before, len_before, line_after, len_after = [int(match.group(x)) for x in [1, 2, 3, 4]]
+            chunk_index = line_index + 1
+            tracked_line_index = line_after - 1
+            deletion = False
+            insertion = False
+            while True:
+                line = lines[chunk_index]
+                if line.startswith('@'):
+                    break
+                elif line.startswith('-'):
+                    if not line.strip() == '-':
+                        deletion = True
+                    tracked_line_index -= 1
+                elif line.startswith('+'):
+                    if deletion and not line.strip() == '+':
+                        diff.append(['x', tracked_line_index])
+                        insertion = True
+                    elif not deletion:
+                        insertion = True
+                        diff.append(['+', tracked_line_index])
+                else:
+                    if not insertion and deletion:
+                        diff.append(['-', tracked_line_index])
+                    insertion = deletion = False
+                tracked_line_index += 1
+                chunk_index += 1
+                if chunk_index >= len(lines):
+                    break
+
+        self.annotate(diff)
+
+    # Once we got all lines with their specific change types (either x, +, or - for
+    # modified, added, or removed) we can create our regions and do the actual annotation.
+    def annotate(self, diff):
+        self.view.erase_regions('git.changes.x')
+        self.view.erase_regions('git.changes.+')
+        self.view.erase_regions('git.changes.-')
+        typed_diff = {'x': [], '+': [], '-': []}
+        for change_type, line in diff:
+            if change_type == '-':
+                full_region = self.view.full_line(self.view.text_point(line-1, 0))
+                position = full_region.begin()
+                for i in xrange(full_region.size()):
+                    typed_diff[change_type].append(sublime.Region(position + i))
+            else:
+                point = self.view.text_point(line, 0)
+                region = self.view.full_line(point)
+                if change_type == '-':
+                    region = sublime.Region(point, point + 5)
+                typed_diff[change_type].append(region)
+
+        for change in ['x', '+']:
+            self.view.add_regions("git.changes.{0}".format(change), typed_diff[change], 'git.changes.{0}'.format(change), 'dot')
+
+        self.view.add_regions("git.changes.-", typed_diff['-'], 'git.changes.-', 'dot', sublime.DRAW_EMPTY_AS_OVERWRITE)
