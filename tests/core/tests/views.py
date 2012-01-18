@@ -123,6 +123,23 @@ class SearchViewTestCase(TestCase):
         bar = queue.get()
         self.assertNotEqual(foo, bar)
 
+    def test_spelling(self):
+        # Stow.
+        from django.conf import settings
+        old = settings.HAYSTACK_CONNECTIONS['default'].get('INCLUDE_SPELLING', None)
+
+        sv = SearchView()
+        sv.query = 'Nothing'
+        sv.results = []
+        sv.build_page = lambda: (None, None)
+        output = sv.create_response()
+
+        # Restore
+        settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = old
+
+        if old is None:
+            del settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING']
+
 
 class ResultsPerPageTestCase(TestCase):
     urls = 'core.tests.results_per_page_urls'
