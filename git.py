@@ -5,6 +5,7 @@ import threading
 import subprocess
 import functools
 import tempfile
+import re
 
 # when sublime loads a plugin it's cd'd into the plugin directory. Thus
 # __file__ is useless for my purposes. What I want is "Packages/Git", but
@@ -542,11 +543,8 @@ class GitOpenFileCommand(GitLog, GitWindowCommand):
 
     def ls_done(self, result):
         # Last two items are the ref and the file name
-        self.results = [r.split()[-2:] for r in result.strip().split('\n')]
-
-        # We want the file name first, then the ref.
-        for r in self.results:
-            r.reverse()
+        # p.s. has to be a list of lists; tuples cause errors later
+        self.results = [[match.group(2), match.group(1)] for match in re.finditer(r"\S+\s(\S+)\t(.+)", result)]
 
         self.quick_panel(self.results, self.ls_panel_done)
 
@@ -595,7 +593,7 @@ class GitNewBranchCommand(GitWindowCommand):
             self.panel("No branch name provided")
             return
         self.run_command(['git', 'checkout', '-b', branchname])
-        
+
 
 class GitCheckoutCommand(GitTextCommand):
     def run(self, edit):
@@ -621,7 +619,7 @@ class GitCustomCommand(GitTextCommand):
             self.on_input, None, None)
 
     def on_input(self, command):
-        command = str(command) # avoiding unicode
+        command = str(command)  # avoiding unicode
         if command.strip() == "":
             self.panel("No git command provided")
             return
