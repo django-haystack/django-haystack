@@ -658,12 +658,12 @@ class GitCheckoutCommand(GitTextCommand):
 
 class GitPullCommand(GitWindowCommand):
     def run(self):
-        self.run_command(['git', 'pull'])
+        self.run_command(['git', 'pull'], callback=self.panel)
 
 
 class GitPushCommand(GitWindowCommand):
     def run(self):
-        self.run_command(['git', 'push'])
+        self.run_command(['git', 'push'], callback=self.panel)
 
 
 class GitCustomCommand(GitTextCommand):
