@@ -87,4 +87,12 @@
         "caption": "Git: Open...",
         "command": "git_open_file"
     }
+    ,{
+        "caption": "Git: Gui",
+        "command": "git_gui"
+    }
+    ,{
+        "caption": "Git: Gitk",
+        "command": "git_gitk"
+    }
 ]

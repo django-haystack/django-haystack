@@ -627,3 +627,18 @@ class GitCustomCommand(GitTextCommand):
         command_splitted = ['git'] + shlex.split(command)
         print command_splitted
         self.run_command(command_splitted)
+        
+
+class GitGuiCommand(GitTextCommand):
+    def run(self, edit):
+        command = ['git', 'gui']
+        self.run_command(command)
+
+
+class GitGitkCommand(GitTextCommand):
+    def run(self, edit):
+        command = ['gitk']
+        self.run_command(command)
+            
+                        
+    
