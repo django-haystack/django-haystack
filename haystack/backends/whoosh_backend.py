@@ -780,7 +780,7 @@ class SearchQuery(BaseSearchQuery):
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
 
-                    in_options.append('%s:"%s"' % (index_fieldname, pv))
+                    in_options.append('%s:%s' % (index_fieldname, pv))
 
                 result = "(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
