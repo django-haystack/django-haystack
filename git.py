@@ -320,12 +320,29 @@ class GitDiff (object):
         self.scratch(result, title="Git Diff")
 
 
+class GitDiffCommit (object):
+    def run(self, edit=None):
+        self.run_command(['git', 'diff', '--cached', '--no-color'],
+            self.diff_done)
+
+    def diff_done(self, result):
+        if not result.strip():
+            self.panel("No output")
+            return
+        self.scratch(result, title="Git Diff")
+
+
 class GitDiffCommand(GitDiff, GitTextCommand):
     pass
 
 
 class GitDiffAllCommand(GitDiff, GitWindowCommand):
     pass
+
+
+class GitDiffCommitCommand(GitDiffCommit, GitWindowCommand):
+    pass
+
 
 class GitDiffTool(GitWindowCommand):
     def run(self):
