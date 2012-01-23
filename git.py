@@ -565,6 +565,8 @@ class GitOpenFileCommand(GitLog, GitWindowCommand):
 
 
 class GitBranchCommand(GitWindowCommand):
+    command_to_run_after_branch = 'checkout'
+
     def run(self):
         self.run_command(['git', 'branch', '--no-color'], self.branch_done)
 
@@ -580,7 +582,11 @@ class GitBranchCommand(GitWindowCommand):
         if picked_branch.startswith("*"):
             return
         picked_branch = picked_branch.strip()
-        self.run_command(['git', 'checkout', picked_branch])
+        self.run_command(['git', self.command_to_run_after_branch, picked_branch])
+
+
+class GitMergeCommand(GitBranchCommand):
+    command_to_run_after_branch = 'merge'
 
 
 class GitNewBranchCommand(GitWindowCommand):
