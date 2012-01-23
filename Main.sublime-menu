@@ -29,6 +29,7 @@
                         [
                              { "caption": "Log", "command": "git_log_all" }
                             ,{ "caption": "Diff", "command": "git_diff_all" }
+                            ,{ "caption": "Diff Staged", "command": "git_diff_commit" }
                             ,{ "caption": "Diff Tool", "command": "git_diff_tool" }
                             ,{ "caption": "Graph", "command": "git_graph_all" }
                             ,{ "caption": "Add...", "command": "git_add_choice" }
