@@ -5,4 +5,7 @@
 	// if present, use this command instead of plain "git"
 	// e.g. "/Users/kemayo/bin/git" or "C:\bin\git.exe"
 	,"git_command": false
+
+  // use the panel for diff output, rather than a new scratch window (new tab)
+  ,"diff_panel": false
 }

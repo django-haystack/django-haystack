@@ -317,7 +317,11 @@ class GitDiff (object):
         if not result.strip():
             self.panel("No output")
             return
-        self.scratch(result, title="Git Diff")
+        s = sublime.load_settings("Git.sublime-settings")
+        if s.get('diff_panel'):
+            view = self.panel(result)
+        else:
+            view = self.scratch(result, title="Git Diff")
 
 
 class GitDiffCommand(GitDiff, GitTextCommand):
