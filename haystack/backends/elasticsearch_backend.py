@@ -280,8 +280,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         if sort_by is not None:
             order_list = []
-            for sort in sort_by:
-                field, direction = sort.split()
+            for field, direction in sort_by:
                 if field == 'distance' and distance_point:
                     # Do the geo-enabled sort.
                     lng, lat = distance_point['point'].get_coords()
@@ -749,11 +748,13 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if order_by_list is None:
                 order_by_list = []
 
-            for order_by in self.order_by:
-                if order_by.startswith('-'):
-                    order_by_list.append('%s desc' % order_by[1:])
-                else:
-                    order_by_list.append('%s asc' % order_by)
+
+            for field in self.order_by:
+                direction = 'asc'
+                if field.startswith('-'):
+                    direction = 'dest'
+                    field = field[1:] 
+                order_by_list.append((field, direction))
 
             search_kwargs['sort_by'] = order_by_list
 
