@@ -279,38 +279,28 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             kwargs['fields'] = fields
 
         if sort_by is not None:
-            if sort_by in ['distance asc', 'distance desc'] and distance_point:
-                # Do the geo-enabled sort.
-                lng, lat = distance_point['point'].get_coords()
-                sort_kwargs = {
-                    "_geo_distance": {
-                        distance_point['field']: [lng, lat],
-                        "order" : "asc",
-                        "unit" : "km"
+            order_list = []
+            for field, direction in sort_by:
+                if field == 'distance' and distance_point:
+                    # Do the geo-enabled sort.
+                    lng, lat = distance_point['point'].get_coords()
+                    sort_kwargs = {
+                        "_geo_distance": {
+                            distance_point['field']: [lng, lat],
+                            "order" : direction,
+                            "unit" : "km"
+                        }
                     }
-                }
-                geo_sort = True
-
-                if sort_by == 'distance asc':
-                    sort_kwargs['sort']['_geo_distance']['order'] = 'asc'
                 else:
-                    sort_kwargs['sort']['_geo_distance']['order'] = 'desc'
+                    if field == 'distance':
+                        warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
 
-                kwargs['sort'] = [sort_kwargs]
-            else:
-                if sort_by.startswith('distance '):
-                    warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
+                    # Regular sorting.
+                    sort_kwargs = {field: {'order': direction}}
 
-                # Regular sorting.
-                order_by_list = []
+                order_list.append(sort_kwargs)
 
-                for order_by in self.order_by:
-                    if order_by.startswith('-'):
-                        order_by_list.append({order_by[1:]: 'desc'})
-                    else:
-                        order_by_list.append({order_by: 'asc'})
-
-                kwargs['sort'] = order_by_list
+            kwargs['sort'] = order_list
 
         # From/size offsets don't seem to work right in Elasticsearch's DSL. :/
         # if start_offset is not None:
@@ -758,13 +748,15 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if order_by_list is None:
                 order_by_list = []
 
-            for order_by in self.order_by:
-                if order_by.startswith('-'):
-                    order_by_list.append('%s desc' % order_by[1:])
-                else:
-                    order_by_list.append('%s asc' % order_by)
 
-            search_kwargs['sort_by'] = ", ".join(order_by_list)
+            for field in self.order_by:
+                direction = 'asc'
+                if field.startswith('-'):
+                    direction = 'desc'
+                    field = field[1:]
+                order_by_list.append((field, direction))
+
+            search_kwargs['sort_by'] = order_by_list
 
         if self.end_offset is not None:
             search_kwargs['end_offset'] = self.end_offset
