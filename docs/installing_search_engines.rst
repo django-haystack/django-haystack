@@ -25,6 +25,16 @@ You'll need to revise your schema. You can generate this from your application
 ``./manage.py build_solr_schema``. Take the output from that command and place
 it in ``apache-solr-3.5.0/example/solr/conf/schema.xml``. Then restart Solr.
 
+.. note::
+    ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
+    provides a default template using some sensible defaults. If you would like
+    to provide your own template, you will need to place it in
+    ``search_configuration/solr.xml``, inside a directory specified by your app's
+    ``TEMPLATE_DIRS`` setting.
+
+    Example: ``/myproj/myapp/templates/search_configuration/solr.xml``
+    
+
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
 distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
 somewhere on your ``PYTHONPATH``.
