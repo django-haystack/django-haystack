@@ -505,7 +505,7 @@ class BaseSearchQuery(object):
         """Generates the query that matches all documents."""
         return '*'
 
-    def build_query(self):
+    def build_query(self, omit_models=False):
         """
         Interprets the collected query metadata and builds the final query to
         be sent to the backend.
@@ -516,7 +516,7 @@ class BaseSearchQuery(object):
             # Match all.
             query = self.matching_all_fragment()
 
-        if len(self.models):
+        if len(self.models) and not omit_models:
             models = sorted(['%s:%s.%s' % (DJANGO_CT, model._meta.app_label, model._meta.module_name) for model in self.models])
             models_clause = ' OR '.join(models)
 
