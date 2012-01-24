@@ -747,12 +747,19 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
     def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
-        final_query = self.build_query()
+        final_query = self.build_query(omit_models=True)
         search_kwargs = {
             'start_offset': self.start_offset,
             'result_class': self.result_class,
         }
         order_by_list = None
+
+        # if limitting by models...
+        if self.models:
+            # ...put that into narrow queries...
+            self.narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(str(model._meta) for model in self.models)))
+            # ...and disable additional limitting to ALL models
+            search_kwargs['limit_to_registered_models'] = False
 
         if self.order_by:
             if order_by_list is None:
