@@ -257,7 +257,7 @@ class WhooshSearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None,
+               dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
         if not self.setup_complete:
             self.setup()
@@ -324,16 +324,20 @@ class WhooshSearchBackend(BaseSearchBackend):
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
-        if limit_to_registered_models:
+        if models and len(models):
+            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+        elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.
+            model_choices = self.build_models_list()
+        else:
+            model_choices = []
+
+        if len(model_choices) > 0:
             if narrow_queries is None:
                 narrow_queries = set()
 
-            registered_models = self.build_models_list()
-
-            if len(registered_models) > 0:
-                narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in registered_models]))
+            narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in model_choices]))
 
         narrow_searcher = None
 
@@ -343,6 +347,12 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             for nq in narrow_queries:
                 recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_unicode(nq)))
+
+                if len(recent_narrowed_results) <= 0:
+                    return {
+                        'results': [],
+                        'hits': 0,
+                    }
 
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
@@ -370,7 +380,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             raw_results = searcher.search(parsed_query, limit=end_offset, sortedby=sort_by, reverse=reverse)
 
             # Handle the case where the results have been narrowed.
-            if narrowed_results:
+            if narrowed_results is not None:
                 raw_results.filter(narrowed_results)
 
             # Determine the page.
@@ -425,7 +435,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             }
 
     def more_like_this(self, model_instance, additional_query_string=None,
-                       start_offset=0, end_offset=None,
+                       start_offset=0, end_offset=None, models=None,
                        limit_to_registered_models=None, result_class=None, **kwargs):
         if not self.setup_complete:
             self.setup()
@@ -444,16 +454,20 @@ class WhooshSearchBackend(BaseSearchBackend):
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
-        if limit_to_registered_models:
-            # Using narrow queries, limit the results to only models registered
-            # with the current site.
+        if models and len(models):
+            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+        elif limit_to_registered_models:
+            # Using narrow queries, limit the results to only models handled
+            # with the current routers.
+            model_choices = self.build_models_list()
+        else:
+            model_choices = []
+
+        if len(model_choices) > 0:
             if narrow_queries is None:
                 narrow_queries = set()
 
-            registered_models = self.build_models_list()
-
-            if len(registered_models) > 0:
-                narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in registered_models]))
+            narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in model_choices]))
 
         if additional_query_string and additional_query_string != '*':
             narrow_queries.add(additional_query_string)
@@ -466,6 +480,12 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             for nq in narrow_queries:
                 recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_unicode(nq)))
+
+                if len(recent_narrowed_results) <= 0:
+                    return {
+                        'results': [],
+                        'hits': 0,
+                    }
 
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
@@ -507,7 +527,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 raw_results = results[0].more_like_this(field_name, top=end_offset)
 
             # Handle the case where the results have been narrowed.
-            if narrowed_results and hasattr(raw_results, 'filter'):
+            if narrowed_results is not None and hasattr(raw_results, 'filter'):
                 raw_results.filter(narrowed_results)
 
         try:

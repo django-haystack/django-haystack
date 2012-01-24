@@ -474,15 +474,13 @@ class WhooshBoostBackendTestCase(TestCase):
         self.sb.update(self.wmmi, self.sample_objs)
         self.raw_whoosh = self.raw_whoosh.refresh()
         searcher = self.raw_whoosh.searcher()
-        self.assertEqual(len(searcher.search(self.parser.parse(u'*'), limit=1000)), 4)
+        self.assertEqual(len(searcher.search(self.parser.parse(u'*'), limit=1000)), 2)
 
         results = SearchQuerySet().filter(SQ(author='daniel') | SQ(editor='daniel'))
 
         self.assertEqual([result.id for result in results], [
             'core.afourthmockmodel.1',
             'core.afourthmockmodel.3',
-            'core.afourthmockmodel.2',
-            'core.afourthmockmodel.4'
         ])
         self.assertEqual(results[0].boost, 1.1)
 
@@ -648,7 +646,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 0)
 
         sqs = self.sqs.models(MockModel)
-        self.assertEqual(sqs.query.build_query(), u'django_ct:core.mockmodel')
+        self.assertEqual(sqs.query.build_query(), u'*')
         self.assertEqual(len(sqs), 3)
 
     def test_all_regression(self):
@@ -813,11 +811,11 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 25)
 
         sqs = self.sqs.models(MockModel)
-        self.assertEqual(sqs.query.build_query(), u'django_ct:core.mockmodel')
+        self.assertEqual(sqs.query.build_query(), u'*')
         self.assertEqual(len(sqs), 23)
 
         sqs = self.sqs.models(AnotherMockModel)
-        self.assertEqual(sqs.query.build_query(), u'django_ct:core.anothermockmodel')
+        self.assertEqual(sqs.query.build_query(), u'*')
         self.assertEqual(len(sqs), 2)
 
 

@@ -106,7 +106,7 @@ class BaseSearchBackend(object):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None,
+               dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
         """
         Takes a query to search on and returns dictionary.
@@ -380,6 +380,9 @@ class BaseSearchQuery(object):
         if self.fields:
             kwargs['fields'] = self.fields
 
+        if self.models:
+            kwargs['models'] = self.models
+
         return kwargs
 
     def run(self, spelling_query=None, **kwargs):
@@ -407,6 +410,9 @@ class BaseSearchQuery(object):
         search_kwargs = {
             'result_class': self.result_class,
         }
+
+        if self.models:
+            search_kwargs['models'] = self.models
 
         if kwargs:
             search_kwargs.update(kwargs)
@@ -510,22 +516,11 @@ class BaseSearchQuery(object):
         Interprets the collected query metadata and builds the final query to
         be sent to the backend.
         """
-        query = self.query_filter.as_query_string(self.build_query_fragment)
+        final_query = self.query_filter.as_query_string(self.build_query_fragment)
 
-        if not query:
+        if not final_query:
             # Match all.
-            query = self.matching_all_fragment()
-
-        if len(self.models):
-            models = sorted(['%s:%s.%s' % (DJANGO_CT, model._meta.app_label, model._meta.module_name) for model in self.models])
-            models_clause = ' OR '.join(models)
-
-            if query != self.matching_all_fragment():
-                final_query = '(%s) AND (%s)' % (query, models_clause)
-            else:
-                final_query = models_clause
-        else:
-            final_query = query
+            final_query = self.matching_all_fragment()
 
         if self.boost:
             boost_list = []
