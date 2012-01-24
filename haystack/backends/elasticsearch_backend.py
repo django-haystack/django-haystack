@@ -752,8 +752,8 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             for field in self.order_by:
                 direction = 'asc'
                 if field.startswith('-'):
-                    direction = 'dest'
-                    field = field[1:] 
+                    direction = 'desc'
+                    field = field[1:]
                 order_by_list.append((field, direction))
 
             search_kwargs['sort_by'] = order_by_list
