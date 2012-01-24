@@ -109,7 +109,7 @@ class SolrSearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None,
+               dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
         if len(query_string) == 0:
             return {
@@ -192,16 +192,20 @@ class SolrSearchBackend(BaseSearchBackend):
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
-        if limit_to_registered_models:
+        if models and len(models):
+            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+        elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.
+            model_choices = self.build_models_list()
+        else:
+            model_choices = []
+
+        if len(model_choices) > 0:
             if narrow_queries is None:
                 narrow_queries = set()
 
-            registered_models = self.build_models_list()
-
-            if len(registered_models) > 0:
-                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
+            narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(model_choices)))
 
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
@@ -245,7 +249,7 @@ class SolrSearchBackend(BaseSearchBackend):
         return self._process_results(raw_results, highlight=highlight, result_class=result_class, distance_point=distance_point)
 
     def more_like_this(self, model_instance, additional_query_string=None,
-                       start_offset=0, end_offset=None,
+                       start_offset=0, end_offset=None, models=None,
                        limit_to_registered_models=None, result_class=None, **kwargs):
         from haystack import connections
 
@@ -272,16 +276,20 @@ class SolrSearchBackend(BaseSearchBackend):
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
-        if limit_to_registered_models:
+        if models and len(models):
+            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+        elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.
+            model_choices = self.build_models_list()
+        else:
+            model_choices = []
+
+        if len(model_choices) > 0:
             if narrow_queries is None:
                 narrow_queries = set()
 
-            registered_models = self.build_models_list()
-
-            if len(registered_models) > 0:
-                narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(registered_models)))
+            narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(model_choices)))
 
         if additional_query_string:
             narrow_queries.add(additional_query_string)
@@ -629,6 +637,9 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.fields:
             search_kwargs['fields'] = self.fields
+
+        if self.models:
+            search_kwargs['models'] = self.models
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query

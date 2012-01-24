@@ -113,10 +113,10 @@ class SolrSearchQueryTestCase(TestCase):
     def test_build_query_with_models(self):
         self.sq.add_filter(SQ(content='hello'))
         self.sq.add_model(MockModel)
-        self.assertEqual(self.sq.build_query(), '(hello) AND (django_ct:core.mockmodel)')
+        self.assertEqual(self.sq.build_query(), 'hello')
 
         self.sq.add_model(AnotherMockModel)
-        self.assertEqual(self.sq.build_query(), u'(hello) AND (django_ct:core.anothermockmodel OR django_ct:core.mockmodel)')
+        self.assertEqual(self.sq.build_query(), u'hello')
 
     def test_set_result_class(self):
         # Assert that we're defaulting to ``SearchResult``.
