@@ -695,5 +695,5 @@ class GitAddSelectedHunkCommand(GitTextCommand):
                 diffs += hunk["diff"]# + "\n\nEND OF HUNK\n\n"
                 i += 1
         
-        if(i): self.run_command(['git', 'apply', '--cached'], callback=self.panel, stdin=diffs)
+        if(i): self.run_command(['git', 'apply', '--cached'], stdin=diffs)
         else: sublime.status_message("No selected hunk")
