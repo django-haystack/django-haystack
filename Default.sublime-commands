@@ -87,4 +87,8 @@
         "caption": "Git: Open...",
         "command": "git_open_file"
     }
+    ,{
+        "caption": "Git: Add Selected Hunk",
+        "command": "git_add_selected_hunk"
+    }
 ]

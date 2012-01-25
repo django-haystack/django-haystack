@@ -18,6 +18,7 @@
                             ,{ "caption": "Blame", "command": "git_blame" }
                             ,{ "caption": "Checkout", "command": "git_checkout" }
                             ,{ "caption": "Graph", "command": "git_graph" }
+                            ,{ "caption": "Add Selected Hunk", "command": "git_add_selected_hunk" }
                         ]
                     }
                     ,{
