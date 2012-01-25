@@ -661,7 +661,7 @@ class GitCustomCommand(GitTextCommand):
 
 class GitAddSelectedHunkCommand(GitTextCommand):
     def run(self, edit):
-        self.run_command(['git', 'diff', '--no-color', '-U0', self.get_file_name()], self.cull_diff)
+        self.run_command(['git', 'diff', '--no-color', self.get_file_name()], self.cull_diff)
 
     def cull_diff(self, result):
         selection = []
