@@ -28,6 +28,10 @@
         "command": "git_diff_all"
     }
     ,{
+        "caption": "Git: Diff Staged",
+        "command": "git_diff_commit"
+    }
+    ,{
         "caption": "Git: Diff Tool",
         "command": "git_diff_tool"
     }
