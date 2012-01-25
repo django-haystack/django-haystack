@@ -56,6 +56,10 @@
         "command": "git_branch"
     }
     ,{
+        "caption": "Git: Merge Branch",
+        "command": "git_merge"
+    }
+    ,{
         "caption": "Git: Stash Changes",
         "command": "git_stash"
     }

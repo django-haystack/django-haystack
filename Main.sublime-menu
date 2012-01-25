@@ -47,6 +47,7 @@
                     ,{ "caption": "-" }
                     ,{ "caption": "Status...", "command": "git_status" }
                     ,{ "caption": "Branches...", "command": "git_branch" }
+                    ,{ "caption": "Merge...", "command": "git_merge" }
                 ]
             }
         ]
