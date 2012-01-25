@@ -111,4 +111,8 @@
 		"caption": "Git: Reset (unstage) Current File",
 		"command": "git_reset_head"
 	}
+    ,{
+        "caption": "Git: Add Selected Hunk",
+        "command": "git_add_selected_hunk"
+    }
 ]
