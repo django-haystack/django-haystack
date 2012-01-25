@@ -80,6 +80,18 @@
         "command": "git_push"
     }
     ,{
+        "caption": "Git: Show Current File",
+        "command": "git_show"
+    }
+    ,{
+        "caption": "Git: Annotate",
+        "command": "git_annotate"
+    }
+    ,{
+        "caption": "Git: Clear Annotation",
+        "command": "git_clear_annotation"
+    }
+    ,{
         "caption": "Git: Custom Command",
         "command": "git_custom"
     }
@@ -87,4 +99,8 @@
         "caption": "Git: Open...",
         "command": "git_open_file"
     }
+	,{
+		"caption": "Git: Reset (unstage) Current File",
+		"command": "git_reset_head"
+	}
 ]
