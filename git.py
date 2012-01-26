@@ -261,6 +261,9 @@ class GitBlameCommand(GitTextCommand):
             # just the lines we have a selection on
             begin_line, begin_column = self.view.rowcol(selection.begin())
             end_line, end_column = self.view.rowcol(selection.end())
+            # blame will fail if last line is empty and is included in the selection
+            if end_line > begin_line and end_column == 0:
+                end_line -= 1
             lines = str(begin_line + 1) + ',' + str(end_line + 1)
             command.extend(('-L', lines))
 
