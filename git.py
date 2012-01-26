@@ -256,8 +256,9 @@ class GitBlameCommand(GitTextCommand):
         # -C: retain blame when copying lines between files
         command = ['git', 'blame', '-w', '-M', '-C']
 
+        s = sublime.load_settings("Git.sublime-settings")
         selection = self.view.sel()[0]  # todo: multi-select support?
-        if not selection.empty():
+        if not selection.empty() or not s.get('blame_whole_file'):
             # just the lines we have a selection on
             begin_line, begin_column = self.view.rowcol(selection.begin())
             end_line, end_column = self.view.rowcol(selection.end())
