@@ -204,7 +204,7 @@ class SearchQuerySet(object):
                     objects = index.read_queryset()
                     loaded_objects[model] = objects.in_bulk(models_pks[model])
                 except NotHandled:
-                    self.log.warning("Model '%s.%s' not handled by the routers." % (self.app_label, self.model_name))
+                    self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
                     # Revert to old behaviour
                     loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
 
