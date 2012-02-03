@@ -153,31 +153,18 @@ URLconf should look something like::
     
     sqs = SearchQuerySet().filter(author='john')
     
-    # Without threading...
     urlpatterns = patterns('haystack.views',
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
-            form_class=SearchForm
-        ), name='haystack_search'),
-    )
-    
-    # With threading...
-    from haystack.views import SearchView, search_view_factory
-    
-    urlpatterns = patterns('haystack.views',
-        url(r'^$', search_view_factory(
-            view_class=SearchView,
-            template='my/special/path/john_search.html',
-            searchqueryset=sqs,
             form_class=ModelSearchForm
-        ), name='haystack_search'),
+        ).as_view(), name='haystack_search'),
     )
 
 .. warning::
 
     The standard ``SearchView`` is not thread-safe. Use the
-    ``search_view_factory`` function, which returns thread-safe instances of
+    ``SearchView.as_view`` method, which returns thread-safe instances of
     ``SearchView``.
 
 By default, if you don't specify a ``form_class``, the view will use the

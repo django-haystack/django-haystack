@@ -10,7 +10,7 @@ from haystack.forms import model_choices, SearchForm, ModelSearchForm, FacetedSe
 from haystack import indexes
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from haystack.views import SearchView, FacetedSearchView, search_view_factory
+from haystack.views import SearchView, FacetedSearchView
 from core.models import MockModel, AnotherMockModel
 
 
@@ -104,7 +104,7 @@ class SearchViewTestCase(TestCase):
                 print "Name: %s" % request.GET['name']
                 return super(ThreadedSearchView, self).__call__(request)
 
-        view = search_view_factory(view_class=ThreadedSearchView)
+        view = ThreadedSearchView.as_view()
         queue = Queue.Queue()
         request_1 = HttpRequest()
         request_1.GET = {'name': 'foo'}
