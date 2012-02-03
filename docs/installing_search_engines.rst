@@ -30,10 +30,11 @@ it in ``apache-solr-3.5.0/example/solr/conf/schema.xml``. Then restart Solr.
     provides a default template using some sensible defaults. If you would like
     to provide your own template, you will need to place it in
     ``search_configuration/solr.xml``, inside a directory specified by your app's
-    ``TEMPLATE_DIRS`` setting.
+    ``TEMPLATE_DIRS`` setting. Examples::
 
-    Example: ``/myproj/myapp/templates/search_configuration/solr.xml``
-    
+        /myproj/myapp/templates/search_configuration/solr.xml
+        # ...or...
+        /myproj/templates/search_configuration/solr.xml
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
 distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
