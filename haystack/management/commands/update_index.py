@@ -44,7 +44,7 @@ def worker(bits):
     backend = haystack_connections[using].get_backend()
 
     if func == 'do_update':
-        qs = index.build_queryset(start_date=start_date, end_date=end_date, verbosity=verbosity)
+        qs = index.build_queryset(start_date=start_date, end_date=end_date)
         do_update(backend, index, qs, start, end, total, verbosity=verbosity)
     elif bits[0] == 'do_remove':
         do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity)
@@ -204,7 +204,7 @@ class Command(LabelCommand):
                     print "Skipping '%s' - no index." % model
                 continue
 
-            qs = index.build_queryset(start_date=self.start_date, end_date=self.end_date, verbosity=self.verbosity)
+            qs = index.build_queryset(start_date=self.start_date, end_date=self.end_date)
             total = qs.count()
 
             if self.verbosity >= 1:
