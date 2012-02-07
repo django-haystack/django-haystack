@@ -1,6 +1,7 @@
 import copy
 import threading
 import sys
+import warnings
 from django.db.models import signals
 from django.utils.encoding import force_unicode
 from haystack import connections, connection_router
@@ -135,7 +136,7 @@ class SearchIndex(threading.local):
         """
         return self.index_queryset()
 
-    def build_queryset(self, start_date=None, end_date=None, verbosity=1):
+    def build_queryset(self, start_date=None, end_date=None):
         """
         Get the default QuerySet to index when doing an index update.
 
@@ -155,19 +156,18 @@ class SearchIndex(threading.local):
         if start_date:
             if updated_field:
                 extra_lookup_kwargs['%s__gte' % updated_field] = start_date
-            elif verbosity >= 2:
-                print update_field_msg
+            else:
+                warnings.warn(update_field_msg)
 
         if end_date:
             if updated_field:
                 extra_lookup_kwargs['%s__lte' % updated_field] = end_date
-            elif verbosity >= 2:
-                print update_field_msg
+            else:
+                warnings.warn(update_field_msg)
 
         index_qs = None
 
         if hasattr(self, 'get_queryset'):
-            import warnings
             warnings.warn("'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'.")
             index_qs = self.get_queryset()
         else:
