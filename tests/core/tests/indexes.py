@@ -73,6 +73,9 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def read_queryset(self):
         return MockModel.objects.filter(author__in=['daniel1', 'daniel3'])
 
+    def build_queryset(self, start_date=None, end_date=None):
+        return MockModel.objects.filter(author__in=['daniel1', 'daniel3'])
+
 
 class GoodNullableMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
@@ -219,6 +222,39 @@ class SearchIndexTestCase(TestCase):
 
     def test_read_queryset(self):
         self.assertEqual(len(self.cmi.read_queryset()), 2)
+
+    def test_build_queryset(self):
+        # The custom SearchIndex.build_queryset returns the same records as
+        # the read_queryset
+        self.assertEqual(len(self.cmi.build_queryset()), 2)
+
+        # Store a reference to the original method
+        old_guf = self.mi.__class__.get_updated_field
+
+        self.mi.__class__.get_updated_field = lambda self: 'pub_date'
+
+        # With an updated field, we should get have filtered results
+        sd = datetime.datetime(2009, 3, 17, 7, 0)
+        self.assertEqual(len(self.mi.build_queryset(start_date=sd)), 2)
+
+        ed = datetime.datetime(2009, 3, 17, 7, 59)
+        self.assertEqual(len(self.mi.build_queryset(end_date=ed)), 2)
+
+        sd = datetime.datetime(2009, 3, 17, 6, 0)
+        ed = datetime.datetime(2009, 3, 17, 6, 59)
+        self.assertEqual(len(self.mi.build_queryset(start_date=sd,
+                                                    end_date=ed)), 1)
+
+        # Remove the updated field for the next test
+        del self.mi.__class__.get_updated_field
+
+        # The default should return all 3 even if we specify a start date
+        # because there is no updated field specified
+        self.assertEqual(len(self.mi.build_queryset(start_date=sd)), 3)
+
+        # Restore the original attribute
+        self.mi.__class__.get_updated_field = old_guf
+
 
     def test_prepare(self):
         mock = MockModel()
