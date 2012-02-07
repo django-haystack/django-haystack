@@ -135,6 +135,50 @@ class SearchIndex(threading.local):
         """
         return self.index_queryset()
 
+    def build_queryset(self, start_date=None, end_date=None, verbosity=1):
+        """
+        Get the default QuerySet to index when doing an index update.
+
+        Subclasses can override this method to take into account related
+        model modification times.
+
+        The default is to use ``SearchIndex.index_queryset`` and filter
+        based on ``SearchIndex.get_updated_field``
+        """
+        extra_lookup_kwargs = {}
+        model = self.get_model()
+        updated_field = self.get_updated_field()
+
+        update_field_msg = ("No updated date field found for '%s' "
+                            "- not restricting by age.") % model.__name__
+
+        if start_date:
+            if updated_field:
+                extra_lookup_kwargs['%s__gte' % updated_field] = start_date
+            elif verbosity >= 2:
+                print update_field_msg
+
+        if end_date:
+            if updated_field:
+                extra_lookup_kwargs['%s__lte' % updated_field] = end_date
+            elif verbosity >= 2:
+                print update_field_msg
+
+        index_qs = None
+
+        if hasattr(self, 'get_queryset'):
+            warnings.warn("'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'.")
+            index_qs = self.get_queryset()
+        else:
+            index_qs = self.index_queryset()
+
+        if not hasattr(index_qs, 'filter'):
+            raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'index_queryset' method." % self)
+
+        # `.select_related()` seems like a good idea here but can fail on
+        # nullable `ForeignKey` as well as what seems like other cases.
+        return index_qs.filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
+
     def prepare(self, obj):
         """
         Fetches and adds/alters data before indexing.
