@@ -904,3 +904,10 @@ class GitAddSelectedHunkCommand(GitTextCommand):
             self.run_command(['git', 'apply', '--cached'], stdin=diffs)
         else:
             sublime.status_message("No selected hunk")
+
+
+class GitCommitSelectedHunk(GitAddSelectedHunkCommand):
+    def run(self, edit):
+        self.run_command(['git', 'diff', '--no-color', self.get_file_name()], self.cull_diff)
+        self.get_window().run_command('git_commit')
+

@@ -115,4 +115,8 @@
         "caption": "Git: Add Selected Hunk",
         "command": "git_add_selected_hunk"
     }
+    ,{
+        "caption": "Git: Commit Selected Hunk",
+        "command": "git_commit_selected_hunk"
+    }
 ]
