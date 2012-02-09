@@ -22,6 +22,7 @@
                             ,{ "caption": "Annotate", "command": "git_annotate" }
                             ,{ "caption": "Clear Annotation", "command": "git_clear_annotation" }
                             ,{ "caption": "Add Selected Hunk", "command": "git_add_selected_hunk" }
+                            ,{ "caption": "Commit Selected Hunk", "command": "git_commit_selected_hunk" }
                         ]
                     }
                     ,{
