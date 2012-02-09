@@ -28,6 +28,14 @@
         "command": "git_diff_all"
     }
     ,{
+        "caption": "Git: Diff Staged",
+        "command": "git_diff_commit"
+    }
+    ,{
+        "caption": "Git: Diff Tool",
+        "command": "git_diff_tool"
+    }
+    ,{
         "caption": "Git: Commit",
         "command": "git_commit"
     }
@@ -40,8 +48,16 @@
         "command": "git_status"
     }
     ,{
+        "caption": "Git: New Branch",
+        "command": "git_new_branch"
+    }
+    ,{
         "caption": "Git: Change Branch",
         "command": "git_branch"
+    }
+    ,{
+        "caption": "Git: Merge Branch",
+        "command": "git_merge"
     }
     ,{
         "caption": "Git: Stash Changes",
@@ -72,11 +88,35 @@
         "command": "git_push"
     }
     ,{
+        "caption": "Git: Show Current File",
+        "command": "git_show"
+    }
+    ,{
+        "caption": "Git: Annotate",
+        "command": "git_annotate"
+    }
+    ,{
+        "caption": "Git: Clear Annotation",
+        "command": "git_clear_annotation"
+    }
+    ,{
         "caption": "Git: Custom Command",
         "command": "git_custom"
     }
     ,{
-        "caption": "Git: Show Current File",
-        "command": "git_show"
+        "caption": "Git: Open...",
+        "command": "git_open_file"
+    }
+	,{
+		"caption": "Git: Reset (unstage) Current File",
+		"command": "git_reset_head"
+	}
+    ,{
+        "caption": "Git: Add Selected Hunk",
+        "command": "git_add_selected_hunk"
+    }
+    ,{
+        "caption": "Git: Commit Selected Hunk",
+        "command": "git_commit_selected_hunk"
     }
 ]

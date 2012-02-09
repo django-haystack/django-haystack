@@ -11,36 +11,45 @@
                         "caption": "This file",
                         "children":
                         [
-                            { "caption": "Log", "command": "git_log" }
+                             { "caption": "Log", "command": "git_log" }
                             ,{ "caption": "Diff", "command": "git_diff" }
                             ,{ "caption": "Add", "command": "git_add" }
+                            ,{ "caption": "Reset", "command": "git_reset_head" }
                             ,{ "caption": "Quick Commit", "command": "git_quick_commit" }
                             ,{ "caption": "Blame", "command": "git_blame" }
                             ,{ "caption": "Checkout", "command": "git_checkout" }
                             ,{ "caption": "Graph", "command": "git_graph" }
+                            ,{ "caption": "Annotate", "command": "git_annotate" }
+                            ,{ "caption": "Clear Annotation", "command": "git_clear_annotation" }
+                            ,{ "caption": "Add Selected Hunk", "command": "git_add_selected_hunk" }
+                            ,{ "caption": "Commit Selected Hunk", "command": "git_commit_selected_hunk" }
                         ]
                     }
                     ,{
                         "caption": "Whole repo",
                         "children":
                         [
-                            { "caption": "Log", "command": "git_log_all" }
+                             { "caption": "Log", "command": "git_log_all" }
                             ,{ "caption": "Diff", "command": "git_diff_all" }
+                            ,{ "caption": "Diff Staged", "command": "git_diff_commit" }
+                            ,{ "caption": "Diff Tool", "command": "git_diff_tool" }
                             ,{ "caption": "Graph", "command": "git_graph_all" }
                             ,{ "caption": "Add...", "command": "git_add_choice" }
+                            ,{ "caption": "Open...", "command": "git_open_file" }
                         ]
                     }
                     ,{
                         "caption": "Stash",
                         "children":
                         [
-                            { "caption": "Save", "command": "git_stash" }
+                             { "caption": "Save", "command": "git_stash" }
                             ,{ "caption": "Pop", "command": "git_stash_pop" }
                         ]
                     }
                     ,{ "caption": "-" }
                     ,{ "caption": "Status...", "command": "git_status" }
                     ,{ "caption": "Branches...", "command": "git_branch" }
+                    ,{ "caption": "Merge...", "command": "git_merge" }
                 ]
             }
         ]

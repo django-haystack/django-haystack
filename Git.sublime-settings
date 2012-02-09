@@ -5,4 +5,12 @@
 	// if present, use this command instead of plain "git"
 	// e.g. "/Users/kemayo/bin/git" or "C:\bin\git.exe"
 	,"git_command": false
+
+	// use the panel for diff output, rather than a new scratch window (new tab)
+	,"diff_panel": false
+
+	// affects blame command when no selection is made
+	// true: blame whole file
+	// false: blame only current line
+	,"blame_whole_file": true
 }
