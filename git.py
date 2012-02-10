@@ -721,9 +721,27 @@ class GitPullCommand(GitWindowCommand):
         self.run_command(['git', 'pull'], callback=self.panel)
 
 
+class GitPullCurrentBranchCommand(GitWindowCommand):
+    def run(self):
+        self.run_command(['git', 'describe', '--contains',  '--all', 'HEAD'], callback=self.pull_current_branch_done)
+
+    def pull_current_branch_done(self, result):
+        result = result.strip()
+        self.run_command(['git', 'pull', 'origin', result], callback=self.panel)
+
+
 class GitPushCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'push'], callback=self.panel)
+
+
+class GitPushCurrentBranchCommand(GitWindowCommand):
+    def run(self):
+        self.run_command(['git', 'describe', '--contains',  '--all', 'HEAD'], callback=self.push_current_branch_done)
+
+    def push_current_branch_done(self, result):
+        result = result.strip()
+        self.run_command(['git', 'push', 'origin', result], callback=self.panel)
 
 
 class GitCustomCommand(GitTextCommand):
