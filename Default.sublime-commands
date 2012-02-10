@@ -84,8 +84,16 @@
         "command": "git_pull"
     }
     ,{
+        "caption": "Git: Pull Current Branch",
+        "command": "git_pull_current_branch"
+    }
+    ,{
         "caption": "Git: Push",
         "command": "git_push"
+    }
+    ,{
+        "caption": "Git: Push Current Branch",
+        "command": "git_push_current_branch"
     }
     ,{
         "caption": "Git: Show Current File",
@@ -114,9 +122,5 @@
     ,{
         "caption": "Git: Add Selected Hunk",
         "command": "git_add_selected_hunk"
-    }
-    ,{
-        "caption": "Git: Commit Selected Hunk",
-        "command": "git_commit_selected_hunk"
     }
 ]
