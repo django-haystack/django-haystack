@@ -30,28 +30,35 @@ class Highlighter(object):
     def find_highlightable_words(self):
         # Use a set so we only do this once per unique word.
         word_positions = {}
-        
+
         # Pre-compute the length.
         end_offset = len(self.text_block)
         lower_text_block = self.text_block.lower()
-        
-        for word in self.query_words:
-            if not word in word_positions:
-                word_positions[word] = []
-            
-            start_offset = 0
-            
-            while start_offset < end_offset:
-                next_offset = lower_text_block.find(word, start_offset, end_offset)
-                
-                # If we get a -1 out of find, it wasn't found. Bomb out and
-                # start the next word.
-                if next_offset == -1:
-                    break
-                
-                word_positions[word].append(next_offset)
-                start_offset = next_offset + len(word)
-        
+
+
+        start_offset = 0
+
+        while start_offset < end_offset:
+            next_offset = -1
+            next_word = -1
+            for word in self.query_words:
+                offset = lower_text_block.find(word, start_offset, end_offset)
+                if offset != -1:
+                    # either it starts before the previously found word, or at the same time and it's a bigger word
+                    if next_offset == -1 or offset < next_offset or offset == next_offset and len(word) > len(next_word):
+                        next_offset = offset
+                        next_word = word
+
+            if not next_word in word_positions:
+                word_positions[next_word] = []
+
+            # If we get a -1 out of all the finds, none of them were found. Bomb out.
+            if next_offset == -1:
+                break
+
+            start_offset = next_offset + len(next_word)
+            word_positions[next_word].append(next_offset)
+
         return word_positions
     
     def find_window(self, highlight_locations):
