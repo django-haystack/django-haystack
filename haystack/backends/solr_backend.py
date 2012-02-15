@@ -107,7 +107,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
+               fields='', highlight=False, facets=None, facets_prefix=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
@@ -168,6 +168,11 @@ class SolrSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
+
+        if facets_prefix is not None:
+            kwargs['facet'] = 'on'
+            for key, value in facets_prefix.items():
+                kwargs["f.%s.facet.prefix" % key] = value
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -625,6 +630,9 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.facets:
             search_kwargs['facets'] = list(self.facets)
+
+        if self.facets_prefix:
+            search_kwargs['facets_prefix'] = self.facets_prefix
 
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
