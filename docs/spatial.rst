@@ -214,7 +214,7 @@ finding results within an area.
 ``within``
 ----------
 
-.. method:: SearchQuerySet.dwithin(self, field, point_1, point_2)
+.. method:: SearchQuerySet.within(self, field, point_1, point_2)
 
 ``within`` is a bounding box comparison. A bounding box is a rectangular area
 within which to search. It's composed of a bottom-left point & a top-right
