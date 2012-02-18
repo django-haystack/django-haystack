@@ -155,11 +155,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 # Convert the data to make sure it's happy.
                 for key, value in prepped_data.items():
-                    final_data[key] = self.conn.from_python(value)
+                    final_data[key] = value
 
                 prepped_docs.append(final_data)
 
-            self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+            for doc in prepped_docs:
+                self.conn.index(doc, self.index_name, 'modelresult', ID)
 
             if commit:
                 self.conn.refresh(indexes=[self.index_name])
@@ -352,8 +353,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     'facet_filter': {
                         "range": {
                             facet_fieldname: {
-                                'from': self.conn.from_python(value.get('start_date')),
-                                'to': self.conn.from_python(value.get('end_date')),
+                                'from': value.get('start_date'),
+                                'to': value.get('end_date'),
                             }
                         }
                     }
@@ -544,7 +545,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         additional_fields[string_key] = index.fields[string_key].convert(value)
                     else:
-                        additional_fields[string_key] = self.conn.to_python(value)
+                        additional_fields[string_key] = value
 
                 del(additional_fields[DJANGO_CT])
                 del(additional_fields[DJANGO_ID])
@@ -664,7 +665,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         if not isinstance(prepared_value, (set, list, tuple)):
             # Then convert whatever we get back to what pysolr wants if needed.
-            prepared_value = self.backend.conn.from_python(prepared_value)
+            prepared_value = prepared_value
 
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
@@ -695,9 +696,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
                     if isinstance(prepared_value, basestring):
                         for possible_value in prepared_value.split(' '):
-                            terms.append(filter_types[filter_type] % self.backend.conn.from_python(possible_value))
+                            terms.append(filter_types[filter_type] % possible_value)
                     else:
-                        terms.append(filter_types[filter_type] % self.backend.conn.from_python(prepared_value))
+                        terms.append(filter_types[filter_type] % prepared_value)
 
                     if len(terms) == 1:
                         query_frag = terms[0]
@@ -707,12 +708,12 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                 in_options = []
 
                 for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend.conn.from_python(possible_value))
+                    in_options.append(u'"%s"' % possible_value)
 
                 query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
-                start = self.backend.conn.from_python(prepared_value[0])
-                end = self.backend.conn.from_python(prepared_value[1])
+                start = prepared_value[0]
+                end = prepared_value[1]
                 query_frag = u'["%s" TO "%s"]' % (start, end)
             elif filter_type == 'exact':
                 if value.input_type_name == 'exact':
@@ -829,3 +830,4 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 class ElasticsearchSearchEngine(BaseEngine):
     backend = ElasticsearchSearchBackend
     query = ElasticsearchSearchQuery
+
