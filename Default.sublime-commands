@@ -100,6 +100,10 @@
         "command": "git_clear_annotation"
     }
     ,{
+        "caption": "Git: Toggle Annotations",
+        "command": "git_toggle_annotations"
+    }
+    ,{
         "caption": "Git: Custom Command",
         "command": "git_custom"
     }

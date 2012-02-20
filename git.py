@@ -769,6 +769,14 @@ class GitClearAnnotationCommand(GitTextCommand):
         self.view.erase_regions('git.changes.-')
 
 
+class GitToggleAnnotationsCommand(GitTextCommand):
+    def run(self, view):
+        if self.active_view().settings().get('live_git_annotations'):
+            self.view.run_command('git_clear_annotation')
+        else:
+            self.view.run_command('git_annotate')
+
+
 class GitAnnotationListener(sublime_plugin.EventListener):
     def on_modified(self, view):
         if not view.settings().get('live_git_annotations'):
