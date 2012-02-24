@@ -259,3 +259,14 @@ For general search.
 Using: ???
 
 * http://mountain-op.com/
+
+
+Crate
+-----
+
+Crate is a PyPI mirror/replacement. It's using Haystack to power all search &
+faceted navigation on the site.
+
+Using: Elasticsearch
+
+* https://crate.io/
