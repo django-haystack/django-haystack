@@ -593,7 +593,4 @@ class ModelSearchIndexTestCase(TestCase):
         self.assertTrue('average_delay' in self.yabmsi.fields)
         self.assertTrue(isinstance(self.yabmsi.fields['average_delay'], indexes.FloatField))
         self.assertEqual(self.yabmsi.fields['average_delay'].null, False)
-        self.assertEqual(self.yabmsi.fields['average_delay'].index_fieldname, 'average_delay')
-
-        
-        
+        self.assertEqual(self.yabmsi.fields['average_delay'].index_fieldname, 'average_delay')        
