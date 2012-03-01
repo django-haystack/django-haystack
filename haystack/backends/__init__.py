@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+
+import operator
 from copy import deepcopy
 from time import time
+
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase
@@ -224,7 +227,7 @@ class SearchNode(tree.Node):
                 result.append(query_fragment_callback(field, filter_type, value))
 
         conn = ' %s ' % self.connector
-        query_string = conn.join(result)
+        query_string = conn.join(filter(operator.truth, result))
 
         if query_string:
             if self.negated:

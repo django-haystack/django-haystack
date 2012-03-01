@@ -111,6 +111,7 @@ class SolrSearchBackend(BaseSearchBackend):
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
+
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -583,7 +584,8 @@ class SolrSearchQuery(BaseSearchQuery):
         if len(query_frag) and not query_frag.startswith('(') and not query_frag.endswith(')'):
             query_frag = "(%s)" % query_frag
 
-        return u"%s%s" % (index_fieldname, query_frag)
+        if index_fieldname:
+            return u"%s%s" % (index_fieldname, query_frag)
 
     def build_alt_parser_query(self, parser_name, query_string='', **kwargs):
         if query_string:
