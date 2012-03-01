@@ -170,7 +170,7 @@ class UnifiedIndex(object):
 
                 continue
 
-            for item_name, item in inspect.getmembers(search_index_module, inspect.isclass):
+            for item_name, item in inspect.getmembers(search_index_module, lambda obj: issubclass(obj, Indexable):
                 if getattr(item, 'haystack_use_for_indexing', False):
                     # We've got an index. Check if we should be ignoring it.
                     class_path = "%s.search_indexes.%s" % (app, item_name)
