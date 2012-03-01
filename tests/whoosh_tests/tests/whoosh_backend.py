@@ -9,6 +9,7 @@ from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
 from haystack import indexes
+from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, SQ
 from haystack.utils.loading import UnifiedIndex
@@ -550,7 +551,7 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
         self.assertEqual(len(connections['default'].queries), 1)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:bar')
+        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
 
         # And again, for good measure.
         self.sq = connections['default'].get_query()
@@ -558,8 +559,8 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(text='foo'))
         len(self.sq.get_results())
         self.assertEqual(len(connections['default'].queries), 2)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:bar')
-        self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:baz AND text:foo)')
+        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
+        self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:(baz) AND text:(foo))')
 
         # Restore.
         settings.DEBUG = old_debug
@@ -614,35 +615,35 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.sb.update(self.wmmi, self.sample_objs)
 
         sqs = self.sqs.filter(content='Index')
-        self.assertEqual(sqs.query.build_query(), u'Index')
+        self.assertEqual(sqs.query.build_query(), u'(Index)')
         self.assertEqual(len(sqs), 3)
 
         sqs = self.sqs.auto_query('Indexed!')
-        self.assertEqual(sqs.query.build_query(), u"'Indexed!'")
+        self.assertEqual(sqs.query.build_query(), u"('Indexed!')")
         self.assertEqual(len(sqs), 3)
 
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 8, 31))
-        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[to 20090831000000])")
+        self.assertEqual(sqs.query.build_query(), u"(('Indexed!') AND pub_date:([to 20090831000000]))")
         self.assertEqual(len(sqs), 3)
 
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 23))
-        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[to 20090223000000])")
+        self.assertEqual(sqs.query.build_query(), u"(('Indexed!') AND pub_date:([to 20090223000000]))")
         self.assertEqual(len(sqs), 2)
 
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 25)).filter(django_id__in=[1, 2]).exclude(name='daniel1')
-        self.assertEqual(sqs.query.build_query(), u"('Indexed!' AND pub_date:[to 20090225000000] AND django_id:(\"1\" OR \"2\") AND NOT (name:daniel1))")
+        self.assertEqual(sqs.query.build_query(), u'((\'Indexed!\') AND pub_date:([to 20090225000000]) AND django_id:("1" OR "2") AND NOT (name:(daniel1)))')
         self.assertEqual(len(sqs), 1)
 
         sqs = self.sqs.auto_query('re-inker')
-        self.assertEqual(sqs.query.build_query(), u"'re-inker'")
+        self.assertEqual(sqs.query.build_query(), u"('re-inker')")
         self.assertEqual(len(sqs), 0)
 
         sqs = self.sqs.auto_query('0.7 wire')
-        self.assertEqual(sqs.query.build_query(), u"'0.7' wire")
+        self.assertEqual(sqs.query.build_query(), u"('0.7' wire)")
         self.assertEqual(len(sqs), 0)
 
         sqs = self.sqs.auto_query("daler-rowney pearlescent 'bell bronze'")
-        self.assertEqual(sqs.query.build_query(), u"'daler-rowney' pearlescent 'bell bronze'")
+        self.assertEqual(sqs.query.build_query(), u"('daler-rowney' pearlescent 'bell bronze')")
         self.assertEqual(len(sqs), 0)
 
         sqs = self.sqs.models(MockModel)
@@ -753,6 +754,10 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(results), 49)
         self.assertEqual(results._cache_is_full(), False)
         self.assertEqual(len(connections['default'].queries), 1)
+
+    def test_query_generation(self):
+        sqs = self.sqs.filter(SQ(content=AutoQuery("hello world")) | SQ(title=AutoQuery("hello world")))
+        self.assertEqual(sqs.query.build_query(), u"((hello world) OR title:(hello world))")
 
     def test_result_class(self):
         self.sb.update(self.wmmi, self.sample_objs)
