@@ -848,6 +848,9 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                 query_frag = filter_types[filter_type] % prepared_value
 
+        if len(query_frag) and not query_frag.startswith('(') and not query_frag.endswith(')'):
+            query_frag = "(%s)" % query_frag
+
         return u"%s%s" % (index_fieldname, query_frag)
 
 
