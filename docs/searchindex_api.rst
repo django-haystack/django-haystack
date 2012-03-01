@@ -402,6 +402,19 @@ Get the default QuerySet for read actions.
 Subclasses can override this method to work with other managers.
 Useful when working with default managers that filter some objects.
 
+``build_queryset``
+-------------------
+
+.. method:: SearchIndex.build_queryset(self, start_date=None, end_date=None)
+
+Get the default QuerySet to index when doing an index update.
+
+Subclasses can override this method to take into account related
+model modification times.
+
+The default is to use ``SearchIndex.index_queryset`` and filter
+based on ``SearchIndex.get_updated_field``
+
 ``prepare``
 -----------
 
