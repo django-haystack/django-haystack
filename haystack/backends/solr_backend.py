@@ -530,6 +530,13 @@ class SolrSearchQuery(BaseSearchQuery):
         else:
             index_fieldname = u'%s:' % connections[self._using].get_unified_index().get_index_fieldname(field)
 
+        if value is None:
+            # The filter is for a document field with the value of None.
+            # As an optimization, we wouldn't have stored that field on the document,
+            #  so we're really looking for documents without this field at all.
+            # Return solr's search filter for the empty fields
+            return '*:* -%s:[* TO *]' % index_fieldname
+
         filter_types = {
             'contains': u'%s',
             'startswith': u'%s*',
