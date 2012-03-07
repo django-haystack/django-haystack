@@ -8,6 +8,5 @@ dist
 build
 MANIFEST
 .tox
-.gitignore
 .project
 .pydevproject
