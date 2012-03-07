@@ -56,12 +56,13 @@ class DeclarativeMetaclass(type):
                             shadow_facet_field.set_instance_name(shadow_facet_name)
                             attrs['fields'][shadow_facet_name] = shadow_facet_field
 
-        # Assigning default 'objects' query manager
-        try:
-            attrs['objects'] = HaystackManager(attrs['meta'].index_label)
-        except KeyError:
-            attrs['objects'] = HaystackManager(DEFAULT_ALIAS)
-        
+        # Assigning default 'objects' query manager if it does not already exist
+        if not attrs.has_key('objects'):
+            try:
+                attrs['objects'] = HaystackManager(attrs['meta'].index_label)
+            except KeyError:
+                attrs['objects'] = HaystackManager(DEFAULT_ALIAS)
+            
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
