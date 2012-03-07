@@ -1,8 +1,3 @@
-'''
-Created on Feb 20, 2012
-
-@author: Madan Thangavelu
-'''
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 
 class HaystackManager(object):
@@ -21,7 +16,7 @@ class HaystackManager(object):
     
     def all(self):
         return self.get_query_set()
-
+    
     def none(self):
         return self.get_empty_query_set()
     
@@ -29,22 +24,22 @@ class HaystackManager(object):
         return self.get_query_set().filter(*args, **kwargs)
     
     def exclude(self, *args, **kwargs):
-        return self.get_query_set().filter(*args, **kwargs)
+        return self.get_query_set().exclude(*args, **kwargs)
     
     def filter_and(self, *args, **kwargs):
-        return self.get_query_set().filter(*args, **kwargs)
+        return self.get_query_set().filter_and(*args, **kwargs)
     
     def filter_or(self, *args, **kwargs):
-        return self.get_query_set().filter(*args, **kwargs)
+        return self.get_query_set().filter_or(*args, **kwargs)
     
     def order_by(self, *args):
-        return self.get_query_set().filter(*args)
+        return self.get_query_set().order_by(*args)
     
     def order_by_distance(self, **kwargs):
-        return self.get_query_set().filter( **kwargs)
+        return self.get_query_set().order_by_distance(**kwargs)
     
     def highlight(self):
-        return self.get_query_set().filter()
+        return self.get_query_set().highlight()
     
     def boost(self, term, boost):
         return self.get_query_set().boost(term, boost)
@@ -53,7 +48,7 @@ class HaystackManager(object):
         return self.get_query_set().facet(field)
     
     def within(self, field, point_1, point_2):
-        return self.get_query_set().filter(field, point_1, point_2)
+        return self.get_query_set().within(field, point_1, point_2)
     
     def dwithin(self, field, point, distance):
         return self.get_query_set().dwithin(field, point, distance)
@@ -71,13 +66,13 @@ class HaystackManager(object):
         return self.get_query_set().narrow(query)
     
     def raw_search(self, query_string, **kwargs):
-        return self.get_query_set().filter(query_string,  **kwargs)
+        return self.get_query_set().raw_search(query_string,  **kwargs)
     
     def load_all(self):
         return self.get_query_set().load_all()
     
     def auto_query(self, query_string, fieldname='content'):
-        return self.get_query_set().filter(query_string, fieldname=fieldname)
+        return self.get_query_set().auto_query(query_string, fieldname=fieldname)
     
     def autocomplete(self, **kwargs):
         return self.get_query_set().autocomplete(**kwargs)
