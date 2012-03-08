@@ -136,7 +136,7 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, stats=None):
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -229,6 +229,15 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
+
+        if stats:
+            kwargs['stats'] = "true"
+
+            for k in stats.keys():
+                kwargs['stats.field'] = k
+
+                for facet in stats[k]:
+                    kwargs['f.%s.stats.facet' % k] = facet
 
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
@@ -324,10 +333,14 @@ class SolrSearchBackend(BaseSearchBackend):
         results = []
         hits = raw_results.hits
         facets = {}
+        stats = {}
         spelling_suggestion = None
 
         if result_class is None:
             result_class = SearchResult
+
+        if hasattr(raw_results,'stats'):
+            stats = raw_results.stats.get('stats_fields',{})
 
         if hasattr(raw_results, 'facets'):
             facets = {
@@ -391,6 +404,7 @@ class SolrSearchBackend(BaseSearchBackend):
         return {
             'results': results,
             'hits': hits,
+            'stats': stats,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
         }
@@ -612,7 +626,7 @@ class SolrSearchQuery(BaseSearchQuery):
         search_kwargs = {
             'start_offset': self.start_offset,
             'result_class': self.result_class
-        }        
+        }
         order_by_list = None
 
         if self.order_by:
@@ -663,16 +677,21 @@ class SolrSearchQuery(BaseSearchQuery):
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
 
+        if self.stats:
+            search_kwargs['stats'] = self.stats
+
         return search_kwargs
-        
+
     def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         search_kwargs = self.build_params(spelling_query, **kwargs)
+
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
+        self._stats = results.get('stats',{})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
 
     def run_mlt(self, **kwargs):

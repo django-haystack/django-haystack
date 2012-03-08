@@ -7,7 +7,7 @@ from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
-from haystack.exceptions import MoreLikeThisError, FacetingError
+from haystack.exceptions import MoreLikeThisError, FacetingError, StatsError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
 
@@ -312,9 +312,10 @@ class BaseSearchQuery(object):
         self._results = None
         self._hit_count = None
         self._facet_counts = None
+        self._stats = None
         self._spelling_suggestion = None
         self.result_class = SearchResult
-
+        self.stats = {}
         from haystack import connections
         self._using = using
         self.backend = connections[self._using].get_backend()
@@ -496,6 +497,17 @@ class BaseSearchQuery(object):
             self.run()
 
         return self._facet_counts
+
+    def get_stats(self):
+        """
+        Returns the stats received from the backend.
+
+        If the query has not been run, this will execute the query and store
+        the results
+        """
+        if self._stats is None:
+            self.run()
+        return self._stats
 
     def get_spelling_suggestion(self, preferred_query=None):
         """
@@ -693,6 +705,9 @@ class BaseSearchQuery(object):
         self._more_like_this = True
         self._mlt_instance = model_instance
 
+    def add_stats_query(self,stats_field,stats_facets):
+        self.stats[stats_field] = stats_facets
+
     def add_highlight(self):
         """Adds highlighting to the search results."""
         self.highlight = True
@@ -826,6 +841,7 @@ class BaseSearchQuery(object):
         clone.models = self.models.copy()
         clone.boost = self.boost.copy()
         clone.highlight = self.highlight
+        clone.stats = self.stats.copy()
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()
         clone.query_facets = self.query_facets[:]
@@ -838,6 +854,7 @@ class BaseSearchQuery(object):
         clone.distance_point = self.distance_point.copy()
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+
         return clone
 
 
