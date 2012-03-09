@@ -191,6 +191,7 @@ class SearchIndex(threading.local):
         return weights
 
     def _get_backend(self, using):
+        
         if using is None:
             using = connection_router.for_write(index=self)
 
@@ -293,18 +294,24 @@ class RealTimeSearchIndex(SearchIndex):
     as opposed to requiring a cron job.
     """
     def _setup_save(self):
-        signals.post_save.connect(self.update_object, sender=self.get_model())
+        signals.post_save.connect(self._signal_update_object, sender=self.get_model())
 
     def _setup_delete(self):
-        signals.post_delete.connect(self.remove_object, sender=self.get_model())
+        signals.post_delete.connect(self._signal_remove_object, sender=self.get_model())
 
     def _teardown_save(self):
-        signals.post_save.disconnect(self.update_object, sender=self.get_model())
+        signals.post_save.disconnect(self._signal_update_object, sender=self.get_model())
 
     def _teardown_delete(self):
-        signals.post_delete.disconnect(self.remove_object, sender=self.get_model())
+        signals.post_delete.disconnect(self._signal_remove_object, sender=self.get_model())
 
-
+    def _signal_update_object(self, instance, **kwargs):
+        self.update_object(instance)
+        
+    def _signal_remove_object(self, instance, **kwargs):
+        self.remove_object(instance)
+    
+        
 class BasicSearchIndex(SearchIndex):
     text = CharField(document=True, use_template=True)
 
