@@ -15,6 +15,11 @@ HAYSTACK_CONNECTIONS = {
         'PATH': mkdtemp(prefix='haystack-multipleindex-whoosh-tests-'),
         'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BarIndex'],
     },
+    'filtered_whoosh': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': mkdtemp(prefix='haystack-multipleindex-filtered-whoosh-tests-'),
+        'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BarIndex'],
+    },
 }
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
