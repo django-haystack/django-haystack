@@ -205,7 +205,7 @@ class SearchQuerySet(object):
                 try:
                     ui = connections[self.query._using].get_unified_index()
                     index = ui.get_index(model)
-                    objects = index.read_queryset()
+                    objects = index.read_queryset(using=self.query._using)
                     loaded_objects[model] = objects.in_bulk(models_pks[model])
                 except NotHandled:
                     self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
