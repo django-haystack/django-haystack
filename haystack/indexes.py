@@ -119,7 +119,7 @@ class SearchIndex(threading.local):
         """
         return self.index_queryset(using=using)
 
-    def build_queryset(self, start_date=None, end_date=None):
+    def build_queryset(self, using=None, start_date=None, end_date=None):
         """
         Get the default QuerySet to index when doing an index update.
 
@@ -154,7 +154,7 @@ class SearchIndex(threading.local):
             warnings.warn("'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'.")
             index_qs = self.get_queryset()
         else:
-            index_qs = self.index_queryset()
+            index_qs = self.index_queryset(using=using)
 
         if not hasattr(index_qs, 'filter'):
             raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'index_queryset' method." % self)
