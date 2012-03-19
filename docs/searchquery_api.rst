@@ -250,6 +250,12 @@ to the rest of the ``SearchQuerySet``.
 Allows backends with support for "More Like This" to return results
 similar to the provided instance.
 
+``add_stats_query``
+~~~~~~~~~~~~~~~~~~~
+.. method:: SearchQuery.add_stats_query(self,stats_field,stats_facets)
+
+Adds stats and stats_facets queries for the Solr backend.
+
 ``add_highlight``
 ~~~~~~~~~~~~~~~~~
 

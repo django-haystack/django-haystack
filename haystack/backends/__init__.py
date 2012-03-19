@@ -706,6 +706,7 @@ class BaseSearchQuery(object):
         self._mlt_instance = model_instance
 
     def add_stats_query(self,stats_field,stats_facets):
+        """Adds stats and stats_facets queries for the Solr backend."""
         self.stats[stats_field] = stats_facets
 
     def add_highlight(self):
