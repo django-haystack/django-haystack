@@ -112,6 +112,7 @@ class SolrSearchBackend(BaseSearchBackend):
                dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
 
+
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -586,6 +587,7 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if index_fieldname:
             return u"%s%s" % (index_fieldname, query_frag)
+        return query_frag
 
     def build_alt_parser_query(self, parser_name, query_string='', **kwargs):
         if query_string:
