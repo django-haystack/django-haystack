@@ -9,6 +9,7 @@ from django.conf import settings
 from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
 from haystack import indexes
+from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
 from haystack.utils.loading import UnifiedIndex
@@ -613,8 +614,8 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
     def test_get_spelling(self):
         self.sq.add_filter(SQ(content='Indexy'))
-        self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
-        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'index')
+        self.assertEqual(self.sq.get_spelling_suggestion(), u'(index)')
+        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'(index)')
 
     def test_log_query(self):
         from django.conf import settings
@@ -634,7 +635,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
         self.assertEqual(len(connections['default'].queries), 1)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:bar')
+        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
 
         # And again, for good measure.
         self.sq = connections['default'].query()
@@ -642,8 +643,8 @@ class LiveSolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(text='moof'))
         len(self.sq.get_results())
         self.assertEqual(len(connections['default'].queries), 2)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:bar')
-        self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:bar AND text:moof)')
+        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
+        self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:(bar) AND text:(moof))')
 
         # Restore.
         settings.DEBUG = old_debug
@@ -766,7 +767,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
-        self.assertEqual(sqs.query.build_query(), u'(foo AND bar)')
+        self.assertEqual(sqs.query.build_query(), u'((foo) AND (bar))')
 
         # Now for something more complex...
         sqs3 = self.sqs.exclude(title='moof').filter(SQ(content='foo') | SQ(content='baz'))
@@ -775,7 +776,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 3)
-        self.assertEqual(sqs.query.build_query(), u'(NOT (title:moof) AND (foo OR baz) AND bar)')
+        self.assertEqual(sqs.query.build_query(), u'(NOT (title:(moof)) AND ((foo) OR (baz)) AND (bar))')
 
     def test___or__(self):
         sqs1 = self.sqs.filter(content='foo')
@@ -784,7 +785,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
-        self.assertEqual(sqs.query.build_query(), u'(foo OR bar)')
+        self.assertEqual(sqs.query.build_query(), u'((foo) OR (bar))')
 
         # Now for something more complex...
         sqs3 = self.sqs.exclude(title='moof').filter(SQ(content='foo') | SQ(content='baz'))
@@ -793,7 +794,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
-        self.assertEqual(sqs.query.build_query(), u'((NOT (title:moof) AND (foo OR baz)) OR bar)')
+        self.assertEqual(sqs.query.build_query(), u'((NOT (title:(moof)) AND ((foo) OR (baz))) OR (bar))')
 
     def test_auto_query(self):
         # Ensure bits in exact matches get escaped properly as well.
@@ -801,7 +802,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.auto_query('"pants:rule"')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains="pants:rule">')
-        self.assertEqual(sqs.query.build_query(), u'"pants\\:rule"')
+        self.assertEqual(sqs.query.build_query(), u'("pants\\:rule")')
         self.assertEqual(len(sqs), 0)
 
     # Regressions
@@ -915,49 +916,53 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
     def test_quotes_regression(self):
         sqs = self.sqs.auto_query(u"44°48'40''N 20°28'32''E")
         # Should not have empty terms.
-        self.assertEqual(sqs.query.build_query(), u"44\xb048'40''N 20\xb028'32''E")
+        self.assertEqual(sqs.query.build_query(), u"(44\xb048'40''N 20\xb028'32''E)")
         # Should not cause Solr to 500.
         self.assertEqual(sqs.count(), 0)
 
         sqs = self.sqs.auto_query('blazing')
-        self.assertEqual(sqs.query.build_query(), u'blazing')
+        self.assertEqual(sqs.query.build_query(), u'(blazing)')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('blazing saddles')
-        self.assertEqual(sqs.query.build_query(), u'blazing saddles')
+        self.assertEqual(sqs.query.build_query(), u'(blazing saddles)')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('"blazing saddles')
-        self.assertEqual(sqs.query.build_query(), u'\\"blazing saddles')
+        self.assertEqual(sqs.query.build_query(), u'(\\"blazing saddles)')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('"blazing saddles"')
-        self.assertEqual(sqs.query.build_query(), u'"blazing saddles"')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles")')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing saddles"')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing saddles"')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing saddles")')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing \'saddles"')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing \'saddles"')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing \'saddles")')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing \'\'saddles"')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing \'\'saddles"')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing \'\'saddles")')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing \'\'saddles"\'')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing \'\'saddles" \'')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing \'\'saddles" \')')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing \'\'saddles"\'"')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing \'\'saddles" \'\\"')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing \'\'saddles" \'\\")')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('"blazing saddles" mel')
-        self.assertEqual(sqs.query.build_query(), u'"blazing saddles" mel')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" mel)')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('"blazing saddles" mel brooks')
-        self.assertEqual(sqs.query.build_query(), u'"blazing saddles" mel brooks')
+        self.assertEqual(sqs.query.build_query(), u'("blazing saddles" mel brooks)')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing saddles" brooks')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing saddles" brooks')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing saddles" brooks)')
         self.assertEqual(sqs.count(), 0)
         sqs = self.sqs.auto_query('mel "blazing saddles" "brooks')
-        self.assertEqual(sqs.query.build_query(), u'mel "blazing saddles" \\"brooks')
+        self.assertEqual(sqs.query.build_query(), u'(mel "blazing saddles" \\"brooks)')
         self.assertEqual(sqs.count(), 0)
+
+    def test_query_generation(self):
+        sqs = self.sqs.filter(SQ(content=AutoQuery("hello world")) | SQ(title=AutoQuery("hello world")))
+        self.assertEqual(sqs.query.build_query(), u"((hello world) OR title:(hello world))")
 
     def test_result_class(self):
         # Assert that we're defaulting to ``SearchResult``.

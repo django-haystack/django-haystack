@@ -36,10 +36,10 @@ class AlteredInternalNamesTestCase(TestCase):
 
         sq.add_filter(SQ(content='hello'))
         sq.add_model(MockModel)
-        self.assertEqual(sq.build_query(), u'hello')
+        self.assertEqual(sq.build_query(), u'(hello)')
 
         sq.add_model(AnotherMockModel)
-        self.assertEqual(sq.build_query(), u'hello')
+        self.assertEqual(sq.build_query(), u'(hello)')
 
     def test_solr_schema(self):
         command = Command()
