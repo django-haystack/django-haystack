@@ -14,10 +14,10 @@ Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 .. note::
 
     This documentation represents the development version of Haystack. For
-    old versions of the documentation: `1.0`_, `1.1`_.
+    old versions of the documentation: `1.2`_, `1.1`_.
 
-.. _`1.0`: http://docs.haystacksearch.org/1.0/
-.. _`1.1`: http://docs.haystacksearch.org/1.1/
+.. _`1.2`: http://django-haystack.readthedocs.org/en/v1.2.6/index.html
+.. _`1.1`: http://django-haystack.readthedocs.org/en/v1.1/index.html
 
 Getting Started
 ---------------
@@ -107,8 +107,8 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.4+ (may work on 2.3 but untested)
-* Django 1.0+
+* Python 2.5+
+* Django 1.2+ (may work on 1.1.2+)
 
 Additionally, each backend has its own requirements. You should refer to
 :doc:`installing_search_engines` for more details.
