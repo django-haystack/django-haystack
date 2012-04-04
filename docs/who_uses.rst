@@ -280,3 +280,14 @@ Pix Populi is a popular French photo sharing site.
 Using: Solr
 
 * http://www.pix-populi.fr/
+
+
+LocalWiki
+----------
+
+LocalWiki is a tool for collaborating in local, geographic communities.
+It's using Haystack to power search on every LocalWiki instance.
+
+Using: Solr
+
+* http://localwiki.org/
