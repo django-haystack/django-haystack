@@ -270,3 +270,13 @@ faceted navigation on the site.
 Using: Elasticsearch
 
 * https://crate.io/
+
+
+Pix Populi
+----------
+
+Pix Populi is a popular French photo sharing site.
+
+Using: Solr
+
+* http://www.pix-populi.fr/
