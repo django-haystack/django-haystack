@@ -157,6 +157,8 @@ class CharField(SearchField):
 
         return unicode(value)
 
+class SuggestionField(SearchField):
+    field_type = 'textSpell'
 
 class LocationField(SearchField):
     field_type = 'location'

@@ -71,7 +71,7 @@ Something like the following is suggested::
     class MySearchIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         # ... normal fields then...
-        suggestions = indexes.FacetCharField()
+        suggestions = indexes.SuggestionField()
 
         def prepare(self, obj):
             prepared_data = super(NoteIndex, self).prepare(object)
@@ -95,11 +95,11 @@ Then, you enable it in Solr by adding the following line to your
 
 Then change your default handler from::
 
-    <requestHandler name="standard" class="solr.StandardRequestHandler" default="true" />
+    <requestHandler name="search" class="solr.SearchHandler" default="true">
 
 ... to ...::
 
-    <requestHandler name="standard" class="solr.StandardRequestHandler" default="true">
+    <requestHandler name="search" class="solr.SearchHandler" default="true">
         <arr name="last-components">
             <str>spellcheck</str>
         </arr>

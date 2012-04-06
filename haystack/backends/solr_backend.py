@@ -427,6 +427,9 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'edge_ngram'
             elif field_class.field_type == 'location':
                 field_data['type'] = 'location'
+            elif field_class.field_type == 'textSpell':
+                field_data['type'] = 'textSpell'
+                field_data.update({'omit_term_freq_and_positions':'true'})
 
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
