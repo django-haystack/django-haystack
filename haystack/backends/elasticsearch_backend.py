@@ -1,9 +1,12 @@
 import datetime
 import logging
 import warnings
+from collections import defaultdict
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
+
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
@@ -100,40 +103,65 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.index_name = connection_options['INDEX_NAME']
         self.log = logging.getLogger('haystack')
         self.setup_complete = False
-        self.existing_mapping = {}
+
+        # Per doctype mapping.
+        self.existing_mapping = defaultdict(dict)
 
     def setup(self):
         """
         Defers loading until needed.
         """
-        # Get the existing mapping & cache it. We'll compare it
-        # during the ``update`` & if it doesn't match, we'll put the new
-        # mapping.
-        try:
-            self.existing_mapping = self.conn.get_mapping(indexes=[self.index_name])
-        except Exception, e:
-            if not self.silently_fail:
-                raise
-
         unified_index = haystack.connections[self.connection_alias].get_unified_index()
-        self.content_field_name, field_mapping = self.build_schema(unified_index.all_searchfields())
-        current_mapping = {
-            'modelresult': {
-                'properties': field_mapping
-            }
-        }
+        current_mapping = {}
 
-        if current_mapping != self.existing_mapping:
+        # Get mappings for all ElasticSearch types/models
+        for model, index in unified_index.indexes.iteritems():
+            es_type = self.get_es_type(index)
+
+            # Get the existing mapping & cache it. We'll compare it
+            # during the ``update`` & if it doesn't match, we'll put the new
+            # mapping.
             try:
-                # Make sure the index is there first.
-                self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
-                self.conn.put_mapping('modelresult', current_mapping, indexes=[self.index_name])
-                self.existing_mapping = current_mapping
+                self.existing_mapping[es_type] = self.conn.get_mapping(indexes=[self.index_name])
             except Exception, e:
                 if not self.silently_fail:
                     raise
 
+            self.content_field_name, field_mapping = (self.build_schema(index.fields))
+            # This awkward syntax is by design.
+            # See http://www.elasticsearch.org/guide/reference/api/admin-indices-put-mapping.html
+            # for more info.
+            current_mapping[es_type] = {
+                    es_type: dict(properties=field_mapping)}
+            if current_mapping[es_type] != self.existing_mapping[es_type]:
+                try:
+                    # Make sure the index is there first.
+                    self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
+                    self.conn.put_mapping(es_type, current_mapping[es_type], indexes=[self.index_name])
+                    self.existing_mapping[es_type] = current_mapping[es_type]
+                except Exception, e:
+                    if not self.silently_fail:
+                        raise
         self.setup_complete = True
+
+    def get_es_type(self, index_or_model):
+        """
+        Get the ElasticSearch document 'type' that is bound to a given
+        index/model.
+        """
+        if not hasattr(index_or_model, '_meta'):
+            index_or_model = index_or_model.get_model()
+
+        return index_or_model._meta.db_table
+
+
+    def get_type_and_id(self, obj):
+        """
+        Return a tuple of document type and document id given an object or string
+        reprsenting an object.
+        """
+        doc_id = '.'.join((obj._meta.app_label, obj._meta.module_name, str(obj.pk)))
+        return obj._meta.db_table, doc_id
 
     def update(self, index, iterable, commit=True):
         if not self.setup_complete:
@@ -157,9 +185,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for key, value in prepped_data.items():
                     final_data[key] = self.conn.from_python(value)
 
+                # Remove the doc_type from the ID since ES is namespacing it.
+                doc_type, doc_id = self.get_type_and_id(obj)
+                final_data['id'] = doc_id
+
                 prepped_docs.append(final_data)
 
-            self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+            self.conn.bulk_index(self.index_name, doc_type, prepped_docs, id_field=ID)
 
             if commit:
                 self.conn.refresh(indexes=[self.index_name])
@@ -170,8 +202,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to add documents to Elasticsearch: %s", e)
 
     def remove(self, obj_or_string, commit=True):
-        doc_id = get_identifier(obj_or_string)
-
+        doc_type, doc_id = self.get_type_and_id(obj_or_string)
         if not self.setup_complete:
             try:
                 self.setup()
@@ -179,11 +210,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
+                self.log.error(
+                        "Failed to remove document '%s.%s' from Elasticsearch: %s",
+                        doc_type, doc_id, e)
                 return
 
         try:
-            self.conn.delete(self.index_name, 'modelresult', doc_id)
+            self.conn.delete(self.index_name, doc_type, doc_id)
 
             if commit:
                 self.conn.refresh(indexes=[self.index_name])
@@ -191,26 +224,25 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
+            self.log.error(
+                    "Failed to remove document '%s.%s' from Elasticsearch: %s",
+                    doc_type, doc_id, e)
 
     def clear(self, models=[], commit=True):
         # We actually don't want to do this here, as mappings could be
         # very different.
         # if not self.setup_complete:
         #     self.setup()
-
         try:
             if not models:
                 self.conn.delete_index(self.index_name)
             else:
-                models_to_delete = []
-
                 for model in models:
-                    models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
-
-                # Delete by query in Elasticsearch asssumes you're dealing with
-                # a ``query`` root object. :/
-                self.conn.delete_by_query(self.index_name, 'modelresult', {'query_string': {'query': " OR ".join(models_to_delete)}})
+                    # FIXME: We should uplift this call into pyelasticsearch.
+                    # c.f. https://github.com/toastdriven/pyelasticsearch/pull/5
+                    path = self.conn._make_path([self.index_name,
+                                                 self.get_es_type(model)])
+                    self.conn._send_request('DELETE', path)
 
             if commit:
                 self.conn.refresh(indexes=[self.index_name])
@@ -219,7 +251,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 raise
 
             if len(models):
-                self.log.error("Failed to clear Elasticsearch index of models '%s': %s", ','.join(models_to_delete), e)
+                self.log.error("Failed to clear Elasticsearch index of models '%s': %s",
+                               ','.join([self.get_es_type(m) for m in models]), e)
             else:
                 self.log.error("Failed to clear Elasticsearch index: %s", e)
 
@@ -229,6 +262,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
+
         if len(query_string) == 0:
             return {
                 'results': [],
@@ -375,7 +409,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
         if models and len(models):
-            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+            model_choices = sorted([model._meta.db_table for model in models])
         elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.
@@ -452,7 +486,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             query_params['size'] = end_offset - start_offset
 
         try:
-            raw_results = self.conn.search(None, kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
+            raw_results = self.conn.search(None, kwargs, indexes=[self.index_name], **query_params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -485,11 +519,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         if end_offset is not None:
             params['search_size'] = end_offset - start_offset
-
-        doc_id = get_identifier(model_instance)
+        doc_type, doc_id = self.get_type_and_id(model_instance)
 
         try:
-            raw_results = self.conn.morelikethis(self.index_name, 'modelresult', doc_id, [field_name], **params)
+            raw_results = self.conn.morelikethis(
+                    self.index_name, doc_type, doc_id, [field_name], **params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
