@@ -733,11 +733,12 @@ class GitPullCurrentBranchCommand(GitWindowCommand):
 
     def remote_done(self, result):
         self.remotes = result.rstrip().split('\n')
-        self.quick_panel(self.remotes, self.panel_done, sublime.MONOSPACE_FONT)
+        if len(self.remotes) == 1:
+            self.panel_done()
+        else:
+            self.quick_panel(self.remotes, self.panel_done, sublime.MONOSPACE_FONT)
 
-    def panel_done(self, picked):
-        if 0 > picked < len(self.remotes):
-            return
+    def panel_done(self, picked=0):
         self.picked_remote = self.remotes[picked]
         self.picked_remote = self.picked_remote.strip()
         self.run_command(['git', self.command_to_run_after_describe, self.picked_remote, self.current_branch])
