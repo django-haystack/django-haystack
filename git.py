@@ -786,7 +786,7 @@ class GitAnnotateCommand(GitTextCommand):
     #    output is then parsed and regions are set accordingly.
     def run(self, view):
         # If the annotations are already running, we dont have to create a new tmpfile
-        if hasattr(view, "tmp"):
+        if hasattr(self, "tmp"):
             self.compare_tmp(None)
             return
         self.tmp = tempfile.NamedTemporaryFile()
