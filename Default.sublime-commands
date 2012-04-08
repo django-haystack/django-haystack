@@ -100,14 +100,6 @@
         "command": "git_show"
     }
     ,{
-        "caption": "Git: Annotate",
-        "command": "git_annotate"
-    }
-    ,{
-        "caption": "Git: Clear Annotation",
-        "command": "git_clear_annotation"
-    }
-    ,{
         "caption": "Git: Toggle Annotations",
         "command": "git_toggle_annotations"
     }
