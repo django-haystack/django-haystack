@@ -496,7 +496,12 @@ class GitCommitCommand(GitWindowCommand):
             self.panel("Nothing to commit")
             return
         # Okay, get the template!
-        self.run_command(['git', 'diff', '--staged'], self.diff_done)
+        s = sublime.load_settings("Git.sublime-settings")
+        if s.get("verbose_commits"):
+            self.run_command(['git', 'diff', '--staged'], self.diff_done)
+        else:
+            self.run_command(['git', 'status'], self.diff_done)
+
 
     def diff_done(self, result):
         template = "\n".join([
@@ -515,6 +520,7 @@ class GitCommitCommand(GitWindowCommand):
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
+
 
     def message_done(self, message):
         # filter out the comments (git commit doesn't do this automatically)
