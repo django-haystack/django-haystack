@@ -577,8 +577,9 @@ class GitStatusCommand(GitWindowCommand):
     def panel_followup(self, picked_status, picked_file, picked_index):
         # split out solely so I can override it for laughs
 
+        s = sublime.load_settings("Git.sublime-settings")
         root = git_root(self.get_working_dir())
-        if picked_status == '??':
+        if picked_status == '??' or s.get('status_opens_file'):
             self.window.open_file(os.path.join(root, picked_file))
         else:
             self.run_command(['git', 'diff', '--no-color', '--', picked_file.strip('"')],
