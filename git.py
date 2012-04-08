@@ -138,9 +138,6 @@ class GitCommand:
             sublime.status_message(message)
 
     def generic_done(self, result):
-        if not result.strip():
-            return
-
         if self.may_change_files and self.active_view() and self.active_view().file_name():
             if self.active_view().is_dirty():
                 result = "WARNING: Current view is dirty.\n\n"
@@ -151,6 +148,9 @@ class GitCommand:
                 self.active_view().run_command('revert')
                 do_when(lambda: not self.active_view().is_loading(), lambda: self.active_view().set_viewport_position(position, False))
                 # self.active_view().show(position)
+
+        if not result.strip():
+            return
         self.panel(result)
 
     def _output_to_view(self, output_file, output, clear=False,
@@ -721,8 +721,6 @@ class GitCheckoutCommand(GitTextCommand):
 
     def run(self, edit):
         self.run_command(['git', 'checkout', self.get_file_name()])
-        # Refresh file
-        sublime.set_timeout(lambda: self.view.run_command('revert'), 100)
 
 
 class GitPullCommand(GitWindowCommand):
