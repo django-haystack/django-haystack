@@ -714,6 +714,8 @@ class GitCheckoutCommand(GitTextCommand):
 
     def run(self, edit):
         self.run_command(['git', 'checkout', self.get_file_name()])
+        # Refresh file
+        sublime.set_timeout(lambda: self.view.run_command('revert'), 100)
 
 
 class GitPullCommand(GitWindowCommand):
