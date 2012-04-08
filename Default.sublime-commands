@@ -84,8 +84,16 @@
         "command": "git_pull"
     }
     ,{
+        "caption": "Git: Pull Current Branch",
+        "command": "git_pull_current_branch"
+    }
+    ,{
         "caption": "Git: Push",
         "command": "git_push"
+    }
+    ,{
+        "caption": "Git: Push Current Branch",
+        "command": "git_push_current_branch"
     }
     ,{
         "caption": "Git: Show Current File",

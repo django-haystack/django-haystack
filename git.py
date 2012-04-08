@@ -728,9 +728,38 @@ class GitPullCommand(GitWindowCommand):
         self.run_command(['git', 'pull'], callback=self.panel)
 
 
+class GitPullCurrentBranchCommand(GitWindowCommand):
+    command_to_run_after_describe = 'pull'
+
+    def run(self):
+        self.run_command(['git', 'describe', '--contains',  '--all', 'HEAD'], callback=self.describe_done)
+
+    def describe_done(self, result):
+        self.current_branch = result.strip()
+        self.run_command(['git', 'remote'], callback=self.remote_done)
+
+    def remote_done(self, result):
+        self.remotes = result.rstrip().split('\n')
+        if len(self.remotes) == 1:
+            self.panel_done()
+        else:
+            self.quick_panel(self.remotes, self.panel_done, sublime.MONOSPACE_FONT)
+
+    def panel_done(self, picked=0):
+        if picked < 0 or picked >= len(self.remotes):
+            return
+        self.picked_remote = self.remotes[picked]
+        self.picked_remote = self.picked_remote.strip()
+        self.run_command(['git', self.command_to_run_after_describe, self.picked_remote, self.current_branch])
+
+
 class GitPushCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'push'], callback=self.panel)
+
+
+class GitPushCurrentBranchCommand(GitPullCurrentBranchCommand):
+    command_to_run_after_describe = 'push'
 
 
 class GitCustomCommand(GitTextCommand):
