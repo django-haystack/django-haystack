@@ -55,8 +55,12 @@ class Highlighter(object):
         return word_positions
     
     def find_window(self, highlight_locations):
+        
+        pre_keyword_context_length = self.max_length / 5
+        
         best_start = 0
         best_end = self.max_length
+        initial_window_length = self.max_length - self.pre_keyword_context_length 
         
         # First, make sure we have words.
         if not len(highlight_locations):
@@ -74,7 +78,10 @@ class Highlighter(object):
             return (best_start, best_end)
         
         if len(words_found) == 1:
-            return (words_found[0], words_found[0] + self.max_length)
+            best_start = words_found[0]
+            if best_start < 0:
+                best_start = 0
+            return self.append_pre_keyword_context_and_optimize_length(words_found[0], words_found[0] + initial_window_length)
         
         # Sort the list so it's in ascending order.
         words_found = sorted(words_found)
@@ -84,27 +91,50 @@ class Highlighter(object):
         # counting the number of found offsets (-1 to fit in the window).
         highest_density = 0
         
-        if words_found[:-1][0] > self.max_length:
-            best_start = words_found[:-1][0]
-            best_end = best_start + self.max_length
-        
         for count, start in enumerate(words_found[:-1]):
             current_density = 1
             
             for end in words_found[count + 1:]:
-                if end - start < self.max_length:
+                if end - start < initial_window_length:
                     current_density += 1
                 else:
-                    current_density = 0
+                    # changed this to 1. was 0. didn't work when there were 2 matches for 1 word that didn't fit in the window.
+                    # would always show the window beginning with 0 as offset in that situation. A bug, I think.
+                    current_density = 1
                 
                 # Only replace if we have a bigger (not equal density) so we
                 # give deference to windows earlier in the document.
                 if current_density > highest_density:
                     best_start = start
-                    best_end = start + self.max_length
+                    if best_start < 0:
+                        best_start = 0
+                    best_end = start + initial_window_length
                     highest_density = current_density
         
-        return (best_start, best_end)
+        return self.append_pre_keyword_context_and_optimize_length(best_start, best_end)    
+    
+    
+    def append_pre_keyword_context_and_optimize_length(self, keywordStart, windowEnd):
+        windowStart = 0
+        if keywordStart >= self.pre_keyword_context_length:
+            # there's room enough for the context
+            windowStart = keywordStart - self.pre_keyword_context_length
+            
+            if windowEnd >= len(self.text_block):
+                # possibly there's room for more text at the beginning of the window.
+                # fit the window to cover the last part of the text block, using max_length.
+                windowEnd = len(self.text_block)
+                windowStart = windowEnd - self.max_length
+                if windowStart < 0:
+                    windowStart = 0
+        else:
+            # there's not room enough for the context. include the entire beginning
+            # of the text block, using max_length
+            windowStart = 0
+            windowEnd = self.max_length # it's ok if windowEnd is bigger than max_length
+
+        return (windowStart, windowEnd)
+
     
     def render_html(self, highlight_locations=None, start_offset=None, end_offset=None):
         # Start by chopping the block down to the proper window.
