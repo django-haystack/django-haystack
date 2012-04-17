@@ -150,7 +150,7 @@ class UnifiedIndex(object):
         self.fields = SortedDict()
         self._built = False
         self._indexes_setup = False
-        self.excluded_indexes = excluded_indexes or []
+        self.excluded_indexes = excluded_indexes or getattr(settings, 'HAYSTACK_EXCLUDED_INDEXES', [])
         self.excluded_indexes_ids = {}
         self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
         self._fieldnames = {}
