@@ -110,7 +110,7 @@ class CommandThread(threading.Thread):
 
 
 # A base for all commands
-class GitCommand:
+class GitCommand(object):
     may_change_files = False
 
     def run_command(self, command, callback=None, show_status=True,
@@ -275,7 +275,7 @@ class GitBlameCommand(GitTextCommand):
         self.scratch(result, title="Git Blame", syntax=plugin_file("Git Blame.tmLanguage"))
 
 
-class GitLog:
+class GitLog(object):
     def run(self, edit=None):
         return self.run_log('--', self.get_file_name())
 
@@ -324,7 +324,7 @@ class GitLogAllCommand(GitLog, GitWindowCommand):
     pass
 
 
-class GitShow:
+class GitShow(object):
     def run(self, edit=None):
         # GitLog Copy-Past
         self.run_command(
