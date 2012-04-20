@@ -13,4 +13,12 @@
 	// true: blame whole file
 	// false: blame only current line
 	,"blame_whole_file": true
+
+	// If you'd rather have your status command open files instead of show you a
+	// diff, set this to true.  You can still do `Git: Status` followed by
+	// 'Git: Diff Current File' to get a file diff
+	,"status_opens_file": false
+
+	// Use --verbose flag for commit messages
+	,"verbose_commits": true
 }

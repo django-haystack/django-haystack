@@ -84,20 +84,24 @@
         "command": "git_pull"
     }
     ,{
+        "caption": "Git: Pull Current Branch",
+        "command": "git_pull_current_branch"
+    }
+    ,{
         "caption": "Git: Push",
         "command": "git_push"
+    }
+    ,{
+        "caption": "Git: Push Current Branch",
+        "command": "git_push_current_branch"
     }
     ,{
         "caption": "Git: Show Current File",
         "command": "git_show"
     }
     ,{
-        "caption": "Git: Annotate",
-        "command": "git_annotate"
-    }
-    ,{
-        "caption": "Git: Clear Annotation",
-        "command": "git_clear_annotation"
+        "caption": "Git: Toggle Annotations",
+        "command": "git_toggle_annotations"
     }
     ,{
         "caption": "Git: Custom Command",
@@ -118,5 +122,13 @@
     ,{
         "caption": "Git: Commit Selected Hunk",
         "command": "git_commit_selected_hunk"
+    }
+    ,{
+        "caption": "Git: Gui",
+        "command": "git_gui"
+    }
+    ,{
+        "caption": "Git: Gitk",
+        "command": "git_gitk"
     }
 ]
