@@ -3,7 +3,7 @@
   "fileTypes": ["git-blame"],
   "patterns": [
     {
-        "match": "^(\\^?[a-f0-9]+)\\s+([\\w\\d\\.\\/]*)\\s*\\((.*?)\\s+(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d [+-]\\d{4})\\s+(\\d+)\\)",
+        "match": "^(\\^?[a-f0-9]+)\\s+([\\w\\-\\d\\.\\/]*)\\s*\\((.*?)\\s+(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d [+-]\\d{4})\\s+(\\d+)\\)",
         "name": "line.comment.git-blame",
         "captures": {
             "1": {"name": "string.sha.git-blame"},
