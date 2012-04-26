@@ -80,6 +80,10 @@
         "command": "git_checkout"
     }
     ,{
+        "caption": "Git: Fetch",
+        "command": "git_fetch"
+    }
+    ,{
         "caption": "Git: Pull",
         "command": "git_pull"
     }

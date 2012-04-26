@@ -730,6 +730,11 @@ class GitCheckoutCommand(GitTextCommand):
         self.run_command(['git', 'checkout', self.get_file_name()])
 
 
+class GitFetchCommand(GitWindowCommand):
+    def run(self):
+        self.run_command(['git', 'fetch'], callback=self.panel)
+
+
 class GitPullCommand(GitWindowCommand):
     def run(self):
         self.run_command(['git', 'pull'], callback=self.panel)
@@ -962,7 +967,7 @@ class GitCommitSelectedHunk(GitAddSelectedHunkCommand):
         self.run_command(['git', 'diff', '--no-color', self.get_file_name()], self.cull_diff)
         self.get_window().run_command('git_commit')
 
-        
+
 
 class GitGuiCommand(GitTextCommand):
     def run(self, edit):
@@ -974,6 +979,6 @@ class GitGitkCommand(GitTextCommand):
     def run(self, edit):
         command = ['gitk']
         self.run_command(command)
-            
-                        
-    
+
+
+
