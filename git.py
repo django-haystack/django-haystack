@@ -496,7 +496,7 @@ class GitCommitCommand(GitWindowCommand):
         has_staged_files = False
         result_lines = result.rstrip().split('\n')
         for line in result_lines:
-            if not line[0].isspace():
+            if line and not line[0].isspace():
                 has_staged_files = True
                 break
         if not has_staged_files:
@@ -508,7 +508,6 @@ class GitCommitCommand(GitWindowCommand):
             self.run_command(['git', 'diff', '--staged'], self.diff_done)
         else:
             self.run_command(['git', 'status'], self.diff_done)
-
 
     def diff_done(self, result):
         template = "\n".join([
@@ -527,7 +526,6 @@ class GitCommitCommand(GitWindowCommand):
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
-
 
     def message_done(self, message):
         # filter out the comments (git commit doesn't do this automatically)
