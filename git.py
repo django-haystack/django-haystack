@@ -376,7 +376,7 @@ class GitGraph(object):
     def run(self, edit=None):
         self.run_command(
             ['git', 'log', '--graph', '--pretty=%h %aN %ci%d %s', '--abbrev-commit', '--no-color', '--decorate',
-            '--date-order', '--', self.get_file_name()],
+            '--date-order', self.get_graph_options(), '--', self.get_file_name()],
             self.log_done
         )
 
@@ -385,11 +385,13 @@ class GitGraph(object):
 
 
 class GitGraphCommand(GitGraph, GitTextCommand):
-    pass
+    def get_graph_options(self):
+        return ""
 
 
 class GitGraphAllCommand(GitGraph, GitWindowCommand):
-    pass
+    def get_graph_options(self):
+        return "--all"
 
 
 class GitDiff (object):
