@@ -767,10 +767,10 @@ class GitPushCurrentBranchCommand(GitPullCurrentBranchCommand):
     command_to_run_after_describe = 'push'
 
 
-class GitCustomCommand(GitTextCommand):
+class GitCustomCommand(GitWindowCommand):
     may_change_files = True
 
-    def run(self, edit):
+    def run(self):
         self.get_window().show_input_panel("Git command", "",
             self.on_input, None, None)
 
