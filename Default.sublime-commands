@@ -111,10 +111,14 @@
         "caption": "Git: Open...",
         "command": "git_open_file"
     }
-	,{
-		"caption": "Git: Reset (unstage) Current File",
-		"command": "git_reset_head"
-	}
+    ,{
+        "caption": "Git: Reset (unstage) Current File",
+        "command": "git_reset_head"
+    }
+    ,{
+        "caption": "Git: Reset (unstage) All",
+        "command": "git_reset_head_all"
+    }
     ,{
         "caption": "Git: Add Selected Hunk",
         "command": "git_add_selected_hunk"

@@ -785,12 +785,20 @@ class GitCustomCommand(GitTextCommand):
         self.run_command(command_splitted)
 
 
-class GitResetHeadCommand(GitTextCommand):
-    def run(self, edit):
+class GitResetHead(object):
+    def run(self, edit=None):
         self.run_command(['git', 'reset', 'HEAD', self.get_file_name()])
 
     def generic_done(self, result):
         pass
+
+
+class GitResetHeadCommand(GitResetHead, GitTextCommand):
+    pass
+
+
+class GitResetHeadAllCommand(GitResetHead, GitWindowCommand):
+    pass
 
 
 class GitClearAnnotationCommand(GitTextCommand):
