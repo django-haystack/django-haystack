@@ -48,3 +48,19 @@ Haystack has a relatively easily-met set of requirements.
 Additionally, each backend has its own requirements. You should refer to
 http://docs.haystacksearch.org/dev/installing_search_engines.html for more
 details.
+
+
+Commercial Support
+==================
+
+If you're using Haystack in a commercial environment, paid support is available
+from `Toast Driven`_. Services offered include:
+
+* Advice/help with setup
+* Implementation in your project
+* Bugfixes in Haystack itself
+* Features in Haystack itself
+
+If you're interested, please contact Daniel Lindsley (daniel@toastdriven.com).
+
+.. _`Toast Driven`: http://toastdriven.com/
