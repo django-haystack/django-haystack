@@ -47,7 +47,7 @@ output, like so::
     >>> my_text = 'This is a sample block that would be more meaningful in real life.'
     >>> my_query = 'block meaningful'
     
-    >>> highlight = Highlighter(my_query, html_tag='div', css_class='found', max_length=35)
+    >>> highlight = Highlighter(my_query, html_tag='div', css_class='found', max_length=35, crop_result=True)
     >>> highlight.highlight(my_text)
     u'...<div class="found">block</div> that would be more <div class="found">meaningful</div>...'
 
