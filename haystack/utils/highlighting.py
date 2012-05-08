@@ -6,6 +6,7 @@ class Highlighter(object):
     html_tag = 'span'
     max_length = 200
     text_block = ''
+    crop_result = True
     
     def __init__(self, query, **kwargs):
         self.query = query
@@ -19,6 +20,9 @@ class Highlighter(object):
         if 'css_class' in kwargs:
             self.css_class = kwargs['css_class']
         
+        if 'crop_result' in kwargs:
+            self.crop_result = kwargs['crop_result']
+            
         self.query_words = set([word.lower() for word in self.query.split() if not word.startswith('-')])
     
     def highlight(self, text_block):
@@ -150,10 +154,11 @@ class Highlighter(object):
         # Don't forget the chunk after the last term
         highlighted_chunk += text[matched_so_far:]
         
-        if start_offset > 0:
-            highlighted_chunk = '...%s' % highlighted_chunk
-        
-        if end_offset < len(self.text_block):
-            highlighted_chunk = '%s...' % highlighted_chunk
+        if self.crop_result:
+            if start_offset > 0:
+                highlighted_chunk = '...%s' % highlighted_chunk
+                
+            if end_offset < len(self.text_block):
+                highlighted_chunk = '%s...' % highlighted_chunk
         
         return highlighted_chunk
