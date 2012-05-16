@@ -4,6 +4,7 @@ import sys
 import warnings
 from django.db.models import signals
 from django.utils.encoding import force_unicode
+from django.core.exceptions import ImproperlyConfigured
 from haystack import connections, connection_router
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
