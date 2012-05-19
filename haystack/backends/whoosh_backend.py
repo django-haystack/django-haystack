@@ -187,7 +187,15 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to add documents to Whoosh: %s", e)
+                # We'll log the object identifier but won't include the actual object
+                # to avoid the possibility of that generating encoding errors while
+                # processing the log message:
+                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
+                    "data": {
+                        "index": index,
+                        "object": get_identifier(obj)
+                    }
+                })
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.

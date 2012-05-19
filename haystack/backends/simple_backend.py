@@ -24,19 +24,20 @@ if settings.DEBUG:
     logger.setLevel(logging.WARNING)
     logger.addHandler(NullHandler())
     logger.addHandler(ch)
-
+else:
+    logger = None
 
 class SimpleSearchBackend(BaseSearchBackend):
     def update(self, indexer, iterable, commit=True):
-        if settings.DEBUG:
+        if logger is not None:
             logger.warning('update is not implemented in this backend')
 
     def remove(self, obj, commit=True):
-        if settings.DEBUG:
+        if logger is not None:
             logger.warning('remove is not implemented in this backend')
 
     def clear(self, models=[], commit=True):
-        if settings.DEBUG:
+        if logger is not None:
             logger.warning('clear is not implemented in this backend')
 
     @log_query

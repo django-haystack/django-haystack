@@ -15,7 +15,7 @@ Supported Backends
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Elasticsearch: http://elasticsearch.org/
-.. _Whoosh: http://whoosh.ca/
+.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 

@@ -146,10 +146,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 self.log.error("Failed to add documents to Elasticsearch: %s", e)
                 return
 
-        try:
-            prepped_docs = []
+        prepped_docs = []
 
-            for obj in iterable:
+        for obj in iterable:
+            try:
                 prepped_data = index.full_prepare(obj)
                 final_data = {}
 
@@ -158,16 +158,24 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     final_data[key] = self.conn.from_python(value)
 
                 prepped_docs.append(final_data)
+            except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
+                if not self.silently_fail:
+                    raise
 
-            self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+                # We'll log the object identifier but won't include the actual object
+                # to avoid the possibility of that generating encoding errors while
+                # processing the log message:
+                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
+                    "data": {
+                        "index": index,
+                        "object": get_identifier(obj)
+                    }
+                })
 
-            if commit:
-                self.conn.refresh(indexes=[self.index_name])
-        except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
-            if not self.silently_fail:
-                raise
+        self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
 
-            self.log.error("Failed to add documents to Elasticsearch: %s", e)
+        if commit:
+            self.conn.refresh(indexes=[self.index_name])
 
     def remove(self, obj_or_string, commit=True):
         doc_id = get_identifier(obj_or_string)

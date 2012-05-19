@@ -15,7 +15,7 @@ Engine
   engine with (i.e. Whoosh_)
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Whoosh: http://whoosh.ca/
+.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 
 Index
   The datastore used by the engine is called an index. Its structure can vary
@@ -57,7 +57,7 @@ Boost
   query.
 
 More Like This
-  Incorporating techniques from information retrieval and artificial 
+  Incorporating techniques from information retrieval and artificial
   intelligence, More Like This is a technique for finding other documents within
   the index that closely resemble the document in question. This is useful for
   programmatically generating a list of similar content for a user to browse
@@ -69,7 +69,7 @@ Faceting
   results when performing a query. These counts can be used as feedback for
   the user, allowing the user to choose interesting aspects of their search
   results and "drill down" into those results.
-  
+
   An example might be providing a facet on an ``author`` field, providing back a
   list of authors and the number of documents in the index they wrote. This
   could be presented to the user with a link, allowing the user to click and
