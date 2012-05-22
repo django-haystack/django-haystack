@@ -59,7 +59,7 @@ class DeclarativeMetaclass(type):
         # Assigning default 'objects' query manager if it does not already exist
         if not attrs.has_key('objects'):
             try:
-                attrs['objects'] = HaystackManager(attrs['meta'].index_label)
+                attrs['objects'] = HaystackManager(attrs['Meta'].index_label)
             except KeyError:
                 attrs['objects'] = HaystackManager(DEFAULT_ALIAS)
             
