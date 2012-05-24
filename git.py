@@ -163,13 +163,15 @@ class GitCommand(object):
         output_file.insert(edit, 0, output)
         output_file.end_edit(edit)
 
-    def scratch(self, output, title=False, **kwargs):
+    def scratch(self, output, title=False, position=None, **kwargs):
         scratch_file = self.get_window().new_file()
         if title:
             scratch_file.set_name(title)
         scratch_file.set_scratch(True)
         self._output_to_view(scratch_file, output, **kwargs)
         scratch_file.set_read_only(True)
+        if position:
+            sublime.set_timeout(lambda: scratch_file.set_viewport_position(position), 0)
         return scratch_file
 
     def panel(self, output, **kwargs):
@@ -267,12 +269,17 @@ class GitBlameCommand(GitTextCommand):
                 end_line -= 1
             lines = str(begin_line + 1) + ',' + str(end_line + 1)
             command.extend(('-L', lines))
+            callback = self.blame_done
+        else:
+            callback = functools.partial(self.blame_done,
+                    position=self.view.viewport_position())
 
         command.append(self.get_file_name())
-        self.run_command(command, self.blame_done)
+        self.run_command(command, callback)
 
-    def blame_done(self, result):
-        self.scratch(result, title="Git Blame", syntax=plugin_file("Git Blame.tmLanguage"))
+    def blame_done(self, result, position=None):
+        self.scratch(result, title="Git Blame", position=position,
+                syntax=plugin_file("Git Blame.tmLanguage"))
 
 
 class GitLog(object):
@@ -489,7 +496,7 @@ class GitCommitCommand(GitWindowCommand):
         has_staged_files = False
         result_lines = result.rstrip().split('\n')
         for line in result_lines:
-            if not line[0].isspace():
+            if line and not line[0].isspace():
                 has_staged_files = True
                 break
         if not has_staged_files:
@@ -501,7 +508,6 @@ class GitCommitCommand(GitWindowCommand):
             self.run_command(['git', 'diff', '--staged'], self.diff_done)
         else:
             self.run_command(['git', 'status'], self.diff_done)
-
 
     def diff_done(self, result):
         template = "\n".join([
@@ -520,7 +526,6 @@ class GitCommitCommand(GitWindowCommand):
         msg.sel().clear()
         msg.sel().add(sublime.Region(0, 0))
         GitCommitCommand.active_message = self
-
 
     def message_done(self, message):
         # filter out the comments (git commit doesn't do this automatically)
