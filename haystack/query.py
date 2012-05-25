@@ -394,7 +394,12 @@ class SearchQuerySet(object):
         clone = self._clone()
         clone.query.add_narrow_query(query)
         return clone
-
+    
+    def search_handler(self, sh):
+        clone = self._clone()
+        clone.query.set_search_handler(sh)
+        return clone
+    
     def raw_search(self, query_string, **kwargs):
         """Passes a raw query directly to the backend."""
         return self.filter(content=Raw(query_string, **kwargs))
