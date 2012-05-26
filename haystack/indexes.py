@@ -228,7 +228,7 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).remove(instance)
+        self._get_backend(using).remove(instance, **kwargs)
 
     def clear(self, using=None):
         """
