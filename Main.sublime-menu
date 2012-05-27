@@ -43,6 +43,8 @@
                         [
                              { "caption": "Save", "command": "git_stash" }
                             ,{ "caption": "Pop", "command": "git_stash_pop" }
+                            ,{ "caption": "Apply", "command": "git_stash_apply" }
+                            ,{ "caption": "Drop", "command": "git_stash_drop" }
                         ]
                     }
                     ,{ "caption": "-" }
