@@ -91,6 +91,11 @@ class HighlighterTestCase(TestCase):
         
         self.assertEqual(highlighter.render_html({'content': [151], 'detection': [42]}, 42, 200), '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes no...')
         
+        # One term found within another term.
+        highlighter = Highlighter('this is')
+        highlighter.text_block = self.document_1
+        self.assertEqual(highlighter.render_html({'this': [0, 53, 79], 'is': [2, 5, 55, 58, 81]}, 0, 200), '<span class="highlighted">This</span> <span class="highlighted">is</span> a test of the highlightable words detection. <span class="highlighted">This</span> <span class="highlighted">is</span> only a test. Were <span class="highlighted">this</span> an actual emergency, your text would have exploded in mid-air.')
+
         # Regression for repetition in the regular expression.
         highlighter = Highlighter('i++')
         highlighter.text_block = 'Foo is i++ in most cases.'

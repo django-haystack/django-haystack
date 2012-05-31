@@ -4,6 +4,7 @@ Primary Authors:
     * Matt Croydon (some documentation, sanity checks and the sweet name)
     * Travis Cline (the original SQ implementation, improvements to ModelSearchIndex)
     * David Sauve (notanumber) for the Xapian backend, the simple backend and various patches.
+    * Jannis Leidel
 
 
 Thanks to
@@ -17,7 +18,6 @@ Thanks to
     * Brian Rosner for various patches.
     * Richard Boulton for feedback and suggestions.
     * Cyberdelia for feedback and patches.
-    * Jannis Leidel for consistently "walking behind the elephant" & cleaning up the setup.py.
     * Ask Solem for for patching the setup.py.
     * Ben Spaulding for feedback and documentation patches.
     * smulloni for various patches.
@@ -62,3 +62,4 @@ Thanks to
     * Honza Kral (HonzaKral) for various Elasticsearch tweaks & testing.
     * Alex Vidal (avidal) for a patch allowing developers to override the queryset used for update operations.
     * Igor Támara (ikks) for a patch related to Unicode ``verbose_name_plural``.
+    * Dan Helfman (witten) for a patch related to highlighting.
