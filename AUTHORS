@@ -62,3 +62,4 @@ Thanks to
     * Honza Kral (HonzaKral) for various Elasticsearch tweaks & testing.
     * Alex Vidal (avidal) for a patch allowing developers to override the queryset used for update operations.
     * Igor Támara (ikks) for a patch related to Unicode ``verbose_name_plural``.
+    * Dan Helfman (witten) for a patch related to highlighting.
