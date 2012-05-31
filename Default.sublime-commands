@@ -68,6 +68,14 @@
         "command": "git_stash_pop"
     }
     ,{
+        "caption": "Git: Stash Apply",
+        "command": "git_stash_apply"
+    }
+    ,{
+        "caption": "Git: Stash Drop",
+        "command": "git_stash_drop"
+    }
+    ,{
         "caption": "Git: Add Current File",
         "command": "git_add"
     }
