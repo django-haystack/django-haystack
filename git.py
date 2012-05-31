@@ -617,8 +617,11 @@ class GitAddChoiceCommand(GitStatusCommand):
         else:
             args = ["--", picked_file.strip('"')]
 
-        self.run_command(['git', 'add'] + args,
+        self.run_command(['git', 'add'] + args, self.rerun,
             working_dir=git_root(self.get_working_dir()))
+
+    def rerun(self, result):
+        self.run()
 
 
 class GitAdd(GitTextCommand):
