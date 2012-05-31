@@ -641,6 +641,7 @@ class GitStashPopCommand(GitWindowCommand):
 
 
 class GitStashApplyCommand(GitWindowCommand):
+    may_change_files = True
     command_to_run_after_list = 'apply'
 
     def run(self):
