@@ -115,7 +115,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
+               fields='', highlight=False, facets=None, facets_prefix=None, facets_sort=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
@@ -176,6 +176,16 @@ class SolrSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
+
+        if facets_prefix is not None:
+            kwargs['facet'] = 'on'
+            for key, value in facets_prefix.items():
+                kwargs["f.%s.facet.prefix" % key] = value
+
+        if facets_sort is not None:
+            kwargs['facet'] = 'on'
+            for key, value in facets_sort.items():
+                kwargs["f.%s.facet.sort" % key] = value
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -251,7 +261,7 @@ class SolrSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to query Solr using '%s': %s", query_string, e)
+            self.log.error("Failed to query Solr: %s", e)
             raw_results = EmptyResults()
 
         return self._process_results(raw_results, highlight=highlight, result_class=result_class, distance_point=distance_point)
@@ -637,6 +647,12 @@ class SolrSearchQuery(BaseSearchQuery):
         if self.facets:
             search_kwargs['facets'] = list(self.facets)
 
+        if self.facets_prefix:
+            search_kwargs['facets_prefix'] = self.facets_prefix
+
+        if self.facets_sort:
+            search_kwargs['facets_sort'] = self.facets_sort
+
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
 
@@ -680,6 +696,12 @@ class SolrSearchQuery(BaseSearchQuery):
             'start_offset': self.start_offset,
             'result_class': self.result_class,
         }
+
+        if self.models:
+            search_kwargs['models'] = self.models
+
+        if kwargs:
+            search_kwargs.update(kwargs)
 
         if self.end_offset is not None:
             search_kwargs['end_offset'] = self.end_offset - self.start_offset
