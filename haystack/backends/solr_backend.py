@@ -697,6 +697,12 @@ class SolrSearchQuery(BaseSearchQuery):
             'result_class': self.result_class,
         }
 
+        if self.models:
+            search_kwargs['models'] = self.models
+
+        if kwargs:
+            search_kwargs.update(kwargs)
+
         if self.end_offset is not None:
             search_kwargs['end_offset'] = self.end_offset - self.start_offset
 
