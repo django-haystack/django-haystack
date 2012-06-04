@@ -303,7 +303,7 @@ class SolrSearchBackendTestCase(TestCase):
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
-
+        
         self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('*:*')['hits'], 3)
         self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], ['1', '2', '3'])
@@ -332,6 +332,11 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {'name:[* TO e]': 3})
 
+        self.assertEqual(self.sb.search('',stats={}),{'hits':0,'results':[]})
+        results = self.sb.search('*:*',stats={'foo':['bar']})
+        self.assertEqual(results['hits'],3)
+        self.assertEqual(results['stats']['queries'],{})
+        
         self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
         results = self.sb.search('Index', narrow_queries=set(['name:daniel1']))
         self.assertEqual(results['hits'], 1)

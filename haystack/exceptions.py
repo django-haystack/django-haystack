@@ -29,3 +29,7 @@ class FacetingError(HaystackError):
 class SpatialError(HaystackError):
     """Raised when incorrect arguments have been provided for spatial."""
     pass
+
+class StatsError(HaystackError):
+    "Raised when incorrect arguments have been provided for stats"
+    pass

@@ -117,7 +117,7 @@ class SolrSearchBackend(BaseSearchBackend):
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
+               dwithin=None, distance_point=None, models=None,stats=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
         if len(query_string) == 0:
             return {
@@ -245,6 +245,13 @@ class SolrSearchBackend(BaseSearchBackend):
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
 
+        if stats:
+            kwargs['stats'] = "true"
+            for k in stats.keys():
+                kwargs['stats.field'] = k
+                for facet in stats[k]:
+                    kwargs['f.%s.stats.facet' % k] = facet
+        
         try:
             raw_results = self.conn.search(query_string, **kwargs)
         except (IOError, SolrError), e:
@@ -323,11 +330,15 @@ class SolrSearchBackend(BaseSearchBackend):
         results = []
         hits = raw_results.hits
         facets = {}
+        stats = {}
         spelling_suggestion = None
 
         if result_class is None:
             result_class = SearchResult
 
+        if hasattr(raw_results,'stats'):
+            stats = raw_results.stats.get('stats_fields',{})
+            
         if hasattr(raw_results, 'facets'):
             facets = {
                 'fields': raw_results.facets.get('facet_fields', {}),
@@ -390,6 +401,7 @@ class SolrSearchBackend(BaseSearchBackend):
         return {
             'results': results,
             'hits': hits,
+            'stats': stats,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
         }
@@ -664,10 +676,14 @@ class SolrSearchQuery(BaseSearchQuery):
         if self.distance_point:
             search_kwargs['distance_point'] = self.distance_point
 
+        if self.stats:
+            search_kwargs['stats'] = self.stats
+
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
+        self._stats = results.get('stats',{})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
 
     def run_mlt(self, **kwargs):

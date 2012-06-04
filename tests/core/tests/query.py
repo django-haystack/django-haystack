@@ -190,6 +190,13 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_query_facet('foo', 'baz')
         self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz'), ('foo', 'baz')])
 
+    def test_add_stats(self):
+        self.bsq.add_stats_query('foo',['bar'])
+        self.assertEqual(self.bsq.stats,{'foo':['bar']})
+
+        self.bsq.add_stats_query('moof',['bar','baz'])
+        self.assertEqual(self.bsq.stats,{'foo':['bar'],'moof':['bar','baz']})
+        
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
         self.assertEqual(self.bsq.narrow_queries, set(['foo:bar']))
@@ -245,6 +252,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.add_field_facet('foo')
         self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 1, 1), end_date=datetime.date(2009, 1, 31), gap_by='day')
         self.bsq.add_query_facet('foo', 'bar')
+        self.bsq.add_stats_query('foo', 'bar')
         self.bsq.add_narrow_query('foo:bar')
 
         clone = self.bsq._clone()
@@ -679,6 +687,19 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs3, SearchQuerySet))
         self.assertEqual(len(sqs3.query.query_facets), 3)
 
+    def test_stats(self):
+        sqs = self.msqs.stats_facet('foo','bar')
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.stats),1)
+
+        sqs2 = self.msqs.stats_facet('foo','bar').stats_facet('foo','baz')
+        self.assertTrue(isinstance(sqs2, SearchQuerySet))
+        self.assertEqual(len(sqs2.query.stats),1)
+
+        sqs3 = self.msqs.stats_facet('foo','bar').stats_facet('moof','baz')
+        self.assertTrue(isinstance(sqs3, SearchQuerySet))
+        self.assertEqual(len(sqs3.query.stats),2)
+        
     def test_narrow(self):
         sqs = self.msqs.narrow('foo:moof')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
