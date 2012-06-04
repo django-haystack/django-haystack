@@ -107,7 +107,7 @@ class BaseSearchBackend(object):
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, search_handler=None,**kwargs):
         """
         Takes a query to search on and returns dictionary.
 
@@ -289,6 +289,7 @@ class BaseSearchQuery(object):
         self.date_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
+        self.search_handler = None
         #: If defined, fields should be a list of field names - no other values
         #: will be retrieved so the caller must be careful to include django_ct
         #: and django_id when using code which expects those to be included in
@@ -337,7 +338,7 @@ class BaseSearchQuery(object):
         kwargs = {
             'start_offset': self.start_offset,
         }
-
+        
         if self.order_by:
             kwargs['sort_by'] = self.order_by
 
@@ -358,7 +359,10 @@ class BaseSearchQuery(object):
 
         if self.narrow_queries:
             kwargs['narrow_queries'] = self.narrow_queries
-
+            
+        if self.search_handler:
+            kwargs['search_handler'] = self.search_handler
+        
         if spelling_query:
             kwargs['spelling_query'] = spelling_query
 
@@ -751,7 +755,10 @@ class BaseSearchQuery(object):
         Generally used in conjunction with faceting.
         """
         self.narrow_queries.add(query)
-
+    
+    def set_search_handler(self,sh):
+        self.search_handler = sh
+    
     def set_result_class(self, klass):
         """
         Sets the result class to use for results.
@@ -831,6 +838,7 @@ class BaseSearchQuery(object):
         clone.distance_point = self.distance_point.copy()
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+        clone.search_handler = self.search_handler
         return clone
 
 

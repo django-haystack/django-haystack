@@ -73,7 +73,6 @@ class SearchModelAdmin(ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         if not self.has_change_permission(request, None):
             raise PermissionDenied
-        
         if not SEARCH_VAR in request.GET:
             # Do the usual song and dance.
             return super(SearchModelAdmin, self).changelist_view(request, extra_context)
@@ -89,7 +88,8 @@ class SearchModelAdmin(ModelAdmin):
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
         list_display = list(self.list_display)
         
-        changelist = SearchChangeList(request, self.model, list_display, self.list_display_links, self.list_filter, self.date_hierarchy, self.search_fields, self.list_select_related, self.list_per_page, self.list_editable, self)
+        #changelist = SearchChangeList(request, self.model, list_display, self.list_display_links, self.list_filter, self.date_hierarchy, self.search_fields, self.list_select_related, self.list_per_page, self.list_editable, self)
+        changelist = SearchChangeList(request, self.model, list_display, self.list_display_links, self.list_filter, self.date_hierarchy, self.search_fields, self.list_select_related, self.list_per_page, self.list_max_show_all, self.list_editable, self)
         formset = changelist.formset = None
         media = self.media
         
@@ -116,7 +116,7 @@ class SearchModelAdmin(ModelAdmin):
             'cl': changelist,
             'media': media,
             'has_add_permission': self.has_add_permission(request),
-            'root_path': self.admin_site.root_path,
+            #'root_path': self.admin_site.root_path,
             'app_label': self.model._meta.app_label,
             'action_form': action_form,
             'actions_on_top': self.actions_on_top,

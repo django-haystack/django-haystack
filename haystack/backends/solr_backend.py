@@ -118,13 +118,12 @@ class SolrSearchBackend(BaseSearchBackend):
                fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+               limit_to_registered_models=None, result_class=None, search_handler=None, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
                 'hits': 0,
             }
-
         kwargs = {
             'fl': '* score',
         }
@@ -163,7 +162,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if highlight is True:
             kwargs['hl'] = 'true'
-            kwargs['hl.fragsize'] = '200'
+            #kwargs['hl.fragsize'] = '200'
 
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
@@ -217,7 +216,10 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if narrow_queries is not None:
             kwargs['fq'] = list(narrow_queries)
-
+            
+        if search_handler is not None:
+            kwargs['qt'] = search_handler
+            
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
 
@@ -615,7 +617,8 @@ class SolrSearchQuery(BaseSearchQuery):
             'result_class': self.result_class,
         }
         order_by_list = None
-
+        
+        
         if self.order_by:
             if order_by_list is None:
                 order_by_list = []
@@ -642,10 +645,14 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.query_facets:
             search_kwargs['query_facets'] = self.query_facets
-
+        
         if self.narrow_queries:
             search_kwargs['narrow_queries'] = self.narrow_queries
-
+        
+        if self.search_handler:
+            search_kwargs['search_handler'] = self.search_handler
+            
+            
         if self.fields:
             search_kwargs['fields'] = self.fields
 

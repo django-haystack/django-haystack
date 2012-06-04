@@ -18,13 +18,8 @@ class SearchQuerySet(object):
         # ``_using`` should only ever be a value other than ``None`` if it's
         # been forced with the ``.using`` method.
         self._using = using
-        self.query = None
+        self.query = query
         self._determine_backend()
-
-        # If ``query`` is present, it should override even what the routers
-        # think.
-        if query is not None:
-            self.query = query
 
         self._result_cache = []
         self._result_count = None
@@ -399,7 +394,12 @@ class SearchQuerySet(object):
         clone = self._clone()
         clone.query.add_narrow_query(query)
         return clone
-
+    
+    def search_handler(self, sh):
+        clone = self._clone()
+        clone.query.set_search_handler(sh)
+        return clone
+    
     def raw_search(self, query_string, **kwargs):
         """Passes a raw query directly to the backend."""
         return self.filter(content=Raw(query_string, **kwargs))
