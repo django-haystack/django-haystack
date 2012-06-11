@@ -1,4 +1,8 @@
 # Haystack settings for running tests.
+import os
+import warnings
+warnings.simplefilter('ignore', Warning)
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -26,3 +30,8 @@ HAYSTACK_CONNECTIONS = {
 }
 
 SITE_ID = 1
+
+TEST_RUNNER = 'discover_runner.DiscoverRunner'
+TEST_DISCOVER_PATTERN = '*.py'
+
+SECRET_KEY = 'yadayada'

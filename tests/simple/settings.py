@@ -1,8 +1,7 @@
-import os
-from settings import *
+from core.settings import *
 
 INSTALLED_APPS += [
-    'simple_tests',
+    'simple',
 ]
 
 HAYSTACK_CONNECTIONS = {

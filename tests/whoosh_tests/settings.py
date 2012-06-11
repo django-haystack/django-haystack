@@ -1,8 +1,8 @@
 import os
-from settings import *
+from core.settings import *
 
 INSTALLED_APPS += [
-    'discovery',
+    'whoosh_tests',
 ]
 
 HAYSTACK_CONNECTIONS = {
@@ -10,5 +10,6 @@ HAYSTACK_CONNECTIONS = {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
         'PATH': os.path.join('tmp', 'test_whoosh_query'),
         'INCLUDE_SPELLING': True,
+        # 'STORAGE': 'ram',
     },
 }

@@ -1,10 +1,7 @@
 import logging
-from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.core import signals
-from haystack.constants import DEFAULT_ALIAS
-from haystack.utils import loading
-
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.functional import LazyObject
 
 __author__ = 'Daniel Lindsley'
 __version__ = (2, 0, 0, 'beta')
@@ -17,43 +14,55 @@ stream.setLevel(logging.INFO)
 log.addHandler(stream)
 
 
-# Help people clean up from 1.X.
-if hasattr(settings, 'HAYSTACK_SITECONF'):
-    raise ImproperlyConfigured('The HAYSTACK_SITECONF setting is no longer used & can be removed.')
-if hasattr(settings, 'HAYSTACK_SEARCH_ENGINE'):
-    raise ImproperlyConfigured('The HAYSTACK_SEARCH_ENGINE setting has been replaced with HAYSTACK_CONNECTIONS.')
-if hasattr(settings, 'HAYSTACK_ENABLE_REGISTRATIONS'):
-    raise ImproperlyConfigured('The HAYSTACK_ENABLE_REGISTRATIONS setting is no longer used & can be removed.')
-if hasattr(settings, 'HAYSTACK_INCLUDE_SPELLING'):
-    raise ImproperlyConfigured('The HAYSTACK_INCLUDE_SPELLING setting is now a per-backend setting & belongs in HAYSTACK_CONNECTIONS.')
+class LazyDict(LazyObject):
+
+    def __getitem__(self, index):
+        if self._wrapped is None:
+            self._setup()
+        return self._wrapped.__getitem__(index)
+
+    def __setitem__(self, index, value):
+        if self._wrapped is None:
+            self._setup()
+        self._wrapped[index] = value
 
 
-# Check the 2.X+ bits.
-if not hasattr(settings, 'HAYSTACK_CONNECTIONS'):
-    raise ImproperlyConfigured('The HAYSTACK_CONNECTIONS setting is required.')
-if DEFAULT_ALIAS not in settings.HAYSTACK_CONNECTIONS:
-    raise ImproperlyConfigured("The default alias '%s' must be included in the HAYSTACK_CONNECTIONS setting." % DEFAULT_ALIAS)
+class LazyConnectionHandler(LazyDict):
 
-# Load the connections.
-connections = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)
+    def reset_search_queries(self, **kwargs):
+        for conn in self._wrapped.all():
+            conn.reset_queries()
+
+    def _setup(self):
+        from django.conf import settings
+        from haystack.utils import loading
+        # Load the connections.
+        self._wrapped = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)
+
+        # Per-request, reset the ghetto query log.
+        # Probably not extraordinarily thread-safe but should only matter when
+        # DEBUG = True.
+        if settings.DEBUG:
+            signals.request_started.connect(self.reset_search_queries)
+
+
+class LazyConnectionRouter(LazyDict):
+
+    def _setup(self):
+        from django.conf import settings
+        from haystack.utils import loading
+        if hasattr(settings, 'HAYSTACK_ROUTERS'):
+            if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
+                raise ImproperlyConfigured("The HAYSTACK_ROUTERS setting must be either a list or tuple.")
+
+            connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
+        else:
+            connection_router = loading.ConnectionRouter()
+        self._wrapped = connection_router
+
+
+# Loads the connection handler
+connections = LazyConnectionHandler()
 
 # Load the router(s).
-connection_router = loading.ConnectionRouter()
-
-if hasattr(settings, 'HAYSTACK_ROUTERS'):
-    if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
-        raise ImproperlyConfigured("The HAYSTACK_ROUTERS setting must be either a list or tuple.")
-
-    connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
-
-
-# Per-request, reset the ghetto query log.
-# Probably not extraordinarily thread-safe but should only matter when
-# DEBUG = True.
-def reset_search_queries(**kwargs):
-    for conn in connections.all():
-        conn.reset_queries()
-
-
-if settings.DEBUG:
-    signals.request_started.connect(reset_search_queries)
+connection_router = LazyConnectionRouter()

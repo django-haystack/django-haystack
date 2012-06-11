@@ -13,6 +13,11 @@ except ImportError:
     geopy_distance = None
 
 
+# setup the connections when the app loading is far enough
+from haystack import connections
+connections._setup()
+
+
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
 class SearchResult(object):

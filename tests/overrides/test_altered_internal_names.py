@@ -1,11 +1,15 @@
 from django.conf import settings
-from django.test import TestCase
-from haystack import connections, connection_router
+from django.test.utils import override_settings
+from django.test.signals import setting_changed
+
+from haystack import connections
 from haystack.constants import DEFAULT_ALIAS
 from haystack import indexes
 from haystack.management.commands.build_solr_schema import Command
 from haystack.query import SQ
 from haystack.utils.loading import UnifiedIndex
+from haystack.utils.test import HaystackTestCase
+
 from core.models import MockModel, AnotherMockModel
 
 
@@ -18,21 +22,44 @@ class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
-class AlteredInternalNamesTestCase(TestCase):
+def reset_connections(sender, setting, value, **kwargs):
+    if setting == 'HAYSTACK_CONNECTIONS':
+        connections.reset(settings.HAYSTACK_CONNECTIONS)
+
+setting_changed.connect(reset_connections)
+
+
+@override_settings(
+    INSTALLED_APPS=settings.INSTALLED_APPS + [
+        'overrides',
+    ],
+    HAYSTACK_CONNECTIONS={
+        'default': {
+            'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+            'URL': 'http://localhost:9001/solr/test_default',
+            'INCLUDE_SPELLING': True,
+        },
+    },
+    HAYSTACK_ID_FIELD='my_id',
+    HAYSTACK_DJANGO_CT_FIELD='my_django_ct',
+    HAYSTACK_DJANGO_ID_FIELD='my_django_id')
+class AlteredInternalNamesTestCase(HaystackTestCase):
+    using = DEFAULT_ALIAS
+
     def setUp(self):
         super(AlteredInternalNamesTestCase, self).setUp()
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections[self.using].get_unified_index()
         ui = UnifiedIndex()
         ui.build(indexes=[MockModelSearchIndex()])
-        connections['default']._index = ui
+        connections[self.using]._index = ui
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections[self.using]._index = self.old_ui
         super(AlteredInternalNamesTestCase, self).tearDown()
 
     def test_altered_names(self):
-        sq = connections['default'].get_query()
+        sq = connections[self.using].get_query()
 
         sq.add_filter(SQ(content='hello'))
         sq.add_model(MockModel)
@@ -43,6 +70,7 @@ class AlteredInternalNamesTestCase(TestCase):
 
     def test_solr_schema(self):
         command = Command()
+        self.maxDiff = None
         self.assertEqual(command.build_context(using=DEFAULT_ALIAS).dicts[0], {
             'DJANGO_ID': 'my_django_id',
             'content_field_name': 'text',

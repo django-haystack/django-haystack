@@ -2,7 +2,7 @@
 import datetime
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
+from haystack import connections, connection_router
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.exceptions import FacetingError
 from haystack import indexes
@@ -263,7 +263,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(clone.backend.__class__, self.bsq.backend.__class__)
 
     def test_log_query(self):
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
 
         # Stow.
@@ -335,7 +335,7 @@ class SearchQuerySetTestCase(TestCase):
         self.old_debug = settings.DEBUG
         settings.DEBUG = True
 
-        reset_search_queries()
+        connections.reset_search_queries()
 
     def tearDown(self):
         # Restore.
@@ -347,13 +347,13 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(self.msqs), 23)
 
     def test_repr(self):
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertEqual(repr(self.msqs), "[<SearchResult: core.mockmodel (pk=u'1')>, <SearchResult: core.mockmodel (pk=u'2')>, <SearchResult: core.mockmodel (pk=u'3')>, <SearchResult: core.mockmodel (pk=u'4')>, <SearchResult: core.mockmodel (pk=u'5')>, <SearchResult: core.mockmodel (pk=u'6')>, <SearchResult: core.mockmodel (pk=u'7')>, <SearchResult: core.mockmodel (pk=u'8')>, <SearchResult: core.mockmodel (pk=u'9')>, <SearchResult: core.mockmodel (pk=u'10')>, <SearchResult: core.mockmodel (pk=u'11')>, <SearchResult: core.mockmodel (pk=u'12')>, <SearchResult: core.mockmodel (pk=u'13')>, <SearchResult: core.mockmodel (pk=u'14')>, <SearchResult: core.mockmodel (pk=u'15')>, <SearchResult: core.mockmodel (pk=u'16')>, <SearchResult: core.mockmodel (pk=u'17')>, <SearchResult: core.mockmodel (pk=u'18')>, <SearchResult: core.mockmodel (pk=u'19')>, '...(remaining elements truncated)...']")
         self.assertEqual(len(connections['default'].queries), 1)
 
     def test_iter(self):
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         msqs = self.msqs.all()
         results = [int(res.pk) for res in msqs]
@@ -361,13 +361,13 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 3)
 
     def test_slice(self):
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = self.msqs.all()
         self.assertEqual([int(res.pk) for res in results[1:11]], [res.pk for res in MOCK_SEARCH_RESULTS[1:11]])
         self.assertEqual(len(connections['default'].queries), 1)
 
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = self.msqs.all()
         self.assertEqual(int(results[22].pk), MOCK_SEARCH_RESULTS[22].pk)
@@ -376,7 +376,7 @@ class SearchQuerySetTestCase(TestCase):
     def test_manual_iter(self):
         results = self.msqs.all()
 
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
 
         check = [result.pk for result in results._manual_iter()]
@@ -384,7 +384,7 @@ class SearchQuerySetTestCase(TestCase):
 
         self.assertEqual(len(connections['default'].queries), 3)
 
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
 
         # Test to ensure we properly fill the cache, even if we get fewer
@@ -403,7 +403,7 @@ class SearchQuerySetTestCase(TestCase):
         connections['default']._index = old_ui
 
     def test_fill_cache(self):
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = self.msqs.all()
         self.assertEqual(len(results._result_cache), 0)
@@ -415,7 +415,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
         self.assertEqual(len(connections['default'].queries), 2)
 
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
 
         # Test to ensure we properly fill the cache, even if we get fewer
@@ -440,7 +440,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 6)
 
     def test_cache_is_full(self):
-        reset_search_queries()
+        connections.reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertEqual(self.msqs._cache_is_full(), False)
         results = self.msqs.all()
@@ -816,7 +816,7 @@ if test_pickling:
             self.old_debug = settings.DEBUG
             settings.DEBUG = True
 
-            reset_search_queries()
+            connections.reset_search_queries()
 
         def tearDown(self):
             # Restore.

@@ -1237,8 +1237,7 @@ class LiveSolrContentExtractionTestCase(TestCase):
 
     def test_content_extraction(self):
         f = open(os.path.join(os.path.dirname(__file__),
-                              "..", "..", "content_extraction", "test.pdf"),
-                 "rb")
+                              "..", "content_extraction", "test.pdf"), "rb")
 
         data = self.sb.extract_file_contents(f)
 

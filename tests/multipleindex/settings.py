@@ -1,5 +1,5 @@
 import os
-from settings import *
+from core.settings import *
 
 INSTALLED_APPS += [
     'multipleindex',
@@ -16,4 +16,3 @@ HAYSTACK_CONNECTIONS = {
         'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BarIndex'],
     },
 }
-

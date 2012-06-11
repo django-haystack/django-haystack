@@ -79,9 +79,7 @@ def load_router(full_router_path):
 
 class ConnectionHandler(object):
     def __init__(self, connections_info):
-        self.connections_info = connections_info
-        self._connections = {}
-        self._index = None
+        self.reset(connections_info)
 
     def ensure_defaults(self, alias):
         try:
@@ -105,8 +103,12 @@ class ConnectionHandler(object):
             del self._connections[key]
         except KeyError:
             pass
-
         return self.__getitem__(key)
+
+    def reset(self, connections_info):
+        self.connections_info = connections_info
+        self._connections = {}
+        self._index = None
 
     def all(self):
         return [self[alias] for alias in self.connections_info]

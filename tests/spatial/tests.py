@@ -183,7 +183,7 @@ def check_running(using):
 
     try:
         resp, content = http.request(url)
-    except Exception, e:
+    except Exception:
         warnings.warn("It appears like '%s' is unavailable. Skipping..." % url)
         raise
 

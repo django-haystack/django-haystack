@@ -319,7 +319,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
-        self.assertEqual([result.highlighted for result in self.sb.search('Index', highlight=True)['results']], [[u'<em>Indexed</em>!\n2 '], [u'<em>Indexed</em>!\n1 '], [u'<em>Indexed</em>!\n3 ']])
+        self.assertEqual([result.highlighted for result in self.sb.search('Index', highlight=True)['results']], [[u'<em>Indexed</em>!\n2'], [u'<em>Indexed</em>!\n1'], [u'<em>Indexed</em>!\n3']])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indax')['spelling_suggestion'], None)
@@ -901,7 +901,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         self.smmi.update()
         self.sammi.update()
 
-
     def tearDown(self):
         # Restore.
         connections['default']._index = self.old_ui
@@ -934,7 +933,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=1))[0], MockSearchResult))
-
 
 
 class LiveElasticsearchAutocompleteTestCase(TestCase):

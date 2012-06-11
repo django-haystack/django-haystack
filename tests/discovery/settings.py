@@ -1,15 +1,14 @@
-import os
-from settings import *
+import tempfile
+from core.settings import *
 
 INSTALLED_APPS += [
-    'whoosh_tests',
+    'discovery',
 ]
 
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-        'PATH': os.path.join('tmp', 'test_whoosh_query'),
+        'PATH': tempfile.mkdtemp(suffix='test_whoosh_query'),
         'INCLUDE_SPELLING': True,
-        # 'STORAGE': 'ram',
     },
 }

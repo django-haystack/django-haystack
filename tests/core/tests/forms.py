@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
-from haystack import connections, connection_router
+from haystack import connections
 from haystack.forms import SearchForm, ModelSearchForm, model_choices, FacetedSearchForm
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex

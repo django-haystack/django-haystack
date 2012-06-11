@@ -46,4 +46,4 @@ Or, to run the Elasticsearch backend's tests::
     
     cd django-haystack/tests
     export PYTHONPATH=`pwd`/..:`pwd`
-    django-admin.py test elasticsearch_tests --settings=elasticsearch_settings 
+    django-admin.py test elasticsearch --settings=elasticsearch_settings 

@@ -18,13 +18,12 @@ class SearchQuerySet(object):
         # ``_using`` should only ever be a value other than ``None`` if it's
         # been forced with the ``.using`` method.
         self._using = using
-        self.query = None
-        self._determine_backend()
+        self._query = None
 
         # If ``query`` is present, it should override even what the routers
         # think.
         if query is not None:
-            self.query = query
+            self._query = query
 
         self._result_cache = []
         self._result_count = None
@@ -33,26 +32,37 @@ class SearchQuerySet(object):
         self._ignored_result_count = 0
         self.log = logging.getLogger('haystack')
 
-    def _determine_backend(self):
+    def _get_query(self):
         # A backend has been manually selected. Use it instead.
         if self._using is not None:
             return self._using
 
+        if self._query is not None:
+            return self._query
+
         # No backend, so rely on the routers to figure out what's right.
-        from haystack import connections
         hints = {}
 
-        if self.query:
-            hints['models'] = self.query.models
+        if self._query:
+            hints['models'] = self._query.models
 
         backend_alias = connection_router.for_read(**hints)
 
         # The ``SearchQuery`` might swap itself out for a different variant
         # here.
-        if self.query:
-            self.query = self.query.using(backend_alias)
+        if self._query:
+            self._query = self.query.using(backend_alias)
         else:
-            self.query = connections[backend_alias].get_query()
+            self._query = connections[backend_alias].get_query()
+        return self._query
+
+    def _set_query(self, value):
+        self._query = value
+
+    def _delete_query(self):
+        self._query = None
+
+    query = property(_get_query, _set_query, _delete_query)
 
     def __getstate__(self):
         """

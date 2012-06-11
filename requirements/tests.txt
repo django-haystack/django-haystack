@@ -1,0 +1,13 @@
+fabric
+django
+django-discover-runner
+flake8
+coverage
+
+pysolr
+httplib2
+lxml
+simplejson
+git+https://github.com/toastdriven/pyelasticsearch#egg=pyelasticsearch
+whoosh
+xapian-haystack==1.1.5beta
