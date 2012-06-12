@@ -48,6 +48,10 @@
         "command": "git_status"
     }
     ,{
+        "caption": "Git: Open Modified Files",
+        "command": "git_open_modified_files"
+    }
+    ,{
         "caption": "Git: New Branch",
         "command": "git_new_branch"
     }
