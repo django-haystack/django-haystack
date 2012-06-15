@@ -114,20 +114,34 @@ class SolrSearchBackend(BaseSearchBackend):
                 self.log.error("Failed to clear Solr index: %s", e)
 
     @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+    def search(self, query_string, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
                 'hits': 0,
             }
+            
+        kwargs = self._build_search_kwargs(**kwargs)
 
-        kwargs = {
-            'fl': '* score',
-        }
+        try:
+            raw_results = self.conn.search(query_string, **kwargs)
+        except (IOError, SolrError), e:
+            if not self.silently_fail:
+                raise
+
+            self.log.error("Failed to query Solr using '%s': %s", query_string, e)
+            raw_results = EmptyResults()
+
+        return self._process_results(raw_results, highlight=highlight, result_class=result_class, distance_point=distance_point)
+
+    def _build_search_kwargs(sort_by=None, start_offset=0, end_offset=None,
+                             fields='', highlight=False, facets=None,
+                             date_facets=None, query_facets=None,
+                             narrow_queries=None, spelling_query=None,
+                             within=None, dwithin=None, distance_point=None,
+                             models=None, limit_to_registered_models=None,
+                             result_class=None):
+        kwargs = {'fl': '* score'}
         geo_sort = False
 
         if fields:
@@ -245,16 +259,7 @@ class SolrSearchBackend(BaseSearchBackend):
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
 
-        try:
-            raw_results = self.conn.search(query_string, **kwargs)
-        except (IOError, SolrError), e:
-            if not self.silently_fail:
-                raise
-
-            self.log.error("Failed to query Solr using '%s': %s", query_string, e)
-            raw_results = EmptyResults()
-
-        return self._process_results(raw_results, highlight=highlight, result_class=result_class, distance_point=distance_point)
+        return kwargs
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,

@@ -63,3 +63,4 @@ Thanks to
     * Alex Vidal (avidal) for a patch allowing developers to override the queryset used for update operations.
     * Igor Támara (ikks) for a patch related to Unicode ``verbose_name_plural``.
     * Dan Helfman (witten) for a patch related to highlighting.
+    * Matt DeBoard for refactor of ``SolrSearchBackend.search`` method to allow simpler extension of the class.
