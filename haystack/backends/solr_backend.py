@@ -140,7 +140,8 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, extras=None):
+		extras = extras or {}
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -256,7 +257,7 @@ class SolrSearchBackend(BaseSearchBackend):
             # time yet.
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
-
+		kwargs.update(extras)
         return kwargs
 
     def more_like_this(self, model_instance, additional_query_string=None,
