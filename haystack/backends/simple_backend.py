@@ -41,16 +41,13 @@ class SimpleSearchBackend(BaseSearchBackend):
             logger.warning('clear is not implemented in this backend')
 
     @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+    def search(self, query_string, **kwargs):
         hits = 0
         results = []
+        result_class = SearchResult
 
-        if result_class is None:
-            result_class = SearchResult
+        if kwargs.get('result_class'):
+            result_class = kwargs['result_class']
 
         if query_string:
             for model in connections[self.connection_alias].get_unified_index().get_indexed_models():
