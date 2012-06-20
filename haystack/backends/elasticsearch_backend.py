@@ -405,9 +405,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             from haystack.utils.geo import generate_bounding_box
 
             ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            kwargs['query']['filtered']['filter'] = {
+            within_filter = {
                 "geo_bounding_box": {
                     within['field']: {
                         "top_left": {
@@ -421,12 +419,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 },
             }
+            kwargs['query'].setdefault('filtered', {})
+            kwargs['query']['filtered'].setdefault('filter', {})
+            if kwargs['query']['filtered']['filter']:
+                compound_filter = {
+                    "and": [
+                        kwargs['query']['filtered']['filter'],
+                        within_filter,
+                    ]
+                }
+                kwargs['query']['filtered']['filter'] = compound_filter
+            else:
+                kwargs['query']['filtered']['filter'] = within_filter
 
         if dwithin is not None:
             lng, lat = dwithin['point'].get_coords()
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            kwargs['query']['filtered']['filter'] = {
+            dwithin_filter = {
                 "geo_distance": {
                     "distance": dwithin['distance'].km,
                     dwithin['field']: {
@@ -435,6 +443,18 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 }
             }
+            kwargs['query'].setdefault('filtered', {})
+            kwargs['query']['filtered'].setdefault('filter', {})
+            if kwargs['query']['filtered']['filter']:
+                compound_filter = {
+                    "and": [
+                        kwargs['query']['filtered']['filter'],
+                        dwithin_filter
+                    ]
+                }
+                kwargs['query']['filtered']['filter'] = compound_filter
+            else:
+                kwargs['query']['filtered']['filter'] = dwithin_filter
 
         # Remove the "filtered" key if we're not filtering. Otherwise,
         # Elasticsearch will blow up.
