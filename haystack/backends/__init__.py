@@ -622,6 +622,9 @@ class BaseSearchQuery(object):
         if subtree:
             self.query_filter.end_subtree()
 
+    def add_extras(self, extra_dict=None):
+        raise NotImplementedError
+
     def add_order_by(self, field):
         """Orders the search result by a field."""
         self.order_by.append(field)

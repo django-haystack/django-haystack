@@ -9,6 +9,7 @@ from django.conf import settings
 from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
 from haystack import indexes
+from haystack.backends.solr_backend import SolrSearchQuery, SolrEngine
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
@@ -804,6 +805,23 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains="pants:rule">')
         self.assertEqual(sqs.query.build_query(), u'("pants\\:rule")')
         self.assertEqual(len(sqs), 0)
+
+    def test_extra(self):
+        # Since the 'extra' method is so free-form, we're just going to test
+        # a couple of generic cases that test the general idea: 'extra' should
+        # override any other method calls, if they conflict.
+        
+        # Ensure that params passed in get passed to Solr.
+        sqs = self.sqs._clone()
+        sqs = sqs.facet('name').extra({'facet.mincount': '20'})
+        self.assertTrue(not any(sqs.facet_counts()['fields'].values()))
+
+        # Let's make sure that by setting facet=false, it's like we didn't
+        # invoke facet at all. 
+        control = self.sqs._clone()
+        sqs = self.sqs._clone()
+        sqs = sqs.facet('name').extra({'facet': 'false'})
+        self.assertItemsEqual(control.facet_counts(), sqs.facet_counts())
 
     # Regressions
 
