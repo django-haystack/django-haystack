@@ -537,12 +537,7 @@ class SearchQuerySet(object):
         Support for Django ORM-style ``extra`` specification to pass in
         search-time search params.
 
-        ``extras_dict`` must be type ``dict`` or another type that can be
-        coerced to a ``dict``, e.g.
-
-        ```
-        sqs = DESearchQuerySet().extra([('rows', '1'), ('mlt', 'false')])
-        ```
+        ``extras_dict`` must be type ``dict``.
         
         """
         if not extras_dict:

@@ -684,6 +684,7 @@ class SolrSearchQuery(BaseSearchQuery):
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
 
+        search_kwargs['extras'] = self.extras
         return search_kwargs
         
     def run(self, spelling_query=None, **kwargs):
