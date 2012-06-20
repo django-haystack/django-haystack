@@ -118,7 +118,7 @@ class SearchIndex(threading.local):
 
         This method is required & you must override it to return the correct class.
         """
-        return NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
+        raise NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
 
     def index_queryset(self):
         """
