@@ -853,9 +853,12 @@ class BaseEngine(object):
         self.options = settings.HAYSTACK_CONNECTIONS.get(self.using, {})
         self.queries = []
         self._index = None
+        self._backend = None
 
     def get_backend(self):
-        return self.backend(self.using, **self.options)
+        if self._backend is None:
+            self._backend = self.backend(self.using, **self.options)
+        return self._backend
 
     def get_query(self):
         return self.query(using=self.using)
