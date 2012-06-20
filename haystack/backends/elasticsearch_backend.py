@@ -285,8 +285,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     sort_kwargs = {
                         "_geo_distance": {
                             distance_point['field']: [lng, lat],
-                            "order" : direction,
-                            "unit" : "km"
+                            "order": direction,
+                            "unit": "km"
                         }
                     }
                 else:
@@ -789,13 +789,14 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if order_by_list is None:
                 order_by_list = []
 
-            for order_by in self.order_by:
-                if order_by.startswith('-'):
-                    order_by_list.append('%s desc' % order_by[1:])
-                else:
-                    order_by_list.append('%s asc' % order_by)
+            for field in self.order_by:
+                direction = 'asc'
+                if field.startswith('-'):
+                    direction = 'desc'
+                    field = field[1:]
+                order_by_list.append((field, direction))
 
-            search_kwargs['sort_by'] = ", ".join(order_by_list)
+            search_kwargs['sort_by'] = order_by_list
 
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
