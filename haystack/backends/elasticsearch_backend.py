@@ -231,21 +231,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             else:
                 self.log.error("Failed to clear Elasticsearch index: %s", e)
 
-    @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
-        if len(query_string) == 0:
-            return {
-                'results': [],
-                'hits': 0,
-            }
-
-        if not self.setup_complete:
-            self.setup()
-
+    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+                            fields='', highlight=False, facets=None,
+                            date_facets=None, query_facets=None,
+                            narrow_queries=None, spelling_query=None,
+                            within=None, dwithin=None, distance_point=None,
+                            models=None, limit_to_registered_models=None,
+                            result_class=None):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
 
@@ -277,8 +269,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     },
                 },
             }
-
-        geo_sort = False
 
         if fields:
             if isinstance(fields, (list, set)):
@@ -451,16 +441,31 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not kwargs['query']['filtered'].get('filter'):
             kwargs['query'] = kwargs['query']['filtered']['query']
 
+        return kwargs
+
+    @log_query
+    def search(self, query_string, **kwargs):
+        if len(query_string) == 0:
+            return {
+                'results': [],
+                'hits': 0,
+            }
+
+        if not self.setup_complete:
+            self.setup()
+
+        search_kwargs = self.build_search_kwargs(query_string, **kwargs)
+
         # Because Elasticsearch.
         query_params = {
-            'from': start_offset,
+            'from': kwargs.get('start_offset', 0),
         }
 
-        if end_offset is not None and end_offset > start_offset:
-            query_params['size'] = end_offset - start_offset
+        if kwargs.get('end_offset') is not None and kwargs.get('end_offset') > kwargs.get('start_offset', 0):
+            query_params['size'] = kwargs.get('end_offset') - kwargs.get('start_offset', 0)
 
         try:
-            raw_results = self.conn.search(None, kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
+            raw_results = self.conn.search(None, search_kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -468,7 +473,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
             raw_results = {}
 
-        return self._process_results(raw_results, highlight=highlight, result_class=result_class)
+        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult))
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
