@@ -631,7 +631,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 2)
 
         sqs = self.sqs.auto_query('Indexed!').filter(pub_date__lte=date(2009, 2, 25)).filter(django_id__in=[1, 2]).exclude(name='daniel1')
-        self.assertEqual(sqs.query.build_query(), u'((\'Indexed!\') AND pub_date:([to 20090225000000]) AND django_id:("1" OR "2") AND NOT (name:(daniel1)))')
+        self.assertEqual(sqs.query.build_query(), u'((\'Indexed!\') AND pub_date:([to 20090225000000]) AND django_id:(1 OR 2) AND NOT (name:(daniel1)))')
         self.assertEqual(len(sqs), 1)
 
         sqs = self.sqs.auto_query('re-inker')
