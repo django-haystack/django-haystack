@@ -1007,19 +1007,27 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(mlt.count(), 22)
-        self.assertEqual([result.pk for result in mlt], ['14', '6', '10', '22', '4', '5', '3', '12', '2', '19', '18', '13', '15', '21', '7', '23', '20', '9', '1', '2', '17', '16'])
-        self.assertEqual(len([result.pk for result in mlt]), 22)
+        self.assertEqual(mlt.count(), 24)
+        self.assertEqual(sorted([result.pk for result in mlt]),
+                         sorted(['6', '14', '4', '10', '22', '5', '3', '12',
+                                 '2', '23', '18', '19', '13', '7', '15', '21',
+                                 '9', '1', '2', '20', '16', '17', '8', '11']))
+        self.assertEqual(len([result.pk for result in mlt]), 24)
 
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
-        self.assertEqual(alt_mlt.count(), 8)
-        self.assertEqual([result.pk for result in alt_mlt], ['17', '16', '19', '23', '22', '13', '1', '2'])
-        self.assertEqual(len([result.pk for result in alt_mlt]), 8)
+        self.assertEqual(alt_mlt.count(), 10)
+        self.assertEqual(sorted([result.pk for result in alt_mlt]),
+                         sorted(['23', '13', '17', '16', '22', '19', '4', '10',
+                                 '1', '2']))
+        self.assertEqual(len([result.pk for result in alt_mlt]), 10)
 
         alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(alt_mlt_with_models.count(), 20)
-        self.assertEqual([result.pk for result in alt_mlt_with_models], ['14', '6', '10', '22', '4', '5', '3', '12', '2', '19', '18', '13', '15', '21', '7', '23', '20', '9', '17', '16'])
-        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 20)
+        self.assertEqual(alt_mlt_with_models.count(), 22)
+        self.assertEqual(sorted([result.pk for result in alt_mlt_with_models]),
+                         sorted(['6', '14', '4', '10', '22', '5', '3', '12',
+                                 '2', '23', '18', '19', '13', '7', '15', '21',
+                                 '9', '20', '16', '17', '8', '11']))
+        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 22)
 
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
@@ -1032,7 +1040,6 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=1))[0], MockSearchResult))
-
 
 
 class LiveSolrAutocompleteTestCase(TestCase):
