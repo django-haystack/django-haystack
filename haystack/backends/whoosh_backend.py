@@ -38,7 +38,7 @@ from whoosh.analysis import StemmingAnalyzer
 from whoosh.fields import Schema, IDLIST, STORED, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME, NGRAM, NGRAMWORDS
 from whoosh.fields import ID as WHOOSH_ID
 from whoosh import index
-from whoosh.qparser import QueryParser
+from whoosh.qparser import MultifieldParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.searching import ResultsPage
 from whoosh.spelling import SpellChecker
@@ -110,8 +110,10 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             self.storage = LOCALS.RAM_STORE
 
-        self.content_field_name, self.schema = self.build_schema(connections[self.connection_alias].get_unified_index().all_searchfields())
-        self.parser = QueryParser(self.content_field_name, schema=self.schema)
+        fields = self.site.all_searchfields()
+        self.content_field_name, self.schema = self.build_schema(fields)
+        self.parser = MultifieldParser([field for field, field_class in fields.items() if field_class.indexed], schema=self.schema)
+
 
         if new_index is True:
             self.index = self.storage.create_index(self.schema)
