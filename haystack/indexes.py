@@ -238,7 +238,11 @@ class SearchIndex(threading.local):
 
     def _get_backend(self, using):
         if using is None:
-            using = connection_router.for_write(index=self)
+            hints = {
+                'index': self,
+                'models': [self.get_model()]
+            }
+            using = connection_router.for_write(**hints)
 
         return connections[using].get_backend()
 
@@ -262,8 +266,9 @@ class SearchIndex(threading.local):
         be used.
         """
         # Check to make sure we want to index this first.
+        commit = kwargs.pop('commit', True)
         if self.should_update(instance, **kwargs):
-            self._get_backend(using).update(self, [instance])
+            self._get_backend(using).update(self, [instance], commit=commit)
 
     def remove_object(self, instance, using=None, **kwargs):
         """
@@ -274,7 +279,8 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).remove(instance)
+        commit = kwargs.pop('commit', True)
+        self._get_backend(using).remove(instance, commit=commit)
 
     def clear(self, using=None):
         """

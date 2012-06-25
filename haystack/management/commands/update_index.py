@@ -8,7 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
-from haystack import connections as haystack_connections
+from haystack import connection_router, connections as haystack_connections
 from haystack.constants import DEFAULT_ALIAS
 from haystack.query import SearchQuerySet
 
@@ -41,9 +41,10 @@ def worker(bits):
     else:
         return
 
-    unified_index = haystack_connections[using].get_unified_index()
+    backend_alias = using or connection_router.for_write(**{'models': [model]})
+    unified_index = haystack_connections[backend_alias].get_unified_index()
+    backend = haystack_connections[backend_alias].get_backend()
     index = unified_index.get_index(model)
-    backend = haystack_connections[using].get_backend()
 
     if func == 'do_update':
         qs = index.build_queryset(start_date=start_date, end_date=end_date)
@@ -110,7 +111,7 @@ class Command(LabelCommand):
         make_option('-r', '--remove', action='store_true', dest='remove',
             default=False, help='Remove objects from the index that are no longer present in the database.'
         ),
-        make_option("-u", "--using", action="store", type="string", dest="using", default=DEFAULT_ALIAS,
+        make_option("-u", "--using", action="store", type="string", dest="using", default=None,
             help='If provided, chooses a connection to work with.'
         ),
         make_option('-k', '--workers', action='store', dest='workers',
@@ -128,7 +129,6 @@ class Command(LabelCommand):
         self.remove = options.get('remove', False)
         self.using = options.get('using')
         self.workers = int(options.get('workers', 0))
-        self.backend = haystack_connections[self.using].get_backend()
 
         age = options.get('age', DEFAULT_AGE)
         start_date = options.get('start_date')
@@ -249,7 +249,7 @@ class Command(LabelCommand):
                     upper_bound = start + batch_size
 
                     if self.workers == 0:
-                        do_remove(self.backend, index, model, pks_seen, start, upper_bound)
+                        do_remove(backend, index, model, pks_seen, start, upper_bound)
                     else:
                         ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, self.using, self.verbosity))
 

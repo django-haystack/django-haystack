@@ -54,6 +54,8 @@ class SearchQuerySet(object):
         else:
             self.query = connections[backend_alias].get_query()
 
+        return backend_alias
+
     def __getstate__(self):
         """
         For pickling.
@@ -333,7 +335,7 @@ class SearchQuerySet(object):
                 warnings.warn('The model %r is not registered for search.' % model)
 
             clone.query.add_model(model)
-
+        clone._determine_backend()
         return clone
 
     def result_class(self, klass):
@@ -537,8 +539,8 @@ class SearchQuerySet(object):
             klass = self.__class__
 
         query = self.query._clone()
-        clone = klass(query=query)
         clone._load_all = self._load_all
+        clone = klass(using=self._using, query=query)
         return clone
 
 
@@ -796,7 +798,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
             klass = self.__class__
 
         query = self.query._clone()
-        clone = klass(query=query)
         clone._load_all = self._load_all
+        clone = klass(using=self._using, query=query)
         clone._load_all_querysets = self._load_all_querysets
         return clone
