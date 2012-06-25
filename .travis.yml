@@ -19,8 +19,8 @@ install:
   - cd tests
   - make solr
   - sudo service jetty start
-before_script:
-  - flake8 compressor --ignore=E501
+# before_script:
+#   - flake8 haystack --ignore=E501
 script:
   - make test
 env:
