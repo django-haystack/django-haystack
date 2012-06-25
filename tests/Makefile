@@ -1,3 +1,5 @@
+export PYTHONPATH = .:$$PYTHONPATH
+
 .PHONY: core test
 
 solr:
