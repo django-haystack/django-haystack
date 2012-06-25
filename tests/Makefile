@@ -16,4 +16,8 @@ solr:
 core:
 	django-admin.py test core --settings=core.settings
 
-test: core
+simple:
+	django-admin.py test simple --settings=simple.settings
+
+
+test: core simple
