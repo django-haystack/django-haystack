@@ -269,15 +269,13 @@ class SearchQuerySet(object):
         else:
             return self._result_cache[start]
 
-
     # Methods that return a SearchQuerySet.
-
     def all(self):
         """Returns all results for the query."""
         return self._clone()
 
     def none(self):
-        """Returns all results for the query."""
+        """Returns an empty result list for the query."""
         return self._clone(klass=EmptySearchQuerySet)
 
     def filter(self, *args, **kwargs):
