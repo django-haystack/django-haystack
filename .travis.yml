@@ -4,7 +4,7 @@ python:
   - "2.6"
   - "2.7"
 before_install:
-  - export PIP_USE_MIRRORS=true
+  # - export PIP_USE_MIRRORS=true
   - export PIP_INDEX_URL=https://simple.crate.io/
   - sudo apt-get update
   - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libxapian22 python-xapian default-jdk
@@ -15,12 +15,13 @@ before_install:
 install:
   - pip install -e .
   - pip install -r requirements/tests.txt Django==$DJANGO
-  - fab -f tests/fabfile.py install_solr
+  - cd tests
+  - make solr
   - sudo service jetty start
 before_script:
   - flake8 compressor --ignore=E501
 script:
-  - cd tests; fab test_core
+  - make test
 env:
   - DJANGO=1.3.1
   - DJANGO=1.4
