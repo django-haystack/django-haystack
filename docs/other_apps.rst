@@ -20,10 +20,11 @@ update time situations.
 celery-haystack
 ---------------
 
-https://github.com/ennio/celery-haystack (2.X compatible)
+https://github.com/jezdez/celery-haystack (1.X and 2.X compatible)
 
 Also provides a queue-based setup, this time centered around Celery. Useful
-for keeping the index fresh.
+for keeping the index fresh per model instance or with the included task
+to call the ``update_index`` management command instead.
 
 django-celery-haystack
 ----------------------
