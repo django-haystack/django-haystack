@@ -74,7 +74,7 @@ Something like the following is suggested::
         suggestions = indexes.FacetCharField()
 
         def prepare(self, obj):
-            prepared_data = super(NoteIndex, self).prepare(object)
+            prepared_data = super(NoteIndex, self).prepare(obj)
             prepared_data['suggestions'] = prepared_data['text']
             return prepared_data
 
