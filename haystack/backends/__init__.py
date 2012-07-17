@@ -104,7 +104,7 @@ class BaseSearchBackend(object):
 
     @log_query
     def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, facets_prefix=None, facets_sort=None, date_facets=None, query_facets=None,
+               fields='', highlight=False, facets=None, facets_kwargs=None, date_facets=None, query_facets=None,
                narrow_queries=None, spelling_query=None, within=None,
                dwithin=None, distance_point=None, models=None,
                limit_to_registered_models=None, result_class=None, **kwargs):
@@ -286,8 +286,7 @@ class BaseSearchQuery(object):
         self.end_offset = None
         self.highlight = False
         self.facets = set()
-        self.facets_prefix = {}
-        self.facets_sort = {}
+        self.facets_kwargs = {}
         self.date_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
@@ -352,11 +351,8 @@ class BaseSearchQuery(object):
         if self.facets:
             kwargs['facets'] = list(self.facets)
 
-        if self.facets_prefix:
-            kwargs['facets_prefix'] = self.facets_prefix
-
-        if self.facets_sort:
-            kwargs['facets_sort'] = self.facets_sort
+        if self.facets_kwargs:
+            kwargs['facets_kwargs'] = self.facets_kwargs
 
         if self.date_facets:
             kwargs['date_facets'] = self.date_facets
@@ -728,16 +724,12 @@ class BaseSearchQuery(object):
             'point': ensure_point(point),
         }
 
-    def add_field_facet(self, field, prefix=None, sort=None):
+    def add_field_facet(self, field, **kwargs):
         """Adds a regular facet on a field."""
         from haystack import connections
-        self.facets.add(connections[self._using].get_unified_index().get_facet_fieldname(field))
-
-        if prefix is not None:
-            self.facets_prefix[connections[self._using].get_unified_index().get_facet_fieldname(field)] = prefix
-
-        if sort is not None and sort in ('count', 'index'):
-            self.facets_sort[connections[self._using].get_unified_index().get_facet_fieldname(field)] = sort
+        facet_field = connections[self._using].get_unified_index().get_index_fieldname(field)
+        self.facets.add(facet_field)
+        self.facets_kwargs[facet_field] = kwargs
 
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
@@ -834,8 +826,7 @@ class BaseSearchQuery(object):
         clone.boost = self.boost.copy()
         clone.highlight = self.highlight
         clone.facets = self.facets.copy()
-        clone.facets_prefix = self.facets_prefix.copy()
-        clone.facets_sort = self.facets_sort.copy()
+        clone.facets_kwargs = self.facets_kwargs.copy()
         clone.date_facets = self.date_facets.copy()
         clone.query_facets = self.query_facets[:]
         clone.narrow_queries = self.narrow_queries.copy()
@@ -863,9 +854,12 @@ class BaseEngine(object):
         self.options = settings.HAYSTACK_CONNECTIONS.get(self.using, {})
         self.queries = []
         self._index = None
+        self._backend = None
 
     def get_backend(self):
-        return self.backend(self.using, **self.options)
+        if self._backend is None:
+            self._backend = self.backend(self.using, **self.options)
+        return self._backend
 
     def get_query(self):
         return self.query(using=self.using)
