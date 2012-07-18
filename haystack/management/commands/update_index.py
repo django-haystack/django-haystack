@@ -65,7 +65,7 @@ def do_update(backend, index, qs, start, end, total, verbosity=1):
             print "  indexed %s - %d of %d (by %s)." % (start+1, end, total, os.getpid())
 
     # FIXME: Get the right backend.
-    backend.update(index, current_qs)
+    backend.update(index, current_qs, commit=False)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
@@ -85,7 +85,7 @@ def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1):
             if verbosity >= 2:
                 print "  removing %s." % result.pk
 
-            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]))
+            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]), commit=False)
 
 
 class Command(LabelCommand):
