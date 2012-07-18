@@ -229,8 +229,10 @@ class SearchNode(tree.Node):
         if query_string:
             if self.negated:
                 query_string = 'NOT (%s)' % query_string
-            elif len(self.children) != 1:
-                query_string = '(%s)' % query_string
+#Fixed: not working (title:qs AND price:(["10" TO "50"]))
+#            elif len(self.children) != 1:
+#                print query_string, self.children
+#                query_string = '(%s)' % query_string
 
         return query_string
 
