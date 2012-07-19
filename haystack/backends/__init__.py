@@ -731,7 +731,7 @@ class BaseSearchQuery(object):
         from haystack import connections
         facet_field = connections[self._using].get_unified_index().get_index_fieldname(field)
         self.facets.add(facet_field)
-        self.facets_kwargs[facet_field] = kwargs
+        self.facets_kwargs[facet_field] = dict((k, v) for k, v in kwargs.items() if v is not None)
 
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
