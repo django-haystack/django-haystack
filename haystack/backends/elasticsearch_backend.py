@@ -246,9 +246,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 'query': {
                     'filtered': {
                         'query': {
-                            'query_string': {
-                                'query': '*:*',
-                            },
+                            "match_all": {}
                         },
                     },
                 },
