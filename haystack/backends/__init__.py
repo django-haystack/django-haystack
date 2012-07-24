@@ -599,7 +599,7 @@ class BaseSearchQuery(object):
         else:
             connector = SQ.AND
 
-        if self.query_filter and query_filter.connector != SQ.AND and len(query_filter) > 1:
+        if self.query_filter and query_filter.connector != connector and len(query_filter) > 1:
             self.query_filter.start_subtree(connector)
             subtree = True
         else:
