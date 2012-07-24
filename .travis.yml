@@ -8,8 +8,6 @@ before_install:
   - export PIP_INDEX_URL=https://simple.crate.io/
   - sudo apt-get update
   - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libxapian22 python-xapian default-jdk
-  - wget https://github.com/downloads/elasticsearch/elasticsearch/elasticsearch-0.19.4.deb
-  - sudo wajig install elasticsearch-0.19.4.deb
   - sudo service elasticsearch start
   - sleep 3
 
