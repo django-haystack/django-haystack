@@ -33,7 +33,7 @@ Example::
 
     # Non-fielded.
     # See ``AltParser`` for a better way to construct this.
-    sqs = SearchQuerySet().filter(content=Raw('{!dismax qf=author mm=1'}haystack'))
+    sqs = SearchQuerySet().filter(content=Raw('{!dismax qf=author mm=1}haystack'))
 
 
 ``Clean``

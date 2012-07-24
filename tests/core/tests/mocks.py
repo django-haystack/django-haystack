@@ -1,16 +1,14 @@
 from django.db.models.loading import get_model
-from django.utils.encoding import force_unicode
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.models import SearchResult
 from haystack.routers import BaseRouter
 from haystack.utils import get_identifier
-from core.models import MockModel
 
 
 class MockMasterSlaveRouter(BaseRouter):
     def for_read(self, **hints):
         return 'slave'
-    
+
     def for_write(self, **hints):
         return 'master'
 
@@ -19,13 +17,13 @@ class MockPassthroughRouter(BaseRouter):
     def for_read(self, **hints):
         if hints.get('pass_through') is False:
             return 'pass'
-        
+
         return None
-    
+
     def for_write(self, **hints):
         if hints.get('pass_through') is False:
             return 'pass'
-        
+
         return None
 
 
@@ -39,7 +37,7 @@ MOCK_INDEX_DATA = {}
 
 class MockSearchBackend(BaseSearchBackend):
     model_name = 'mockmodel'
-    
+
     def update(self, index, iterable, commit=True):
         global MOCK_INDEX_DATA
         for obj in iterable:
@@ -53,32 +51,29 @@ class MockSearchBackend(BaseSearchBackend):
     def clear(self, models=[], commit=True):
         global MOCK_INDEX_DATA
         MOCK_INDEX_DATA = {}
-    
+
     @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+    def search(self, query_string, **kwargs):
         from haystack import connections
         global MOCK_INDEX_DATA
         results = []
         hits = len(MOCK_INDEX_DATA)
         indexed_models = connections['default'].get_unified_index().get_indexed_models()
-        
+
         def junk_sort(key):
             app, model, pk = key.split('.')
-            
+
             if pk.isdigit():
                 return int(pk)
             else:
                 return ord(pk[0])
-        
+
         sliced = sorted(MOCK_INDEX_DATA, key=junk_sort)
-        
+
         for result in sliced:
             app_label, model_name, pk = result.split('.')
             model = get_model(app_label, model_name)
-            
+
             if model:
                 if model in indexed_models:
                     results.append(MockSearchResult(app_label, model_name, pk, 1 - (i / 100.0)))
@@ -86,12 +81,12 @@ class MockSearchBackend(BaseSearchBackend):
                     hits -= 1
             else:
                 hits -= 1
-        
+
         return {
-            'results': results[start_offset:end_offset],
+            'results': results[kwargs.get('start_offset'):kwargs.get('end_offset')],
             'hits': hits,
         }
-    
+
     def more_like_this(self, model_instance, additional_query_string=None, result_class=None):
         return self.search(query_string='*')
 
@@ -111,32 +106,32 @@ class MixedMockSearchBackend(MockSearchBackend):
     def search(self, query_string, **kwargs):
         if kwargs.get('end_offset') and kwargs['end_offset'] > 30:
             kwargs['end_offset'] = 30
-        
+
         result_info = super(MixedMockSearchBackend, self).search(query_string, **kwargs)
         result_info['hits'] = 30
-        
+
         # Remove search results from other models.
         temp_results = []
-        
+
         for result in result_info['results']:
             if not int(result.pk) in (9, 13, 14):
                 # MockSearchResult('core', 'AnotherMockModel', 9, .1)
                 # MockSearchResult('core', 'AnotherMockModel', 13, .1)
                 # MockSearchResult('core', 'NonexistentMockModel', 14, .1)
                 temp_results.append(result)
-        
+
         result_info['results'] = temp_results
-        
+
         return result_info
 
 
 class MockSearchQuery(BaseSearchQuery):
     def build_query(self):
         return ''
-    
+
     def clean(self, query_fragment):
         return query_fragment
-    
+
     # def run_mlt(self):
     #     # To simulate the chunking behavior of a regular search, return a slice
     #     # of our results using start/end offset.

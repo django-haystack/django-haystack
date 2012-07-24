@@ -231,21 +231,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             else:
                 self.log.error("Failed to clear Elasticsearch index: %s", e)
 
-    @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
-        if len(query_string) == 0:
-            return {
-                'results': [],
-                'hits': 0,
-            }
-
-        if not self.setup_complete:
-            self.setup()
-
+    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+                            fields='', highlight=False, facets=None,
+                            date_facets=None, query_facets=None,
+                            narrow_queries=None, spelling_query=None,
+                            within=None, dwithin=None, distance_point=None,
+                            models=None, limit_to_registered_models=None,
+                            result_class=None):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
 
@@ -254,9 +246,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 'query': {
                     'filtered': {
                         'query': {
-                            'query_string': {
-                                'query': '*:*',
-                            },
+                            "match_all": {}
                         },
                     },
                 },
@@ -278,8 +268,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 },
             }
 
-        geo_sort = False
-
         if fields:
             if isinstance(fields, (list, set)):
                 fields = " ".join(fields)
@@ -295,8 +283,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     sort_kwargs = {
                         "_geo_distance": {
                             distance_point['field']: [lng, lat],
-                            "order" : direction,
-                            "unit" : "km"
+                            "order": direction,
+                            "unit": "km"
                         }
                     }
                 else:
@@ -415,9 +403,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             from haystack.utils.geo import generate_bounding_box
 
             ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            kwargs['query']['filtered']['filter'] = {
+            within_filter = {
                 "geo_bounding_box": {
                     within['field']: {
                         "top_left": {
@@ -431,12 +417,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 },
             }
+            kwargs['query'].setdefault('filtered', {})
+            kwargs['query']['filtered'].setdefault('filter', {})
+            if kwargs['query']['filtered']['filter']:
+                compound_filter = {
+                    "and": [
+                        kwargs['query']['filtered']['filter'],
+                        within_filter,
+                    ]
+                }
+                kwargs['query']['filtered']['filter'] = compound_filter
+            else:
+                kwargs['query']['filtered']['filter'] = within_filter
 
         if dwithin is not None:
             lng, lat = dwithin['point'].get_coords()
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            kwargs['query']['filtered']['filter'] = {
+            dwithin_filter = {
                 "geo_distance": {
                     "distance": dwithin['distance'].km,
                     dwithin['field']: {
@@ -445,22 +441,49 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 }
             }
+            kwargs['query'].setdefault('filtered', {})
+            kwargs['query']['filtered'].setdefault('filter', {})
+            if kwargs['query']['filtered']['filter']:
+                compound_filter = {
+                    "and": [
+                        kwargs['query']['filtered']['filter'],
+                        dwithin_filter
+                    ]
+                }
+                kwargs['query']['filtered']['filter'] = compound_filter
+            else:
+                kwargs['query']['filtered']['filter'] = dwithin_filter
 
         # Remove the "filtered" key if we're not filtering. Otherwise,
         # Elasticsearch will blow up.
         if not kwargs['query']['filtered'].get('filter'):
             kwargs['query'] = kwargs['query']['filtered']['query']
 
+        return kwargs
+
+    @log_query
+    def search(self, query_string, **kwargs):
+        if len(query_string) == 0:
+            return {
+                'results': [],
+                'hits': 0,
+            }
+
+        if not self.setup_complete:
+            self.setup()
+
+        search_kwargs = self.build_search_kwargs(query_string, **kwargs)
+
         # Because Elasticsearch.
         query_params = {
-            'from': start_offset,
+            'from': kwargs.get('start_offset', 0),
         }
 
-        if end_offset is not None and end_offset > start_offset:
-            query_params['size'] = end_offset - start_offset
+        if kwargs.get('end_offset') is not None and kwargs.get('end_offset') > kwargs.get('start_offset', 0):
+            query_params['size'] = kwargs.get('end_offset') - kwargs.get('start_offset', 0)
 
         try:
-            raw_results = self.conn.search(None, kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
+            raw_results = self.conn.search(None, search_kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
         except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
             if not self.silently_fail:
                 raise
@@ -468,7 +491,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
             raw_results = {}
 
-        return self._process_results(raw_results, highlight=highlight, result_class=result_class)
+        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult))
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -753,19 +776,16 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         return u"{!%s %s}" % (parser_name, ' '.join(kwarg_bits))
 
-    def run(self, spelling_query=None, **kwargs):
-        """Builds and executes the query. Returns a list of search results."""
-        final_query = self.build_query()
+    def build_params(self, spelling_query=None, **kwargs):
         search_kwargs = {
             'start_offset': self.start_offset,
-            'result_class': self.result_class,
+            'result_class': self.result_class
         }
         order_by_list = None
 
         if self.order_by:
             if order_by_list is None:
                 order_by_list = []
-
 
             for field in self.order_by:
                 direction = 'asc'
@@ -776,43 +796,48 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
             search_kwargs['sort_by'] = order_by_list
 
-        if self.end_offset is not None:
-            search_kwargs['end_offset'] = self.end_offset
-
-        if self.highlight:
-            search_kwargs['highlight'] = self.highlight
-
-        if self.facets:
-            search_kwargs['facets'] = list(self.facets)
-
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
-
-        if self.query_facets:
-            search_kwargs['query_facets'] = self.query_facets
-
-        if self.narrow_queries:
-            search_kwargs['narrow_queries'] = self.narrow_queries
-
-        if self.fields:
-            search_kwargs['fields'] = self.fields
-
-        if self.models:
-            search_kwargs['models'] = self.models
-
-        if spelling_query:
-            search_kwargs['spelling_query'] = spelling_query
-
-        if self.within:
-            search_kwargs['within'] = self.within
-
-        if self.dwithin:
-            search_kwargs['dwithin'] = self.dwithin
 
         if self.distance_point:
             search_kwargs['distance_point'] = self.distance_point
 
-        search_kwargs.update(**kwargs)
+        if self.dwithin:
+            search_kwargs['dwithin'] = self.dwithin
+
+        if self.end_offset is not None:
+            search_kwargs['end_offset'] = self.end_offset
+
+        if self.facets:
+            search_kwargs['facets'] = list(self.facets)
+
+        if self.fields:
+            search_kwargs['fields'] = self.fields
+
+        if self.highlight:
+            search_kwargs['highlight'] = self.highlight
+
+        if self.models:
+            search_kwargs['models'] = self.models
+
+        if self.narrow_queries:
+            search_kwargs['narrow_queries'] = self.narrow_queries
+
+        if self.query_facets:
+            search_kwargs['query_facets'] = self.query_facets
+
+        if self.within:
+            search_kwargs['within'] = self.within
+
+        if spelling_query:
+            search_kwargs['spelling_query'] = spelling_query
+
+        return search_kwargs
+
+    def run(self, spelling_query=None, **kwargs):
+        """Builds and executes the query. Returns a list of search results."""
+        final_query = self.build_query()
+        search_kwargs = self.build_params(spelling_query, **kwargs)
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)

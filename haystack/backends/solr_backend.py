@@ -114,21 +114,34 @@ class SolrSearchBackend(BaseSearchBackend):
                 self.log.error("Failed to clear Solr index: %s", e)
 
     @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+    def search(self, query_string, **kwargs):
         if len(query_string) == 0:
             return {
                 'results': [],
                 'hits': 0,
             }
 
-        kwargs = {
-            'fl': '* score',
-        }
-        geo_sort = False
+        search_kwargs = self.build_search_kwargs(query_string, **kwargs)
+
+        try:
+            raw_results = self.conn.search(query_string, **search_kwargs)
+        except (IOError, SolrError), e:
+            if not self.silently_fail:
+                raise
+
+            self.log.error("Failed to query Solr using '%s': %s", query_string, e)
+            raw_results = EmptyResults()
+
+        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult), distance_point=kwargs.get('distance_point'))
+
+    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+                            fields='', highlight=False, facets=None,
+                            date_facets=None, query_facets=None,
+                            narrow_queries=None, spelling_query=None,
+                            within=None, dwithin=None, distance_point=None,
+                            models=None, limit_to_registered_models=None,
+                            result_class=None):
+        kwargs = {'fl': '* score'}
 
         if fields:
             if isinstance(fields, (list, set)):
@@ -142,7 +155,6 @@ class SolrSearchBackend(BaseSearchBackend):
                 lng, lat = distance_point['point'].get_coords()
                 kwargs['sfield'] = distance_point['field']
                 kwargs['pt'] = '%s,%s' % (lat, lng)
-                geo_sort = True
 
                 if sort_by == 'distance asc':
                     kwargs['sort'] = 'geodist() asc'
@@ -245,16 +257,7 @@ class SolrSearchBackend(BaseSearchBackend):
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
 
-        try:
-            raw_results = self.conn.search(query_string, **kwargs)
-        except (IOError, SolrError), e:
-            if not self.silently_fail:
-                raise
-
-            self.log.error("Failed to query Solr using '%s': %s", query_string, e)
-            raw_results = EmptyResults()
-
-        return self._process_results(raw_results, highlight=highlight, result_class=result_class, distance_point=distance_point)
+        return kwargs
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -607,13 +610,11 @@ class SolrSearchQuery(BaseSearchQuery):
 
         return u"{!%s %s}" % (parser_name, ' '.join(kwarg_bits))
 
-    def run(self, spelling_query=None, **kwargs):
-        """Builds and executes the query. Returns a list of search results."""
-        final_query = self.build_query()
+    def build_params(self, spelling_query=None, **kwargs):
         search_kwargs = {
             'start_offset': self.start_offset,
-            'result_class': self.result_class,
-        }
+            'result_class': self.result_class
+        }        
         order_by_list = None
 
         if self.order_by:
@@ -628,42 +629,48 @@ class SolrSearchQuery(BaseSearchQuery):
 
             search_kwargs['sort_by'] = ", ".join(order_by_list)
 
-        if self.end_offset is not None:
-            search_kwargs['end_offset'] = self.end_offset
-
-        if self.highlight:
-            search_kwargs['highlight'] = self.highlight
-
-        if self.facets:
-            search_kwargs['facets'] = list(self.facets)
-
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
-
-        if self.query_facets:
-            search_kwargs['query_facets'] = self.query_facets
-
-        if self.narrow_queries:
-            search_kwargs['narrow_queries'] = self.narrow_queries
-
-        if self.fields:
-            search_kwargs['fields'] = self.fields
-
-        if self.models:
-            search_kwargs['models'] = self.models
-
-        if spelling_query:
-            search_kwargs['spelling_query'] = spelling_query
-
-        if self.within:
-            search_kwargs['within'] = self.within
-
-        if self.dwithin:
-            search_kwargs['dwithin'] = self.dwithin
 
         if self.distance_point:
             search_kwargs['distance_point'] = self.distance_point
 
+        if self.dwithin:
+            search_kwargs['dwithin'] = self.dwithin
+
+        if self.end_offset is not None:
+            search_kwargs['end_offset'] = self.end_offset
+
+        if self.facets:
+            search_kwargs['facets'] = list(self.facets)
+
+        if self.fields:
+            search_kwargs['fields'] = self.fields
+
+        if self.highlight:
+            search_kwargs['highlight'] = self.highlight
+
+        if self.models:
+            search_kwargs['models'] = self.models
+
+        if self.narrow_queries:
+            search_kwargs['narrow_queries'] = self.narrow_queries
+
+        if self.query_facets:
+            search_kwargs['query_facets'] = self.query_facets
+
+        if self.within:
+            search_kwargs['within'] = self.within
+
+        if spelling_query:
+            search_kwargs['spelling_query'] = spelling_query
+
+        return search_kwargs
+        
+    def run(self, spelling_query=None, **kwargs):
+        """Builds and executes the query. Returns a list of search results."""
+        final_query = self.build_query()
+        search_kwargs = self.build_params(spelling_query, **kwargs)
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)

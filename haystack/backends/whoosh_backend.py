@@ -829,8 +829,11 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
-
-                    in_options.append('"%s"' % pv)
+                    
+                    if isinstance(pv, basestring) and not is_datetime:
+                        in_options.append('"%s"' % pv)
+                    else:
+                        in_options.append('%s' % pv)
 
                 query_frag = "(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
