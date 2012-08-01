@@ -519,6 +519,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         field_name = index.get_content_field()
         params = {}
 
+        if additional_query_string:
+            body = {
+                'filter': {
+                    'fquery': {
+                        'query': {
+                            'query_string': {
+                                'query': additional_query_string,
+                                },
+                            },
+                        },
+                    }
+                }
+        else:
+            body = {}
+
+
         if start_offset is not None:
             params['search_from'] = start_offset
 
@@ -528,7 +544,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         doc_id = get_identifier(model_instance)
 
         try:
-            raw_results = self.conn.mlt(index=self.index_name, doc_type='modelresult', id=doc_id, mlt_fields=[field_name], **params)
+            raw_results = self.conn.mlt(index=self.index_name, doc_type='modelresult', id=doc_id, mlt_fields=[field_name], body=body, **params)
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
