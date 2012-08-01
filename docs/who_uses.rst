@@ -236,7 +236,7 @@ AstroBin
 
 For general search.
 
-Using: ???
+Using: Xapian
 
 * http://www.astrobin.com/
 
