@@ -537,6 +537,10 @@ class CaptureHandler(logging.Handler):
 
 
 class FailedSolrSearchBackendTestCase(TestCase):
+    def setUp(self):
+        super(FailedSolrSearchBackendTestCase, self).setUp()
+        self.old_solr_url = settings.HAYSTACK_CONNECTIONS['default']['URL']
+    
     def test_all_cases(self):
         self.sample_objs = []
 
@@ -550,8 +554,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
         # Stow.
         # Point the backend at a URL that doesn't exist so we can watch the
         # sparks fly.
-        old_solr_url = settings.HAYSTACK_CONNECTIONS['default']['URL']
-        settings.HAYSTACK_CONNECTIONS['default']['URL'] = "%s/foo/" % old_solr_url
+        settings.HAYSTACK_CONNECTIONS['default']['URL'] = "%s/foo/" % self.old_solr_url
         cap = CaptureHandler()
         logging.getLogger('haystack').addHandler(cap)
         import haystack
@@ -581,10 +584,13 @@ class FailedSolrSearchBackendTestCase(TestCase):
         self.assertEqual(len(CaptureHandler.logs_seen), 6)
 
         # Restore.
-        settings.HAYSTACK_CONNECTIONS['default']['URL'] = old_solr_url
         connections['default']._index = old_ui
         logging.getLogger('haystack').removeHandler(cap)
         logging.getLogger('haystack').addHandler(haystack.stream)
+
+    def tearDown(self):
+        super(FailedSolrSearchBackendTestCase, self).tearDown()
+        settings.HAYSTACK_CONNECTIONS['default']['URL'] = self.old_solr_url
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
