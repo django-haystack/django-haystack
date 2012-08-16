@@ -5,6 +5,7 @@ from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.exceptions import FacetingError
+from haystack import constants
 from haystack import indexes
 from haystack.models import SearchResult
 from haystack.query import (SearchQuerySet, EmptySearchQuerySet,
@@ -262,6 +263,10 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(clone.end_offset, self.bsq.end_offset)
         self.assertEqual(clone.backend.__class__, self.bsq.backend.__class__)
 
+    def test_log_query_setting(self):
+        log_query_setting = getattr(settings, 'HAYSTACK_LOG_QUERIES', settings.DEBUG)
+        self.assertEqual(log_query_setting, constants.LOG_QUERIES)
+
     def test_log_query(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
@@ -277,14 +282,14 @@ class BaseSearchQueryTestCase(TestCase):
         backend = connections['default'].get_backend()
         backend.clear()
         self.bmmsi.update()
-        old_debug = settings.DEBUG
-        settings.DEBUG = False
+        old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = False
 
         msq = connections['default'].get_query()
         self.assertEqual(len(msq.get_results()), 23)
         self.assertEqual(len(connections['default'].queries), 0)
 
-        settings.DEBUG = True
+        constants.LOG_QUERIES = True
         # Redefine it to clear out the cached results.
         msq2 = connections['default'].get_query()
         self.assertEqual(len(msq2.get_results()), 23)
@@ -300,7 +305,7 @@ class BaseSearchQueryTestCase(TestCase):
 
         # Restore.
         connections['default']._index = self.old_unified_index
-        settings.DEBUG = old_debug
+        constants.LOG_QUERIES = old_log_queries
 
 
 class CharPKMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -332,15 +337,15 @@ class SearchQuerySetTestCase(TestCase):
         self.msqs = SearchQuerySet()
 
         # Stow.
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
 
         reset_search_queries()
 
     def tearDown(self):
         # Restore.
         connections['default']._index = self.old_unified_index
-        settings.DEBUG = self.old_debug
+        constants.LOG_QUERIES = self.old_log_queries
         super(SearchQuerySetTestCase, self).tearDown()
 
     def test_len(self):
@@ -813,15 +818,15 @@ if test_pickling:
             self.msqs = SearchQuerySet()
 
             # Stow.
-            self.old_debug = settings.DEBUG
-            settings.DEBUG = True
+            self.old_log_queries = constants.LOG_QUERIES
+            constants.LOG_QUERIES = True
 
             reset_search_queries()
 
         def tearDown(self):
             # Restore.
             connections['default']._index = self.old_unified_index
-            settings.DEBUG = self.old_debug
+            constants.LOG_QUERIES = self.old_log_queries
             super(PickleSearchQuerySetTestCase, self).tearDown()
 
         def test_pickling(self):

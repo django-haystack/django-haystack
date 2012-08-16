@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
+from haystack import constants
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
@@ -27,7 +28,7 @@ def log_query(func):
         finally:
             stop = time()
 
-            if settings.DEBUG:
+            if constants.LOG_QUERIES:
                 from haystack import connections
                 connections[obj.connection_alias].queries.append({
                     'query_string': query_string,
