@@ -156,7 +156,7 @@ Example::
     import os
     HAYSTACK_CONNECTIONS = {
         'default': {
-            'ENGINE': 'haystack.backends.xapian_backend.XapianEngine',
+            'ENGINE': 'xapian_backend.XapianEngine',
             'PATH': os.path.join(os.path.dirname(__file__), 'xapian_index'),
         },
     }
