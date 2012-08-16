@@ -79,6 +79,7 @@ Additionally, each backend may have additional options it requires:
 * Solr
 
   * ``URL`` - The URL to the Solr core.
+  * ``COMMIT_UPDATES`` - Wheter to immediately commit updates via ?commit=true.
 
 * Whoosh
 
