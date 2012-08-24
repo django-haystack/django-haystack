@@ -135,7 +135,7 @@ class SolrSearchBackend(BaseSearchBackend):
         return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult), distance_point=kwargs.get('distance_point'))
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-                            fields='', highlight=False, facets=None,
+                            fields='', highlight=False, facets=None, facet_options=None,
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
@@ -188,6 +188,35 @@ class SolrSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
+            
+            if facet_options == None: facet_options = {}
+            
+            def set_str_opt(field, option, value, default=None, valid_options=None):
+                if value == None:
+                    if default == None: return
+                    value = default
+                if valid_options and value not in valid_options: raise ValueError(value)
+                kwargs['f.%s.facet.%s' % (field, option)] = unicode(value)
+            def set_int_opt(field, option, value, default=None):
+                if value == None:
+                    if default == None: return
+                    value = default
+                kwargs['f.%s.facet.%s' % (field, option)] = int(value)
+            def set_bool_opt(field, option, value):
+                if value == None: return
+                kwargs['f.%s.facet.%s' % (field, option)] = "true" if bool(value) else "false"
+                
+            for f in facets:
+                # The default for each facet option is the Solr default, except for
+                # 'mincount', where the default is 1 (Solr default is 0), in order
+                # to match the behavior of other search backends.
+                set_str_opt(f, 'prefix', facet_options.get(f, {}).get("prefix"))
+                set_int_opt(f, 'limit', facet_options.get(f, {}).get("limit"))
+                set_int_opt(f, 'offset', facet_options.get(f, {}).get("offset"))
+                set_str_opt(f, 'sort', facet_options.get(f, {}).get("sort"), None, ("count", "lexicographic"))
+                set_int_opt(f, 'mincount', facet_options.get(f, {}).get("min_count"), 1)
+                set_bool_opt(f, 'missing', facet_options.get(f, {}).get("missing"))
+                set_str_opt(f, 'method', "enum" if facet_options.get(f, {}).get("uniques", False) else "fc")
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -644,6 +673,9 @@ class SolrSearchQuery(BaseSearchQuery):
         if self.facets:
             search_kwargs['facets'] = list(self.facets)
 
+        if self.facet_options:
+            search_kwargs['facet_options'] = dict(self.facet_options)
+            
         if self.fields:
             search_kwargs['fields'] = self.fields
 

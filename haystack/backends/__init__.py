@@ -119,7 +119,7 @@ class BaseSearchBackend(object):
         raise NotImplementedError
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-                            fields='', highlight=False, facets=None,
+                            fields='', highlight=False, facets=None, facet_options=None,
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
@@ -292,6 +292,7 @@ class BaseSearchQuery(object):
         self.end_offset = None
         self.highlight = False
         self.facets = set()
+        self.facet_options = {}
         self.date_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
@@ -356,6 +357,9 @@ class BaseSearchQuery(object):
         if self.facets:
             kwargs['facets'] = list(self.facets)
 
+        if self.facet_options:
+            kwargs['facet_options'] = self.facet_options
+            
         if self.date_facets:
             kwargs['date_facets'] = self.date_facets
 
@@ -726,10 +730,12 @@ class BaseSearchQuery(object):
             'point': ensure_point(point),
         }
 
-    def add_field_facet(self, field):
+    def add_field_facet(self, field, options):
         """Adds a regular facet on a field."""
         from haystack import connections
-        self.facets.add(connections[self._using].get_unified_index().get_facet_fieldname(field))
+        f = connections[self._using].get_unified_index().get_facet_fieldname(field)
+        self.facets.add(f)
+        self.facet_options[f] = options
 
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
@@ -826,6 +832,7 @@ class BaseSearchQuery(object):
         clone.boost = self.boost.copy()
         clone.highlight = self.highlight
         clone.facets = self.facets.copy()
+        clone.facet_options = self.facet_options.copy()
         clone.date_facets = self.date_facets.copy()
         clone.query_facets = self.query_facets[:]
         clone.narrow_queries = self.narrow_queries.copy()
