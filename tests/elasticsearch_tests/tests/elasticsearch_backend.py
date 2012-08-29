@@ -7,6 +7,7 @@ import pyelasticsearch
 from django.conf import settings
 from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
+from haystack import constants
 from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
@@ -521,18 +522,17 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
         self.assertEqual(self.sq.get_spelling_suggestion('indexy'), None)
 
     def test_log_query(self):
-        from django.conf import settings
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
 
         # Stow.
-        old_debug = settings.DEBUG
-        settings.DEBUG = False
+        old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = False
 
         len(self.sq.get_results())
         self.assertEqual(len(connections['default'].queries), 0)
 
-        settings.DEBUG = True
+        constants.LOG_QUERIES = True
         # Redefine it to clear out the cached results.
         self.sq = connections['default'].query()
         self.sq.add_filter(SQ(name='bar'))
@@ -550,7 +550,7 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
         self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:(bar) AND text:(moof))')
 
         # Restore.
-        settings.DEBUG = old_debug
+        constants.LOG_QUERIES = old_log_queries
 
 
 lssqstc_all_loaded = None
@@ -564,8 +564,8 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         super(LiveElasticsearchSearchQuerySetTestCase, self).setUp()
 
         # Stow.
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
         self.old_ui = connections['default'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = ElasticsearchMockSearchIndex()
@@ -591,7 +591,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections['default']._index = self.old_ui
-        settings.DEBUG = self.old_debug
+        constants.LOG_QUERIES = self.old_log_queries
         super(LiveElasticsearchSearchQuerySetTestCase, self).tearDown()
 
     def test_load_all(self):

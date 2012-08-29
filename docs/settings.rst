@@ -253,3 +253,21 @@ An example::
     HAYSTACK_DJANGO_ID_FIELD = 'my_django_id'
 
 Default is ``django_id``.
+
+
+
+``HAYSTACK_LOG_QUERIES``
+========================
+
+**Optional**
+
+This setting turns on or off query logging. Note that setting this to
+``True`` can incur performance penalties and should not be used full
+time in a production environment. This is best used alongside the
+built-in Django debug panel at ``haystack.panels.HaystackDebugPanel``.
+
+An example::
+
+    HAYSTACK_LOG_QUERIES = True
+
+Default is the value of the ``DEBUG`` setting.

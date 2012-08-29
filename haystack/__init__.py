@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core import signals
-from haystack.constants import DEFAULT_ALIAS
+from haystack.constants import DEFAULT_ALIAS, LOG_QUERIES
 from haystack.utils import loading
 
 
@@ -55,5 +55,5 @@ def reset_search_queries(**kwargs):
         conn.reset_queries()
 
 
-if settings.DEBUG:
+if LOG_QUERIES:
     signals.request_started.connect(reset_search_queries)

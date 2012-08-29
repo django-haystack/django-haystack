@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
+from haystack import constants
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 from solr_tests.tests.solr_backend import SolrMockModelSearchIndex, clear_solr_index
@@ -15,8 +16,8 @@ class SearchModelAdminTestCase(TestCase):
 
         # With the models setup, you get the proper bits.
         # Stow.
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
         self.old_ui = connections['default'].get_unified_index()
         self.ui = UnifiedIndex()
         smmsi = SolrMockModelSearchIndex()
@@ -38,7 +39,7 @@ class SearchModelAdminTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections['default']._index = self.old_ui
-        settings.DEBUG = self.old_debug
+        constants.LOG_QUERIES = self.old_log_queries
         super(SearchModelAdminTestCase, self).tearDown()
 
     def test_usage(self):

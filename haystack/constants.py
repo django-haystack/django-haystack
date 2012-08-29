@@ -27,3 +27,6 @@ class Indexable(object):
 # For the geo bits, since that's what Solr & Elasticsearch seem to silently
 # assume...
 WGS_84_SRID = 4326
+
+# Configurable query logging
+LOG_QUERIES = getattr(settings, 'HAYSTACK_LOG_QUERIES', settings.DEBUG)

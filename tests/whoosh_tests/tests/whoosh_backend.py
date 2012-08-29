@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils.datetime_safe import datetime, date
 from django.test import TestCase
 from haystack import connections, connection_router, reset_search_queries
+from haystack import constants
 from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
@@ -539,13 +540,13 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 0)
 
         # Stow.
-        old_debug = settings.DEBUG
-        settings.DEBUG = False
+        old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = False
 
         len(self.sq.get_results())
         self.assertEqual(len(connections['default'].queries), 0)
 
-        settings.DEBUG = True
+        constants.LOG_QUERIES = True
         # Redefine it to clear out the cached results.
         self.sq = connections['default'].get_query()
         self.sq.add_filter(SQ(name='bar'))
@@ -563,7 +564,7 @@ class LiveWhooshSearchQueryTestCase(TestCase):
         self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:(baz) AND text:(foo))')
 
         # Restore.
-        settings.DEBUG = old_debug
+        constants.LOG_QUERIES = old_log_queries
 
 
 class LiveWhooshSearchQuerySetTestCase(TestCase):
@@ -583,8 +584,8 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         connections['default']._index = self.ui
 
         # Stow.
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -910,8 +911,8 @@ class LiveWhooshAutocompleteTestCase(TestCase):
 
         # Stow.
         import haystack
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
 
         self.sb.setup()
         self.sqs = SearchQuerySet()
@@ -928,7 +929,7 @@ class LiveWhooshAutocompleteTestCase(TestCase):
 
         settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
         connections['default']._index = self.old_ui
-        settings.DEBUG = self.old_debug
+        constants.LOG_QUERIES = self.old_log_queries
         super(LiveWhooshAutocompleteTestCase, self).tearDown()
 
     def test_autocomplete(self):
@@ -998,8 +999,8 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.sb = connections['default'].get_backend()
         connections['default']._index = self.ui
 
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -1021,7 +1022,7 @@ class LiveWhooshRoundTripTestCase(TestCase):
             shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
 
         settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        settings.DEBUG = self.old_debug
+        constants.LOG_QUERIES = self.old_log_queries
         super(LiveWhooshRoundTripTestCase, self).tearDown()
 
     def test_round_trip(self):
@@ -1067,8 +1068,8 @@ class LiveWhooshRamStorageTestCase(TestCase):
 
         # Stow.
         import haystack
-        self.old_debug = settings.DEBUG
-        settings.DEBUG = True
+        self.old_log_queries = constants.LOG_QUERIES
+        constants.LOG_QUERIES = True
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -1089,7 +1090,7 @@ class LiveWhooshRamStorageTestCase(TestCase):
 
         settings.HAYSTACK_CONNECTIONS['default']['STORAGE'] = self.old_whoosh_storage
         connections['default']._index = self.old_ui
-        settings.DEBUG = self.old_debug
+        constants.LOG_QUERIES = self.old_log_queries
         super(LiveWhooshRamStorageTestCase, self).tearDown()
 
     def test_ram_storage(self):
