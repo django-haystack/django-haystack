@@ -190,7 +190,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
+                self.log.error(u"%s while preparing object for update" % e, exc_info=True, extra={
                     "data": {
                         "index": index,
                         "object": get_identifier(obj)
@@ -829,7 +829,7 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
-                    
+
                     if isinstance(pv, basestring) and not is_datetime:
                         in_options.append('"%s"' % pv)
                     else:
