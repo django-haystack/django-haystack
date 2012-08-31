@@ -15,7 +15,7 @@ Supported Backends
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Elasticsearch: http://elasticsearch.org/
-.. _Whoosh: http://whoosh.ca/
+.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 
@@ -50,7 +50,7 @@ Elasticsearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: pyelasticsearch (toastdriven git master) & Elasticsearch 0.17.7+
+* Requires: pyelasticsearch 0.1+ & Elasticsearch 0.17.7+
 
 Whoosh
 ------

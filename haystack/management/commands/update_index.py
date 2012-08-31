@@ -2,13 +2,12 @@ import datetime
 import os
 import warnings
 from optparse import make_option
+from django import db
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
-from django.utils import translation
-
 from haystack import connections as haystack_connections
 from haystack.constants import DEFAULT_ALIAS
 from haystack.query import SearchQuerySet
@@ -19,6 +18,13 @@ DEFAULT_AGE = None
 APP = 'app'
 MODEL = 'model'
 
+    # Iterate over those results.
+    for result in stuff_in_the_index:
+        # Be careful not to hit the DB.
+        if not smart_str(result.pk) in pks_seen:
+            # The id is NOT in the small_cache_qs, issue a delete.
+            if verbosity >= 2:
+                print "  removing %s." % result.pk
 
 def worker(bits):
     # We need to reset the connections, otherwise the different processes
@@ -30,6 +36,7 @@ def worker(bits):
         # out connections (via ``... = {}``) destroys in-memory DBs.
         if not 'sqlite3' in info['ENGINE']:
             try:
+                db.close_connection()
                 del(connections._connections[alias])
             except KeyError:
                 pass
@@ -121,9 +128,6 @@ class Command(LabelCommand):
     option_list = LabelCommand.option_list + base_options
 
     def handle(self, *items, **options):
-        # Activate language from settings
-        translation.activate(settings.LANGUAGE_CODE)
-
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.start_date = None
@@ -208,6 +212,10 @@ class Command(LabelCommand):
                 if self.verbosity >= 2:
                     print "Skipping '%s' - no index." % model
                 continue
+
+            if self.workers > 0:
+                # workers resetting connections leads to references to models / connections getting stale and having their connection disconnected from under them. Resetting before the loop continues and it accesses the ORM makes it better.
+                db.close_connection()
 
             qs = index.build_queryset(start_date=self.start_date, end_date=self.end_date)
             total = qs.count()

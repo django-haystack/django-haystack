@@ -4,6 +4,7 @@ import sys
 import warnings
 from django.db.models import signals
 from django.utils.encoding import force_unicode
+from django.core.exceptions import ImproperlyConfigured
 from haystack import connections, connection_router
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
@@ -117,7 +118,7 @@ class SearchIndex(threading.local):
 
         This method is required & you must override it to return the correct class.
         """
-        return NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
+        raise NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
 
     def index_queryset(self):
         """

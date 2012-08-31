@@ -319,7 +319,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
-        self.assertEqual([result.highlighted for result in self.sb.search('Index', highlight=True)['results']], [[u'<em>Indexed</em>!\n2 '], [u'<em>Indexed</em>!\n1 '], [u'<em>Indexed</em>!\n3 ']])
+        self.assertEqual([result.highlighted for result in self.sb.search('Index', highlight=True)['results']],
+            [[u'<em>Indexed</em>!\n2'], [u'<em>Indexed</em>!\n1'], [u'<em>Indexed</em>!\n3']])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indax')['spelling_suggestion'], None)

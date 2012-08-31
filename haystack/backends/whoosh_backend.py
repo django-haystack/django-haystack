@@ -187,7 +187,15 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to add documents to Whoosh: %s", e)
+                # We'll log the object identifier but won't include the actual object
+                # to avoid the possibility of that generating encoding errors while
+                # processing the log message:
+                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
+                    "data": {
+                        "index": index,
+                        "object": get_identifier(obj)
+                    }
+                })
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
@@ -821,8 +829,11 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
-
-                    in_options.append('"%s"' % pv)
+                    
+                    if isinstance(pv, basestring) and not is_datetime:
+                        in_options.append('"%s"' % pv)
+                    else:
+                        in_options.append('%s' % pv)
 
                 query_frag = "(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':

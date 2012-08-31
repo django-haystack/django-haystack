@@ -6,9 +6,8 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS, DEFAULT_OPERATOR
+from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
-from haystack.inputs import Clean
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
 
@@ -103,11 +102,7 @@ class BaseSearchBackend(object):
         raise NotImplementedError
 
     @log_query
-    def search(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-               fields='', highlight=False, facets=None, date_facets=None, query_facets=None,
-               narrow_queries=None, spelling_query=None, within=None,
-               dwithin=None, distance_point=None, models=None,
-               limit_to_registered_models=None, result_class=None, **kwargs):
+    def search(self, query_string, **kwargs):
         """
         Takes a query to search on and returns dictionary.
 
@@ -121,6 +116,17 @@ class BaseSearchBackend(object):
         This method MUST be implemented by each backend, as it will be highly
         specific to each one.
         """
+        raise NotImplementedError
+
+    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+                            fields='', highlight=False, facets=None,
+                            date_facets=None, query_facets=None,
+                            narrow_queries=None, spelling_query=None,
+                            within=None, dwithin=None, distance_point=None,
+                            models=None, limit_to_registered_models=None,
+                            result_class=None):
+        # A convenience method most backends should include in order to make
+        # extension easier.
         raise NotImplementedError
 
     def prep_value(self, value):
@@ -847,9 +853,12 @@ class BaseEngine(object):
         self.options = settings.HAYSTACK_CONNECTIONS.get(self.using, {})
         self.queries = []
         self._index = None
+        self._backend = None
 
     def get_backend(self):
-        return self.backend(self.using, **self.options)
+        if self._backend is None:
+            self._backend = self.backend(self.using, **self.options)
+        return self._backend
 
     def get_query(self):
         return self.query(using=self.using)

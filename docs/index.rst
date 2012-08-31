@@ -3,20 +3,21 @@ Welcome to Haystack!
 
 Haystack provides modular search for Django. It features a unified, familiar
 API that allows you to plug in different search backends (such as Solr_,
-Whoosh_, Xapian_, etc.) without having to modify your code.
+Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Whoosh: http://whoosh.ca/
+.. _Elasticsearch: http://elasticsearch.org/
+.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 
 .. note::
 
     This documentation represents the development version of Haystack. For
-    old versions of the documentation: `1.0`_, `1.1`_.
+    old versions of the documentation: `1.2`_, `1.1`_.
 
-.. _`1.0`: http://docs.haystacksearch.org/1.0/
-.. _`1.1`: http://docs.haystacksearch.org/1.1/
+.. _`1.2`: http://django-haystack.readthedocs.org/en/v1.2.6/index.html
+.. _`1.1`: http://django-haystack.readthedocs.org/en/v1.1/index.html
 
 Getting Started
 ---------------
@@ -43,6 +44,7 @@ you up and running:
    debugging
 
    migration_from_1_to_2
+   contributing
 
 
 Advanced Uses
@@ -106,8 +108,24 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.4+ (may work on 2.3 but untested)
-* Django 1.0+
+* Python 2.5+
+* Django 1.2+ (may work on 1.1.2+)
 
 Additionally, each backend has its own requirements. You should refer to
 :doc:`installing_search_engines` for more details.
+
+
+Commercial Support
+==================
+
+If you're using Haystack in a commercial environment, paid support is available
+from `Toast Driven`_. Services offered include:
+
+* Advice/help with setup
+* Implementation in your project
+* Bugfixes in Haystack itself
+* Features in Haystack itself
+
+If you're interested, please contact Daniel Lindsley (daniel@toastdriven.com).
+
+.. _`Toast Driven`: http://toastdriven.com/

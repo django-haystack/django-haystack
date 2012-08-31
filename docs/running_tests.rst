@@ -15,7 +15,7 @@ In the event you need to run ``Haystack``'s tests (such as testing
 bugfixes/modifications), here are the steps to getting them running::
 
     cd django-haystack/tests
-    export PYTHONPATH=`pwd`
+    export PYTHONPATH=`pwd`/..:`pwd`
     django-admin.py test core --settings=settings
 
 ``Haystack`` is maintained with all tests passing at all times, so if you
@@ -33,11 +33,17 @@ the settings module and the app to test. To test an engine, use the
 app for that engine. For instance, to run the Solr backend's tests::
 
     cd django-haystack/tests
-    export PYTHONPATH=`pwd`
+    export PYTHONPATH=`pwd`/..:`pwd`
     django-admin.py test solr_tests --settings=solr_settings
     
 Or, to run the Whoosh backend's tests::
     
     cd django-haystack/tests
-    export PYTHONPATH=`pwd`
+    export PYTHONPATH=`pwd`/..:`pwd`
     django-admin.py test whoosh_tests --settings=whoosh_settings
+     
+Or, to run the Elasticsearch backend's tests::
+    
+    cd django-haystack/tests
+    export PYTHONPATH=`pwd`/..:`pwd`
+    django-admin.py test elasticsearch_tests --settings=elasticsearch_settings 
