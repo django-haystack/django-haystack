@@ -19,13 +19,6 @@ DEFAULT_AGE = None
 APP = 'app'
 MODEL = 'model'
 
-    # Iterate over those results.
-    for result in stuff_in_the_index:
-        # Be careful not to hit the DB.
-        if not smart_str(result.pk) in pks_seen:
-            # The id is NOT in the small_cache_qs, issue a delete.
-            if verbosity >= 2:
-                print "  removing %s." % result.pk
 
 def worker(bits):
     # We need to reset the connections, otherwise the different processes
