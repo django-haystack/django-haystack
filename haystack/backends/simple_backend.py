@@ -10,7 +10,7 @@ from haystack.models import SearchResult
 
 
 if settings.DEBUG:
-    import logging
+    from haystack.utils import log as logging
 
     class NullHandler(logging.Handler):
         def emit(self, record):

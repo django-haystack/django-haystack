@@ -1,5 +1,4 @@
 import datetime
-import logging
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -11,6 +10,7 @@ from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
+from haystack.utils import log as logging
 try:
     from django.db.models.sql.query import get_proxied_model
 except ImportError:
