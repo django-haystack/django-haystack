@@ -4,6 +4,12 @@ from haystack.exceptions import SearchFieldError, NotHandled
 from haystack import indexes
 from haystack.utils import loading
 from core.models import MockModel, AnotherMockModel
+import unittest
+
+try:
+    import pysolr
+except ImportError:
+    pysolr = False
 
 
 class ConnectionHandlerTestCase(TestCase):
@@ -25,7 +31,8 @@ class ConnectionHandlerTestCase(TestCase):
             },
         })
         self.assertEqual(ch._connections, {})
-    
+
+    @unittest.skipIf(pysolr is False, "pysolr required")
     def test_get_item(self):
         ch = loading.ConnectionHandler({})
         
