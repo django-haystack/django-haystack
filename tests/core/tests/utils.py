@@ -1,4 +1,5 @@
 from django.test import TestCase
+from haystack.utils import log
 from haystack.utils import get_identifier, get_facet_field_name, Highlighter
 from core.models import MockModel
 
@@ -139,3 +140,31 @@ class HighlighterTestCase(TestCase):
         self.assertEqual(highlighter.highlight(self.document_1), u'...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-...')
         self.assertEqual(highlighter.highlight(self.document_2), u'...<span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
         self.assertEqual(highlighter.highlight(self.document_3), u'This is a test of the highlightable words <span class="highlighted">detection</span>. This is only a test. Were this an actual emerge...')
+
+
+class LoggingFacadeTestCase(TestCase):
+    def test_everything_noops_if_settings_are_off(self):
+        with self.settings(HAYSTACK_LOGGING=False):
+            l = log.LoggingFacade(None)
+            l.error()
+
+    def test_uses_provided_logger_if_logging_is_on(self):
+        with self.settings(HAYSTACK_LOGGING=True):
+            l = log.LoggingFacade(None)
+            try:
+                l.error()
+            except AttributeError:
+                pass
+
+    def test_uses_provided_logger_by_default(self):
+        class Logger(object):
+            def __init__(self):
+                self.was_called = False
+
+            def error(self):
+                self.was_called = True
+
+        l = log.LoggingFacade(Logger())
+        self.assertFalse(l.was_called, msg='sanity check')
+        l.error()
+        self.assertTrue(l.was_called)

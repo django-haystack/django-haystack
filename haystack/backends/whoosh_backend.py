@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import shutil
@@ -15,6 +14,7 @@ from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
+from haystack.utils import log as logging
 try:
     import json
 except ImportError:

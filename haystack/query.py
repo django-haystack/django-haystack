@@ -1,4 +1,3 @@
-import logging
 import operator
 import warnings
 from haystack import connections, connection_router
@@ -6,6 +5,7 @@ from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotHandled
 from haystack.inputs import Raw, Clean, AutoQuery
+from haystack.utils import log as logging
 
 
 class SearchQuerySet(object):
