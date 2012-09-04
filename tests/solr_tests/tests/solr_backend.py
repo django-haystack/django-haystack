@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 from decimal import Decimal
-import logging
 import os
+import logging as std_logging
 
 import pysolr
 from django.conf import settings
@@ -12,6 +12,7 @@ from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
+from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
 from core.models import (MockModel, AnotherMockModel,
                          AFourthMockModel, ASixthMockModel)
@@ -529,7 +530,7 @@ class SolrSearchBackendTestCase(TestCase):
         connections['default']._index = old_ui
 
 
-class CaptureHandler(logging.Handler):
+class CaptureHandler(std_logging.Handler):
     logs_seen = []
 
     def emit(self, record):

@@ -1,11 +1,11 @@
 # "Hey, Django! Look at me, I'm an app! For Serious!"
-import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.encoding import force_unicode
 from django.utils.text import capfirst
 from haystack.exceptions import NotHandled, SpatialError
+from haystack.utils import log as logging
 
 try:
     from geopy import distance as geopy_distance
