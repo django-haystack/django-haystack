@@ -537,16 +537,7 @@ class CaptureHandler(logging.Handler):
 
 
 class FailedSolrSearchBackendTestCase(TestCase):
-    def test_all_cases(self):
-        self.sample_objs = []
-
-        for i in xrange(1, 4):
-            mock = MockModel()
-            mock.id = i
-            mock.author = 'daniel%s' % i
-            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
-            self.sample_objs.append(mock)
-
+    def setUp(self):
         # Stow.
         # Point the backend at a URL that doesn't exist so we can watch the
         # sparks fly.
@@ -557,8 +548,27 @@ class FailedSolrSearchBackendTestCase(TestCase):
         import haystack
         logging.getLogger('haystack').removeHandler(haystack.stream)
 
-        # Setup the rest of the bits.
         old_ui = connections['default'].get_unified_index()
+
+        def restoreSolrBackend():
+            settings.HAYSTACK_CONNECTIONS['default']['URL'] = old_solr_url
+            connections['default']._index = old_ui
+            logging.getLogger('haystack').removeHandler(cap)
+            logging.getLogger('haystack').addHandler(haystack.stream)
+
+        self.addCleanup(restoreSolrBackend)
+
+    def test_all_cases(self):
+        self.sample_objs = []
+
+        for i in xrange(1, 4):
+            mock = MockModel()
+            mock.id = i
+            mock.author = 'daniel%s' % i
+            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            self.sample_objs.append(mock)
+
+        # Setup the rest of the bits.
         ui = UnifiedIndex()
         smmi = SolrMockSearchIndex()
         ui.build(indexes=[smmi])
@@ -579,12 +589,6 @@ class FailedSolrSearchBackendTestCase(TestCase):
         self.assertEqual(len(CaptureHandler.logs_seen), 5)
         sb.clear()
         self.assertEqual(len(CaptureHandler.logs_seen), 6)
-
-        # Restore.
-        settings.HAYSTACK_CONNECTIONS['default']['URL'] = old_solr_url
-        connections['default']._index = old_ui
-        logging.getLogger('haystack').removeHandler(cap)
-        logging.getLogger('haystack').addHandler(haystack.stream)
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
