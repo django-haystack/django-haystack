@@ -1003,7 +1003,6 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.smmi.update()
         self.sammi.update()
 
-
     def tearDown(self):
         # Restore.
         connections['default']._index = self.old_ui
@@ -1036,7 +1035,6 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=1))[0], MockSearchResult))
-
 
 
 class LiveSolrAutocompleteTestCase(TestCase):
