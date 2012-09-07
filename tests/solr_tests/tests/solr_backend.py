@@ -7,7 +7,7 @@ import os
 import pysolr
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
+from haystack import connections, reset_search_queries
 from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
