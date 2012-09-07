@@ -575,6 +575,8 @@ class FailedSolrSearchBackendTestCase(TestCase):
         connections['default']._index = ui
         sb = connections['default'].get_backend()
 
+        sb.conn.path = '/foobar/broken/path/'
+
         # Prior to the addition of the try/except bits, these would all fail miserably.
         self.assertEqual(len(CaptureHandler.logs_seen), 0)
         sb.update(smmi, self.sample_objs)
