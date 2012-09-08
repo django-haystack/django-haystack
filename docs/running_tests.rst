@@ -4,6 +4,14 @@
 Running Tests
 =============
 
+Dependencies
+============
+
+``Haystack`` uses the `Mock <http://pypi.python.org/pypi/mock>`_ library for
+testing. You will need to install it before running the tests::
+
+    pip install mock
+
 Core Haystack Functionality
 ===========================
 
@@ -21,7 +29,6 @@ bugfixes/modifications), here are the steps to getting them running::
 ``Haystack`` is maintained with all tests passing at all times, so if you
 receive any errors during testing, please check your setup and file a report if
 the errors persist.
-
 
 Backends
 ========
