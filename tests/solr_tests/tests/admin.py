@@ -60,7 +60,9 @@ class SearchModelAdminTestCase(TestCase):
         self.assertEqual(resp.context['cl'].full_result_count, 23)
         # Ensure they aren't search results.
         self.assertEqual(isinstance(resp.context['cl'].result_list[0], MockModel), True)
-        self.assertEqual(resp.context['cl'].result_list[0].id, 5)
+
+        result_pks = [i.pk for i in resp.context['cl'].result_list]
+        self.assertIn(5, result_pks)
 
         # Make sure only changelist is affected.
         resp = self.client.get('/admin/core/mockmodel/1/')

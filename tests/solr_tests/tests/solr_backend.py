@@ -4,10 +4,13 @@ from decimal import Decimal
 import logging
 import os
 
+from mock import patch
+
 import pysolr
+
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
+from haystack import connections, reset_search_queries
 from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
@@ -529,15 +532,10 @@ class SolrSearchBackendTestCase(TestCase):
         connections['default']._index = old_ui
 
 
-class CaptureHandler(logging.Handler):
-    logs_seen = []
-
-    def emit(self, record):
-        CaptureHandler.logs_seen.append(record)
-
-
+@patch("pysolr.Solr._send_request", side_effect=pysolr.SolrError)
+@patch("logging.Logger.log")
 class FailedSolrSearchBackendTestCase(TestCase):
-    def test_all_cases(self):
+    def test_all_cases(self, mock_send_request, mock_log):
         self.sample_objs = []
 
         for i in xrange(1, 4):
@@ -547,18 +545,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
             mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
             self.sample_objs.append(mock)
 
-        # Stow.
-        # Point the backend at a URL that doesn't exist so we can watch the
-        # sparks fly.
-        old_solr_url = settings.HAYSTACK_CONNECTIONS['default']['URL']
-        settings.HAYSTACK_CONNECTIONS['default']['URL'] = "%s/foo/" % old_solr_url
-        cap = CaptureHandler()
-        logging.getLogger('haystack').addHandler(cap)
-        import haystack
-        logging.getLogger('haystack').removeHandler(haystack.stream)
-
         # Setup the rest of the bits.
-        old_ui = connections['default'].get_unified_index()
         ui = UnifiedIndex()
         smmi = SolrMockSearchIndex()
         ui.build(indexes=[smmi])
@@ -566,25 +553,23 @@ class FailedSolrSearchBackendTestCase(TestCase):
         sb = connections['default'].get_backend()
 
         # Prior to the addition of the try/except bits, these would all fail miserably.
-        self.assertEqual(len(CaptureHandler.logs_seen), 0)
         sb.update(smmi, self.sample_objs)
-        self.assertEqual(len(CaptureHandler.logs_seen), 1)
-        sb.remove(self.sample_objs[0])
-        self.assertEqual(len(CaptureHandler.logs_seen), 2)
-        sb.search('search')
-        self.assertEqual(len(CaptureHandler.logs_seen), 3)
-        sb.more_like_this(self.sample_objs[0])
-        self.assertEqual(len(CaptureHandler.logs_seen), 4)
-        sb.clear([MockModel])
-        self.assertEqual(len(CaptureHandler.logs_seen), 5)
-        sb.clear()
-        self.assertEqual(len(CaptureHandler.logs_seen), 6)
+        self.assertEqual(mock_log.call_count, 1)
 
-        # Restore.
-        settings.HAYSTACK_CONNECTIONS['default']['URL'] = old_solr_url
-        connections['default']._index = old_ui
-        logging.getLogger('haystack').removeHandler(cap)
-        logging.getLogger('haystack').addHandler(haystack.stream)
+        sb.remove(self.sample_objs[0])
+        self.assertEqual(mock_log.call_count, 2)
+
+        sb.search('search')
+        self.assertEqual(mock_log.call_count, 3)
+
+        sb.more_like_this(self.sample_objs[0])
+        self.assertEqual(mock_log.call_count, 4)
+
+        sb.clear([MockModel])
+        self.assertEqual(mock_log.call_count, 5)
+
+        sb.clear()
+        self.assertEqual(mock_log.call_count, 6)
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
@@ -999,7 +984,6 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.smmi.update()
         self.sammi.update()
 
-
     def tearDown(self):
         # Restore.
         connections['default']._index = self.old_ui
@@ -1032,7 +1016,6 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=1))[0], MockSearchResult))
-
 
 
 class LiveSolrAutocompleteTestCase(TestCase):
