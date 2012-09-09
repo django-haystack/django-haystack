@@ -237,7 +237,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, extras=None):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
 
@@ -459,6 +459,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not kwargs['query']['filtered'].get('filter'):
             kwargs['query'] = kwargs['query']['filtered']['query']
 
+        extras = extras or {}
+        kwargs.update(extras)
+
         return kwargs
 
     @log_query
@@ -653,6 +656,21 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 # Sucks that this is almost an exact copy of what's in the Solr backend,
 # but we can't import due to dependencies.
 class ElasticsearchSearchQuery(BaseSearchQuery):
+    def __init__(self, **kwargs):
+        super(ElasticsearchSearchQuery, self).__init__(**kwargs)
+        self.extras = {}
+
+    def _clone(self, **kwargs):
+        clone = super(ElasticsearchSearchQuery, self)._clone(**kwargs)
+        clone.extras = self.extras.copy()
+
+    def add_extras(self, extras):
+        """
+        Adds any 'extra' search params & values to a query at search-time.
+
+        """
+        self.extras.update(extras)
+    
     def matching_all_fragment(self):
         return '*:*'
 
@@ -832,6 +850,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
 
+		search_kwargs['extras'] = self.extras
         return search_kwargs
         
     def run(self, spelling_query=None, **kwargs):

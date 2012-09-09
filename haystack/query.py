@@ -530,6 +530,21 @@ class SearchQuerySet(object):
         qs._flat = flat
         return qs
 
+    def extra(self, extras_dict=None):
+        """
+        Support for Django ORM-style ``extra`` specification to pass in
+        search-time search params.
+
+        ``extras_dict`` must be type ``dict``.
+        
+        """
+        if not extras_dict:
+            return
+
+        clone = self._clone()
+        clone.query.add_extras(dict(extras_dict))
+        return clone
+
     # Utility methods.
 
     def _clone(self, klass=None):

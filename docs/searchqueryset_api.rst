@@ -534,6 +534,35 @@ Example::
     # Specify the 'default'.
     sqs = SearchQuerySet().all().using('default')
 
+``extra``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.extra(self, extras_dict=None)
+
+Passes a dictionary (``extras_dict``) of arbitrary parameters and their values
+directly to the search engine. Any parameter passed in will override values set
+by any other method call (including previous ``extra`` calls).
+
+This method is provided as a convenience to enable ad hoc support for arbitrary
+search parameters that may not be explicitly supported by Haystack. 
+
+.. warning::
+
+   Haystack neither validates that the parameters passed in via this method are
+   correct, nor cleans/escapes the values of those parameters. If you want to
+   clean the values before passing them, use the ``Clean`` input type
+   (:ref:`ref-inputtypes`). Consult your search engine's documentation to verify
+   it supports the parameters you wish to pass in.
+
+Example::
+
+    # Let's search for all books by Jules Verne, and facet on year of book
+    # publication.
+    sqs = SearchQuerySet().filter(author="Jules Verne").facet("year_published")
+
+    # We only want Solr to send us back the 'title' field in the response.
+    sqs = sqs.extra({'fl': 'title'})
+
 
 Methods That Do Not Return A ``SearchQuerySet``
 -----------------------------------------------

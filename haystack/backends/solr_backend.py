@@ -140,7 +140,8 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, extras=None):
+        extras = extras or {}
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -257,6 +258,7 @@ class SolrSearchBackend(BaseSearchBackend):
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
 
+        kwargs.update(extras)
         return kwargs
 
     def more_like_this(self, model_instance, additional_query_string=None,
@@ -490,6 +492,23 @@ class SolrSearchBackend(BaseSearchBackend):
 
 
 class SolrSearchQuery(BaseSearchQuery):
+    def __init__(self, **kwargs):
+        super(SolrSearchQuery, self).__init__(**kwargs)
+        self.extras = {}
+
+    def _clone(self, **kwargs):
+        clone = super(SolrSearchQuery, self)._clone(**kwargs)
+        clone.extras = self.extras.copy()
+        return clone
+
+    def add_extras(self, extras):
+        """
+        Adds any 'extra' search params & values to a query at
+        search-time.
+
+        """
+        self.extras.update(extras)
+        
     def matching_all_fragment(self):
         return '*:*'
 
@@ -665,6 +684,7 @@ class SolrSearchQuery(BaseSearchQuery):
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
 
+        search_kwargs['extras'] = self.extras
         return search_kwargs
         
     def run(self, spelling_query=None, **kwargs):
