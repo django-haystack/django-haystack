@@ -29,7 +29,7 @@ class SearchQuerySet(object):
         self._result_cache = []
         self._result_count = None
         self._cache_full = False
-        self._load_all = False
+        self._transform_fns = []
         self._ignored_result_count = 0
         self.log = logging.getLogger('haystack')
 
@@ -53,6 +53,8 @@ class SearchQuerySet(object):
             self.query = self.query.using(backend_alias)
         else:
             self.query = connections[backend_alias].get_query()
+
+        return backend_alias
 
     def __getstate__(self):
         """
@@ -152,6 +154,71 @@ class SearchQuerySet(object):
             if not self._fill_cache(current_position, current_position + ITERATOR_LOAD_PER_QUERY):
                 raise StopIteration
 
+    def _load_all(self, results):
+        original_results = []
+        models_pks = {}
+        loaded_objects = {}
+
+        # Remember the search position for each result so we don't have to resort later.
+        for result in results:
+            original_results.append(result)
+            models_pks.setdefault(result.model, []).append(result.pk)
+            if getattr(result, 'related_pk', None):
+                content_type = ContentType.objects.get_for_id(result.related_ct)
+                model = content_type.model_class()
+                models_pks.setdefault(model, []).append(result.related_pk)
+
+        # Load the objects for each model in turn.
+        load_all_querysets = hasattr(self, '_load_all_querysets')
+        for model in models_pks:
+            if load_all_querysets and model in self._load_all_querysets:
+                # Use the overriding queryset.
+                loaded_objects[model] = self._load_all_querysets[model].in_bulk(models_pks[model])
+            else:
+                # Check the SearchIndex for the model for an override.
+                try:
+                    ui = connections[self.query._using].get_unified_index()
+                    index = ui.get_index(model)
+                    if load_all_querysets:
+                        objects = index.load_all_queryset()
+                    else:
+                        objects = index.read_queryset()
+                    loaded_objects[model] = objects.in_bulk(models_pks[model])
+                except NotHandled:
+                    self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
+                    # Revert to old behaviour
+                    loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
+
+        for result in results:
+            # We have to deal with integer keys being cast from strings
+            model_objects = loaded_objects.get(result.model, {})
+            if not result.pk in model_objects:
+                try:
+                    result.pk = int(result.pk)
+                except ValueError:
+                    pass
+            try:
+                result._object = model_objects[result.pk]
+            except KeyError:
+                # The object was either deleted since we indexed or should
+                # be ignored; fail silently.
+                self._ignored_result_count += 1
+                continue
+            if getattr(result, 'related_pk', None):
+                content_type = ContentType.objects.get_for_id(result.related_ct)
+                model = content_type.model_class()
+                model_objects = loaded_objects.get(model, {})
+                if not result.related_pk in model_objects:
+                    try:
+                        result.related_pk = int(result.related_pk)
+                    except ValueError:
+                        pass
+                try:
+                    result._related = model_objects[result.related_pk]
+                except KeyError:
+                    self._ignored_result_count += 1
+                    continue
+
     def _fill_cache(self, start, end, **kwargs):
         # Tell the query where to start from and how many we'd like.
         self.query._reset()
@@ -185,47 +252,12 @@ class SearchQuerySet(object):
     def post_process_results(self, results):
         to_cache = []
 
-        # Check if we wish to load all objects.
-        if self._load_all:
-            original_results = []
-            models_pks = {}
-            loaded_objects = {}
+        results = list(results)
+        if self._transform_fns:
+            for fn in self._transform_fns:
+                fn(results)
 
-            # Remember the search position for each result so we don't have to resort later.
-            for result in results:
-                original_results.append(result)
-                models_pks.setdefault(result.model, []).append(result.pk)
-
-            # Load the objects for each model in turn.
-            for model in models_pks:
-                try:
-                    ui = connections[self.query._using].get_unified_index()
-                    index = ui.get_index(model)
-                    objects = index.read_queryset()
-                    loaded_objects[model] = objects.in_bulk(models_pks[model])
-                except NotHandled:
-                    self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
-                    # Revert to old behaviour
-                    loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
-
-        for result in results:
-            if self._load_all:
-                # We have to deal with integer keys being cast from strings
-                model_objects = loaded_objects.get(result.model, {})
-                if not result.pk in model_objects:
-                    try:
-                        result.pk = int(result.pk)
-                    except ValueError:
-                        pass
-                try:
-                    result._object = model_objects[result.pk]
-                except KeyError:
-                    # The object was either deleted since we indexed or should
-                    # be ignored; fail silently.
-                    self._ignored_result_count += 1
-                    continue
-
-            to_cache.append(result)
+        to_cache.extend(results)
 
         return to_cache
 
@@ -270,6 +302,7 @@ class SearchQuerySet(object):
             return self._result_cache[start]
 
     # Methods that return a SearchQuerySet.
+
     def all(self):
         """Returns all results for the query."""
         return self._clone()
@@ -333,7 +366,7 @@ class SearchQuerySet(object):
                 warnings.warn('The model %r is not registered for search.' % model)
 
             clone.query.add_model(model)
-
+        clone._determine_backend()
         return clone
 
     def result_class(self, klass):
@@ -405,7 +438,12 @@ class SearchQuerySet(object):
     def load_all(self):
         """Efficiently populates the objects in the search results."""
         clone = self._clone()
-        clone._load_all = True
+        clone._transform_fns.append(self._load_all)
+        return clone
+
+    def transform(self, fn):
+        clone = self._clone()
+        clone._transform_fns.append(fn)
         return clone
 
     def auto_query(self, query_string, fieldname='content'):
@@ -537,8 +575,8 @@ class SearchQuerySet(object):
             klass = self.__class__
 
         query = self.query._clone()
-        clone = klass(query=query)
-        clone._load_all = self._load_all
+        clone = klass(using=self._using, query=query)
+        clone._transform_fns = self._transform_fns[:]
         return clone
 
 
@@ -598,6 +636,11 @@ class ValuesListSearchQuerySet(SearchQuerySet):
     def post_process_results(self, results):
         to_cache = []
 
+        results = list(results)
+        if self._transform_fns:
+            for fn in self._transform_fns:
+                fn(results)
+
         if self._flat:
             accum = to_cache.extend
         else:
@@ -625,6 +668,11 @@ class ValuesSearchQuerySet(ValuesListSearchQuerySet):
 
     def post_process_results(self, results):
         to_cache = []
+
+        results = list(results)
+        if self._transform_fns:
+            for fn in self._transform_fns:
+                fn(results)
 
         for result in results:
             to_cache.append(dict((i, getattr(result, i, None)) for i in self._fields))
@@ -671,69 +719,21 @@ class RelatedSearchQuerySet(SearchQuerySet):
             if not self._fill_cache(start, start + ITERATOR_LOAD_PER_QUERY):
                 raise StopIteration
 
-    def _fill_cache(self, start, end):
+    def _fill_cache(self, start, end, **kwargs):
         # Tell the query where to start from and how many we'd like.
         self.query._reset()
         self.query.set_limits(start, end)
-        results = self.query.get_results()
+        results = self.query.get_results(**kwargs)
 
-        if len(results) == 0:
+        if results == None or len(results) == 0:
             return False
-
-        if start is None:
-            start = 0
-
-        if end is None:
-            end = self.query.get_count()
-
-        # Check if we wish to load all objects.
-        if self._load_all:
-            original_results = []
-            models_pks = {}
-            loaded_objects = {}
-
-            # Remember the search position for each result so we don't have to resort later.
-            for result in results:
-                original_results.append(result)
-                models_pks.setdefault(result.model, []).append(result.pk)
-
-            # Load the objects for each model in turn.
-            for model in models_pks:
-                if model in self._load_all_querysets:
-                    # Use the overriding queryset.
-                    loaded_objects[model] = self._load_all_querysets[model].in_bulk(models_pks[model])
-                else:
-                    # Check the SearchIndex for the model for an override.
-                    try:
-                        index = connections[self.query._using].get_unified_index().get_index(model)
-                        qs = index.load_all_queryset()
-                        loaded_objects[model] = qs.in_bulk(models_pks[model])
-                    except NotHandled:
-                        # The model returned doesn't seem to be handled by the
-                        # routers. We should silently fail and populate
-                        # nothing for those objects.
-                        loaded_objects[model] = []
 
         if len(results) + len(self._result_cache) < len(self) and len(results) < ITERATOR_LOAD_PER_QUERY:
             self._ignored_result_count += ITERATOR_LOAD_PER_QUERY - len(results)
 
-        for result in results:
-            if self._load_all:
-                # We have to deal with integer keys being cast from strings; if this
-                # fails we've got a character pk.
-                try:
-                    result.pk = int(result.pk)
-                except ValueError:
-                    pass
-                try:
-                    result._object = loaded_objects[result.model][result.pk]
-                except (KeyError, IndexError):
-                    # The object was either deleted since we indexed or should
-                    # be ignored; fail silently.
-                    self._ignored_result_count += 1
-                    continue
+        to_cache = self.post_process_results(results)
 
-            self._result_cache.append(result)
+        self._result_cache.extend(to_cache)
 
         return True
 
@@ -796,7 +796,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
             klass = self.__class__
 
         query = self.query._clone()
-        clone = klass(query=query)
-        clone._load_all = self._load_all
+        clone = klass(using=self._using, query=query)
+        clone._transform_fns = self._transform_fns[:]
         clone._load_all_querysets = self._load_all_querysets
         return clone
