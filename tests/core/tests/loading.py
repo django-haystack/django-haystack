@@ -4,7 +4,14 @@ from haystack.exceptions import SearchFieldError, NotHandled
 from haystack import indexes
 from haystack.utils import loading
 from core.models import MockModel, AnotherMockModel
-import unittest
+
+try:
+    from django.utils import unittest as unittest2
+except ImportError:
+    try:
+        import unittest2
+    except ImportError:
+        raise RuntimeError("Tests require unittest2. If you use Django 1.2, install unittest2")
 
 try:
     import pysolr
@@ -32,7 +39,7 @@ class ConnectionHandlerTestCase(TestCase):
         })
         self.assertEqual(ch._connections, {})
 
-    @unittest.skipIf(pysolr is False, "pysolr required")
+    @unittest2.skipIf(pysolr is False, "pysolr required")
     def test_get_item(self):
         ch = loading.ConnectionHandler({})
         
