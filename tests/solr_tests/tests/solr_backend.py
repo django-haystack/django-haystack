@@ -15,7 +15,6 @@ from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
-from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
 from core.models import (MockModel, AnotherMockModel,
                          AFourthMockModel, ASixthMockModel)

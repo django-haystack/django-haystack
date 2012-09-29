@@ -1,8 +1,6 @@
-import pysolr
-from django.conf import settings
 from django.template import Template, Context
 from django.test import TestCase
-from haystack import connections, connection_router
+from haystack import connections
 from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel

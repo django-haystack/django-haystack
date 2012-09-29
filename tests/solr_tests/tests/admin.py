@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
+from haystack import connections, reset_search_queries
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 from solr_tests.tests.solr_backend import SolrMockModelSearchIndex, clear_solr_index
@@ -69,4 +69,3 @@ class SearchModelAdminTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(connections['default'].queries), 3)
         self.assertEqual(resp.context['original'].id, 1)
-
