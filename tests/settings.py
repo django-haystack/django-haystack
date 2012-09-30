@@ -1,3 +1,5 @@
+SECRET_KEY = "Please do not spew DeprecationWarnings"
+
 # Haystack settings for running tests.
 DATABASES = {
     'default': {
