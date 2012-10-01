@@ -291,3 +291,14 @@ It's using Haystack to power search on every LocalWiki instance.
 Using: Solr
 
 * http://localwiki.org/
+
+
+Pitchup
+-------
+
+For faceting, geo and autocomplete.
+
+Using: ???
+
+* http://www.pitchup.com/search/
+
