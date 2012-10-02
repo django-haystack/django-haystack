@@ -325,6 +325,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 kwargs['facets'][facet_fieldname] = {
                     'terms': {
                         'field': facet_fieldname,
+                        'size': getattr(settings, 'HAYSTACK_FACETS_SIZE', 10),
                     },
                 }
 
