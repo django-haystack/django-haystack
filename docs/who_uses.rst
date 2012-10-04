@@ -302,3 +302,17 @@ Using: ???
 
 * http://www.pitchup.com/search/
 
+
+Gidsy
+-----
+
+Gidsy makes it easy for anyone to organize and find exciting things
+to do everywhere in the world.
+
+For activity search, area pages, forums and private messages.
+
+Using: Elasticsearch
+
+* https://gidsy.com/
+* https://gidsy.com/search/
+* https://gidsy.com/forum/
