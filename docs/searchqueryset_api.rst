@@ -1,4 +1,4 @@
-_ref-searchqueryset-api:
+.. _ref-searchqueryset-api:
 
 ======================
 ``SearchQuerySet`` API
@@ -303,7 +303,7 @@ amount of time between gaps as ``gap_by`` (one of ``'year'``, ``'month'``,
 
 You can also optionally provide a ``gap_amount`` to specify a different
 increment than ``1``. For example, specifying gaps by week (every seven days)
-would would be ``gap_by='day', gap_amount=7``).
+would be ``gap_by='day', gap_amount=7``).
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.
@@ -505,7 +505,7 @@ for similar results. The instance you pass in should be an indexed object.
 Previously called methods will have an effect on the provided results.
 
 It will evaluate its own backend-specific query and populate the
-`SearchQuerySet`` in the same manner as other methods.
+``SearchQuerySet`` in the same manner as other methods.
 
 Example::
 

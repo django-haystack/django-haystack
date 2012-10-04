@@ -8,7 +8,7 @@ What Is Faceting?
 -----------------
 
 Faceting is a way to provide users with feedback about the number of documents
-which match terms they may be interested in. At it's simplest, it gives
+which match terms they may be interested in. At its simplest, it gives
 document counts based on words in the corpus, date ranges, numeric ranges or
 even advanced queries.
 

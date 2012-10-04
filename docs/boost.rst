@@ -23,7 +23,7 @@ Despite all being types of boost, they take place at different times and have
 slightly different effects on scoring.
 
 Term boost happens at query time (when the search query is run) and is based
-around increasing the score is a certain word/phrase is seen.
+around increasing the score if a certain word/phrase is seen.
 
 On the other hand, document & field boosts take place at indexing time (when
 the document is being added to the index). Document boost causes the relevance
