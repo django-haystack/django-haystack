@@ -4,9 +4,10 @@ from decimal import Decimal
 import logging as std_logging
 
 import pyelasticsearch
+import requests
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
+from haystack import connections, reset_search_queries
 from haystack import indexes
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
@@ -35,7 +36,7 @@ def clear_elasticsearch_index():
     try:
         raw_es.delete_index(settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
         raw_es.refresh()
-    except pyelasticsearch.ElasticSearchError:
+    except (requests.RequestException, pyelasticsearch.ElasticHttpError):
         pass
 
 
@@ -195,8 +196,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
     def raw_search(self, query):
         try:
-            return self.raw_es.search('*:*', indexes=[settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME']])
-        except pyelasticsearch.ElasticSearchError:
+            return self.raw_es.search('*:*', index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError):
             return {}
 
     def test_non_silent(self):
@@ -231,7 +232,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Check what Elasticsearch thinks is there.
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 3)
-        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], cmp=lambda x,y: cmp(x['id'], y['id'])), [
+        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], cmp=lambda x, y: cmp(x['id'], y['id'])), [
             {
                 'django_id': '1',
                 'django_ct': 'core.mockmodel',
@@ -1168,7 +1169,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
         super(ElasticsearchBoostBackendTestCase, self).tearDown()
 
     def raw_search(self, query):
-        return self.raw_es.search('*:*', indexes=[settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME']])
+        return self.raw_es.search('*:*', index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
 
     def test_boost(self):
         self.sb.update(self.smmi, self.sample_objs)
