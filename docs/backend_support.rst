@@ -46,11 +46,11 @@ Elasticsearch
 * Automatic query building
 * "More Like This" functionality
 * Term Boosting
-* Faceting
+* Faceting (up to 100 facets)
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: pyelasticsearch (toastdriven git master) & Elasticsearch 0.17.7+
+* Requires: pyelasticsearch 0.2+ & Elasticsearch 0.17.7+
 
 Whoosh
 ------

@@ -236,7 +236,7 @@ AstroBin
 
 For general search.
 
-Using: ???
+Using: Solr
 
 * http://www.astrobin.com/
 
@@ -291,3 +291,28 @@ It's using Haystack to power search on every LocalWiki instance.
 Using: Solr
 
 * http://localwiki.org/
+
+
+Pitchup
+-------
+
+For faceting, geo and autocomplete.
+
+Using: ???
+
+* http://www.pitchup.com/search/
+
+
+Gidsy
+-----
+
+Gidsy makes it easy for anyone to organize and find exciting things
+to do everywhere in the world.
+
+For activity search, area pages, forums and private messages.
+
+Using: Elasticsearch
+
+* https://gidsy.com/
+* https://gidsy.com/search/
+* https://gidsy.com/forum/

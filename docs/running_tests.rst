@@ -4,6 +4,14 @@
 Running Tests
 =============
 
+Dependencies
+============
+
+``Haystack`` uses the `Mock <http://pypi.python.org/pypi/mock>`_ library for
+testing. You will need to install it before running the tests::
+
+    pip install mock
+
 Core Haystack Functionality
 ===========================
 
@@ -11,7 +19,7 @@ In order to test Haystack with the minimum amount of unnecessary mocking and to
 stay as close to real-world use as possible, ``Haystack`` ships with a test
 app (called ``core``) within the ``django-haystack/tests`` directory.
 
-In the event you need to run ``Haystack``'s tests (such as testing 
+In the event you need to run ``Haystack``'s tests (such as testing
 bugfixes/modifications), here are the steps to getting them running::
 
     cd django-haystack/tests
@@ -21,7 +29,6 @@ bugfixes/modifications), here are the steps to getting them running::
 ``Haystack`` is maintained with all tests passing at all times, so if you
 receive any errors during testing, please check your setup and file a report if
 the errors persist.
-
 
 Backends
 ========
@@ -35,15 +42,28 @@ app for that engine. For instance, to run the Solr backend's tests::
     cd django-haystack/tests
     export PYTHONPATH=`pwd`/..:`pwd`
     django-admin.py test solr_tests --settings=solr_settings
-    
+
 Or, to run the Whoosh backend's tests::
-    
+
     cd django-haystack/tests
     export PYTHONPATH=`pwd`/..:`pwd`
     django-admin.py test whoosh_tests --settings=whoosh_settings
-     
+
 Or, to run the Elasticsearch backend's tests::
-    
+
     cd django-haystack/tests
     export PYTHONPATH=`pwd`/..:`pwd`
-    django-admin.py test elasticsearch_tests --settings=elasticsearch_settings 
+    django-admin.py test elasticsearch_tests --settings=elasticsearch_settings
+
+Configuring Solr
+----------------
+
+Haystack assumes that you have a Solr server running on port ``9001`` which uses the schema and
+configuration provided in the ``tests/`` directory. Currently, these steps will result in a working
+test server:
+
+#. Download the current Solr release from http://lucene.apache.org/solr/
+#. Copy ``tests/solrconfig.xml`` to ``example/solr/conf/solrconfig.xml``
+#. Copy ``tests/solr_test_schema.xml`` to ``example/solr/conf/schema.xml``
+#. Change into the ``example`` directory
+#. Start Solr: ``java -Djetty.port=9001 -jar start.jar``
