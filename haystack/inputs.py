@@ -26,7 +26,7 @@ class BaseInput(object):
 
 class Raw(BaseInput):
     """
-    An input type for passing a query directory to the backend.
+    An input type for passing a query directly to the backend.
 
     Prone to not being very portable.
     """

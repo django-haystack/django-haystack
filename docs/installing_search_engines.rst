@@ -153,10 +153,10 @@ locally. Modifications should be done in a YAML file, the stock one being
       data: /usr/local/var/data
 
 You'll also need an Elasticsearch binding: pyelasticsearch_ (**NOT**
-``pyes``). Place ``pyelasticsearch.py`` somewhere on your ``PYTHONPATH``
+``pyes``). Place ``pyelasticsearch`` somewhere on your ``PYTHONPATH``
 (usually ``python setup.py install`` or ``pip install pyelasticsearch``).
 
-.. _pyelasticsearch: http://pypi.python.org/pypi/pyelasticsearch/0.1
+.. _pyelasticsearch: http://pypi.python.org/pypi/pyelasticsearch/
 
 .. note::
 
