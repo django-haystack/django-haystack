@@ -27,6 +27,28 @@ class MockPassthroughRouter(BaseRouter):
         return None
 
 
+class MockMasterSlaveRouter(BaseRouter):
+    def for_read(self, **hints):
+        return 'slave'
+    
+    def for_write(self, **hints):
+        return 'master'
+
+
+class MockPassthroughRouter(BaseRouter):
+    def for_read(self, **hints):
+        if hints.get('pass_through') is False:
+            return 'pass'
+        
+        return None
+    
+    def for_write(self, **hints):
+        if hints.get('pass_through') is False:
+            return 'pass'
+        
+        return None
+
+
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
         super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
