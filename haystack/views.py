@@ -177,7 +177,7 @@ class FacetedSearchView(SearchView):
         return extra
 
 
-def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None):
+def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None, form_kwargs=None):
     """
     A more traditional view that also demonstrate an alternative
     way to use Haystack.
@@ -201,14 +201,22 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
     query = ''
     results = EmptySearchQuerySet()
 
+    new_kwargs = {
+        'load_all': load_all,
+    }
+    if form_kwargs:
+        new_kwargs.update(form_kwargs)
+    if searchqueryset:
+        new_kwargs['searchqueryset'] = searchqueryset
+
     if request.GET.get('q'):
-        form = form_class(request.GET, searchqueryset=searchqueryset, load_all=load_all)
+        form = form_class(request.GET, **new_kwargs)
 
         if form.is_valid():
             query = form.cleaned_data['q']
             results = form.search()
     else:
-        form = form_class(searchqueryset=searchqueryset, load_all=load_all)
+        form = form_class(**new_kwargs)
 
     paginator = Paginator(results, results_per_page or RESULTS_PER_PAGE)
 
