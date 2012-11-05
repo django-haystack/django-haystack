@@ -201,6 +201,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             if self.include_spelling is True:
                 sp = SpellChecker(self.storage)
                 sp.add_field(self.index, self.content_field_name)
+        else:
+            # release lock
+            writer.cancel()
 
     def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
