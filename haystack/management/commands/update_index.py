@@ -71,9 +71,9 @@ def do_update(backend, index, qs, start, end, total, verbosity=1):
 
     if verbosity >= 2:
         if hasattr(os, 'getppid') and os.getpid() == os.getppid():
-            print "  indexed %s - %d of %d." % (start+1, end, total)
+            print "  indexed %s - %d of %d." % (start + 1, end, total)
         else:
-            print "  indexed %s - %d of %d (by %s)." % (start+1, end, total, os.getpid())
+            print "  indexed %s - %d of %d (by %s)." % (start + 1, end, total, os.getpid())
 
     # FIXME: Get the right backend.
     backend.update(index, current_qs)
