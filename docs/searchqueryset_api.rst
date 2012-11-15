@@ -1,4 +1,4 @@
-.. _ref-searchqueryset-api:
+_ref-searchqueryset-api:
 
 ======================
 ``SearchQuerySet`` API
@@ -730,7 +730,15 @@ The actual behavior of these lookups is backend-specific.
 
 .. warning::
 
-    The ``contains``
+    The ``contains`` filter became the new default filter as of Haystack v2.X
+    (the default in Haystack v1.X was ``exact``). This changed because ``exact``
+    caused problems and was unintuitive for new people trying to use Haystack.
+    ``contains`` is a much more natural usage.
+
+    If you had an app built on Haystack v1.X & are upgrading, you'll need to
+    sanity-check & possibly change any code that was relying on the default.
+    The solution is just to add ``__exact`` to any "bare" field in a
+    ``.filter(...)`` clause.
 
 Example::
 

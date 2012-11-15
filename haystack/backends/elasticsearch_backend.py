@@ -1,5 +1,4 @@
 import datetime
-import logging
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -11,11 +10,8 @@ from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
-try:
-    from django.db.models.sql.query import get_proxied_model
-except ImportError:
-    # Likely on Django 1.0
-    get_proxied_model = None
+from haystack.utils import log as logging
+
 try:
     import requests
 except ImportError:
@@ -61,26 +57,26 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 "tokenizer": {
                     "haystack_ngram_tokenizer": {
                         "type": "nGram",
-                        "min_gram" : 3,
-                        "max_gram" : 15,
+                        "min_gram": 3,
+                        "max_gram": 15,
                     },
                     "haystack_edgengram_tokenizer": {
                         "type": "edgeNGram",
-                        "min_gram" : 2,
-                        "max_gram" : 15,
+                        "min_gram": 2,
+                        "max_gram": 15,
                         "side": "front"
                     }
                 },
-                "filter" : {
-                    "haystack_ngram" : {
-                        "type" : "nGram",
-                        "min_gram" : 3,
-                        "max_gram" : 15
+                "filter": {
+                    "haystack_ngram": {
+                        "type": "nGram",
+                        "min_gram": 3,
+                        "max_gram": 15
                     },
-                    "haystack_edgengram" : {
-                        "type" : "edgeNGram",
-                        "min_gram" : 2,
-                        "max_gram" : 15
+                    "haystack_edgengram": {
+                        "type": "edgeNGram",
+                        "min_gram": 2,
+                        "max_gram": 15
                     }
                 }
             }
@@ -110,8 +106,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # during the ``update`` & if it doesn't match, we'll put the new
         # mapping.
         try:
-            self.existing_mapping = self.conn.get_mapping(indexes=[self.index_name])
-        except Exception, e:
+            self.existing_mapping = self.conn.get_mapping(index=self.index_name)
+        except Exception:
             if not self.silently_fail:
                 raise
 
@@ -127,9 +123,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             try:
                 # Make sure the index is there first.
                 self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
-                self.conn.put_mapping('modelresult', current_mapping, indexes=[self.index_name])
+                self.conn.put_mapping('modelresult', current_mapping, index=self.index_name)
                 self.existing_mapping = current_mapping
-            except Exception, e:
+            except Exception:
                 if not self.silently_fail:
                     raise
 
@@ -139,7 +135,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except pyelasticsearch.ElasticSearchError, e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
                 if not self.silently_fail:
                     raise
 
@@ -158,7 +154,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     final_data[key] = self.conn.from_python(value)
 
                 prepped_docs.append(final_data)
-            except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
                 if not self.silently_fail:
                     raise
 
@@ -175,7 +171,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
 
         if commit:
-            self.conn.refresh(indexes=[self.index_name])
+            self.conn.refresh(index=self.index_name)
 
     def remove(self, obj_or_string, commit=True):
         doc_id = get_identifier(obj_or_string)
@@ -183,7 +179,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except pyelasticsearch.ElasticSearchError, e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
                 if not self.silently_fail:
                     raise
 
@@ -194,8 +190,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.conn.delete(self.index_name, 'modelresult', doc_id)
 
             if commit:
-                self.conn.refresh(indexes=[self.index_name])
-        except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
+                self.conn.refresh(index=self.index_name)
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
             if not self.silently_fail:
                 raise
 
@@ -218,11 +214,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 # Delete by query in Elasticsearch asssumes you're dealing with
                 # a ``query`` root object. :/
-                self.conn.delete_by_query(self.index_name, 'modelresult', {'query_string': {'query': " OR ".join(models_to_delete)}})
+                query = {'query_string': {'query': " OR ".join(models_to_delete)}}
+                self.conn.delete_by_query(self.index_name, 'modelresult', query)
 
             if commit:
-                self.conn.refresh(indexes=[self.index_name])
-        except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
+                self.conn.refresh(index=self.index_name)
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
             if not self.silently_fail:
                 raise
 
@@ -325,6 +322,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 kwargs['facets'][facet_fieldname] = {
                     'terms': {
                         'field': facet_fieldname,
+                        'size': 100,
                     },
                 }
 
@@ -473,25 +471,26 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.setup()
 
         search_kwargs = self.build_search_kwargs(query_string, **kwargs)
+        search_kwargs['from'] = kwargs.get('start_offset', 0)
 
-        # Because Elasticsearch.
-        query_params = {
-            'from': kwargs.get('start_offset', 0),
-        }
-
-        if kwargs.get('end_offset') is not None and kwargs.get('end_offset') > kwargs.get('start_offset', 0):
-            query_params['size'] = kwargs.get('end_offset') - kwargs.get('start_offset', 0)
+        end_offset = kwargs.get('end_offset')
+        start_offset = kwargs.get('start_offset', 0)
+        if end_offset is not None and end_offset > start_offset:
+            search_kwargs['size'] = end_offset - start_offset
 
         try:
-            raw_results = self.conn.search(None, search_kwargs, indexes=[self.index_name], doc_types=['modelresult'], **query_params)
-        except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
+            raw_results = self.conn.search(search_kwargs,
+                                           index=self.index_name,
+                                           doc_type='modelresult')
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
             if not self.silently_fail:
                 raise
 
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
             raw_results = {}
 
-        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult))
+        return self._process_results(raw_results, highlight=kwargs.get('highlight'),
+                                     result_class=kwargs.get('result_class', SearchResult))
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -501,11 +500,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
-        # Handle deferred models.
-        if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
-            model_klass = get_proxied_model(model_instance._meta)
-        else:
-            model_klass = type(model_instance)
+        # Deferred models will have a different class ("RealClass_Deferred_fieldname")
+        # which won't be in our registry:
+        model_klass = model_instance._meta.concrete_model
 
         index = connections[self.connection_alias].get_unified_index().get_index(model_klass)
         field_name = index.get_content_field()
@@ -537,7 +534,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.morelikethis(self.index_name, 'modelresult', doc_id, [field_name], body, **params)
-        except (requests.RequestException, pyelasticsearch.ElasticSearchError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
             if not self.silently_fail:
                 raise
 
@@ -849,7 +846,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             search_kwargs['spelling_query'] = spelling_query
 
         return search_kwargs
-        
+
     def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()

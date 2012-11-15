@@ -8,7 +8,7 @@ INSTALLED_APPS += [
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:9001/solr/test_default',
+        'URL': 'http://localhost:9001/solr',
     },
     'whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
