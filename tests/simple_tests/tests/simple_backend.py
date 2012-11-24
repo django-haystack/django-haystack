@@ -119,6 +119,11 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
         self.assertTrue(len(self.sqs.exclude(name='daniel')) > 0)
         self.assertTrue(len(self.sqs.order_by('-pub_date')) > 0)
 
+    def test_more_like_this(self):
+        # MLT shouldn't be horribly broken. This used to throw an exception.
+        mm1 = MockModel.objects.get(pk=1)
+        self.assertEqual(len(self.sqs.filter(text=1).more_like_this(mm1)), 0)
+
     def test_values_queries(self):
         sqs = self.sqs.auto_query('daniel')
         self.assertTrue(len(sqs) > 0)

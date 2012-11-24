@@ -15,6 +15,7 @@ from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
 from haystack.utils import log as logging
+
 try:
     import json
 except ImportError:
@@ -22,11 +23,6 @@ except ImportError:
         import simplejson as json
     except ImportError:
         from django.utils import simplejson as json
-try:
-    from django.db.models.sql.query import get_proxied_model
-except ImportError:
-    # Likely on Django 1.0
-    get_proxied_model = None
 
 try:
     import whoosh
@@ -448,11 +444,9 @@ class WhooshSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
-        # Handle deferred models.
-        if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
-            model_klass = get_proxied_model(model_instance._meta)
-        else:
-            model_klass = type(model_instance)
+        # Deferred models will have a different class ("RealClass_Deferred_fieldname")
+        # which won't be in our registry:
+        model_klass = model_instance._meta.concrete_model
 
         field_name = self.content_field_name
         narrow_queries = set()
