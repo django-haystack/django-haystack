@@ -10,14 +10,6 @@ Whoosh_, Xapian_, etc.) without having to modify your code.
 .. _Xapian: http://xapian.org/
 
 
-.. note::
-
-    This documentation represents the development version of Haystack. For
-    old versions of the documentation: `1.0`_, `1.1`_.
-
-.. _`1.0`: http://docs.haystacksearch.org/1.0/
-.. _`1.1`: http://docs.haystacksearch.org/1.1/
-
 Getting Started
 ---------------
 
