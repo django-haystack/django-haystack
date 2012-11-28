@@ -183,7 +183,7 @@ Those include files might look like::
 
 You can make this even better by standardizing on an includes layout, then
 writing a template tag or filter that generates the include filename. Usage
-might looks something like::
+might look something like::
 
     {% for result in page.object_list %}
         {% with result|search_include as fragment %}
