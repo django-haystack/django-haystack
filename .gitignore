@@ -7,3 +7,6 @@ dist
 build
 MANIFEST
 .tox
+
+# Because I'm ghetto like that.
+tests/pyelasticsearch.py
