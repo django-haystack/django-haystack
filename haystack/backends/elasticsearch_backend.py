@@ -408,11 +408,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     within['field']: {
                         "top_left": {
                             "lat": max_lat,
-                            "lon": max_lng
+                            "lon": min_lng
                         },
                         "bottom_right": {
                             "lat": min_lat,
-                            "lon": min_lng
+                            "lon": max_lng
                         }
                     }
                 },
