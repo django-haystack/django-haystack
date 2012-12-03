@@ -473,6 +473,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         search_kwargs = self.build_search_kwargs(query_string, **kwargs)
         search_kwargs['from'] = kwargs.get('start_offset', 0)
 
+        order_fields = set()
+        for order in search_kwargs.get('sort', []):
+            for key in order.keys():
+                order_fields.add(key)
+
+        geo_sort = '_geo_distance' in order_fields
+
         end_offset = kwargs.get('end_offset')
         start_offset = kwargs.get('start_offset', 0)
         if end_offset is not None and end_offset > start_offset:
@@ -489,8 +496,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
             raw_results = {}
 
-        return self._process_results(raw_results, highlight=kwargs.get('highlight'),
-                                     result_class=kwargs.get('result_class', SearchResult))
+        return self._process_results(raw_results,
+            highlight=kwargs.get('highlight'),
+            result_class=kwargs.get('result_class', SearchResult),
+            distance_point=kwargs.get('distance_point'), geo_sort=geo_sort)
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -527,7 +536,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return self._process_results(raw_results, result_class=result_class)
 
-    def _process_results(self, raw_results, highlight=False, result_class=None):
+    def _process_results(self, raw_results, highlight=False,
+                         result_class=None, distance_point=None,
+                         geo_sort=False):
         from haystack import connections
         results = []
         hits = raw_results.get('hits', {}).get('total', 0)
@@ -579,6 +590,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 if 'highlight' in raw_result:
                     additional_fields['highlighted'] = raw_result['highlight'].get(content_field, '')
+
+                if distance_point:
+                    additional_fields['_point_of_origin'] = distance_point
+
+                    if geo_sort and raw_result.get('sort'):
+                        from haystack.utils.geo import Distance
+                        additional_fields['_distance'] = Distance(km=float(raw_result['sort'][0]))
+                    else:
+                        additional_fields['_distance'] = None
 
                 result = result_class(app_label, model_name, source[DJANGO_ID], raw_result['_score'], **additional_fields)
                 results.append(result)
