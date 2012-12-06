@@ -220,16 +220,6 @@ class SearchResult(object):
         self.log = self._get_log()
 
 
-# Setup pre_save/pre_delete signals to make sure things like the signals in
-# ``RealTimeSearchIndex`` are setup in time to handle data changes.
-def load_indexes(sender, *args, **kwargs):
-    from haystack import connections
-
-    for conn in connections.all():
-        ui = conn.get_unified_index()
-        ui.setup_indexes()
-
-
 def reload_indexes(sender, *args, **kwargs):
     from haystack import connections
 
@@ -238,13 +228,10 @@ def reload_indexes(sender, *args, **kwargs):
         # Note: Unlike above, we're resetting the ``UnifiedIndex`` here.
         # Thi gives us a clean slate.
         ui.reset()
-        ui.setup_indexes()
 
 
-models.signals.pre_save.connect(load_indexes, dispatch_uid='setup_index_signals')
-models.signals.pre_delete.connect(load_indexes, dispatch_uid='setup_index_signals')
-
-
+# FIXME: This may no longer be needed with the new signal processing setup.
+#        Test & remove if possible.
 if 'south' in settings.INSTALLED_APPS:
     # South causes a little mayhem, as when you run a ``syncdb``, it'll setup
     # the apps *without* migrations using Django's built-in ``syncdb``. When

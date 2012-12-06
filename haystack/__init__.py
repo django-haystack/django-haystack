@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core import signals
 from haystack.constants import DEFAULT_ALIAS
+from haystack import signals
 from haystack.utils import loading
 
 
@@ -39,6 +40,11 @@ connections = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)
 
 # Load the router(s).
 connection_router = loading.ConnectionRouter()
+
+# Setup the signal processor.
+signal_processor_path = getattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', 'haystack.signals.BaseSignalProcessor')
+signal_processor_class = loading.import_class(signal_processor_path)
+signal_processor = signal_processor_class(connections, connection_router)
 
 if hasattr(settings, 'HAYSTACK_ROUTERS'):
     if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):

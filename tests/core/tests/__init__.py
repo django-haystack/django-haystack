@@ -11,6 +11,7 @@ from core.tests.inputs import *
 from core.tests.loading import *
 from core.tests.models import *
 from core.tests.query import *
+from core.tests.signals import *
 from core.tests.templatetags import *
 from core.tests.views import *
 from core.tests.utils import *

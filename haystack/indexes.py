@@ -1,8 +1,6 @@
 import copy
 import threading
-import sys
 import warnings
-from django.db.models import signals
 from django.utils.encoding import force_unicode
 from django.core.exceptions import ImproperlyConfigured
 from haystack import connections, connection_router
@@ -94,22 +92,6 @@ class SearchIndex(threading.local):
 
         if not len(content_fields) == 1:
             raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
-
-    def _setup_save(self):
-        """A hook for controlling what happens when the registered model is saved."""
-        pass
-
-    def _setup_delete(self):
-        """A hook for controlling what happens when the registered model is deleted."""
-        pass
-
-    def _teardown_save(self):
-        """A hook for removing the behavior when the registered model is saved."""
-        pass
-
-    def _teardown_delete(self):
-        """A hook for removing the behavior when the registered model is deleted."""
-        pass
 
     def get_model(self):
         """
@@ -238,7 +220,11 @@ class SearchIndex(threading.local):
 
     def _get_backend(self, using):
         if using is None:
-            using = connection_router.for_write(index=self)
+            try:
+                using = connection_router.for_write(index=self)[0]
+            except IndexError:
+                # There's no backend to handle it. Bomb out.
+                return None
 
         return connections[using].get_backend()
 
@@ -250,7 +236,10 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).update(self, self.index_queryset())
+        backend = self._get_backend(using)
+
+        if backend is not None:
+            backend.update(self, self.index_queryset())
 
     def update_object(self, instance, using=None, **kwargs):
         """
@@ -263,7 +252,10 @@ class SearchIndex(threading.local):
         """
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
-            self._get_backend(using).update(self, [instance])
+            backend = self._get_backend(using)
+
+            if backend is not None:
+                backend.update(self, [instance])
 
     def remove_object(self, instance, using=None, **kwargs):
         """
@@ -274,7 +266,10 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).remove(instance)
+        backend = self._get_backend(using)
+
+        if backend is not None:
+            backend.remove(instance)
 
     def clear(self, using=None):
         """
@@ -284,7 +279,10 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).clear(models=[self.get_model()])
+        backend = self._get_backend(using)
+
+        if backend is not None:
+            backend.clear(models=[self.get_model()])
 
     def reindex(self, using=None):
         """
@@ -331,24 +329,6 @@ class SearchIndex(threading.local):
         By default, returns ``all()`` on the model's default manager.
         """
         return self.get_model()._default_manager.all()
-
-
-class RealTimeSearchIndex(SearchIndex):
-    """
-    A variant of the ``SearchIndex`` that constantly keeps the index fresh,
-    as opposed to requiring a cron job.
-    """
-    def _setup_save(self):
-        signals.post_save.connect(self.update_object, sender=self.get_model())
-
-    def _setup_delete(self):
-        signals.post_delete.connect(self.remove_object, sender=self.get_model())
-
-    def _teardown_save(self):
-        signals.post_save.disconnect(self.update_object, sender=self.get_model())
-
-    def _teardown_delete(self):
-        signals.post_delete.disconnect(self.remove_object, sender=self.get_model())
 
 
 class BasicSearchIndex(SearchIndex):
