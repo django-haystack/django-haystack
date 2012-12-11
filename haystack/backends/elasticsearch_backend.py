@@ -8,7 +8,7 @@ from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, lo
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact
-from haystack.models import SearchResult
+from haystack.models import SearchResult, get_concrete_model_for_instance
 from haystack.utils import get_identifier
 from haystack.utils import log as logging
 
@@ -509,9 +509,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
-        # Deferred models will have a different class ("RealClass_Deferred_fieldname")
-        # which won't be in our registry:
-        model_klass = model_instance._meta.concrete_model
+        model_klass = get_concrete_model_for_instance(model_instance)
 
         index = connections[self.connection_alias].get_unified_index().get_index(model_klass)
         field_name = index.get_content_field()
