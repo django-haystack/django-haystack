@@ -30,7 +30,10 @@ def worker(bits):
         if not 'sqlite3' in info['ENGINE']:
             try:
                 db.close_connection()
-                del(connections._connections[alias])
+                if isinstance(connections._connections, dict):
+                    del(connections._connections[alias])
+                else:
+                    delattr(connections._connections, alias)
             except KeyError:
                 pass
 
