@@ -244,6 +244,7 @@ class Command(LabelCommand):
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
                 pool.map(worker, ghetto_queue)
+                pool.terminate()
 
             if self.remove:
                 if self.start_date or self.end_date or total <= 0:
@@ -267,3 +268,4 @@ class Command(LabelCommand):
                 if self.workers > 0:
                     pool = multiprocessing.Pool(self.workers)
                     pool.map(worker, ghetto_queue)
+                    pool.terminate()
