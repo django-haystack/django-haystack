@@ -1,3 +1,4 @@
+.settings
 *.pyc
 .DS_Store
 _build
@@ -7,3 +8,5 @@ dist
 build
 MANIFEST
 .tox
+.project
+.pydevproject
