@@ -1,12 +1,19 @@
 import datetime
+
+from mock import patch
 import pysolr
+
+from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.test import TestCase
+from django.utils import unittest
+
 from haystack import connections
 from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
+
 from core.models import MockModel, MockTag
 
 
@@ -93,6 +100,20 @@ class ManagementCommandTestCase(TestCase):
 
         call_command('update_index', age=3, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 1)
+
+    @unittest.skipIf(DJANGO_VERSION < (1, 4, 0), 'timezone support was added in Django 1.4')
+    def test_age_with_time_zones(self):
+        """Haystack should use django.utils.timezone.now on Django 1.4+"""
+        from django.utils.timezone import now as django_now
+        from haystack.management.commands.update_index import now as haystack_now
+
+        self.assertIs(haystack_now, django_now,
+                      msg="update_index should use django.utils.timezone.now")
+
+        with patch("haystack.management.commands.update_index.now") as m:
+            m.return_value = django_now()
+            self.test_age()
+            assert m.called
 
     def test_dates(self):
         call_command('clear_index', interactive=False, verbosity=0)

@@ -1,16 +1,24 @@
-import datetime
+from datetime import timedelta
+from optparse import make_option
 import os
 import warnings
-from optparse import make_option
+
 from django import db
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+
 from haystack import connections as haystack_connections
 from haystack.constants import DEFAULT_ALIAS
 from haystack.query import SearchQuerySet
+
+try:
+    from django.utils.timezone import now
+except ImportError:
+    from datetime import datetime
+    now = datetime.now
 
 
 DEFAULT_BATCH_SIZE = None
@@ -30,7 +38,10 @@ def worker(bits):
         if not 'sqlite3' in info['ENGINE']:
             try:
                 db.close_connection()
-                del(connections._connections[alias])
+                if isinstance(connections._connections, dict):
+                    del(connections._connections[alias])
+                else:
+                    delattr(connections._connections, alias)
             except KeyError:
                 pass
 
@@ -135,7 +146,7 @@ class Command(LabelCommand):
         end_date = options.get('end_date')
 
         if age is not None:
-            self.start_date = datetime.datetime.now() - datetime.timedelta(hours=int(age))
+            self.start_date = now() - timedelta(hours=int(age))
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
@@ -233,6 +244,7 @@ class Command(LabelCommand):
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
                 pool.map(worker, ghetto_queue)
+                pool.terminate()
 
             if self.remove:
                 if self.start_date or self.end_date or total <= 0:
@@ -256,3 +268,4 @@ class Command(LabelCommand):
                 if self.workers > 0:
                     pool = multiprocessing.Pool(self.workers)
                     pool.map(worker, ghetto_queue)
+                    pool.terminate()
