@@ -111,6 +111,10 @@ class HighlightedModelSearchForm(ModelSearchForm):
 
 class FacetedModelSearchForm(ModelSearchForm):
     selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
+    
+    def __init__(self, *args, **kwargs):
+        self.selected_facets = kwargs.pop("selected_facets", [])
+        super(FacetedModelSearchForm, self).__init__(*args, **kwargs)
 
     def search(self):
         sqs = super(FacetedModelSearchForm, self).search()
