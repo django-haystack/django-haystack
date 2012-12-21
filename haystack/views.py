@@ -1,8 +1,10 @@
+from functools import update_wrapper
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.decorators import classonlymethod
 from haystack.forms import ModelSearchForm, FacetedSearchForm
 from haystack.query import EmptySearchQuerySet
 
@@ -142,12 +144,13 @@ class SearchView(object):
 
         context.update(self.extra_context())
         return render_to_response(self.template, context, context_instance=self.context_class(self.request))
-
-
-def search_view_factory(view_class=SearchView, *args, **kwargs):
-    def search_view(request):
-        return view_class(*args, **kwargs)(request)
-    return search_view
+    
+    @classonlymethod    
+    def as_view(cls, *initargs, **initkwargs):
+        def view(request, *args, **kwargs):
+            return cls(*initargs, **initkwargs)(request)
+        update_wrapper(view, cls, updated=())
+        return view
 
 
 class FacetedSearchView(SearchView):
