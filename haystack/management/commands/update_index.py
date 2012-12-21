@@ -147,12 +147,14 @@ class Command(LabelCommand):
 
         if age is not None:
             self.start_date = now() - timedelta(hours=int(age))
+            options['start_date'] = self.start_date
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
 
             try:
                 self.start_date = dateutil_parse(start_date)
+                options['start_date'] = self.start_date
             except ValueError:
                 pass
 
@@ -161,6 +163,7 @@ class Command(LabelCommand):
 
             try:
                 self.end_date = dateutil_parse(end_date)
+                options['end_date'] = self.end_date
             except ValueError:
                 pass
 
