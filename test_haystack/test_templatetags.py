@@ -69,7 +69,7 @@ the attribute of the object to populate that field with.
         context = {"entry": self.sample_entry, "query": "Haystack"}
         self.assertEqual(
             self.render(template, context),
-            '...<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y...',
+            '\nRegistering indexes in <div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the...'
         )
 
         template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx foo bbxxxxx foo" with "foo" max_length 5 html_tag "span" %}"""
