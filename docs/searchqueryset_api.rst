@@ -632,7 +632,8 @@ Example::
 Returns the spelling suggestion found by the query.
 
 To work, you must set ``INCLUDE_SPELLING`` within your connection's
-settings dictionary to ``True``. Otherwise, ``None`` will be returned.
+settings dictionary to ``True``, and you must rebuild your index afterwards. 
+Otherwise, ``None`` will be returned.
 
 This method causes the query to evaluate and run the search if it hasn't already
 run. Search results will be populated as normal but with an additional spelling
