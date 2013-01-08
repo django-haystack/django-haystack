@@ -110,30 +110,30 @@ class ConnectionRouterTestCase(TestCase):
         self.assertEqual(cr.for_read(), ['default'])
 
         cr = loading.ConnectionRouter(routers_list=['core.tests.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave'])
+        self.assertEqual(cr.for_read(), ['slave', 'default'])
 
         # Demonstrate pass-through.
         cr = loading.ConnectionRouter(routers_list=['core.tests.mocks.MockPassthroughRouter', 'core.tests.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave'])
+        self.assertEqual(cr.for_read(), ['slave', 'default'])
 
         # Demonstrate that hinting can change routing.
         cr = loading.ConnectionRouter(routers_list=['core.tests.mocks.MockPassthroughRouter', 'core.tests.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(pass_through=False), ['pass'])
+        self.assertEqual(cr.for_read(pass_through=False), ['pass', 'slave', 'default'])
 
     def test_for_write(self):
         cr = loading.ConnectionRouter()
         self.assertEqual(cr.for_write(), ['default'])
 
         cr = loading.ConnectionRouter(routers_list=['core.tests.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_write(), ['master'])
+        self.assertEqual(cr.for_write(), ['master', 'default'])
 
         # Demonstrate pass-through.
         cr = loading.ConnectionRouter(routers_list=['core.tests.mocks.MockPassthroughRouter', 'core.tests.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_write(), ['master'])
+        self.assertEqual(cr.for_write(), ['master', 'default'])
 
         # Demonstrate that hinting can change routing.
         cr = loading.ConnectionRouter(routers_list=['core.tests.mocks.MockPassthroughRouter', 'core.tests.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_write(pass_through=False), ['pass'])
+        self.assertEqual(cr.for_write(pass_through=False), ['pass', 'master', 'default'])
 
 
 class MockNotAModel(object):

@@ -1,10 +1,12 @@
 import os
 import shutil
 from django.conf import settings
+from django.db import models
 from django.test import TestCase
 from haystack import connections, connection_router
 from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
+from haystack.signals import BaseSignalProcessor, RealtimeSignalProcessor
 from haystack.utils.loading import UnifiedIndex
 from multipleindex.search_indexes import FooIndex
 from multipleindex.models import Foo, Bar
@@ -57,7 +59,13 @@ class MultipleIndexTestCase(TestCase):
         self.fi.clear()
         self.bi.clear()
 
-        super(MultipleIndexTestCase, self).setUp()
+        try:
+            # Because Whoosh doesn't clean up its mess.
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
+        except OSError:
+            pass
+
+        super(MultipleIndexTestCase, self).tearDown()
 
     def test_index_update_object_using(self):
         results = self.solr_backend.search('foo')
@@ -182,3 +190,96 @@ class MultipleIndexTestCase(TestCase):
 
         # Should error, since it's not present.
         self.assertRaises(NotHandled, wui.get_index, Bar)
+
+
+class TestSignalProcessor(BaseSignalProcessor):
+    def setup(self):
+        self.setup_ran = True
+        super(TestSignalProcessor, self).setup()
+
+    def teardown(self):
+        self.teardown_ran = True
+        super(TestSignalProcessor, self).teardown()
+
+
+class SignalProcessorTestCase(TestCase):
+    def setUp(self):
+        super(SignalProcessorTestCase, self).setUp()
+
+        # Blatantly wrong data, just for assertion purposes.
+        self.fake_connections = {}
+        self.fake_router = []
+
+        self.ui = connections['default'].get_unified_index()
+        self.fi = self.ui.get_index(Foo)
+        self.bi = self.ui.get_index(Bar)
+        self.solr_backend = connections['default'].get_backend()
+        self.whoosh_backend = connections['whoosh'].get_backend()
+
+        foo_1 = Foo.objects.create(
+            title='Haystack test',
+            body='foo 1',
+        )
+        foo_2 = Foo.objects.create(
+            title='Another Haystack test',
+            body='foo 2',
+        )
+        bar_1 = Bar.objects.create(
+            author='Haystack test',
+            content='bar 1',
+        )
+        bar_2 = Bar.objects.create(
+            author='Another Haystack test',
+            content='bar 2',
+        )
+        bar_3 = Bar.objects.create(
+            author='Yet another Haystack test',
+            content='bar 3',
+        )
+
+        self.fi.reindex(using='default')
+        self.fi.reindex(using='whoosh')
+        self.bi.reindex(using='default')
+
+    def tearDown(self):
+        self.fi.clear()
+        self.bi.clear()
+
+        try:
+            # Because Whoosh doesn't clean up its mess.
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
+        except OSError:
+            pass
+
+        super(SignalProcessorTestCase, self).tearDown()
+
+    def test_init(self):
+        tsp = TestSignalProcessor(self.fake_connections, self.fake_router)
+        self.assertEqual(tsp.connections, self.fake_connections)
+        self.assertEqual(tsp.connection_router, self.fake_router)
+        # We fake some side-effects to make sure it ran.
+        self.assertTrue(tsp.setup_ran)
+
+        bsp = BaseSignalProcessor(self.fake_connections, self.fake_router)
+        self.assertRaises(AttributeError, bsp.setup_ran)
+
+    def test_setup(self):
+        tsp = TestSignalProcessor(self.fake_connections, self.fake_router)
+        tsp.setup()
+        self.assertTrue(tsp.setup_ran)
+
+    def test_teardown(self):
+        tsp = TestSignalProcessor(self.fake_connections, self.fake_router)
+        tsp.teardown()
+        self.assertTrue(tsp.teardown_ran)
+
+    def test_handle_save(self):
+        # Because the code here is pretty leaky (abstraction-wise), we'll test
+        # the actual setup.
+        # First, ensure the signals are setup.
+        self.assertEqual(len(models.signals.post_save.receivers), 1)
+        self.assertEqual(len(models.signals.post_delete.receivers), 1)
+        # Second, check the existing
+
+    def test_handle_delete(self):
+        pass
