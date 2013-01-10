@@ -22,24 +22,24 @@ class BaseSignalProcessor(object):
         # Do nothing.
         pass
 
-    def handle_save(self, sending_object):
-        using_backends = self.connection_router.for_write(sending_object)
+    def handle_save(self, sender, instance, **kwargs):
+        using_backends = self.connection_router.for_write(instance=instance)
 
         for using in using_backends:
             try:
-                index = self.connections[using].get_unified_index().get_index(sending_object.__class__)
-                index.update_object(sending_object, using=using)
+                index = self.connections[using].get_unified_index().get_index(sender)
+                index.update_object(instance, using=using)
             except NotHandled:
                 # FIXME: Maybe log it or let the exception bubble?
                 pass
 
-    def handle_delete(self, sending_object):
-        using_backends = self.connection_router.for_write(sending_object)
+    def handle_delete(self, sender, instance, **kwargs):
+        using_backends = self.connection_router.for_write(instance=instance)
 
         for using in using_backends:
             try:
-                index = self.connections[using].get_unified_index().get_index(sending_object.__class__)
-                index.remove_object(sending_object, using=using)
+                index = self.connections[using].get_unified_index().get_index(sender)
+                index.remove_object(instance, using=using)
             except NotHandled:
                 # FIXME: Maybe log it or let the exception bubble?
                 pass
@@ -51,15 +51,15 @@ class RealtimeSignalProcessor(BaseSignalProcessor):
     search engine appropriately.
     """
     def setup(self):
-        # Naive.
-        models.signals.post_save.connect(self.handle_save, sender=models.Model)
-        models.signals.post_delete.connect(self.handle_delete, sender=models.Model)
+        # Naive (listen to all model saves).
+        models.signals.post_save.connect(self.handle_save)
+        models.signals.post_delete.connect(self.handle_delete)
         # Efficient would be going through all backends & collecting all models
         # being used, then hooking up signals only for those.
 
     def teardown(self):
-        # Naive.
-        models.signals.post_save.disconnect(self.handle_save, sender=models.Model)
-        models.signals.post_delete.disconnect(self.handle_delete, sender=models.Model)
+        # Naive (listen to all model saves).
+        models.signals.post_save.disconnect(self.handle_save)
+        models.signals.post_delete.disconnect(self.handle_delete)
         # Efficient would be going through all backends & collecting all models
         # being used, then disconnecting signals only for those.
