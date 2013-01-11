@@ -64,7 +64,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if len(docs) > 0:
             try:
                 self.conn.add(docs, commit=commit, boost=index.get_field_weights())
-            except (IOError, SolrError), e:
+            except (IOError, SolrError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -79,7 +79,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 ID: solr_id
             }
             self.conn.delete(**kwargs)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -100,7 +100,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
             # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
             self.conn.optimize()
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -121,7 +121,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.search(query_string, **search_kwargs)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -306,7 +306,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -477,7 +477,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             return self.conn.extract(file_obj)
-        except StandardError, e:
+        except StandardError as e:
             self.log.warning(u"Unable to extract file contents: %s", e,
                              exc_info=True, extra={"data": {"file": file_obj}})
             return None
@@ -608,7 +608,7 @@ class SolrSearchQuery(BaseSearchQuery):
         search_kwargs = {
             'start_offset': self.start_offset,
             'result_class': self.result_class
-        }        
+        }
         order_by_list = None
 
         if self.order_by:
@@ -660,7 +660,7 @@ class SolrSearchQuery(BaseSearchQuery):
             search_kwargs['spelling_query'] = spelling_query
 
         return search_kwargs
-        
+
     def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
