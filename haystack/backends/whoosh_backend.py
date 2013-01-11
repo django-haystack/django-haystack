@@ -182,7 +182,7 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             try:
                 writer.update_document(**doc)
-            except Exception, e:
+            except Exception as e:
                 if not self.silently_fail:
                     raise
 
@@ -214,7 +214,7 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         try:
             self.index.delete_by_query(q=self.parser.parse(u'%s:"%s"' % (ID, whoosh_id)))
-        except Exception, e:
+        except Exception as e:
             if not self.silently_fail:
                 raise
 
@@ -236,7 +236,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     models_to_delete.append(u"%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
 
                 self.index.delete_by_query(q=self.parser.parse(u" OR ".join(models_to_delete)))
-        except Exception, e:
+        except Exception as e:
             if not self.silently_fail:
                 raise
 
