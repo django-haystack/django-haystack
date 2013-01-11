@@ -2,9 +2,12 @@ import copy
 import threading
 import sys
 import warnings
-from django.db.models import signals
-from django.utils.encoding import force_unicode
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import signals
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 from haystack import connections, connection_router
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
@@ -188,7 +191,7 @@ class SearchIndex(threading.local):
         self.prepared_data = {
             ID: get_identifier(obj),
             DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
-            DJANGO_ID: force_unicode(obj.pk),
+            DJANGO_ID: force_text(obj.pk),
         }
 
         for field_name, field in self.fields.items():

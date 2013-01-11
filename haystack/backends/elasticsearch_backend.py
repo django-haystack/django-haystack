@@ -135,7 +135,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -154,7 +154,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     final_data[key] = self.conn.from_python(value)
 
                 prepped_docs.append(final_data)
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -179,7 +179,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -191,7 +191,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             if commit:
                 self.conn.refresh(index=self.index_name)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -219,7 +219,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             if commit:
                 self.conn.refresh(index=self.index_name)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -489,7 +489,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             raw_results = self.conn.search(search_kwargs,
                                            index=self.index_name,
                                            doc_type='modelresult')
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -527,7 +527,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(self.index_name, 'modelresult', doc_id, [field_name], **params)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 

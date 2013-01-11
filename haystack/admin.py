@@ -4,10 +4,15 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, InvalidPage
 from django.shortcuts import render_to_response
 from django import template
-from django.utils.encoding import force_unicode
 from django.utils.translation import ungettext
 from haystack import connections
 from haystack.query import SearchQuerySet
+
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
+
 try:
     from django.contrib.admin.options import csrf_protect_m
 except ImportError:
@@ -20,6 +25,7 @@ except ImportError:
         return wraps
 
     csrf_protect_m = method_decorator(csrf_protect)
+
 
 def list_max_show_all(changelist):
     """
@@ -126,7 +132,7 @@ class SearchModelAdmin(ModelAdmin):
             'All %(total_count)s selected', changelist.result_count)
 
         context = {
-            'module_name': force_unicode(self.model._meta.verbose_name_plural),
+            'module_name': force_text(self.model._meta.verbose_name_plural),
             'selection_note': selection_note % {'count': len(changelist.result_list)},
             'selection_note_all': selection_note_all % {'total_count': changelist.result_count},
             'title': changelist.title,
