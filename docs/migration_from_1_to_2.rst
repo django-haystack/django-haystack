@@ -12,6 +12,7 @@ they consisted of:
 * The removal of ``SearchSite`` & ``haystack.site``.
 * The removal of ``handle_registrations`` & ``autodiscover``.
 * The addition of multiple index support.
+* The addition of ``SignalProcessors`` & the removal of ``RealTimeSearchIndex``.
 * The removal/renaming of various settings.
 
 This guide will help you make the changes needed to be compatible with Haystack
@@ -198,6 +199,28 @@ that should not be loaded & used. For example::
 
 This allows for reliable swapping of the index that handles a model without
 relying on correct import order.
+
+
+Removal of ``RealTimeSearchIndex``
+==================================
+
+Use of the ``haystack.indexes.RealTimeSearchIndex`` is no longer valid. It has
+been removed in favor of ``RealtimeSignalProcessor``. To migrate, first change
+the inheritance of all your ``RealTimeSearchIndex`` subclasses to use
+``SearchIndex`` instead::
+
+    # Old.
+    class MySearchIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
+        # ...
+
+
+    # New.
+    class MySearchIndex(indexes.SearchIndex, indexes.Indexable):
+        # ...
+
+Then update your settings to enable use of the ``RealtimeSignalProcessor``::
+
+    HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 
 Done!

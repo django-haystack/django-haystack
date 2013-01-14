@@ -113,7 +113,7 @@ Examples::
     deletions unless the ``--remove`` flag is provided. You might consider
     a queue consumer if the memory requirements for ``--remove`` don't
     fit your needs. Alternatively, you can use the
-    ``RealTimeSearchIndex``, which will automatically handle deletions.
+    ``RealtimeSignalProcessor``, which will automatically handle deletions.
 
 
 ``rebuild_index``

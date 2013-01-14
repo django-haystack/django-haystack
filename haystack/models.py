@@ -228,27 +228,3 @@ def reload_indexes(sender, *args, **kwargs):
         # Note: Unlike above, we're resetting the ``UnifiedIndex`` here.
         # Thi gives us a clean slate.
         ui.reset()
-
-
-# FIXME: This may no longer be needed with the new signal processing setup.
-#        Test & remove if possible.
-if 'south' in settings.INSTALLED_APPS:
-    # South causes a little mayhem, as when you run a ``syncdb``, it'll setup
-    # the apps *without* migrations using Django's built-in ``syncdb``. When
-    # this happens, ``INSTALLED_APPS`` consists of only those apps, NOT all
-    # apps.At the end of that sync, Django runs ``create_permissions``, which
-    # of course uses the ORM, causing the ``pre_save`` above to fire.
-
-    # The effect is that Haystack runs its setup against the then-subset of
-    # ``INSTALLED_APPS``. Once that's done, it won't re-setup the
-    # ``UnifiedIndex`` again, since the signal has a ``dispatch_uid``.
-
-    # This bug gets exposed only either when people run tests that *use*
-    # the South migrations OR when they have a data migration & the changed
-    # data isn't picked up by ``RealTimeSearchIndex`` (or similar).
-
-    # In the event of this, the only safe route is to listen for
-    # ``south.signals.post_migrate``, then re-run setup. This will
-    # unfortunately happen per-app, but should be quick & reliable.
-    from south.signals import post_migrate
-    post_migrate.connect(reload_indexes)

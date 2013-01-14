@@ -15,14 +15,30 @@ class BaseSignalProcessor(object):
         self.setup()
 
     def setup(self):
+        """
+        A hook for setting up anything necessary for
+        ``handle_save/handle_delete`` to be executed.
+
+        Default behavior is to do nothing (``pass``).
+        """
         # Do nothing.
         pass
 
     def teardown(self):
+        """
+        A hook for tearing down anything necessary for
+        ``handle_save/handle_delete`` to no longer be executed.
+
+        Default behavior is to do nothing (``pass``).
+        """
         # Do nothing.
         pass
 
     def handle_save(self, sender, instance, **kwargs):
+        """
+        Given an individual model instance, determine which backends the
+        update should be sent to & update the object on those backends.
+        """
         using_backends = self.connection_router.for_write(instance=instance)
 
         for using in using_backends:
@@ -30,10 +46,14 @@ class BaseSignalProcessor(object):
                 index = self.connections[using].get_unified_index().get_index(sender)
                 index.update_object(instance, using=using)
             except NotHandled:
-                # FIXME: Maybe log it or let the exception bubble?
+                # TODO: Maybe log it or let the exception bubble?
                 pass
 
     def handle_delete(self, sender, instance, **kwargs):
+        """
+        Given an individual model instance, determine which backends the
+        delete should be sent to & delete the object on those backends.
+        """
         using_backends = self.connection_router.for_write(instance=instance)
 
         for using in using_backends:
@@ -41,7 +61,7 @@ class BaseSignalProcessor(object):
                 index = self.connections[using].get_unified_index().get_index(sender)
                 index.remove_object(instance, using=using)
             except NotHandled:
-                # FIXME: Maybe log it or let the exception bubble?
+                # TODO: Maybe log it or let the exception bubble?
                 pass
 
 
