@@ -61,6 +61,7 @@ you may want to include in your application.
    faceting
    autocomplete
    boost
+   signal_processors
    multiple_index
    rich_content_extraction
    spatial

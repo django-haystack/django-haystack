@@ -15,7 +15,7 @@ class FooIndex(BaseIndex, indexes.Indexable):
 
 
 # Import the old way & make sure things don't explode.
-from haystack.indexes import SearchIndex, RealTimeSearchIndex, Indexable
+from haystack.indexes import SearchIndex, Indexable
 
 
 class BarIndex(SearchIndex, Indexable):

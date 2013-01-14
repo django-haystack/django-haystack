@@ -1,3 +1,5 @@
+.. _ref-other_apps:
+
 =============================
 Haystack-Related Applications
 =============================
@@ -13,7 +15,7 @@ queued_search
 
 http://github.com/toastdriven/queued_search (2.X compatible)
 
-Provides a queue-based setup as an alternative to ``RealTimeSearchIndex`` or
+Provides a queue-based setup as an alternative to ``RealtimeSignalProcessor`` or
 constantly running the ``update_index`` command. Useful for high-load, short
 update time situations.
 

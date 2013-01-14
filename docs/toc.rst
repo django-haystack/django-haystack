@@ -27,6 +27,7 @@ Table Of Contents
    faceting
    autocomplete
    boost
+   signal_processors
    multiple_index
    rich_content_extraction
    spatial

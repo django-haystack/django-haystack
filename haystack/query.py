@@ -47,6 +47,10 @@ class SearchQuerySet(object):
 
         backend_alias = connection_router.for_read(**hints)
 
+        if isinstance(backend_alias, (list, tuple)) and len(backend_alias):
+            # We can only effectively read from one engine.
+            backend_alias = backend_alias[0]
+
         # The ``SearchQuery`` might swap itself out for a different variant
         # here.
         if self.query:
