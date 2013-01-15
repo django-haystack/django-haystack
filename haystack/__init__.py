@@ -62,4 +62,7 @@ def reset_search_queries(**kwargs):
 
 
 if settings.DEBUG:
-    signals.request_started.connect(reset_search_queries)
+    try:
+        signals.request_started.connect(reset_search_queries)
+    except:
+        pass
