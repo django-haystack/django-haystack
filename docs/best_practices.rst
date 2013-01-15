@@ -170,10 +170,10 @@ Those include files might look like::
     # search/includes/blog/post.html
     <div class="post_result">
         <h3><a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a></h3>
-        
+
         <p>{{ result.object.tease }}</p>
     </div>
-    
+
     # search/includes/media/photo.html
     <div class="photo_result">
         <a href="{{ result.object.get_absolute_url }}">
@@ -197,12 +197,14 @@ might looks something like::
 Real-Time Search
 ================
 
-If your site sees heavy search traffic and up-to-date information is very important,
-Haystack provides a way to constantly keep your index up to date. By using the
-``RealTimeSearchIndex`` class instead of the ``SearchIndex`` class, Haystack will
-automatically update the index whenever a model is saved/deleted.
+If your site sees heavy search traffic and up-to-date information is very
+important, Haystack provides a way to constantly keep your index up to date.
 
-You can find more information within the :doc:`searchindex_api` documentation.
+You can enable the ``RealtimeSignalProcessor`` within your settings, which
+will allow Haystack to automatically update the index whenever a model is
+saved/deleted.
+
+You can find more information within the :doc:`signal_processors` documentation.
 
 
 Use Of A Queue For A Better User Experience
@@ -210,8 +212,8 @@ Use Of A Queue For A Better User Experience
 
 By default, you have to manually reindex content, Haystack immediately tries to merge
 it into the search index. If you have a write-heavy site, this could mean your
-search engine may spend most of its time churning on constant merges. If you can 
-afford a small delay between when a model is saved and when it appears in the 
+search engine may spend most of its time churning on constant merges. If you can
+afford a small delay between when a model is saved and when it appears in the
 search results, queuing these merges is a good idea.
 
 You gain a snappier interface for users as updates go into a queue (a fast
@@ -222,24 +224,40 @@ could live on a completely separate server from your webservers, allowing you
 to tune more efficiently.
 
 Implementing this is relatively simple. There are two parts, creating a new
-``QueuedSearchIndex`` class and creating a queue processing script to handle the
-actual updates.
+``QueuedSignalProcessor`` class and creating a queue processing script to
+handle the actual updates.
 
-For the ``QueuedSearchIndex``, simply inherit from the ``SearchIndex`` provided
-by Haystack and override the ``_setup_save``/``_setup_delete`` methods. These
-methods usually attach themselves to their model's ``post_save``/``post_delete``
-signals and call the backend to update or remove a record. You should override 
-this behavior and place a message in your queue of choice. At a minimum, you'll 
-want to include the model you're indexing and the id of the model within that 
-message, so that you can retrieve the proper index from the ``SearchSite`` in 
-your consumer. Then alter all of your ``SearchIndex`` classes to inherit from 
-this new class. Now all saves/deletes will be handled by the queue and you 
-should receive a speed boost.
+For the ``QueuedSignalProcessor``, you should inherit from
+``haystack.signals.BaseSignalProcessor``, then alter the ``setup/teardown``
+methods to call an enqueuing method instead of directly calling
+``handle_save/handle_delete``. For example::
 
-For the consumer, this is much more specific to the queue used and your desired 
-setup. At a minimum, you will need to periodically consume the queue, fetch the 
-correct index from the ``SearchSite`` for your application, load the model from 
-the message and pass that model to the ``update_object`` or ``remove_object`` 
-methods on the ``SearchIndex``. Proper grouping, batching and intelligent 
-handling are all additional things that could be applied on top to further 
+    from haystack import signals
+
+
+    class QueuedSignalProcessor(signals.BaseSignalProcessor):
+        # Override the built-in.
+        def setup(self):
+            models.signals.post_save.connect(self.enqueue_save)
+            models.signals.post_delete.connect(self.enqueue_delete)
+
+        # Override the built-in.
+        def teardown(self):
+            models.signals.post_save.disconnect(self.enqueue_save)
+            models.signals.post_delete.disconnect(self.enqueue_delete)
+
+        # Add on a queuing method.
+        def enqueue_save(self, sender, instance, **kwargs):
+            # Push the save & information onto queue du jour here...
+
+        # Add on a queuing method.
+        def enqueue_delete(self, sender, instance, **kwargs):
+            # Push the delete & information onto queue du jour here...
+
+For the consumer, this is much more specific to the queue used and your desired
+setup. At a minimum, you will need to periodically consume the queue, fetch the
+correct index from the ``SearchSite`` for your application, load the model from
+the message and pass that model to the ``update_object`` or ``remove_object``
+methods on the ``SearchIndex``. Proper grouping, batching and intelligent
+handling are all additional things that could be applied on top to further
 improve performance.

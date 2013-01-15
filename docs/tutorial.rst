@@ -360,7 +360,7 @@ models were processed and placed in the index.
     things to update).
 
     Alternatively, if you have low traffic and/or your search engine can handle
-    it, the ``RealTimeSearchIndex`` automatically handles updates/deletes
+    it, the ``RealtimeSignalProcessor`` automatically handles updates/deletes
     for you.
 
 

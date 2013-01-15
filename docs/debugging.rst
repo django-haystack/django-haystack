@@ -71,25 +71,14 @@ not running a ``rebuild_index`` to populate your index or having a blank
 
 This is a Whoosh-specific traceback. It occurs when the Whoosh engine in one
 process/thread is locks the index files for writing while another process/thread
-tries to access them. This is a common error when using ``RealTimeSearchIndex``
+tries to access them. This is a common error when using ``RealtimeSignalProcessor``
 with Whoosh under any kind of load, which is why it's only recommended for
 small sites or development.
 
-A way to solve this is to subclass ``SearchIndex`` instead::
-
-    from haystack import indexes
-    
-    # Change from:
-    # 
-    #   class MySearchIndex(indexes.RealTimeSearchIndex, indexes.Indexable):
-    # 
-    # to:
-    class MySearchIndex(indexes.SearchIndex, indexes.Indexable):
-        ...
-
-The final step is to set up a cron job that runs
+The only real solution is to set up a cron job that runs
 ``./manage.py rebuild_index`` (optionally with ``--age=24``) that runs nightly
-(or however often you need) to refresh the search indexes.
+(or however often you need) to refresh the search indexes. Then disable the
+use of the ``RealtimeSignalProcessor`` within your settings.
 
 The downside to this is that you lose real-time search. For many people, this
 isn't an issue and this will allow you to scale Whoosh up to a much higher

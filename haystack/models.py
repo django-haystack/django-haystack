@@ -220,16 +220,6 @@ class SearchResult(object):
         self.log = self._get_log()
 
 
-# Setup pre_save/pre_delete signals to make sure things like the signals in
-# ``RealTimeSearchIndex`` are setup in time to handle data changes.
-def load_indexes(sender, *args, **kwargs):
-    from haystack import connections
-
-    for conn in connections.all():
-        ui = conn.get_unified_index()
-        ui.setup_indexes()
-
-
 def reload_indexes(sender, *args, **kwargs):
     from haystack import connections
 
@@ -238,30 +228,3 @@ def reload_indexes(sender, *args, **kwargs):
         # Note: Unlike above, we're resetting the ``UnifiedIndex`` here.
         # Thi gives us a clean slate.
         ui.reset()
-        ui.setup_indexes()
-
-
-models.signals.pre_save.connect(load_indexes, dispatch_uid='setup_index_signals')
-models.signals.pre_delete.connect(load_indexes, dispatch_uid='setup_index_signals')
-
-
-if 'south' in settings.INSTALLED_APPS:
-    # South causes a little mayhem, as when you run a ``syncdb``, it'll setup
-    # the apps *without* migrations using Django's built-in ``syncdb``. When
-    # this happens, ``INSTALLED_APPS`` consists of only those apps, NOT all
-    # apps.At the end of that sync, Django runs ``create_permissions``, which
-    # of course uses the ORM, causing the ``pre_save`` above to fire.
-
-    # The effect is that Haystack runs its setup against the then-subset of
-    # ``INSTALLED_APPS``. Once that's done, it won't re-setup the
-    # ``UnifiedIndex`` again, since the signal has a ``dispatch_uid``.
-
-    # This bug gets exposed only either when people run tests that *use*
-    # the South migrations OR when they have a data migration & the changed
-    # data isn't picked up by ``RealTimeSearchIndex`` (or similar).
-
-    # In the event of this, the only safe route is to listen for
-    # ``south.signals.post_migrate``, then re-run setup. This will
-    # unfortunately happen per-app, but should be quick & reliable.
-    from south.signals import post_migrate
-    post_migrate.connect(reload_indexes)
