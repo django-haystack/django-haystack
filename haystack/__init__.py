@@ -1,7 +1,6 @@
 import logging
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core import signals
 from haystack.constants import DEFAULT_ALIAS
 from haystack import signals
 from haystack.utils import loading
@@ -62,4 +61,5 @@ def reset_search_queries(**kwargs):
 
 
 if settings.DEBUG:
-    signals.request_started.connect(reset_search_queries)
+    from django.core import signals as django_signals
+    django_signals.request_started.connect(reset_search_queries)
