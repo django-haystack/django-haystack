@@ -526,7 +526,7 @@ with ``RelatedSearchQuerySet.load_all``. This is useful for post-processing the
 results from the query, enabling things like adding ``select_related`` or
 filtering certain data.
 
-.. warning:
+.. warning::
 
     Utilizing this functionality can have negative performance implications.
     Please see the section on ``RelatedSearchQuerySet`` within

@@ -164,7 +164,7 @@ following arguments::
         If provided, determines which connection should be used. Default is
         ``default``.
 
-.. warning:
+.. warning::
 
     This command does NOT update the ``schema.xml`` file for you. You either
     have to specify a ``filename`` flag or have to

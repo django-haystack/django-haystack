@@ -86,7 +86,7 @@ To make it work in browser, you need both a view to run the autocomplete
 
 Since it comes up often, here is an example implementation of those things.
 
-.. warning:
+.. warning::
 
     This code comes with no warranty. Don't ask for support on it. If you
     copy-paste it & it burns down your server room, I'm not liable for any

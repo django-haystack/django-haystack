@@ -24,7 +24,7 @@ has been introduced. In it's simplest form, the ``SignalProcessor`` listens
 to whatever signals are setup & can be configured to then trigger the updates
 without having to change any ``SearchIndex`` code.
 
-.. warning:
+.. warning::
 
     Incorporating Haystack's ``SignalProcessor`` into your setup **will**
     increase the overall load (CPU & perhaps I/O depending on configuration).
@@ -74,7 +74,7 @@ Configuration looks like::
 
 This causes **all** ``SearchIndex`` classes to work in a realtime fashion.
 
-.. note:
+.. note::
 
     These updates happen in-process, which if a request-response cycle is
     involved, may cause the user with the browser to sit & wait for indexing to
