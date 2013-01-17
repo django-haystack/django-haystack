@@ -14,7 +14,7 @@ HAYSTACK_CONNECTIONS = {
     'solr_native_distance': {
         # Solr 4.X+
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:8983/solr/',
+        'URL': 'http://localhost:9003/solr/',
         # See ``haystack/backends/solr_backend.py`` for details on why not.
         # 'DISTANCE_AVAILABLE': True,
     },
