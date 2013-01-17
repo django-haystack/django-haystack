@@ -218,9 +218,7 @@ finding results within an area.
 
 ``within`` is a bounding box comparison. A bounding box is a rectangular area
 within which to search. It's composed of a bottom-left point & a top-right
-point, though provided you give two opposing corners in either order, Haystack
-will determine the right coordinates. It is faster but slighty sloppier than
-its counterpart.
+point. It is faster but slighty sloppier than its counterpart.
 
 Examples::
 
