@@ -38,11 +38,11 @@ Several issues can cause no results to be found. Most commonly it is either
 not running a ``rebuild_index`` to populate your index or having a blank
 ``document=True`` field, resulting in no content for the engine to search on.
 
-* Do you have a ``search_sites.py`` that runs ``haystack.autodiscover``?
-* Have you registered your models with the main ``haystack.site`` (usually
-  within your ``search_indexes.py``)?
+* Do you have a ``search_indexes.py`` located within an installed app?
 * Do you have data in your database?
 * Have you run a ``./manage.py rebuild_index`` to index all of your content?
+* Try running ``./manage.py rebuild_index -v2`` for more verbose output to
+  ensure data is being processed/inserted.
 * Start a Django shell (``./manage.py shell``) and try::
 
   >>> from haystack.query import SearchQuerySet
