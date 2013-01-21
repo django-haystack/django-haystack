@@ -322,7 +322,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 kwargs['facets'][facet_fieldname] = {
                     'terms': {
                         'field': facet_fieldname,
-                        'size': 100,
+                        'size': 300
                     },
                 }
 
@@ -400,17 +400,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
 
-            ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
+            ((south, west), (north, east)) = generate_bounding_box(within['point_1'], within['point_2'])
             within_filter = {
                 "geo_bounding_box": {
                     within['field']: {
                         "top_left": {
-                            "lat": max_lat,
-                            "lon": min_lng
+                            "lat": north,
+                            "lon": west
                         },
                         "bottom_right": {
-                            "lat": min_lat,
-                            "lon": max_lng
+                            "lat": south,
+                            "lon": east
                         }
                     }
                 },
@@ -516,6 +516,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         index = connections[self.connection_alias].get_unified_index().get_index(model_klass)
         field_name = index.get_content_field()
         params = {}
+        
+        if additional_query_string:
+            body = {
+                'filter': {
+                    'fquery': {
+                        'query': {
+                            'query_string': {
+                                'query': additional_query_string,
+                                },
+                            },
+                        },
+                    }
+                }
+        else:
+            body = {}
+
 
         if start_offset is not None:
             params['search_from'] = start_offset
@@ -526,7 +542,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         doc_id = get_identifier(model_instance)
 
         try:
-            raw_results = self.conn.more_like_this(self.index_name, 'modelresult', doc_id, [field_name], **params)
+            raw_results = self.conn.morelikethis(self.index_name, 'modelresult', doc_id, [field_name], body, **params)
         except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
             if not self.silently_fail:
                 raise
