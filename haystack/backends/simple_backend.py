@@ -71,7 +71,9 @@ class SimpleSearchBackend(BaseSearchBackend):
                 hits += len(qs)
 
                 for match in qs:
-                    result = result_class(match._meta.app_label, match._meta.module_name, match.pk, 0, **match.__dict__)
+                    product_dict = match.__dict__
+                    product_dict['model_score'] = product_dict.pop('score', 0.0)
+                    result = result_class(match._meta.app_label, match._meta.module_name, match.pk, 0, **product_dict)
                     # For efficiency.
                     result._model = match.__class__
                     result._object = match
