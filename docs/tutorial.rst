@@ -289,15 +289,10 @@ will likely differ)::
         <h2>Search</h2>
 
         <form method="get" action=".">
-            <table>
-                {{ form.as_table }}
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>
-                        <input type="submit" value="Search">
-                    </td>
-                </tr>
-            </table>
+            {{ form.as_p }}
+            <p>
+               <input type="submit" value="Search">
+            </p>
 
             {% if query %}
                 <h3>Results</h3>
