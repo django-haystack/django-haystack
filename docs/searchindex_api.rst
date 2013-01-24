@@ -34,7 +34,7 @@ For the impatient::
         def get_model(self):
             return Note
 
-        def index_queryset(self):
+        def index_queryset(self, using=None):
             "Used when the entire index for model is updated."
             return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
@@ -386,7 +386,7 @@ This method is required & you must override it to return the correct class.
 ``index_queryset``
 ------------------
 
-.. method:: SearchIndex.index_queryset(self)
+.. method:: SearchIndex.index_queryset(self, using=None)
 
 Get the default QuerySet to index when doing a full update.
 
@@ -395,7 +395,7 @@ Subclasses can override this method to avoid indexing certain objects.
 ``read_queryset``
 -----------------
 
-.. method:: SearchIndex.read_queryset(self)
+.. method:: SearchIndex.read_queryset(self, using=None)
 
 Get the default QuerySet for read actions.
 
@@ -609,7 +609,7 @@ For the impatient::
             fields = ['user', 'pub_date']
 
         # Note that regular ``SearchIndex`` methods apply.
-        def index_queryset(self):
+        def index_queryset(self, using=None):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
 

@@ -19,7 +19,7 @@ class DogIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return Dog
 
-    def index_queryset(self):
+    def index_queryset(self, using=None):
         return self.get_model().objects.filter(public=True)
 
     def prepare_toys(self, obj):

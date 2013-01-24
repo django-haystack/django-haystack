@@ -67,10 +67,10 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return MockModel
 
-    def index_queryset(self):
+    def index_queryset(self, using=None):
         return MockModel.objects.all()
 
-    def read_queryset(self):
+    def read_queryset(self, using=None):
         return MockModel.objects.filter(author__in=['daniel1', 'daniel3'])
 
     def build_queryset(self, start_date=None, end_date=None):
@@ -525,11 +525,11 @@ class GhettoAFifthMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return AFifthMockModel
 
-    def index_queryset(self):
+    def index_queryset(self, using=None):
         # Index everything,
         return self.get_model().objects.complete_set()
 
-    def read_queryset(self):
+    def read_queryset(self, using=None):
         return self.get_model().objects.all()
 
 
@@ -539,7 +539,7 @@ class ReadQuerySetTestSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return AFifthMockModel
 
-    def read_queryset(self):
+    def read_queryset(self, using=None):
         return self.get_model().objects.complete_set()
 
 
@@ -549,7 +549,7 @@ class TextReadQuerySetTestSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return AFifthMockModel
 
-    def read_queryset(self):
+    def read_queryset(self, using=None):
         return self.get_model().objects.complete_set()
 
 
