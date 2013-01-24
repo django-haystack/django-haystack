@@ -14,3 +14,4 @@ from core.tests.query import *
 from core.tests.templatetags import *
 from core.tests.views import *
 from core.tests.utils import *
+from core.tests.management_commands import *

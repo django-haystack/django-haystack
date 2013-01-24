@@ -76,7 +76,7 @@ class SearchIndex(threading.local):
             def get_model(self):
                 return Note
 
-            def index_queryset(self):
+            def index_queryset(self, using=None):
                 return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
     """
@@ -102,7 +102,7 @@ class SearchIndex(threading.local):
         """
         raise NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
 
-    def index_queryset(self):
+    def index_queryset(self, using=None):
         """
         Get the default QuerySet to index when doing a full update.
 
@@ -110,16 +110,16 @@ class SearchIndex(threading.local):
         """
         return self.get_model()._default_manager.all()
 
-    def read_queryset(self):
+    def read_queryset(self, using=None):
         """
         Get the default QuerySet for read actions.
 
         Subclasses can override this method to work with other managers.
         Useful when working with default managers that filter some objects.
         """
-        return self.index_queryset()
+        return self.index_queryset(using=using)
 
-    def build_queryset(self, start_date=None, end_date=None):
+    def build_queryset(self, using=None, start_date=None, end_date=None):
         """
         Get the default QuerySet to index when doing an index update.
 
@@ -154,7 +154,7 @@ class SearchIndex(threading.local):
             warnings.warn("'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'.")
             index_qs = self.get_queryset()
         else:
-            index_qs = self.index_queryset()
+            index_qs = self.index_queryset(using=using)
 
         if not hasattr(index_qs, 'filter'):
             raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'index_queryset' method." % self)

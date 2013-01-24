@@ -155,7 +155,7 @@ A converted Haystack 2.X index should look like::
         def get_model(self):
             return Note
 
-        def index_queryset(self):
+        def index_queryset(self, using=None):
             """Used when the entire index for model is updated."""
             return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
