@@ -24,17 +24,17 @@ For the impatient::
     import datetime
     from haystack import indexes
     from myapp.models import Note
-    
-    
+
+
     class NoteIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         author = indexes.CharField(model_attr='user')
         pub_date = indexes.DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
-        def index_queryset(self):
+
+        def index_queryset(self, using=None):
             "Used when the entire index for model is updated."
             return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
@@ -74,7 +74,7 @@ search, et cetera).
     Haystack reserves the following field names for internal use: ``id``,
     ``django_ct``, ``django_id`` & ``content``. The ``name`` & ``type`` names
     used to be reserved but no longer are.
-    
+
     You can override these field names using the ``HAYSTACK_ID_FIELD``,
     ``HAYSTACK_DJANGO_CT_FIELD`` & ``HAYSTACK_DJANGO_ID_FIELD`` if needed.
 
@@ -134,13 +134,13 @@ Within ``myapp/search_indexes.py``::
 Then, inside a template named ``search/indexes/myapp/note_rendered.txt``::
 
     <h2>{{ object.title }}</h2>
-    
+
     <p>{{ object.content }}</p>
-    
+
 And finally, in ``search/search.html``::
-    
+
     ...
-    
+
     {% for result in page.object_list %}
         <div class="search_result">
             {{ result.rendered|safe }}
@@ -162,27 +162,27 @@ data in sync within that timeframe and will handle the updates in a very
 efficient batch. Additionally, Whoosh (and to a lesser extent Xapian) behave
 better when using this approach.
 
-Another option is to use ``RealTimeSearchIndex``, which uses Django's signals
-to immediately update the index any time a model is saved/deleted. This
+Another option is to use ``RealtimeSignalProcessor``, which uses Django's
+signals to immediately update the index any time a model is saved/deleted. This
 yields a much more current search index at the expense of being fairly
-inefficient. Solr is the only backend that handles this well under load, and
-even then, you should make sure you have the server capacity to spare.
+inefficient. Solr & Elasticsearch are the only backends that handles this well
+under load, and even then, you should make sure you have the server capacity
+to spare.
 
-A third option is to develop a custom ``QueueSearchIndex`` that, much like
-``RealTimeSearchIndex``, uses Django's signals to enqueue messages for
+A third option is to develop a custom ``QueuedSignalProcessor`` that, much like
+``RealtimeSignalProcessor``, uses Django's signals to enqueue messages for
 updates/deletes. Then writing a management command to consume these messages
 in batches, yielding a nice compromise between the previous two options.
 
 .. note::
 
-    Haystack doesn't ship with a ``QueueSearchIndex`` largely because there is
+    Haystack doesn't ship with a ``QueuedSignalProcessor`` largely because there is
     such a diversity of lightweight queuing options and that they tend to
     polarize developers. Queuing is outside of Haystack's goals (provide good,
     powerful search) and, as such, is left to the developer.
-    
-    Additionally, the implementation is relatively trivial in that you simply
-    extend the same four methods as ``RealTimeSearchIndex`` and simply add
-    messages to the queue of choice.
+
+    Additionally, the implementation is relatively trivial & there are already
+    good third-party add-ons for Haystack to enable this.
 
 
 Advanced Data Preparation
@@ -228,10 +228,10 @@ you might write the following code::
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
+
         def prepare_author(self, obj):
             return "%s <%s>" % (obj.user.get_full_name(), obj.user.email)
 
@@ -246,18 +246,18 @@ Just like ``Form.clean_FOO``, the field's ``prepare`` runs before the
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
+
         def prepare_author(self, obj):
             # Say we want last name first, the hard way.
             author = u''
-            
+
             if 'author' in self.prepared_data:
                 name_bits = self.prepared_data['author'].split()
                 author = "%s, %s" % (name_bits[-1], ' '.join(name_bits[:-1]))
-            
+
             return author
 
 This method is fully function with ``model_attr``, so if there's no convenient
@@ -268,10 +268,10 @@ way to access the data you want, this is an excellent way to prepare it::
         author = CharField(model_attr='user')
         categories = MultiValueField()
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
+
         def prepare_categories(self, obj):
             # Since we're using a M2M relationship with a complex lookup,
             # we can prepare the list here.
@@ -293,18 +293,18 @@ by a single ``SearchField``. An example might look like::
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
+
         def prepare(self, object):
             self.prepared_data = super(NoteIndex, self).prepare(object)
-            
+
             # Add in tags (assuming there's a M2M relationship to Tag on the model).
             # Note that this would NOT get picked up by the automatic
             # schema tools provided by Haystack.
             self.prepared_data['tags'] = [tag.name for tag in object.tags.all()]
-            
+
             return self.prepared_data
 
 If you choose to use this method, you should make a point to be careful to call
@@ -331,7 +331,7 @@ choose. For instance, a (naive) user-created ``GeoPointField`` might look
 something like::
 
     from haystack import indexes
-    
+
     class GeoPointField(indexes.CharField):
         def __init__(self, **kwargs):
             kwargs['default'] = '0.00-0.00'
@@ -386,7 +386,7 @@ This method is required & you must override it to return the correct class.
 ``index_queryset``
 ------------------
 
-.. method:: SearchIndex.index_queryset(self)
+.. method:: SearchIndex.index_queryset(self, using=None)
 
 Get the default QuerySet to index when doing a full update.
 
@@ -395,7 +395,7 @@ Subclasses can override this method to avoid indexing certain objects.
 ``read_queryset``
 -----------------
 
-.. method:: SearchIndex.read_queryset(self)
+.. method:: SearchIndex.read_queryset(self, using=None)
 
 Get the default QuerySet for read actions.
 
@@ -457,7 +457,7 @@ be used.
 
 .. method:: SearchIndex.remove_object(self, instance, using=None, **kwargs)
 
-Remove an object from the index. Attached to the class's 
+Remove an object from the index. Attached to the class's
 post-delete hook.
 
 If ``using`` is provided, it specifies which connection should be
@@ -526,7 +526,7 @@ with ``RelatedSearchQuerySet.load_all``. This is useful for post-processing the
 results from the query, enabling things like adding ``select_related`` or
 filtering certain data.
 
-.. warning:
+.. warning::
 
     Utilizing this functionality can have negative performance implications.
     Please see the section on ``RelatedSearchQuerySet`` within
@@ -540,10 +540,10 @@ Example::
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user')
         pub_date = DateTimeField(model_attr='pub_date')
-        
+
         def get_model(self):
             return Note
-        
+
         def load_all_queryset(self):
             # Pull all objects related to the Note in search results.
             return Note.objects.all().select_related()
@@ -555,27 +555,6 @@ passed to ``in_bulk`` will map to the model in question.
 If you need a specific ``QuerySet`` in one place, you can specify this at the
 ``RelatedSearchQuerySet`` level using the ``load_all_queryset`` method. See
 :doc:`searchqueryset_api` for usage.
-
-
-``RealTimeSearchIndex``
-=======================
-
-The ``RealTimeSearchIndex`` provides all the same functionality as the standard
-``SearchIndex``. However, in addition, it connects to the
-``post_save``/``post_delete`` signals of the model it's registered with.
-
-This means that anytime a model is saved or deleted, it's automatically and
-immediately updated in the search index, yielding real-time search.
-
-.. warning::
-
-    Not all backends deal well with the kind of document churn that can result
-    from using the ``RealTimeSearchIndex``. Solr is the only one that handles
-    it gracefully.
-    
-    Additionally, this will add more overhead in terms of CPU usage, so you
-    should be sure to accommodate for this and should have appropriate monitoring
-    in place.
 
 
 ``ModelSearchIndex``
@@ -611,26 +590,26 @@ For the impatient::
     import datetime
     from haystack import indexes
     from myapp.models import Note
-    
+
     # All Fields
     class AllNoteIndex(indexes.ModelSearchIndex, indexes.Indexable):
         class Meta:
             model = Note
-    
+
     # Blacklisted Fields
     class LimitedNoteIndex(indexes.ModelSearchIndex, indexes.Indexable):
         class Meta:
             model = Note
             excludes = ['user']
-    
+
     # Whitelisted Fields
     class NoteIndex(indexes.ModelSearchIndex, indexes.Indexable):
         class Meta:
             model = Note
             fields = ['user', 'pub_date']
-        
+
         # Note that regular ``SearchIndex`` methods apply.
-        def index_queryset(self):
+        def index_queryset(self, using=None):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
 

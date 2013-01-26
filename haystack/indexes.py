@@ -1,8 +1,6 @@
 import copy
 import threading
-import sys
 import warnings
-from django.db.models import signals
 from django.utils.encoding import force_unicode
 from django.core.exceptions import ImproperlyConfigured
 from haystack import connections, connection_router
@@ -78,7 +76,7 @@ class SearchIndex(threading.local):
             def get_model(self):
                 return Note
 
-            def index_queryset(self):
+            def index_queryset(self, using=None):
                 return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
     """
@@ -95,22 +93,6 @@ class SearchIndex(threading.local):
         if not len(content_fields) == 1:
             raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
 
-    def _setup_save(self):
-        """A hook for controlling what happens when the registered model is saved."""
-        pass
-
-    def _setup_delete(self):
-        """A hook for controlling what happens when the registered model is deleted."""
-        pass
-
-    def _teardown_save(self):
-        """A hook for removing the behavior when the registered model is saved."""
-        pass
-
-    def _teardown_delete(self):
-        """A hook for removing the behavior when the registered model is deleted."""
-        pass
-
     def get_model(self):
         """
         Should return the ``Model`` class (not an instance) that the rest of the
@@ -120,7 +102,7 @@ class SearchIndex(threading.local):
         """
         raise NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
 
-    def index_queryset(self):
+    def index_queryset(self, using=None):
         """
         Get the default QuerySet to index when doing a full update.
 
@@ -128,16 +110,16 @@ class SearchIndex(threading.local):
         """
         return self.get_model()._default_manager.all()
 
-    def read_queryset(self):
+    def read_queryset(self, using=None):
         """
         Get the default QuerySet for read actions.
 
         Subclasses can override this method to work with other managers.
         Useful when working with default managers that filter some objects.
         """
-        return self.index_queryset()
+        return self.index_queryset(using=using)
 
-    def build_queryset(self, start_date=None, end_date=None):
+    def build_queryset(self, using=None, start_date=None, end_date=None):
         """
         Get the default QuerySet to index when doing an index update.
 
@@ -172,7 +154,7 @@ class SearchIndex(threading.local):
             warnings.warn("'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'.")
             index_qs = self.get_queryset()
         else:
-            index_qs = self.index_queryset()
+            index_qs = self.index_queryset(using=using)
 
         if not hasattr(index_qs, 'filter'):
             raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'index_queryset' method." % self)
@@ -238,7 +220,11 @@ class SearchIndex(threading.local):
 
     def _get_backend(self, using):
         if using is None:
-            using = connection_router.for_write(index=self)
+            try:
+                using = connection_router.for_write(index=self)[0]
+            except IndexError:
+                # There's no backend to handle it. Bomb out.
+                return None
 
         return connections[using].get_backend()
 
@@ -250,7 +236,10 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).update(self, self.index_queryset())
+        backend = self._get_backend(using)
+
+        if backend is not None:
+            backend.update(self, self.index_queryset())
 
     def update_object(self, instance, using=None, **kwargs):
         """
@@ -263,7 +252,10 @@ class SearchIndex(threading.local):
         """
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
-            self._get_backend(using).update(self, [instance])
+            backend = self._get_backend(using)
+
+            if backend is not None:
+                backend.update(self, [instance])
 
     def remove_object(self, instance, using=None, **kwargs):
         """
@@ -274,7 +266,10 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).remove(instance)
+        backend = self._get_backend(using)
+
+        if backend is not None:
+            backend.remove(instance)
 
     def clear(self, using=None):
         """
@@ -284,7 +279,10 @@ class SearchIndex(threading.local):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        self._get_backend(using).clear(models=[self.get_model()])
+        backend = self._get_backend(using)
+
+        if backend is not None:
+            backend.clear(models=[self.get_model()])
 
     def reindex(self, using=None):
         """
@@ -331,24 +329,6 @@ class SearchIndex(threading.local):
         By default, returns ``all()`` on the model's default manager.
         """
         return self.get_model()._default_manager.all()
-
-
-class RealTimeSearchIndex(SearchIndex):
-    """
-    A variant of the ``SearchIndex`` that constantly keeps the index fresh,
-    as opposed to requiring a cron job.
-    """
-    def _setup_save(self):
-        signals.post_save.connect(self.update_object, sender=self.get_model())
-
-    def _setup_delete(self):
-        signals.post_delete.connect(self.remove_object, sender=self.get_model())
-
-    def _teardown_save(self):
-        signals.post_save.disconnect(self.update_object, sender=self.get_model())
-
-    def _teardown_delete(self):
-        signals.post_delete.disconnect(self.remove_object, sender=self.get_model())
 
 
 class BasicSearchIndex(SearchIndex):

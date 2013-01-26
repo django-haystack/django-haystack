@@ -125,16 +125,17 @@ class ConnectionRouter(object):
             self.routers.append(router_class())
 
     def for_action(self, action, **hints):
+        conns = []
+
         for router in self.routers:
             if hasattr(router, action):
                 action_callable = getattr(router, action)
                 connection_to_use = action_callable(**hints)
 
                 if connection_to_use is not None:
-                    return connection_to_use
+                    conns.append(connection_to_use)
 
-        # If we didn't find a router to handle it, use the default.
-        return DEFAULT_ALIAS
+        return conns
 
     def for_write(self, **hints):
         return self.for_action('for_write', **hints)
@@ -149,7 +150,6 @@ class UnifiedIndex(object):
         self.indexes = {}
         self.fields = SortedDict()
         self._built = False
-        self._indexes_setup = False
         self.excluded_indexes = excluded_indexes or []
         self.excluded_indexes_ids = {}
         self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
@@ -262,29 +262,6 @@ class UnifiedIndex(object):
 
                 if field_object.null is True:
                     self.fields[field_object.index_fieldname].null = True
-
-    def setup_indexes(self):
-        if not self._built:
-            self.build()
-
-        if self._indexes_setup:
-            return
-
-        for model_ct, index in self.indexes.items():
-            index._setup_save()
-            index._setup_delete()
-
-        self._indexes_setup = True
-
-    def teardown_indexes(self):
-        if not self._built:
-            self.build()
-
-        for model_ct, index in self.indexes.items():
-            index._teardown_save()
-            index._teardown_delete()
-
-        self._indexes_setup = False
 
     def get_indexed_models(self):
         if not self._built:

@@ -61,6 +61,7 @@ you may want to include in your application.
    faceting
    autocomplete
    boost
+   signal_processors
    multiple_index
    rich_content_extraction
    spatial
@@ -109,7 +110,7 @@ Requirements
 Haystack has a relatively easily-met set of requirements.
 
 * Python 2.5+
-* Django 1.2+ (may work on 1.1.2+)
+* Django 1.3+
 
 Additionally, each backend has its own requirements. You should refer to
 :doc:`installing_search_engines` for more details.

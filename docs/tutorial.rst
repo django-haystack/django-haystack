@@ -221,7 +221,7 @@ Haystack to automatically pick it up. The ``NoteIndex`` should look like::
         def get_model(self):
             return Note
 
-        def index_queryset(self):
+        def index_queryset(self, using=None):
             """Used when the entire index for model is updated."""
             return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
@@ -360,7 +360,7 @@ models were processed and placed in the index.
     things to update).
 
     Alternatively, if you have low traffic and/or your search engine can handle
-    it, the ``RealTimeSearchIndex`` automatically handles updates/deletes
+    it, the ``RealtimeSignalProcessor`` automatically handles updates/deletes
     for you.
 
 

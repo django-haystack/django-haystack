@@ -64,3 +64,6 @@ Thanks to
     * Igor Támara (ikks) for a patch related to Unicode ``verbose_name_plural``.
     * Dan Helfman (witten) for a patch related to highlighting.
     * Matt DeBoard for refactor of ``SolrSearchBackend.search`` method to allow simpler extension of the class.
+    * Rodrigo Guzman (rz) for a fix to query handling in the ``simple`` backend.
+    * Martin J. Laubach (mjl) for fixing the logic used when combining querysets
+    * Eric Holscher (ericholscher) for a docs fix.
