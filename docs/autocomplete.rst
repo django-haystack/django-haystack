@@ -42,7 +42,7 @@ Example (continuing from the tutorial)::
         def get_model(self):
             return Note
 
-        def index_queryset(self):
+        def index_queryset(self, using=None):
             """Used when the entire index for model is updated."""
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
 
