@@ -37,7 +37,7 @@ class Command(BaseCommand):
         total = qs.count()
         start = 0
         while start + batch_size <= total:
-            batch = qs[start:start+batch_size]
+            batch = SearchQuerySet().using(using)[start:start+batch_size] # don't reuse the SearchQuerySet or else the query cache grows unbounded
             
             # Get primary keys by model. Force the primary keys to integers
             # because we will need to compare them with the result of in_bulk
