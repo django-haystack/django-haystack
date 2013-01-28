@@ -12,7 +12,7 @@ from django.conf import settings
 from django.test import TestCase
 from haystack import connections, reset_search_queries
 from haystack import indexes
-from haystack.inputs import AutoQuery
+from haystack.inputs import AutoQuery, AltParser
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
 from haystack.utils.loading import UnifiedIndex
@@ -178,6 +178,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.ui.build(indexes=[self.smmi])
         connections['default']._index = self.ui
         self.sb = connections['default'].get_backend()
+        self.sq = connections['default'].get_query()
 
         self.sample_objs = []
 
@@ -357,6 +358,34 @@ class SolrSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_altparser_query(self):
+        self.sb.update(self.smmi, self.sample_objs)
+
+        results = self.sb.search(AltParser('dismax', 'daniel1', qf='name', mm=1).prepare(self.sq))
+        self.assertEqual(results['hits'], 1)
+
+        # This should produce exactly the same result since all we have are mockmodel instances but we simply
+        # want to confirm that using the AltParser doesn't break other options:
+        results = self.sb.search(AltParser('dismax', 'daniel1', qf='name', mm=1).prepare(self.sq),
+                                 narrow_queries=set(('django_ct:core.mockmodel', )))
+        self.assertEqual(results['hits'], 1)
+
+        results = self.sb.search(AltParser('dismax', '+indexed +daniel1', qf='text name', mm=1).prepare(self.sq))
+        self.assertEqual(results['hits'], 1)
+
+        self.sq.add_filter(SQ(name=AltParser('dismax', 'daniel1', qf='name', mm=1)))
+        self.sq.add_filter(SQ(text='indexed'))
+
+        new_q = self.sq._clone()
+        new_q._reset()
+
+        new_q.add_filter(SQ(name='daniel1'))
+        new_q.add_filter(SQ(text=AltParser('dismax', 'indexed', qf='text')))
+
+        results = new_q.get_results()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].id, 'core.mockmodel.1')
 
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
