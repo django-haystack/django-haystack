@@ -8,9 +8,6 @@ class Command(BaseCommand):
     help = "Removes indexed documents that no longer correspond to objects in the Django ORM."
     
     base_options = (
-        make_option('--noinput', action='store_false', dest='interactive', default=True,
-            help='If provided, no prompts will be issued to the user and the data will be wiped out.'
-        ),
         make_option("-u", "--using", action="store", type="string", dest="using", default=DEFAULT_ALIAS,
             help='If provided, chooses a connection to work with.'
         ),
@@ -36,6 +33,7 @@ class Command(BaseCommand):
         
         total = qs.count()
         start = 0
+        removed_count = 0
         while start + batch_size <= total:
             batch = SearchQuerySet().using(using)[start:start+batch_size] # don't reuse the SearchQuerySet or else the query cache grows unbounded
             
@@ -56,20 +54,14 @@ class Command(BaseCommand):
                 # Check for missing pks from objs, indicating a missing object.
                 for pk, dotted_identifier in pks.items():
                     if pk not in objs:
-                        print dotted_identifier, "missing:"
+                        print dotted_identifier
                         pprint(batch_objs[dotted_identifier].get_stored_fields())
-                        print
-
-                        # Without --noinput we ask to remove each one from the index.
-                        if options.get('interactive', True):
-                            yes_or_no = raw_input("Delete record? [y/N] ")
-                            if not yes_or_no.lower().startswith('y'):
-                                continue
-
-                        # With --noinput, or the user chose yes, delete the record.
                         backend.remove(dotted_identifier)
+                        removed_count += 1
             
             print start, total, str(100*start/total) + "%"
         
             start += batch_size
             
+        print removed_count, "objects pruned"
+        
