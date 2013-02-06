@@ -21,6 +21,7 @@ class SearchResultTestCase(TestCase):
     def setUp(self):
         super(SearchResultTestCase, self).setUp()
         cap = CaptureHandler()
+        logging.getLogger('haystack').real_logger.handlers = []
         logging.getLogger('haystack').addHandler(cap)
         
         self.no_data = {}
@@ -131,7 +132,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol1.verbose_name, u'Mock model')
         self.assertEqual(awol1.verbose_name_plural, u'Mock models')
         self.assertEqual(awol1.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 4)
+        self.assertEqual(len(CaptureHandler.logs_seen), 1)
         
         CaptureHandler.logs_seen = []
         self.assertEqual(awol2.model, None)
@@ -139,7 +140,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name, u'')
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 12)
+        self.assertEqual(len(CaptureHandler.logs_seen), 3)
     
     def test_read_queryset(self):
         # The model is flagged deleted so not returned by the default manager.
