@@ -437,10 +437,11 @@ class SearchQuerySet(object):
         for field_name, query in kwargs.items():
             for word in query.split(' '):
                 bit = clone.query.clean(word.strip())
-                kwargs = {
-                    field_name: bit,
-                }
-                query_bits.append(SQ(**kwargs))
+                if bit:
+                    kwargs = {
+                        field_name: bit,
+                    }
+                    query_bits.append(SQ(**kwargs))
 
         return clone.filter(reduce(operator.__and__, query_bits))
 
