@@ -162,6 +162,16 @@ class SolrSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return ASixthMockModel
 
 
+class SolrQuotingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, use_template=True)
+
+    def get_model(self):
+        return MockModel
+
+    def prepare_text(self, obj):
+        return u"""Don't panic but %s has been iñtërnâtiônàlizéð""" % obj.author
+
+
 class SolrSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
@@ -362,7 +372,7 @@ class SolrSearchBackendTestCase(TestCase):
     def test_altparser_query(self):
         self.sb.update(self.smmi, self.sample_objs)
 
-        results = self.sb.search(AltParser('dismax', 'daniel1', qf='name', mm=1).prepare(self.sq))
+        results = self.sb.search(AltParser('dismax', "daniel1", qf='name', mm=1).prepare(self.sq))
         self.assertEqual(results['hits'], 1)
 
         # This should produce exactly the same result since all we have are mockmodel instances but we simply
@@ -386,6 +396,16 @@ class SolrSearchBackendTestCase(TestCase):
         results = new_q.get_results()
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].id, 'core.mockmodel.1')
+
+    def test_altparser_quoting(self):
+        test_objs = [
+            MockModel(id=1, author="Foo d'Bar", pub_date=datetime.date.today()),
+            MockModel(id=2, author="Baaz Quuz", pub_date=datetime.date.today()),
+        ]
+        self.sb.update(SolrQuotingMockSearchIndex(), test_objs)
+
+        results = self.sb.search(AltParser('dismax', "+don't +quuz", qf='text').prepare(self.sq))
+        self.assertEqual(results['hits'], 1)
 
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
