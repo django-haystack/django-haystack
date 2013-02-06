@@ -37,7 +37,7 @@ class SearchResultTestCase(TestCase):
         self.no_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 2)
         self.extra_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 3, **self.extra_data)
         self.no_overwrite_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 4, **self.no_overwrite_data)
-    
+
     def test_init(self):
         self.assertEqual(self.no_data_sr.app_label, 'haystack')
         self.assertEqual(self.no_data_sr.model_name, 'mockmodel')
@@ -171,3 +171,23 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(pickle_me_1.model_name, pickle_me_2.model_name)
         self.assertEqual(pickle_me_1.pk, pickle_me_2.pk)
         self.assertEqual(pickle_me_1.score, pickle_me_2.score)
+
+    def test_equality(self):
+        self.assertEqual(self.no_data_sr,
+                MockSearchResult('haystack', 'mockmodel', '1', 2))
+        self.assertEqual(self.extra_data_sr,
+            MockSearchResult('haystack', 'mockmodel',
+                                '1', 3, **self.extra_data))
+        self.assertEqual(self.no_overwrite_data_sr,
+             MockSearchResult('haystack', 'mockmodel',
+                            '1', 4, **self.no_overwrite_data))
+
+    def test_inequality(self):
+        self.assertNotEqual(self.no_data_sr,
+                MockSearchResult('haystack', 'mockmodel', '2', 2))
+        self.assertNotEqual(self.extra_data_sr,
+            MockSearchResult('haystack', 'mockmodel',
+                                '2', 3, **self.extra_data))
+        self.assertNotEqual(self.no_overwrite_data_sr,
+             MockSearchResult('haystack', 'mockmodel',
+                            '2', 4, **self.no_overwrite_data))
