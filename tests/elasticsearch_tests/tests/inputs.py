@@ -78,4 +78,4 @@ class ElasticsearchInputTestCase(TestCase):
     def test_altparser_prepare(self):
         altparser = inputs.AltParser('dismax', 'douglas adams', qf='author', mm=1)
         self.assertEqual(altparser.prepare(self.query_obj),
-                         u"""_query_:"{!dismax mm=1 qf=author v='douglas adams'}\"""")
+                         u"""{!dismax mm=1 qf=author v='douglas adams'}""")
