@@ -7,15 +7,7 @@ from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 from core.tests.mocks import MockSearchResult
-
-
-class SimpleMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
-    text = indexes.CharField(document=True, use_template=True)
-    name = indexes.CharField(model_attr='author', faceted=True)
-    pub_date = indexes.DateField(model_attr='pub_date')
-
-    def get_model(self):
-        return MockModel
+from simple_tests.search_indexes import SimpleMockSearchIndex
 
 
 class SimpleSearchBackendTestCase(TestCase):
