@@ -24,7 +24,6 @@ class Command(BaseCommand):
         from haystack import connections
         from haystack.query import SearchQuerySet
         
-        verbosity = int(options.get('verbosity', 1))
         using = options.get('using')
         batch_size = int(options.get('batchsize'))
         
@@ -34,7 +33,10 @@ class Command(BaseCommand):
         total = qs.count()
         start = 0
         removed_count = 0
-        while start + batch_size <= total:
+        while start < total:
+            # ensure we don't slice past the end
+            batch_size = min(batch_size, total-start)
+            
             batch = SearchQuerySet().using(using)[start:start+batch_size] # don't reuse the SearchQuerySet or else the query cache grows unbounded
             
             # Get primary keys by model. Force the primary keys to integers
@@ -58,6 +60,11 @@ class Command(BaseCommand):
                         pprint(batch_objs[dotted_identifier].get_stored_fields())
                         backend.remove(dotted_identifier)
                         removed_count += 1
+                        
+                        # Adjust counters since this result is no longer
+                        # in the index.
+                        start -= 1
+                        total -= 1
             
             print start, total, str(100*start/total) + "%"
         
