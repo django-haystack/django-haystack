@@ -9,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
 from django.utils.encoding import smart_str
+from django.utils import translation
 
 from haystack import connections as haystack_connections
 from haystack.query import SearchQuerySet
@@ -132,7 +133,11 @@ class Command(LabelCommand):
     )
     option_list = LabelCommand.option_list + base_options
 
+    leave_locale_alone = True
+
     def handle(self, *items, **options):
+        translation.activate(settings.LANGUAGE_CODE)
+
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.start_date = None
