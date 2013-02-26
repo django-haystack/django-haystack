@@ -29,9 +29,11 @@ MODEL = 'model'
 def worker(bits):
     # We need to reset the connections, otherwise the different processes
     # will try to share the connection, which causes things to blow up.
-    from django.db import connections
+    from django.db import connections, close_connection
+    close_connection() # as suggested in https://github.com/toastdriven/django-haystack/issues/562
 
     for alias, info in connections.databases.items():
+        break
         # We need to also tread lightly with SQLite, because blindly wiping
         # out connections (via ``... = {}``) destroys in-memory DBs.
         if not 'sqlite3' in info['ENGINE']:
