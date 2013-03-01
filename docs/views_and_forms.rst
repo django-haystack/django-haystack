@@ -267,17 +267,14 @@ As with the forms, inheritance is likely your best bet. In this case, the
 ``SearchView``. The complete code for the ``FacetedSearchView`` looks like::
 
     class FacetedSearchView(SearchView):
-        def __name__(self):
-            return "FacetedSearchView"
-            
         def extra_context(self):
             extra = super(FacetedSearchView, self).extra_context()
-            
+
             if self.results == []:
                 extra['facets'] = self.form.search().facet_counts()
             else:
                 extra['facets'] = self.results.facet_counts()
-            
+
             return extra
 
 It updates the name of the class (generally for documentation purposes) and
