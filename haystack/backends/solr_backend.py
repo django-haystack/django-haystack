@@ -659,6 +659,9 @@ class SolrSearchQuery(BaseSearchQuery):
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
 
+        if kwargs:
+            search_kwargs.update(kwargs)
+
         return search_kwargs
         
     def run(self, spelling_query=None, **kwargs):
@@ -684,6 +687,9 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.end_offset is not None:
             search_kwargs['end_offset'] = self.end_offset - self.start_offset
+
+        if kwargs:
+            search_kwargs.update(kwargs)
 
         results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **search_kwargs)
         self._results = results.get('results', [])
