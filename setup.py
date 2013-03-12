@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='django-haystack',
@@ -34,4 +34,5 @@ setup(
         'Programming Language :: Python',
         'Topic :: Utilities'
     ],
+    zip_safe=False,
 )
