@@ -251,5 +251,12 @@
       "author": "daniel3",
       "pub_date": "2009-07-17 22:30:00"
     }
+  },
+  {
+    "pk": 1,
+    "model": "core.ScoreMockModel",
+    "fields": {
+      "score": "42"
+    }
   }
 ]
