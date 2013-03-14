@@ -291,7 +291,7 @@ class BaseSearchQuery(object):
         self.start_offset = 0
         self.end_offset = None
         self.highlight = False
-        self.facets = set()
+        self.facets = {}
         self.date_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
@@ -354,7 +354,7 @@ class BaseSearchQuery(object):
             kwargs['highlight'] = self.highlight
 
         if self.facets:
-            kwargs['facets'] = list(self.facets)
+            kwargs['facets'] = self.facets
 
         if self.date_facets:
             kwargs['date_facets'] = self.date_facets
@@ -726,10 +726,11 @@ class BaseSearchQuery(object):
             'point': ensure_point(point),
         }
 
-    def add_field_facet(self, field):
+    def add_field_facet(self, field, **options):
         """Adds a regular facet on a field."""
         from haystack import connections
-        self.facets.add(connections[self._using].get_unified_index().get_facet_fieldname(field))
+        field_name = connections[self._using].get_unified_index().get_facet_fieldname(field)
+        self.facets[field_name] = options.copy()
 
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""

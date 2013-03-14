@@ -318,13 +318,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs.setdefault('facets', {})
 
-            for facet_fieldname in facets:
-                kwargs['facets'][facet_fieldname] = {
+            for facet_fieldname, extra_options in facets.items():
+                facet_options = {
                     'terms': {
                         'field': facet_fieldname,
                         'size': 100,
                     },
                 }
+                facet_options['terms'].update(extra_options)
+                kwargs['facets'][facet_fieldname] = facet_options
 
         if date_facets is not None:
             kwargs.setdefault('facets', {})
@@ -826,7 +828,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             search_kwargs['end_offset'] = self.end_offset
 
         if self.facets:
-            search_kwargs['facets'] = list(self.facets)
+            search_kwargs['facets'] = self.facets
 
         if self.fields:
             search_kwargs['fields'] = self.fields
