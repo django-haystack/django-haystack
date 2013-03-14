@@ -183,7 +183,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if facets is not None:
             kwargs['facet'] = 'on'
-            kwargs['facet.field'] = facets
+            kwargs['facet.field'] = facets.keys()
+
+            for facet_field, options in facets.items():
+                for key, value in options.items():
+                    kwargs['f.%s.facet.%s' % (facet_field, key)] = self.conn._from_python(value)
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -636,7 +640,7 @@ class SolrSearchQuery(BaseSearchQuery):
             search_kwargs['end_offset'] = self.end_offset
 
         if self.facets:
-            search_kwargs['facets'] = list(self.facets)
+            search_kwargs['facets'] = self.facets
 
         if self.fields:
             search_kwargs['fields'] = self.fields

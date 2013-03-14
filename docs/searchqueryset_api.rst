@@ -277,10 +277,18 @@ Example::
 ``facet``
 ~~~~~~~~~
 
-.. method:: SearchQuerySet.facet(self, field)
+.. method:: SearchQuerySet.facet(self, field, **options)
 
 Adds faceting to a query for the provided field. You provide the field (from one
-of the ``SearchIndex`` classes) you like to facet on.
+of the ``SearchIndex`` classes) you like to facet on. Any keyword options you
+provide will be passed along to the backend for that facet.
+
+Example::
+
+    # For SOLR (setting f.author.facet.*; see http://wiki.apache.org/solr/SimpleFacetParameters#Parameters)
+    SearchQuerySet().facet('author', mincount=1, limit=10)
+    # For ElasticSearch (see http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html)
+    SearchQuerySet().facet('author', size=10, order='term')
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.

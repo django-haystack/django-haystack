@@ -282,7 +282,7 @@ point passed in.
 ``add_field_facet``
 ~~~~~~~~~~~~~~~~~~~
 
-.. method:: SearchQuery.add_field_facet(self, field)
+.. method:: SearchQuery.add_field_facet(self, field, **options)
 
 Adds a regular facet on a field.
 

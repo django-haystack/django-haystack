@@ -330,8 +330,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('indax')['spelling_suggestion'], None)
         self.assertEqual(self.sb.search('Indx', spelling_query='indexy')['spelling_suggestion'], None)
 
-        self.assertEqual(self.sb.search('', facets=['name']), {'hits': 0, 'results': []})
-        results = self.sb.search('Index', facets=['name'])
+        self.assertEqual(self.sb.search('', facets={'name': {}}), {'hits': 0, 'results': []})
+        results = self.sb.search('Index', facets={'name': {}})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['fields']['name'], [('daniel3', 1), ('daniel2', 1), ('daniel1', 1)])
 

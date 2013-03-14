@@ -168,10 +168,10 @@ class BaseSearchQueryTestCase(TestCase):
 
     def test_add_field_facet(self):
         self.bsq.add_field_facet('foo')
-        self.assertEqual(self.bsq.facets, set(['foo']))
+        self.assertEqual(self.bsq.facets, {'foo': {}})
 
         self.bsq.add_field_facet('bar')
-        self.assertEqual(self.bsq.facets, set(['foo', 'bar']))
+        self.assertEqual(self.bsq.facets, {'foo': {}, 'bar': {}})
 
     def test_add_date_facet(self):
         self.bsq.add_date_facet('foo', start_date=datetime.date(2009, 2, 25), end_date=datetime.date(2009, 3, 25), gap_by='day')

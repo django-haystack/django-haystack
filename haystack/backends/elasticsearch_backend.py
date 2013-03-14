@@ -324,13 +324,21 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs.setdefault('facets', {})
 
-            for facet_fieldname in facets:
-                kwargs['facets'][facet_fieldname] = {
+            for facet_fieldname, extra_options in facets.items():
+                facet_options = {
                     'terms': {
                         'field': facet_fieldname,
                         'size': 100,
                     },
                 }
+                # Special cases for options applied at the facet level (not the terms level).
+                if extra_options.pop('global_scope', False):
+                    # Renamed "global_scope" since "global" is a python keyword.
+                    facet_options['global'] = True
+                if 'facet_filter' in extra_options:
+                    facet_options['facet_filter'] = extra_options.pop('facet_filter')
+                facet_options['terms'].update(extra_options)
+                kwargs['facets'][facet_fieldname] = facet_options
 
         if date_facets is not None:
             kwargs.setdefault('facets', {})
@@ -892,7 +900,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             search_kwargs['end_offset'] = self.end_offset
 
         if self.facets:
-            search_kwargs['facets'] = list(self.facets)
+            search_kwargs['facets'] = self.facets
 
         if self.fields:
             search_kwargs['fields'] = self.fields
