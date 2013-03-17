@@ -1,4 +1,4 @@
-_ref-searchqueryset-api:
+.. _ref-searchqueryset-api:
 
 ======================
 ``SearchQuerySet`` API
