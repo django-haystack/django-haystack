@@ -188,6 +188,12 @@ class BaseSearchBackend(object):
 
         return models
 
+    def percolator(self, name, query):
+        raise NotImplementedError("Percolators are only available on the elastic search backend.")
+
+    def percolate(self, model_instance):
+        raise NotImplementedError("Percolate is only available on the elastic search backend.")
+
 
 # Alias for easy loading within SearchQuery objects.
 SearchBackend = BaseSearchBackend

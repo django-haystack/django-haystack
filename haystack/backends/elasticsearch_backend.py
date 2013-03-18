@@ -666,6 +666,34 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return (content_field_name, mapping)
 
+    def percolator(self, name, query):
+        """
+        Create a percolator for the index with the name given and the query provided.
+        """
+        self.conn.percolator(self.index_name, name, query)
+
+    def percolate(self, model_instance):
+        """
+        Take the model instance given, run it against the percolators and return the matching names
+        """
+        model_klass = model_instance._meta.concrete_model
+
+        from haystack import connections
+        index = connections[self.connection_alias].get_unified_index().get_index(model_klass)
+
+        prepped_data = index.full_prepare(model_instance)
+        final_data = {}
+
+        for key, value in prepped_data.items():
+            final_data[key] = self.conn.from_python(value)
+
+        response = self.conn.percolate(self.index_name, 'modelresult', {"doc":final_data})
+
+        if not response.get('ok', False):
+            raise Exception, "Error on response: %s" % response
+
+        return response['matches']
+
 
 # Sucks that this is almost an exact copy of what's in the Solr backend,
 # but we can't import due to dependencies.

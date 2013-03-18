@@ -534,6 +534,19 @@ class SearchQuerySet(object):
         qs._flat = flat
         return qs
 
+    def save_as_percolator(self, name):
+        """
+        Saves the current query as a percolator in the backend, using the name given.
+        """
+        query = self.query.backend.build_search_kwargs(self.query.build_query())
+        self.query.backend.percolator(name, query)
+
+    def percolate(self, model_instance):
+        """
+        Take the model instance given, run it against the percolators and return the matching names
+        """
+        return self.query.backend.percolate(model_instance)
+
     # Utility methods.
 
     def _clone(self, klass=None):
