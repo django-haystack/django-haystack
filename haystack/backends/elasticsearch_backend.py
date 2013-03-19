@@ -325,6 +325,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                         'size': 100,
                     },
                 }
+                # Special cases for options applied at the facet level (not the terms level).
+                if extra_options.pop('global_scope', False):
+                    # Renamed "global_scope" since "global" is a python keyword.
+                    facet_options['global'] = True
+                if 'facet_filter' in extra_options:
+                    facet_options['facet_filter'] = extra_options.pop('facet_filter')
                 facet_options['terms'].update(extra_options)
                 kwargs['facets'][facet_fieldname] = facet_options
 
