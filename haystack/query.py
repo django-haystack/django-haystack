@@ -357,10 +357,10 @@ class SearchQuerySet(object):
         clone.query.add_boost(term, boost)
         return clone
 
-    def facet(self, field):
+    def facet(self, field, **options):
         """Adds faceting to a query for the provided field."""
         clone = self._clone()
-        clone.query.add_field_facet(field)
+        clone.query.add_field_facet(field, **options)
         return clone
 
     def within(self, field, point_1, point_2):

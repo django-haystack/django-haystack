@@ -67,3 +67,4 @@ Thanks to
     * Rodrigo Guzman (rz) for a fix to query handling in the ``simple`` backend.
     * Martin J. Laubach (mjl) for fixing the logic used when combining querysets
     * Eric Holscher (ericholscher) for a docs fix.
+    * Dan Watson (dcwatson) for a patch allowing developers to specify per-facet options.
