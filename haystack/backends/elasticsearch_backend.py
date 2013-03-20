@@ -1,4 +1,5 @@
 import datetime
+import re
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -20,6 +21,11 @@ try:
     import pyelasticsearch
 except ImportError:
     raise MissingDependency("The 'elasticsearch' backend requires the installation of 'pyelasticsearch'. Please refer to the documentation.")
+
+
+DATETIME_REGEX = re.compile(
+    r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T'
+    r'(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d+)?$')
 
 
 class ElasticsearchSearchBackend(BaseSearchBackend):
@@ -583,7 +589,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         additional_fields[string_key] = index.fields[string_key].convert(value)
                     else:
-                        additional_fields[string_key] = self.conn.to_python(value)
+                        additional_fields[string_key] = self._to_python(value)
 
                 del(additional_fields[DJANGO_CT])
                 del(additional_fields[DJANGO_ID])
@@ -665,6 +671,43 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             mapping[field_class.index_fieldname] = field_mapping
 
         return (content_field_name, mapping)
+
+    def _to_python(self, value):
+        """Convert values from ElasticSearch to native Python values."""
+        if isinstance(value, (int, float, complex, list, tuple, bool)):
+            return value
+
+        if isinstance(value, basestring):
+            possible_datetime = DATETIME_REGEX.search(value)
+
+            if possible_datetime:
+                date_values = possible_datetime.groupdict()
+
+                for dk, dv in date_values.items():
+                    date_values[dk] = int(dv)
+
+                return datetime(
+                    date_values['year'], date_values['month'],
+                    date_values['day'], date_values['hour'],
+                    date_values['minute'], date_values['second'])
+
+        try:
+            # This is slightly gross but it's hard to tell otherwise what the
+            # string's original type might have been. Be careful who you trust.
+            converted_value = eval(value)
+
+            # Try to handle most built-in types.
+            if isinstance(
+                    converted_value,
+                    (int, list, tuple, set, dict, float, complex)):
+                return converted_value
+        except Exception:
+            # If it fails (SyntaxError or its ilk) or we don't trust it,
+            # continue on.
+            pass
+
+        return value
+
 
 
 # Sucks that this is almost an exact copy of what's in the Solr backend,
