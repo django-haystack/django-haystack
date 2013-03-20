@@ -50,7 +50,7 @@ Elasticsearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: pyelasticsearch 0.2+ & Elasticsearch 0.17.7+
+* Requires: pyelasticsearch 0.4+ & Elasticsearch 0.17.7+
 
 Whoosh
 ------
