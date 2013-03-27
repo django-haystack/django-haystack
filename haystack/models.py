@@ -57,6 +57,19 @@ class SearchResult(object):
 
         return self.__dict__.get(attr, None)
 
+    def __eq__(self, other):
+        try:
+            return (
+                (self.app_label == other.app_label) and
+                (self.model_name == other.model_name) and
+                (self.pk == other.pk)
+            )
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def _get_searchindex(self):
         from haystack import connections
         return connections['default'].get_unified_index().get_index(self.model)

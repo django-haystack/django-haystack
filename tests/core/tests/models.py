@@ -21,6 +21,7 @@ class SearchResultTestCase(TestCase):
     def setUp(self):
         super(SearchResultTestCase, self).setUp()
         cap = CaptureHandler()
+        logging.getLogger('haystack').real_logger.handlers = []
         logging.getLogger('haystack').addHandler(cap)
         
         self.no_data = {}
@@ -36,7 +37,7 @@ class SearchResultTestCase(TestCase):
         self.no_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 2)
         self.extra_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 3, **self.extra_data)
         self.no_overwrite_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 4, **self.no_overwrite_data)
-    
+
     def test_init(self):
         self.assertEqual(self.no_data_sr.app_label, 'haystack')
         self.assertEqual(self.no_data_sr.model_name, 'mockmodel')
@@ -131,7 +132,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol1.verbose_name, u'Mock model')
         self.assertEqual(awol1.verbose_name_plural, u'Mock models')
         self.assertEqual(awol1.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 4)
+        self.assertEqual(len(CaptureHandler.logs_seen), 1)
         
         CaptureHandler.logs_seen = []
         self.assertEqual(awol2.model, None)
@@ -139,7 +140,7 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name, u'')
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 12)
+        self.assertEqual(len(CaptureHandler.logs_seen), 3)
     
     def test_read_queryset(self):
         # The model is flagged deleted so not returned by the default manager.
@@ -170,3 +171,23 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(pickle_me_1.model_name, pickle_me_2.model_name)
         self.assertEqual(pickle_me_1.pk, pickle_me_2.pk)
         self.assertEqual(pickle_me_1.score, pickle_me_2.score)
+
+    def test_equality(self):
+        self.assertEqual(self.no_data_sr,
+                MockSearchResult('haystack', 'mockmodel', '1', 2))
+        self.assertEqual(self.extra_data_sr,
+            MockSearchResult('haystack', 'mockmodel',
+                                '1', 3, **self.extra_data))
+        self.assertEqual(self.no_overwrite_data_sr,
+             MockSearchResult('haystack', 'mockmodel',
+                            '1', 4, **self.no_overwrite_data))
+
+    def test_inequality(self):
+        self.assertNotEqual(self.no_data_sr,
+                MockSearchResult('haystack', 'mockmodel', '2', 2))
+        self.assertNotEqual(self.extra_data_sr,
+            MockSearchResult('haystack', 'mockmodel',
+                                '2', 3, **self.extra_data))
+        self.assertNotEqual(self.no_overwrite_data_sr,
+             MockSearchResult('haystack', 'mockmodel',
+                            '2', 4, **self.no_overwrite_data))
