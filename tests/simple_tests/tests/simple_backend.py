@@ -71,6 +71,11 @@ class SimpleSearchBackendTestCase(TestCase):
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.backend.search(u'index document', result_class=MockSearchResult)['results'][0], MockSearchResult))
 
+    def test_filter_models(self):
+        self.backend.update(self.index, self.sample_objs)
+        self.assertEqual(self.backend.search(u'*', models=set([]))['hits'], 24)
+        self.assertEqual(self.backend.search(u'*', models=set([MockModel]))['hits'], 23)
+
     def test_more_like_this(self):
         self.backend.update(self.index, self.sample_objs)
         self.assertEqual(self.backend.search(u'*')['hits'], 24)

@@ -45,12 +45,16 @@ class SimpleSearchBackend(BaseSearchBackend):
         hits = 0
         results = []
         result_class = SearchResult
+        models = connections[self.connection_alias].get_unified_index().get_indexed_models()
 
         if kwargs.get('result_class'):
             result_class = kwargs['result_class']
 
+        if kwargs.get('models'):
+            models = kwargs['models']
+
         if query_string:
-            for model in connections[self.connection_alias].get_unified_index().get_indexed_models():
+            for model in models:
                 if query_string == '*':
                     qs = model.objects.all()
                 else:
