@@ -68,3 +68,4 @@ Thanks to
     * Martin J. Laubach (mjl) for fixing the logic used when combining querysets
     * Eric Holscher (ericholscher) for a docs fix.
     * Erik Rose (erikrose) for a quick pyelasticsearch-compatibility patch
+    * Stefan Wehrmeyer (stefanw) for a simple search filter fix
