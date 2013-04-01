@@ -665,6 +665,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
     def _clone(self, **kwargs):
         clone = super(ElasticsearchSearchQuery, self)._clone(**kwargs)
         clone.extras = self.extras.copy()
+        return clone
 
     def add_extras(self, extras):
         """
