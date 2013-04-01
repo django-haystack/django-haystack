@@ -130,6 +130,7 @@
 
   <fields>
     <!-- general -->
+    <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>
     <field name="{{ ID }}" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
     <field name="{{ DJANGO_CT }}" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="{{ DJANGO_ID }}" type="string" indexed="true" stored="true" multiValued="false"/>
