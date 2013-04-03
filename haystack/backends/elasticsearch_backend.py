@@ -157,7 +157,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 # Convert the data to make sure it's happy.
                 for key, value in prepped_data.items():
-                    final_data[key] = self.conn.from_python(value)
+                    final_data[key] = self._from_python(value)
 
                 prepped_docs.append(final_data)
             except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
@@ -352,8 +352,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     'facet_filter': {
                         "range": {
                             facet_fieldname: {
-                                'from': self.conn.from_python(value.get('start_date')),
-                                'to': self.conn.from_python(value.get('end_date')),
+                                'from': self._from_python(value.get('start_date')),
+                                'to': self._from_python(value.get('end_date')),
                             }
                         }
                     }
@@ -672,6 +672,29 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return (content_field_name, mapping)
 
+    def _iso_datetime(self, value):
+        """
+        If value appears to be something datetime-like, return it in ISO format.
+
+        Otherwise, return None.
+        """
+        if hasattr(value, 'strftime'):
+            if hasattr(value, 'hour'):
+                return value.isoformat()
+            else:
+                return '%sT00:00:00' % value.isoformat()
+
+    def _from_python(self, value):
+        """Convert more Python data types to ES-understandable JSON."""
+        iso = self._iso_datetime(value)
+        if iso:
+            return iso
+        elif isinstance(value, str):
+            return unicode(value, errors='replace')  # TODO: Be stricter.
+        elif isinstance(value, set):
+            return list(value)
+        return value
+
     def _to_python(self, value):
         """Convert values from ElasticSearch to native Python values."""
         if isinstance(value, (int, float, complex, list, tuple, bool)):
@@ -755,7 +778,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         if not isinstance(prepared_value, (set, list, tuple)):
             # Then convert whatever we get back to what pysolr wants if needed.
-            prepared_value = self.backend.conn.from_python(prepared_value)
+            prepared_value = self.backend._from_python(prepared_value)
 
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
@@ -786,9 +809,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
                     if isinstance(prepared_value, basestring):
                         for possible_value in prepared_value.split(' '):
-                            terms.append(filter_types[filter_type] % self.backend.conn.from_python(possible_value))
+                            terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
                     else:
-                        terms.append(filter_types[filter_type] % self.backend.conn.from_python(prepared_value))
+                        terms.append(filter_types[filter_type] % self.backend._from_python(prepared_value))
 
                     if len(terms) == 1:
                         query_frag = terms[0]
@@ -798,12 +821,12 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                 in_options = []
 
                 for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend.conn.from_python(possible_value))
+                    in_options.append(u'"%s"' % self.backend._from_python(possible_value))
 
                 query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
-                start = self.backend.conn.from_python(prepared_value[0])
-                end = self.backend.conn.from_python(prepared_value[1])
+                start = self.backend._from_python(prepared_value[0])
+                end = self.backend._from_python(prepared_value[1])
                 query_frag = u'["%s" TO "%s"]' % (start, end)
             elif filter_type == 'exact':
                 if value.input_type_name == 'exact':
