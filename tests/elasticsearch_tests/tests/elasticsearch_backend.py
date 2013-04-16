@@ -263,6 +263,12 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             }
         ])
 
+    def test_spelling(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        self.assertEqual(self.sb.search('Indx')['hits'], 0)
+        self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
+        self.assertEqual(self.sb.search('arf', spelling_query='indexyd')['spelling_suggestion'], 'indexed')
+
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 3)
@@ -519,11 +525,6 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
     def tearDown(self):
         connections['default']._index = self.old_ui
         super(LiveElasticsearchSearchQueryTestCase, self).tearDown()
-
-    def test_get_spelling(self):
-        self.sq.add_filter(SQ(content='Indexy'))
-        self.assertEqual(self.sq.get_spelling_suggestion(), None)
-        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), None)
 
     def test_log_query(self):
         from django.conf import settings
