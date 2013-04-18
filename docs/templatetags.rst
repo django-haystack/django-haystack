@@ -64,5 +64,5 @@ Example::
     # Pull just the top 5 similar entries or comments.
     {% more_like_this entry as related_content for "blog.entry,comments.comment" limit 5  %}
 
-This tag behaves exactly like `SearchQuerySet.more_like_this``, so all notes in
+This tag behaves exactly like ``SearchQuerySet.more_like_this``, so all notes in
 that regard apply here as well.

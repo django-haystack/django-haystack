@@ -1,14 +1,16 @@
-import logging
+import logging as std_logging
 import pickle
 from django.test import TestCase
 from haystack import connections
 from haystack.models import SearchResult
+from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel, AFifthMockModel
 from core.tests.mocks import MockSearchResult
 from core.tests.indexes import ReadQuerySetTestSearchIndex
 
-class CaptureHandler(logging.Handler):
+
+class CaptureHandler(std_logging.Handler):
     logs_seen = []
     
     def emit(self, record):

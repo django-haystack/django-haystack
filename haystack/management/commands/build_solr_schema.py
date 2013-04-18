@@ -1,7 +1,10 @@
 from optparse import make_option
 import sys
+
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from django.template import loader, Context
+from haystack.backends.solr_backend import SolrSearchBackend
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR, DEFAULT_ALIAS
 
 
@@ -28,6 +31,10 @@ class Command(BaseCommand):
     def build_context(self, using):
         from haystack import connections, connection_router
         backend = connections[using].get_backend()
+
+        if not isinstance(backend, SolrSearchBackend):
+            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % backend.connection_alias)
+
         content_field_name, fields = backend.build_schema(connections[using].get_unified_index().all_searchfields())
         return Context({
             'content_field_name': content_field_name,

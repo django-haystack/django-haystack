@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
+from haystack import connections, reset_search_queries
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
 from solr_tests.tests.solr_backend import SolrMockModelSearchIndex, clear_solr_index
@@ -60,11 +60,12 @@ class SearchModelAdminTestCase(TestCase):
         self.assertEqual(resp.context['cl'].full_result_count, 23)
         # Ensure they aren't search results.
         self.assertEqual(isinstance(resp.context['cl'].result_list[0], MockModel), True)
-        self.assertEqual(resp.context['cl'].result_list[0].id, 5)
+
+        result_pks = [i.pk for i in resp.context['cl'].result_list]
+        self.assertIn(5, result_pks)
 
         # Make sure only changelist is affected.
         resp = self.client.get('/admin/core/mockmodel/1/')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(connections['default'].queries), 3)
         self.assertEqual(resp.context['original'].id, 1)
-

@@ -726,6 +726,32 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_filter), 2)
 
+    def test_and_or(self):
+        """
+        Combining AND queries with OR should give
+            AND(OR(a, b), OR(c, d))
+        """
+        sqs1 = self.msqs.filter(content='foo').filter(content='oof')
+        sqs2 = self.msqs.filter(content='bar').filter(content='rab')
+        sqs = sqs1 | sqs2
+
+        self.assertEqual(sqs.query.query_filter.connector, 'OR')
+        self.assertEqual(repr(sqs.query.query_filter.children[0]), repr(sqs1.query.query_filter))
+        self.assertEqual(repr(sqs.query.query_filter.children[1]), repr(sqs2.query.query_filter))
+
+    def test_or_and(self):
+        """
+        Combining OR queries with AND should give
+            OR(AND(a, b), AND(c, d))
+        """
+        sqs1 = self.msqs.filter(content='foo').filter_or(content='oof')
+        sqs2 = self.msqs.filter(content='bar').filter_or(content='rab')
+        sqs = sqs1 & sqs2
+
+        self.assertEqual(sqs.query.query_filter.connector, 'AND')
+        self.assertEqual(repr(sqs.query.query_filter.children[0]), repr(sqs1.query.query_filter))
+        self.assertEqual(repr(sqs.query.query_filter.children[1]), repr(sqs2.query.query_filter))
+
 
 class ValuesQuerySetTestCase(SearchQuerySetTestCase):
     def test_values_sqs(self):

@@ -1,7 +1,7 @@
 import datetime
 from django.test import TestCase
 from haystack import connections
-from haystack.inputs import Exact
+from haystack.inputs import Exact, AltParser
 from haystack.models import SearchResult
 from haystack.query import SQ
 from core.models import MockModel, AnotherMockModel
@@ -73,6 +73,16 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(id__in=[1, 2, 3]))
         self.sq.add_filter(SQ(rating__range=[3, 5]))
         self.assertEqual(self.sq.build_query(), u'((why) AND pub_date:([* TO "2009-02-10 01:59:00"]) AND author:({"daniel" TO *}) AND created:({* TO "2009-02-12 12:13:00"}) AND title:(["B" TO *]) AND id:("1" OR "2" OR "3") AND rating:(["3" TO "5"]))')
+
+    def test_build_complex_altparser_query(self):
+        self.sq.add_filter(SQ(content=AltParser('dismax', "Don't panic", qf='text')))
+        self.sq.add_filter(SQ(pub_date__lte=Exact('2009-02-10 01:59:00')))
+        self.sq.add_filter(SQ(author__gt='daniel'))
+        self.sq.add_filter(SQ(created__lt=Exact('2009-02-12 12:13:00')))
+        self.sq.add_filter(SQ(title__gte='B'))
+        self.sq.add_filter(SQ(id__in=[1, 2, 3]))
+        self.sq.add_filter(SQ(rating__range=[3, 5]))
+        self.assertEqual(self.sq.build_query(), u'((_query_:"{!dismax qf=text}Don\'t panic") AND pub_date:([* TO "2009-02-10 01:59:00"]) AND author:({"daniel" TO *}) AND created:({* TO "2009-02-12 12:13:00"}) AND title:(["B" TO *]) AND id:("1" OR "2" OR "3") AND rating:(["3" TO "5"]))')
 
     def test_build_query_multiple_filter_types_with_datetimes(self):
         self.sq.add_filter(SQ(content='why'))

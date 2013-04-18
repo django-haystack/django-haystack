@@ -1,3 +1,4 @@
+from tempfile import mkdtemp
 import os
 from settings import *
 
@@ -8,8 +9,7 @@ INSTALLED_APPS += [
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-        'PATH': os.path.join('tmp', 'test_whoosh_query'),
+        'PATH': mkdtemp(prefix='haystack-whoosh-tests-'),
         'INCLUDE_SPELLING': True,
-        # 'STORAGE': 'ram',
     },
 }

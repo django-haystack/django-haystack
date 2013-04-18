@@ -113,7 +113,7 @@ Examples::
     deletions unless the ``--remove`` flag is provided. You might consider
     a queue consumer if the memory requirements for ``--remove`` don't
     fit your needs. Alternatively, you can use the
-    ``RealTimeSearchIndex``, which will automatically handle deletions.
+    ``RealtimeSignalProcessor``, which will automatically handle deletions.
 
 
 ``rebuild_index``
@@ -164,7 +164,7 @@ following arguments::
         If provided, determines which connection should be used. Default is
         ``default``.
 
-.. warning:
+.. warning::
 
     This command does NOT update the ``schema.xml`` file for you. You either
     have to specify a ``filename`` flag or have to

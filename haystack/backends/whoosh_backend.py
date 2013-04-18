@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import shutil
@@ -15,6 +14,8 @@ from haystack.exceptions import MissingDependency, SearchBackendError
 from haystack.inputs import PythonData, Clean, Exact
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
+from haystack.utils import log as logging
+
 try:
     import json
 except ImportError:
@@ -22,11 +23,6 @@ except ImportError:
         import simplejson as json
     except ImportError:
         from django.utils import simplejson as json
-try:
-    from django.db.models.sql.query import get_proxied_model
-except ImportError:
-    # Likely on Django 1.0
-    get_proxied_model = None
 
 try:
     import whoosh
@@ -187,7 +183,15 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to add documents to Whoosh: %s", e)
+                # We'll log the object identifier but won't include the actual object
+                # to avoid the possibility of that generating encoding errors while
+                # processing the log message:
+                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
+                    "data": {
+                        "index": index,
+                        "object": get_identifier(obj)
+                    }
+                })
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
@@ -440,11 +444,9 @@ class WhooshSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
-        # Handle deferred models.
-        if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
-            model_klass = get_proxied_model(model_instance._meta)
-        else:
-            model_klass = type(model_instance)
+        # Deferred models will have a different class ("RealClass_Deferred_fieldname")
+        # which won't be in our registry:
+        model_klass = model_instance._meta.concrete_model
 
         field_name = self.content_field_name
         narrow_queries = set()
@@ -821,8 +823,11 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
-
-                    in_options.append('"%s"' % pv)
+                    
+                    if isinstance(pv, basestring) and not is_datetime:
+                        in_options.append('"%s"' % pv)
+                    else:
+                        in_options.append('%s' % pv)
 
                 query_frag = "(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':

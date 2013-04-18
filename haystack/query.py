@@ -1,4 +1,3 @@
-import logging
 import operator
 import warnings
 from haystack import connections, connection_router
@@ -6,6 +5,7 @@ from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
 from haystack.exceptions import NotHandled
 from haystack.inputs import Raw, Clean, AutoQuery
+from haystack.utils import log as logging
 
 
 class SearchQuerySet(object):
@@ -46,6 +46,10 @@ class SearchQuerySet(object):
             hints['models'] = self.query.models
 
         backend_alias = connection_router.for_read(**hints)
+
+        if isinstance(backend_alias, (list, tuple)) and len(backend_alias):
+            # We can only effectively read from one engine.
+            backend_alias = backend_alias[0]
 
         # The ``SearchQuery`` might swap itself out for a different variant
         # here.
@@ -201,7 +205,7 @@ class SearchQuerySet(object):
                 try:
                     ui = connections[self.query._using].get_unified_index()
                     index = ui.get_index(model)
-                    objects = index.read_queryset()
+                    objects = index.read_queryset(using=self.query._using)
                     loaded_objects[model] = objects.in_bulk(models_pks[model])
                 except NotHandled:
                     self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
@@ -269,15 +273,13 @@ class SearchQuerySet(object):
         else:
             return self._result_cache[start]
 
-
     # Methods that return a SearchQuerySet.
-
     def all(self):
         """Returns all results for the query."""
         return self._clone()
 
     def none(self):
-        """Returns all results for the query."""
+        """Returns an empty result list for the query."""
         return self._clone(klass=EmptySearchQuerySet)
 
     def filter(self, *args, **kwargs):

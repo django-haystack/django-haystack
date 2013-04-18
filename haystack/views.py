@@ -11,7 +11,6 @@ RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):
-    __name__ = 'SearchView'
     template = 'search/search.html'
     extra_context = {}
     query = ''
@@ -151,8 +150,6 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 
 class FacetedSearchView(SearchView):
-    __name__ = 'FacetedSearchView'
-
     def __init__(self, *args, **kwargs):
         # Needed to switch out the default form class.
         if kwargs.get('form_class') is None:

@@ -1,14 +1,13 @@
 import logging
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core import signals
 from haystack.constants import DEFAULT_ALIAS
+from haystack import signals
 from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
 __version__ = (2, 0, 0, 'beta')
-__all__ = ['backend']
 
 
 # Setup default logging.
@@ -47,6 +46,11 @@ if hasattr(settings, 'HAYSTACK_ROUTERS'):
 
     connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
 
+# Setup the signal processor.
+signal_processor_path = getattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', 'haystack.signals.BaseSignalProcessor')
+signal_processor_class = loading.import_class(signal_processor_path)
+signal_processor = signal_processor_class(connections, connection_router)
+
 
 # Per-request, reset the ghetto query log.
 # Probably not extraordinarily thread-safe but should only matter when
@@ -57,4 +61,5 @@ def reset_search_queries(**kwargs):
 
 
 if settings.DEBUG:
-    signals.request_started.connect(reset_search_queries)
+    from django.core import signals as django_signals
+    django_signals.request_started.connect(reset_search_queries)

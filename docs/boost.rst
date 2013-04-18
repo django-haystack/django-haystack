@@ -30,7 +30,7 @@ the document is being added to the index). Document boost causes the relevance
 of the entire result to go up, where field boost causes only searches within
 that field to do better.
 
-.. warning:
+.. warning::
 
   Be warned that boost is very, very sensitive & can hurt overall search
   quality if over-zealously applied. Even very small adjustments can affect
@@ -47,7 +47,7 @@ Example::
 
     # Slight increase in relevance for documents that include "banana".
     sqs = SearchQuerySet().boost('banana', 1.1)
-    
+
     # Big decrease in relevance for documents that include "blueberry".
     sqs = SearchQuerySet().boost('blueberry', 0.8)
 
@@ -63,16 +63,16 @@ Document boosting is done by adding a ``boost`` field to the prepared data
 
     from haystack import indexes
     from notes.models import Note
-    
-    
+
+
     class NoteSearchIndex(indexes.SearchIndex, indexes.Indexable):
         # Your regular fields here then...
-        
+
         def prepare(self, obj):
             data = super(NoteSearchIndex, self).prepare(obj)
             data['boost'] = 1.1
             return data
-    
+
 
 Another approach might be to add a new field called ``boost``. However, this
 can skew your schema and is not encouraged.
@@ -86,11 +86,11 @@ An example of this might be increasing the significance of a ``title``::
 
     from haystack import indexes
     from notes.models import Note
-    
-    
+
+
     class NoteSearchIndex(indexes.SearchIndex, indexes.Indexable):
         text = indexes.CharField(document=True, use_template=True)
         title = indexes.CharField(model_attr='title', boost=1.125)
-        
+
         def get_model(self):
             return Note

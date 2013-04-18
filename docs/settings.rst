@@ -120,6 +120,21 @@ An example::
 Defaults to ``['haystack.routers.DefaultRouter']``.
 
 
+``HAYSTACK_SIGNAL_PROCESSOR``
+=============================
+
+**Optional**
+
+This setting controls what ``SignalProcessor`` class is used to handle Django's
+signals & keep the search index up-to-date.
+
+An example::
+
+    HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+Defaults to ``'haystack.signals.BaseSignalProcessor'``.
+
+
 ``HAYSTACK_DOCUMENT_FIELD``
 ===========================
 

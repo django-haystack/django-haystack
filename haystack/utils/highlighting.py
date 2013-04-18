@@ -125,7 +125,6 @@ class Highlighter(object):
             hl_start = '<%s>' % (self.html_tag)
         
         hl_end = '</%s>' % self.html_tag
-        highlight_length = len(hl_start + hl_end)
         
         # Copy the part from the start of the string to the first match,
         # and there replace the match with a highlighted version.
@@ -140,6 +139,9 @@ class Highlighter(object):
             
             # Handle incorrect highlight_locations by first checking for the term
             if actual_term.lower() == cur_str:
+                if cur < prev + len(prev_str):
+                    continue
+
                 highlighted_chunk += text[prev + len(prev_str):cur] + hl_start + actual_term + hl_end
                 prev = cur
                 prev_str = cur_str
