@@ -3,7 +3,7 @@ Haystack
 ========
 
 :author: Daniel Lindsley
-:date: 2012/03/30
+:date: 2013/04/28
 
 Haystack provides modular search for Django. It features a unified, familiar
 API that allows you to plug in different search backends (such as Solr_,
@@ -48,19 +48,3 @@ Haystack has a relatively easily-met set of requirements.
 Additionally, each backend has its own requirements. You should refer to
 http://docs.haystacksearch.org/dev/installing_search_engines.html for more
 details.
-
-
-Commercial Support
-==================
-
-If you're using Haystack in a commercial environment, paid support is available
-from `Toast Driven`_. Services offered include:
-
-* Advice/help with setup
-* Implementation in your project
-* Bugfixes in Haystack itself
-* Features in Haystack itself
-
-If you're interested, please contact Daniel Lindsley (daniel@toastdriven.com).
-
-.. _`Toast Driven`: http://toastdriven.com/
