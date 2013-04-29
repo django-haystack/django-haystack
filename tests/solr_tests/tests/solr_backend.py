@@ -978,11 +978,11 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 5)
 
     def test_quotes_regression(self):
-        sqs = self.sqs.auto_query(u"44°48'40''N 20°28'32''E")
+        sqs = self.sqs.auto_query(u"44°48'40''N 26°28'32''E")
         # Should not have empty terms.
-        self.assertEqual(sqs.query.build_query(), u"(44\xb048'40''N 20\xb028'32''E)")
+        self.assertEqual(sqs.query.build_query(), u"(44\xb048'40''N 26\xb028'32''E)")
         # Should not cause Solr to 500.
-        self.assertEqual(sqs.count(), 0)
+        self.assertIsInstance(sqs.count(), int)
 
         sqs = self.sqs.auto_query('blazing')
         self.assertEqual(sqs.query.build_query(), u'(blazing)')
