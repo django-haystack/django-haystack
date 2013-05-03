@@ -680,6 +680,7 @@ class SolrSearchQuery(BaseSearchQuery):
         search_kwargs = {
             'start_offset': self.start_offset,
             'result_class': self.result_class,
+            'models': self.models
         }
 
         if self.end_offset is not None:
