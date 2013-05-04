@@ -32,7 +32,6 @@ except ImportError:
 
 def clear_elasticsearch_index():
     # Wipe it clean.
-    print 'Clearing out Elasticsearch...'
     raw_es = pyelasticsearch.ElasticSearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     try:
         raw_es.delete_index(settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
@@ -182,6 +181,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         connections['default']._index = self.ui
         self.sb = connections['default'].get_backend()
 
+        # Force the backend to rebuild the mapping each time.
+        self.sb.existing_mapping = {}
+        self.sb.setup()
+
         self.sample_objs = []
 
         for i in xrange(1, 4):
@@ -312,7 +315,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_search('*:*').get('hits', {}).get('total', 0), 0)
 
-    @unittest.expectedFailure
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 3)
@@ -327,8 +329,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             [[u'<em>Indexed</em>!\n2'], [u'<em>Indexed</em>!\n1'], [u'<em>Indexed</em>!\n3']])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
-        self.assertEqual(self.sb.search('indax')['spelling_suggestion'], None)
-        self.assertEqual(self.sb.search('Indx', spelling_query='indexy')['spelling_suggestion'], None)
+        self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
+        self.assertEqual(self.sb.search('arf', spelling_query='indexyd')['spelling_suggestion'], 'indexed')
 
         self.assertEqual(self.sb.search('', facets={'name': {}}), {'hits': 0, 'results': []})
         results = self.sb.search('Index', facets={'name': {}})
@@ -520,11 +522,6 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
         connections['default']._index = self.old_ui
         super(LiveElasticsearchSearchQueryTestCase, self).tearDown()
 
-    def test_get_spelling(self):
-        self.sq.add_filter(SQ(content='Indexy'))
-        self.assertEqual(self.sq.get_spelling_suggestion(), None)
-        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), None)
-
     def test_log_query(self):
         from django.conf import settings
         reset_search_queries()
@@ -584,7 +581,6 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         global lssqstc_all_loaded
 
         if lssqstc_all_loaded is None:
-            print 'Reloading data...'
             lssqstc_all_loaded = True
 
             # Wipe it clean.

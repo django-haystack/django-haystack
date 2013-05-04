@@ -315,8 +315,16 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 }
             }
 
-        if self.include_spelling is True:
-            warnings.warn("Elasticsearch does not handle spelling suggestions.", Warning, stacklevel=2)
+        if self.include_spelling:
+            kwargs['suggest'] = {
+                'suggest': {
+                    'text': spelling_query or query_string,
+                    'term': {
+                        # Using content_field here will result in suggestions of stemmed words.
+                        'field': '_all',
+                    },
+                },
+            }
 
         if narrow_queries is None:
             narrow_queries = set()
@@ -561,6 +569,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         if result_class is None:
             result_class = SearchResult
+
+        if self.include_spelling and 'suggest' in raw_results:
+            raw_suggest = raw_results['suggest']['suggest']
+            spelling_suggestion = ' '.join([word['text'] if len(word['options']) == 0 else word['options'][0]['text'] for word in raw_suggest])
 
         if 'facets' in raw_results:
             facets = {
