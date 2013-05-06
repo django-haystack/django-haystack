@@ -36,10 +36,10 @@ class SearchQuerySet(object):
     def _determine_backend(self):
         # A backend has been manually selected. Use it instead.
         if self._using is not None:
-            return self._using
+            self.query = connections[self._using].get_query()
+            return
 
         # No backend, so rely on the routers to figure out what's right.
-        from haystack import connections
         hints = {}
 
         if self.query:
