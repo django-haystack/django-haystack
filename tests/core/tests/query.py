@@ -695,6 +695,11 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(clone._cache_full, False)
         self.assertEqual(clone._using, results._using)
 
+    def test_using(self):
+        sqs = SearchQuerySet(using='default')
+        self.assertNotEqual(sqs.query, None)
+        self.assertEqual(sqs.query._using, 'default')
+
     def test_chaining(self):
         sqs = self.msqs.filter(content='foo')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
