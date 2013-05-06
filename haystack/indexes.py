@@ -60,9 +60,9 @@ class DeclarativeMetaclass(type):
         if not attrs.has_key('objects'):
             try:
                 attrs['objects'] = HaystackManager(attrs['Meta'].index_label)
-            except KeyError:
+            except (KeyError, AttributeError):
                 attrs['objects'] = HaystackManager(DEFAULT_ALIAS)
-            
+
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
