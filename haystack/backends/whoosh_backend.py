@@ -823,7 +823,7 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
-                    
+
                     if isinstance(pv, basestring) and not is_datetime:
                         in_options.append('"%s"' % pv)
                     else:
