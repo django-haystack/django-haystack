@@ -34,6 +34,7 @@ class SearchQuerySet(object):
         self.log = logging.getLogger('haystack')
 
     def _determine_backend(self):
+        from haystack import connections
         # A backend has been manually selected. Use it instead.
         if self._using is not None:
             self.query = connections[self._using].get_query()
