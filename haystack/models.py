@@ -13,6 +13,25 @@ except ImportError:
     geopy_distance = None
 
 
+def get_concrete_model_for_instance(obj):
+    """
+    Return the model for a given instance, accounting for defer()
+
+    Deferred models will have a different class ("RealClass_Deferred_fieldname")
+    which won't be in our registry
+    """
+
+    if hasattr(obj._meta, 'concrete_model'):
+        model_klass = obj._meta.concrete_model
+    else:
+        # Compatibility with Django 1.3, where concrete_model isn't always set:
+        model_klass = type(obj)
+        while model_klass._meta.proxy:
+            model_klass = model_klass._meta.proxy_for_model
+
+    return model_klass
+
+
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
 class SearchResult(object):
