@@ -222,9 +222,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 # a ``query`` root object. :/
                 query = {'query_string': {'query': " OR ".join(models_to_delete)}}
                 self.conn.delete_by_query(self.index_name, 'modelresult', query)
-
-            if commit:
-                self.conn.refresh(index=self.index_name)
         except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
             if not self.silently_fail:
                 raise

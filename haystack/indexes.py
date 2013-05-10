@@ -277,7 +277,7 @@ class SearchIndex(threading.local):
         backend = self._get_backend(using)
 
         if backend is not None:
-            backend.remove(instance)
+            backend.remove(instance, **kwargs)
 
     def clear(self, using=None):
         """
