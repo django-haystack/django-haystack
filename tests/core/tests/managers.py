@@ -8,11 +8,11 @@ from core.models import MockModel, AnotherMockModel, CharPKMockModel, AFifthMock
 from core.tests.views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
 from core.tests.mocks import CharPKMockSearchBackend
 from haystack.utils.loading import UnifiedIndex
-from haystack.manager import HaystackManager
+from haystack.manager import SearchIndexManager
 
-class CustomManager(HaystackManager):
+class CustomManager(SearchIndexManager):
     def filter(self, *args, **kwargs):
-        return self.get_query_set().filter(content='foo1').filter(*args, **kwargs)
+        return self.get_search_queryset().filter(content='foo1').filter(*args, **kwargs)
 
 class CustomMockModelIndexWithObjectsManager(BasicMockModelSearchIndex):
     objects = CustomManager()
