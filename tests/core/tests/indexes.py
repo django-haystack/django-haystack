@@ -401,6 +401,19 @@ class SearchIndexTestCase(TestCase):
 
         self.mi.remove_object(mock)
         self.assertEqual([(res.content_type(), res.pk) for res in self.sb.search('*')['results']], [(u'core.mockmodel', u'1'), (u'core.mockmodel', u'2'), (u'core.mockmodel', u'3')])
+
+        # Put it back so we can test passing kwargs.
+        mock = MockModel()
+        mock.pk = 20
+        mock.author = 'daniel%s' % mock.id
+        mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
+
+        self.mi.update_object(mock)
+        self.assertEqual(self.sb.search('*')['hits'], 4)
+
+        self.mi.remove_object(mock, commit=False)
+        self.assertEqual([(res.content_type(), res.pk) for res in self.sb.search('*')['results']], [(u'core.mockmodel', u'1'), (u'core.mockmodel', u'2'), (u'core.mockmodel', u'3'), (u'core.mockmodel', u'20')])
+
         self.sb.clear()
 
     def test_clear(self):
@@ -629,4 +642,4 @@ class ModelSearchIndexTestCase(TestCase):
         self.assertTrue('average_delay' in self.yabmsi.fields)
         self.assertTrue(isinstance(self.yabmsi.fields['average_delay'], indexes.FloatField))
         self.assertEqual(self.yabmsi.fields['average_delay'].null, False)
-        self.assertEqual(self.yabmsi.fields['average_delay'].index_fieldname, 'average_delay')        
+        self.assertEqual(self.yabmsi.fields['average_delay'].index_fieldname, 'average_delay')
