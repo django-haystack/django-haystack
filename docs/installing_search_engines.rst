@@ -117,8 +117,8 @@ Official Download Location: http://www.elasticsearch.org/download/
 
 Elasticsearch is Java but comes in a pre-packaged form that requires very
 little other than the JRE. It's also very performant, scales easily and has
-an advanced featureset. Haystack requires at least version 0.17.7 (0.20.2 is
-current as of writing). Installation is best done using a package manager::
+an advanced featureset. Haystack requires at least version 0.90.0+.
+Installation is best done using a package manager::
 
     # On Mac OS X...
     brew install elasticsearch
@@ -130,7 +130,7 @@ current as of writing). Installation is best done using a package manager::
     elasticsearch -f -D es.config=<path to YAML config>
 
     # Example:
-    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.17.7/config/elasticsearch.yml
+    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.90.0/config/elasticsearch.yml
 
 You may have to alter the configuration to run on ``localhost`` when developing
 locally. Modifications should be done in a YAML file, the stock one being
@@ -172,7 +172,7 @@ Official Download Location: http://bitbucket.org/mchaput/whoosh/
 
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. The
-current recommended version is 1.3.1+. You can install via PyPI_ using 
+current recommended version is 1.3.1+. You can install via PyPI_ using
 ``sudo easy_install whoosh`` or ``sudo pip install whoosh``.
 
 Note that, while capable otherwise, the Whoosh backend does not currently
