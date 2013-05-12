@@ -96,7 +96,8 @@ associated with it. You might create a form that looked as follows::
         def search(self):
             # First, store the SearchQuerySet received from other processing.
             sqs = super(DateRangeSearchForm, self).search()
-            
+            if not self.is_valid():
+                return sqs
             # Check to see if a start_date was chosen.
             if self.cleaned_data['start_date']:
                 sqs = sqs.filter(pub_date__gte=self.cleaned_data['start_date'])
