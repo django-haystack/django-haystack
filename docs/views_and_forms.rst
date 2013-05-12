@@ -87,24 +87,27 @@ associated with it. You might create a form that looked as follows::
 
     from django import forms
     from haystack.forms import SearchForm
-    
-    
+
+
     class DateRangeSearchForm(SearchForm):
         start_date = forms.DateField(required=False)
         end_date = forms.DateField(required=False)
-        
+
         def search(self):
             # First, store the SearchQuerySet received from other processing.
             sqs = super(DateRangeSearchForm, self).search()
-            
+
+            if not self.is_valid():
+                return self.no_query_found()
+
             # Check to see if a start_date was chosen.
             if self.cleaned_data['start_date']:
                 sqs = sqs.filter(pub_date__gte=self.cleaned_data['start_date'])
-            
+
             # Check to see if an end_date was chosen.
             if self.cleaned_data['end_date']:
                 sqs = sqs.filter(pub_date__lte=self.cleaned_data['end_date'])
-            
+
             return sqs
 
 This form adds two new fields for (optionally) choosing the start and end dates.
@@ -150,9 +153,9 @@ URLconf should look something like::
     from haystack.forms import ModelSearchForm
     from haystack.query import SearchQuerySet
     from haystack.views import SearchView
-    
+
     sqs = SearchQuerySet().filter(author='john')
-    
+
     # Without threading...
     urlpatterns = patterns('haystack.views',
         url(r'^$', SearchView(
@@ -161,10 +164,10 @@ URLconf should look something like::
             form_class=SearchForm
         ), name='haystack_search'),
     )
-    
+
     # With threading...
     from haystack.views import SearchView, search_view_factory
-    
+
     urlpatterns = patterns('haystack.views',
         url(r'^$', search_view_factory(
             view_class=SearchView,
