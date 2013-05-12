@@ -29,7 +29,7 @@ class SolrSearchBackend(BaseSearchBackend):
     # The '\\' must come first, so as not to overwrite the other slash replacements.
     RESERVED_CHARACTERS = (
         '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}',
-        '[', ']', '^', '"', '~', '*', '?', ':',
+        '[', ']', '^', '"', '~', '*', '?', ':', '/',
     )
 
     def __init__(self, connection_alias, **connection_options):
