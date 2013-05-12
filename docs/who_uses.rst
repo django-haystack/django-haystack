@@ -316,3 +316,30 @@ Using: Elasticsearch
 * https://gidsy.com/
 * https://gidsy.com/search/
 * https://gidsy.com/forum/
+
+
+GroundCity
+----------
+
+Groundcity is a Romanian dynamic real estate site.
+
+For real estate, forums and comments.
+
+Using: Whoosh
+
+* http://groundcity.ro/cautare/
+
+
+Docket Alarm
+------------
+
+Docket Alarm allows people to search court dockets across
+the country. With it, you can search court dockets in the International Trade
+Commission (ITC), the Patent Trial and Appeal Board (PTAB) and All Federal
+Courts.
+
+Using: Elasticsearch
+
+* https://www.docketalarm.com/search/ITC
+* https://www.docketalarm.com/search/PTAB
+* https://www.docketalarm.com/search/dockets
