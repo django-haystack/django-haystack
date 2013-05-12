@@ -851,6 +851,11 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(sqs.query.build_query(), u'("pants\\:rule")')
         self.assertEqual(len(sqs), 0)
 
+        sqs = self.sqs.auto_query('Canon+PowerShot+ELPH+(Black)')
+        self.assertEqual(sqs.query.build_query(), u'Canon\\+PowerShot\\+ELPH\\+\\(Black\\)')
+        sqs = sqs.filter(tags__in=['cameras', 'electronics'])
+        self.assertEqual(len(sqs), 0)
+
     # Regressions
 
     def test_regression_proper_start_offsets(self):
