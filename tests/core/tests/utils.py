@@ -1,6 +1,7 @@
 from django.test import TestCase
+from django.test.utils import override_settings
 from haystack.utils import log
-from haystack.utils import get_identifier, get_facet_field_name, Highlighter
+from haystack.utils import get_identifier, get_facet_field_name, Highlighter, _lookup_identifier_method
 from core.models import MockModel
 
 
@@ -16,10 +17,23 @@ class GetIdentifierTestCase(TestCase):
 class GetFacetFieldNameTestCase(TestCase):
     def test_get_identifier(self):
         self.assertEqual(get_identifier('core.mockmodel.1'), 'core.mockmodel.1')
-        
+
         # Valid object.
         mock = MockModel.objects.get(pk=1)
         self.assertEqual(get_identifier(mock), 'core.mockmodel.1')
+
+    @override_settings(HAYSTACK_IDENTIFIER_METHOD='core.custom_identifier.get_identifier_method')
+    def test_haystack_identifier_method(self):
+        get_identifier = _lookup_identifier_method()
+        self.assertEqual(get_identifier('a.b.c'), 'a.b.c')
+
+    @override_settings(HAYSTACK_IDENTIFIER_METHOD='core.custom_identifier.not_there')
+    def test_haystack_identifier_method_bad_path(self):
+        self.assertRaises(AttributeError, _lookup_identifier_method)
+
+    @override_settings(HAYSTACK_IDENTIFIER_METHOD='core.not_there.not_there')
+    def test_haystack_identifier_method_bad_module(self):
+        self.assertRaises(ImportError, _lookup_identifier_method)
 
 
 class HighlighterTestCase(TestCase):
@@ -28,33 +42,33 @@ class HighlighterTestCase(TestCase):
         self.document_1 = "This is a test of the highlightable words detection. This is only a test. Were this an actual emergency, your text would have exploded in mid-air."
         self.document_2 = "The content of words in no particular order causes nothing to occur."
         self.document_3 = "%s %s" % (self.document_1, self.document_2)
-    
+
     def test_find_highlightable_words(self):
         highlighter = Highlighter('this test')
         highlighter.text_block = self.document_1
         self.assertEqual(highlighter.find_highlightable_words(), {'this': [0, 53, 79], 'test': [10, 68]})
-        
+
         # We don't stem for now.
         highlighter = Highlighter('highlight tests')
         highlighter.text_block = self.document_1
         self.assertEqual(highlighter.find_highlightable_words(), {'highlight': [22], 'tests': []})
-        
+
         # Ignore negated bits.
         highlighter = Highlighter('highlight -test')
         highlighter.text_block = self.document_1
         self.assertEqual(highlighter.find_highlightable_words(), {'highlight': [22]})
-    
+
     def test_find_window(self):
         # The query doesn't matter for this method, so ignore it.
         highlighter = Highlighter('')
         highlighter.text_block = self.document_1
-        
+
         # No query.
         self.assertEqual(highlighter.find_window({}), (0, 200))
-        
+
         # Nothing found.
         self.assertEqual(highlighter.find_window({'highlight': [], 'tests': []}), (0, 200))
-        
+
         # Simple cases.
         self.assertEqual(highlighter.find_window({'highlight': [0], 'tests': [100]}), (0, 200))
         self.assertEqual(highlighter.find_window({'highlight': [99], 'tests': [199]}), (99, 299))

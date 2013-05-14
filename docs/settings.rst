@@ -268,3 +268,20 @@ An example::
     HAYSTACK_DJANGO_ID_FIELD = 'my_django_id'
 
 Default is ``django_id``.
+
+
+``HAYSTACK_IDENTIFIER_METHOD``
+==============================
+
+**Optional**
+
+This setting allows you to provide a custom method for
+``haystack.utils.get_identifier``. Useful when the default identifier
+pattern of <app.label>.<object_name>.<pk> isn't suited to your
+needs.
+
+An example::
+
+    HAYSTACK_IDENTIFIER_METHOD = 'my_app.module.get_identifier'
+
+Default is ``haystack.utils.default_get_identifier``.
