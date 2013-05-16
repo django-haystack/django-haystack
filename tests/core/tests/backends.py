@@ -25,6 +25,16 @@ class LoadBackendTestCase(TestCase):
         backend = loading.load_backend('haystack.backends.whoosh_backend.WhooshEngine')
         self.assertEqual(backend.__name__, 'WhooshEngine')
     
+    def test_load_elasticsearch(self):
+        try:
+            import pyelasticsearch
+        except ImportError:
+            warnings.warn("Pyelasticsearch doesn't appear to be installed. Unable to test loading the ElasticSearch backend.")
+            return
+        
+        backend = loading.load_backend('haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine')
+        self.assertEqual(backend.__name__, 'ElasticsearchSearchEngine')
+    
     def test_load_simple(self):
         backend = loading.load_backend('haystack.backends.simple_backend.SimpleEngine')
         self.assertEqual(backend.__name__, 'SimpleEngine')
