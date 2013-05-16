@@ -3,6 +3,7 @@ A very basic, ORM-based backend for simple search during tests.
 """
 from django.conf import settings
 from django.db.models import Q
+from django.utils.encoding import force_unicode
 from haystack import connections
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, SearchNode, log_query
 from haystack.inputs import PythonData
@@ -120,7 +121,7 @@ class SimpleSearchQuery(BaseSearchQuery):
 
                 term_list.append(value.prepare(self))
 
-        return (' ').join(map(str, term_list))
+        return (' ').join(map(force_unicode, term_list))
 
 
 class SimpleEngine(BaseEngine):
