@@ -4,7 +4,7 @@
 Glossary
 ========
 
-Search is a domain full of it's own jargon and definitions. As this may be an
+Search is a domain full of its own jargon and definitions. As this may be an
 unfamiliar territory to many developers, what follows are some commonly used
 terms and what they mean.
 

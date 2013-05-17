@@ -8,7 +8,7 @@
 
 The ``SearchQuery`` class acts as an intermediary between ``SearchQuerySet``'s
 abstraction and ``SearchBackend``'s actual search. Given the metadata provided
-by ``SearchQuerySet``, ``SearchQuery`` build the actual query and interacts
+by ``SearchQuerySet``, ``SearchQuery`` builds the actual query and interacts
 with the ``SearchBackend`` on ``SearchQuerySet``'s behalf.
 
 This class must be at least partially implemented on a per-backend basis, as portions
@@ -236,8 +236,8 @@ Adds a boosted term and the amount to boost it to the query.
 
 Runs a raw query (no parsing) against the backend.
 
-This method causes the SearchQuery to ignore the standard query
-generating facilities, running only what was provided instead.
+This method causes the ``SearchQuery`` to ignore the standard query-generating 
+facilities, running only what was provided instead.
 
 Note that any kwargs passed along will override anything provided
 to the rest of the ``SearchQuerySet``.
