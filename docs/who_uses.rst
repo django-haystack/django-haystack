@@ -343,3 +343,15 @@ Using: Elasticsearch
 * https://www.docketalarm.com/search/ITC
 * https://www.docketalarm.com/search/PTAB
 * https://www.docketalarm.com/search/dockets
+
+
+Educreations
+-------------
+
+Educreations makes it easy for anyone to teach what they know and learn
+what they don't with a recordable whiteboard. Haystack is used to
+provide search across users and lessons.
+
+Using: Solr
+
+* http://www.educreations.com/browse/
