@@ -63,6 +63,16 @@ backend to get started. There is a quick-start guide to
 official instructions.
 
 
+Installation
+=============
+
+Use your favorite Python package manager to install the app from PyPI, e.g.
+
+Example::
+
+    pip install django-haystack
+
+
 Configuration
 =============
 
