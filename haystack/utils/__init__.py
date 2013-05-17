@@ -3,7 +3,7 @@ from django.utils.html import strip_tags
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 
 
-IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.\d+$')
+IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\..+$')
 
 
 def get_identifier(obj_or_string):
