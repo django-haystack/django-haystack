@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class HaystackError(Exception):
     """A generic exception for all others to extend."""
     pass

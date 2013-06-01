@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.conf import settings
 
 DEFAULT_ALIAS = 'default'

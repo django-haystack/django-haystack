@@ -1,4 +1,5 @@
 # "Hey, Django! Look at me, I'm an app! For Serious!"
+from __future__ import unicode_literals
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models

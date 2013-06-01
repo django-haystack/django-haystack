@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import operator
 import warnings
 from haystack import connections, connection_router
@@ -78,7 +79,7 @@ class SearchQuerySet(object):
 
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
-        
+
         if len(self) > REPR_OUTPUT_SIZE:
             data[-1] = "...(remaining elements truncated)..."
 
@@ -375,11 +376,11 @@ class SearchQuerySet(object):
         clone = self._clone()
         clone.query.add_dwithin(field, point, distance)
         return clone
-    
+
     def stats(self, field):
         """Adds stats to a query for the provided field."""
         return self.stats_facet(field, facet_fields=None)
-    
+
     def stats_facet(self, field, facet_fields=None):
         """Adds stats facet for the given field and facet_fields represents
         the faceted fields."""
@@ -391,7 +392,7 @@ class SearchQuerySet(object):
             if facet_fields: stats_facets.append(facet_fields)
         clone.query.add_stats_query(field,stats_facets)
         return clone
-       
+
     def distance(self, field, point):
         """
         Spatial: Denotes results must have distance measurements from the
@@ -516,7 +517,7 @@ class SearchQuerySet(object):
         else:
             clone = self._clone()
             return clone.query.get_stats()
-            
+
     def spelling_suggestion(self, preferred_query=None):
         """
         Returns the spelling suggestion found by the query.

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import re
 from django.utils import datetime_safe
 from django.template import loader, Context
