@@ -119,15 +119,32 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             }
         }
 
-        if current_mapping != self.existing_mapping:
+        current_properties = current_mapping['modelresult']['properties']
+        existing_properties = self.existing_mapping[self.index_name]['modelresult']['properties']
+        del existing_properties['django_id']
+        del existing_properties['django_ct']
+        del existing_properties['id']
+        mapping_needs_update = len(current_properties) != len(existing_properties)
+        if not mapping_needs_update:
+            for prop, values in current_properties.iteritems():
+                existing_values = existing_properties[prop]
+                if existing_values['type'] != values['type']:
+                    mapping_needs_update = True
+                    break
+
+        if mapping_needs_update:
+            try:
+                self.conn.delete_index(self.index_name)
+            except pyelasticsearch.exceptions.ElasticHttpError:
+                pass
+
             try:
                 # Make sure the index is there first.
                 self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
                 self.conn.put_mapping('modelresult', current_mapping, index=self.index_name)
                 self.existing_mapping = current_mapping
-            except Exception:
-                if not self.silently_fail:
-                    raise
+            except pyelasticsearch.exceptions.IndexAlreadyExistsError:
+                raise
 
         self.setup_complete = True
 
