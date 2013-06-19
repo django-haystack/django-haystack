@@ -174,7 +174,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 })
 
-        self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+        try:
+            self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+        except ValueError:
+            # pyelasticsearch raise a ValueError exception
+            # when prepped_docs is empty
+            if not self.silently_fail:
+                raise
 
         if commit:
             self.conn.refresh(index=self.index_name)
