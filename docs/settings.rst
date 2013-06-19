@@ -93,8 +93,8 @@ The following options are optional:
 * ``INCLUDE_SPELLING`` - Include spelling suggestions. Default is ``False``
 * ``BATCH_SIZE`` - How many records should be updated at once via the management
   commands. Default is ``1000``.
-* ``TIMEOUT`` - (Solr-only) How long to wait (in seconds) before the connection
-  times out. Default is ``10``.
+* ``TIMEOUT`` - (Solr and ElasticSearch) How long to wait (in seconds) before
+  the connection times out. Default is ``10``.
 * ``STORAGE`` - (Whoosh-only) Which storage engine to use. Accepts ``file`` or
   ``ram``. Default is ``file``.
 * ``POST_LIMIT`` - (Whoosh-only) How large the file sizes can be. Default is
