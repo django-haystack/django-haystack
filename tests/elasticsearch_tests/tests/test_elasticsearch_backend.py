@@ -266,6 +266,20 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         except:
             pass
 
+    def test_update_no_documents(self):
+        url = settings.HAYSTACK_CONNECTIONS['default']['URL']
+        index_name = settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME']
+
+        sb = connections['default'].backend('default', URL=url, INDEX_NAME=index_name, SILENTLY_FAIL=True)
+        self.assertEqual(sb.update(self.smmi, []), None)
+
+        sb = connections['default'].backend('default', URL=url, INDEX_NAME=index_name, SILENTLY_FAIL=False)
+        try:
+            sb.update(self.smmi, [])
+            self.fail()
+        except:
+            pass
+
     def test_update(self):
         self.sb.update(self.smmi, self.sample_objs)
 
