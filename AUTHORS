@@ -81,7 +81,7 @@ Thanks to
     * Stefan Wehrmeyer (stefanw) for a simple search filter fix
     * Dan Watson (dcwatson) for various patches.
     * Andrew Schoen (andrewschoen) for the addition of ``HAYSTACK_IDENTIFIER_METHOD``
-    * Pablo SEMINARIO (pabluk) for a docs fix.
+    * Pablo SEMINARIO (pabluk) for a docs fix, and a fix in the ElasticSearch backend.
     * Eric Thurgood (ethurgood) for a import fix in the Elasticssearch backend.
     * Revolution Systems & The Python Software Foundation for funding a significant portion of the port to Python 3!
     * Artem Kostiuk (postatum) for patch allowing to search for slash character in ElasticSearch since Lucene 4.0.
