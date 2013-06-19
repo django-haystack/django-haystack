@@ -71,3 +71,4 @@ Thanks to
     * Stefan Wehrmeyer (stefanw) for a simple search filter fix
     * Dan Watson (dcwatson) for various patches.
     * Andrew Schoen (andrewschoen) for the addition of ``HAYSTACK_IDENTIFIER_METHOD``
+    * Pablo SEMINARIO (pabluk) for a docs fix.
