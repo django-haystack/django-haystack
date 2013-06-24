@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -64,7 +65,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if len(docs) > 0:
             try:
                 self.conn.add(docs, commit=commit, boost=index.get_field_weights())
-            except (IOError, SolrError), e:
+            except (IOError, SolrError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -79,7 +80,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 ID: solr_id
             }
             self.conn.delete(**kwargs)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -100,7 +101,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
             # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
             self.conn.optimize()
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -121,7 +122,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.search(query_string, **search_kwargs)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -319,7 +320,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -495,7 +496,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             return self.conn.extract(file_obj)
-        except StandardError, e:
+        except StandardError as e:
             self.log.warning(u"Unable to extract file contents: %s", e,
                              exc_info=True, extra={"data": {"file": file_obj}})
             return None

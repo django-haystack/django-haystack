@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance, D
 from haystack.constants import WGS_84_SRID

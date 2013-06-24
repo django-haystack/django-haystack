@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from copy import deepcopy
 from time import time
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
-from django.utils.encoding import force_unicode
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
-from haystack.exceptions import MoreLikeThisError, FacetingError, StatsError
+from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
+
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
+
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
@@ -134,7 +140,7 @@ class BaseSearchBackend(object):
         Hook to give the backend a chance to prep an attribute value before
         sending it to the search engine. By default, just force it to unicode.
         """
-        return force_unicode(value)
+        return force_text(value)
 
     def more_like_this(self, model_instance, additional_query_string=None, result_class=None):
         """
@@ -212,7 +218,7 @@ class SearchNode(tree.Node):
         return '<SQ: %s %s>' % (self.connector, self.as_query_string(self._repr_query_fragment_callback))
 
     def _repr_query_fragment_callback(self, field, filter_type, value):
-        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, force_unicode(value).encode('utf8'))
+        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, force_text(value).encode('utf8'))
 
     def as_query_string(self, query_fragment_callback):
         """

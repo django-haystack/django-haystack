@@ -196,7 +196,7 @@ class BaseSearchQueryTestCase(TestCase):
 
         self.bsq.add_stats_query('moof',['bar','baz'])
         self.assertEqual(self.bsq.stats,{'foo':['bar'],'moof':['bar','baz']})
-        
+
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
         self.assertEqual(self.bsq.narrow_queries, set(['foo:bar']))
@@ -662,7 +662,7 @@ class SearchQuerySetTestCase(TestCase):
         try:
             sqs = self.msqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='smarblaph')
             self.fail()
-        except FacetingError, e:
+        except FacetingError as e:
             self.assertEqual(str(e), "The gap_by ('smarblaph') must be one of the following: year, month, day, hour, minute, second.")
 
         sqs = self.msqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month')
@@ -699,7 +699,7 @@ class SearchQuerySetTestCase(TestCase):
         sqs3 = self.msqs.stats_facet('foo','bar').stats_facet('moof','baz')
         self.assertTrue(isinstance(sqs3, SearchQuerySet))
         self.assertEqual(len(sqs3.query.stats),2)
-        
+
     def test_narrow(self):
         sqs = self.msqs.narrow('foo:moof')
         self.assertTrue(isinstance(sqs, SearchQuerySet))

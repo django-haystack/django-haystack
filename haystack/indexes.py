@@ -2,13 +2,17 @@ from __future__ import unicode_literals
 import copy
 import threading
 import warnings
-from django.utils.encoding import force_unicode
 from django.core.exceptions import ImproperlyConfigured
 from haystack import connections, connection_router
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
 from haystack.manager import SearchIndexManager
 from haystack.utils import get_identifier, get_facet_field_name
+
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 
 
 class DeclarativeMetaclass(type):
@@ -179,7 +183,7 @@ class SearchIndex(threading.local):
         self.prepared_data = {
             ID: get_identifier(obj),
             DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
-            DJANGO_ID: force_unicode(obj.pk),
+            DJANGO_ID: force_text(obj.pk),
         }
 
         for field_name, field in self.fields.items():

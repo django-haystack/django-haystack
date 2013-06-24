@@ -1,6 +1,7 @@
 """
 A very basic, ORM-based backend for simple search during tests.
 """
+from __future__ import unicode_literals
 from django.conf import settings
 from django.db.models import Q
 from haystack import connections

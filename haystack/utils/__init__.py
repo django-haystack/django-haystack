@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import re
 
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
