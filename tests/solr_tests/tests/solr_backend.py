@@ -194,7 +194,7 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -612,7 +612,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
     def test_all_cases(self, mock_send_request, mock_log):
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -1271,7 +1271,7 @@ class SolrBoostBackendTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 5):
+        for i in range(1, 5):
             mock = AFourthMockModel()
             mock.id = i
 

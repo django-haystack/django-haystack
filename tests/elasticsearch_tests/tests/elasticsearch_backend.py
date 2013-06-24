@@ -187,7 +187,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -440,7 +440,7 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
     def setUp(self):
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -1151,7 +1151,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 5):
+        for i in range(1, 5):
             mock = AFourthMockModel()
             mock.id = i
 

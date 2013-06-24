@@ -5,6 +5,7 @@ from time import time
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase
+from django.utils import six
 from django.utils import tree
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
@@ -218,7 +219,12 @@ class SearchNode(tree.Node):
         return '<SQ: %s %s>' % (self.connector, self.as_query_string(self._repr_query_fragment_callback))
 
     def _repr_query_fragment_callback(self, field, filter_type, value):
-        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, force_text(value).encode('utf8'))
+        if six.PY3:
+            value = force_text(value)
+        else:
+            value = force_text(value).encode('utf8')
+
+        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, value)
 
     def as_query_string(self, query_fragment_callback):
         """
@@ -582,7 +588,7 @@ class BaseSearchQuery(object):
 
         A basic (override-able) implementation is provided.
         """
-        if not isinstance(query_fragment, basestring):
+        if not isinstance(query_fragment, six.string_types):
             return query_fragment
 
         words = query_fragment.split()

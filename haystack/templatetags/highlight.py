@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django import template
 from django.utils import importlib
+from django.utils import six
 
 
 register = template.Library()
@@ -103,12 +104,12 @@ def highlight(parser, token):
 
     for bit in arg_bits:
         if bit == 'css_class':
-            kwargs['css_class'] = arg_bits.next()
+            kwargs['css_class'] = six.next(arg_bits)
 
         if bit == 'html_tag':
-            kwargs['html_tag'] = arg_bits.next()
+            kwargs['html_tag'] = six.next(arg_bits)
 
         if bit == 'max_length':
-            kwargs['max_length'] = arg_bits.next()
+            kwargs['max_length'] = six.next(arg_bits)
 
     return HighlightNode(text_block, query, **kwargs)

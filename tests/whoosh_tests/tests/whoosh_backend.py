@@ -171,7 +171,7 @@ class WhooshSearchBackendTestCase(TestCase):
 
         # Check what Whoosh thinks is there.
         self.assertEqual(len(self.whoosh_search(u'*')), 23)
-        self.assertEqual([doc.fields()['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.%s' % i for i in xrange(1, 24)])
+        self.assertEqual([doc.fields()['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.%s' % i for i in range(1, 24)])
 
     def test_remove(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -218,7 +218,7 @@ class WhooshSearchBackendTestCase(TestCase):
         # self.assertEqual(self.sb.search(u'a b'), {'hits': 0, 'results': [], 'spelling_suggestion': '', 'facets': {}})
 
         self.assertEqual(self.sb.search(u'*')['hits'], 23)
-        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in xrange(1, 24)])
+        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in range(1, 24)])
 
         self.assertEqual(self.sb.search(u'', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search(u'index*', highlight=True)['hits'], 23)
@@ -256,7 +256,7 @@ class WhooshSearchBackendTestCase(TestCase):
         # Check the use of ``limit_to_registered_models``.
         self.assertEqual(self.sb.search(u'', limit_to_registered_models=False), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search(u'*', limit_to_registered_models=False)['hits'], 23)
-        self.assertEqual([result.pk for result in self.sb.search(u'*', limit_to_registered_models=False)['results']], [u'%s' % i for i in xrange(1, 24)])
+        self.assertEqual([result.pk for result in self.sb.search(u'*', limit_to_registered_models=False)['results']], [u'%s' % i for i in range(1, 24)])
 
         # Stow.
         old_limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
@@ -264,7 +264,7 @@ class WhooshSearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search(u''), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search(u'*')['hits'], 23)
-        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in xrange(1, 24)])
+        self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in range(1, 24)])
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
@@ -410,7 +410,7 @@ class WhooshSearchBackendTestCase(TestCase):
         page_1 = self.sb.search(u'*', start_offset=0, end_offset=20)
         page_2 = self.sb.search(u'*', start_offset=20, end_offset=30)
         self.assertEqual(len(page_1['results']), 20)
-        self.assertEqual([result.pk for result in page_1['results']], [u'%s' % i for i in xrange(1, 21)])
+        self.assertEqual([result.pk for result in page_1['results']], [u'%s' % i for i in range(1, 21)])
         self.assertEqual(len(page_2['results']), 3)
         self.assertEqual([result.pk for result in page_2['results']], [u'21', u'22', u'23'])
 
@@ -452,7 +452,7 @@ class WhooshBoostBackendTestCase(TestCase):
         self.sb.delete_index()
         self.sample_objs = []
 
-        for i in xrange(1, 5):
+        for i in range(1, 5):
             mock = AFourthMockModel()
             mock.id = i
 
@@ -514,7 +514,7 @@ class LiveWhooshSearchQueryTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -597,7 +597,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -743,7 +743,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
     def test_count(self):
         more_samples = []
 
-        for i in xrange(1, 50):
+        for i in range(1, 50):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i

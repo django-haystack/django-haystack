@@ -3,6 +3,7 @@ import copy
 import threading
 import warnings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.six import with_metaclass
 from haystack import connections, connection_router
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
@@ -44,11 +45,13 @@ class DeclarativeMetaclass(type):
 
                 facet_fields[obj.facet_for].append(field_name)
 
+        built_fields = {}
+
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
-                field = attrs.pop(field_name)
+                field = attrs[field_name]
                 field.set_instance_name(field_name)
-                attrs['fields'][field_name] = field
+                built_fields[field_name] = field
 
                 # Only check non-faceted fields for the following info.
                 if not hasattr(field, 'facet_for'):
@@ -59,10 +62,12 @@ class DeclarativeMetaclass(type):
                             shadow_facet_name = get_facet_field_name(field_name)
                             shadow_facet_field = field.facet_class(facet_for=field_name)
                             shadow_facet_field.set_instance_name(shadow_facet_name)
-                            attrs['fields'][shadow_facet_name] = shadow_facet_field
+                            built_fields[shadow_facet_name] = shadow_facet_field
+
+        attrs['fields'].update(built_fields)
 
         # Assigning default 'objects' query manager if it does not already exist
-        if not attrs.has_key('objects'):
+        if not 'objects' in attrs:
             try:
                 attrs['objects'] = SearchIndexManager(attrs['Meta'].index_label)
             except (KeyError, AttributeError):
@@ -71,7 +76,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(threading.local):
+class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
     """
     Base class for building indexes.
 
@@ -93,8 +98,6 @@ class SearchIndex(threading.local):
                 return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
     """
-    __metaclass__ = DeclarativeMetaclass
-
     def __init__(self):
         self.prepared_data = None
         content_fields = []

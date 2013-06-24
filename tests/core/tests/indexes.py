@@ -1,8 +1,8 @@
 import datetime
-import Queue
 from threading import Thread
 import time
 from django.test import TestCase
+from django.utils.six.moves import queue
 from haystack import connections, connection_router
 from haystack.exceptions import SearchFieldError
 from haystack import indexes
@@ -283,11 +283,11 @@ class SearchIndexTestCase(TestCase):
         # went too fast.
         exceptions = []
 
-        def threaded_prepare(queue, index, model):
+        def threaded_prepare(index_queue, index, model):
             try:
-                index.queue = queue
+                index.queue = index_queue
                 prepped = index.prepare(model)
-            except Exception, e:
+            except Exception as e:
                 exceptions.append(e)
                 raise
 
@@ -298,11 +298,11 @@ class SearchIndexTestCase(TestCase):
                 else:
                     time.sleep(0.5)
 
-                queue.put(self.prepared_data['author'])
+                index_queue.put(self.prepared_data['author'])
                 return self.prepared_data['author']
 
         tmi = ThreadedSearchIndex()
-        queue = Queue.Queue()
+        index_queue = queue.Queue()
         mock_1 = MockModel()
         mock_1.pk = 20
         mock_1.author = 'foo'
@@ -312,16 +312,16 @@ class SearchIndexTestCase(TestCase):
         mock_2.author = 'daniel%s' % mock_2.id
         mock_2.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
 
-        th1 = Thread(target=threaded_prepare, args=(queue, tmi, mock_1))
-        th2 = Thread(target=threaded_prepare, args=(queue, tmi, mock_2))
+        th1 = Thread(target=threaded_prepare, args=(index_queue, tmi, mock_1))
+        th2 = Thread(target=threaded_prepare, args=(index_queue, tmi, mock_2))
 
         th1.start()
         th2.start()
         th1.join()
         th2.join()
 
-        mock_1_result = queue.get()
-        mock_2_result = queue.get()
+        mock_1_result = index_queue.get()
+        mock_2_result = index_queue.get()
         self.assertEqual(mock_1_result, u'foo')
         self.assertEqual(mock_2_result, u'daniel21')
 

@@ -265,7 +265,7 @@ class UnifiedIndex(object):
         if not self._built:
             self.build()
 
-        return self.indexes.keys()
+        return list(self.indexes.keys())
 
     def get_index_fieldname(self, field):
         if not self._built:
