@@ -708,8 +708,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         iso = self._iso_datetime(value)
         if iso:
             return iso
-        elif isinstance(value, str):
-            return six.text_type(value, errors='replace')  # TODO: Be stricter.
+        elif isinstance(value, six.binary_type):
+            # TODO: Be stricter.
+            return six.text_type(value, errors='replace')
         elif isinstance(value, set):
             return list(value)
         return value
