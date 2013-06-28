@@ -405,7 +405,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             page_length = end_offset - start_offset
 
             if page_length and page_length > 0:
-                page_num = start_offset / page_length
+                page_num = int(start_offset / page_length)
 
             # Increment because Whoosh uses 1-based page numbers.
             page_num += 1
@@ -517,7 +517,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         page_length = end_offset - start_offset
 
         if page_length and page_length > 0:
-            page_num = start_offset / page_length
+            page_num = int(start_offset / page_length)
 
         # Increment because Whoosh uses 1-based page numbers.
         page_num += 1
@@ -672,7 +672,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 value = 'false'
         elif isinstance(value, (list, tuple)):
             value = u','.join([force_text(v) for v in value])
-        elif isinstance(value, (int, long, float)):
+        elif isinstance(value, (six.integer_types, float)):
             # Leave it alone.
             pass
         else:
@@ -706,7 +706,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             converted_value = json.loads(value)
 
             # Try to handle most built-in types.
-            if isinstance(converted_value, (list, tuple, set, dict, int, float, long, complex)):
+            if isinstance(converted_value, (list, tuple, set, dict, six.integer_types, float, complex)):
                 return converted_value
         except:
             # If it fails (SyntaxError or its ilk) or we don't trust it,

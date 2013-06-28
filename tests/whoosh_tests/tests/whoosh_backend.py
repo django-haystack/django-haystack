@@ -321,7 +321,7 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb._from_python(2653), 2653)
         self.assertEqual(self.sb._from_python(25.5), 25.5)
         self.assertEqual(self.sb._from_python([1, 2, 3]), u'1,2,3')
-        self.assertEqual(self.sb._from_python({'a': 1, 'c': 3, 'b': 2}), u"{'a': 1, 'c': 3, 'b': 2}")
+        self.assertTrue("a': 1" in self.sb._from_python({'a': 1, 'c': 3, 'b': 2}))
         self.assertEqual(self.sb._from_python(datetime(2009, 5, 9, 16, 14)), datetime(2009, 5, 9, 16, 14))
         self.assertEqual(self.sb._from_python(datetime(2009, 5, 9, 0, 0)), datetime(2009, 5, 9, 0, 0))
         self.assertEqual(self.sb._from_python(datetime(1899, 5, 18, 0, 0)), datetime(1899, 5, 18, 0, 0))
@@ -393,7 +393,7 @@ class WhooshSearchBackendTestCase(TestCase):
             if not os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
                 os.makedirs(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
 
-            os.chmod(settings.HAYSTACK_CONNECTIONS['default']['PATH'], 0400)
+            os.chmod(settings.HAYSTACK_CONNECTIONS['default']['PATH'], 0o400)
 
             try:
                 self.sb.setup()
@@ -402,7 +402,7 @@ class WhooshSearchBackendTestCase(TestCase):
                 # Yay. We failed
                 pass
 
-            os.chmod(settings.HAYSTACK_CONNECTIONS['default']['PATH'], 0755)
+            os.chmod(settings.HAYSTACK_CONNECTIONS['default']['PATH'], 0o755)
 
     def test_slicing(self):
         self.sb.update(self.wmmi, self.sample_objs)

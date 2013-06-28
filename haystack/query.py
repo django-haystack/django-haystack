@@ -461,7 +461,7 @@ class SearchQuerySet(object):
                 }
                 query_bits.append(SQ(**kwargs))
 
-        return clone.filter(reduce(operator.__and__, query_bits))
+        return clone.filter(six.moves.reduce(operator.__and__, query_bits))
 
     def using(self, connection_name):
         """
