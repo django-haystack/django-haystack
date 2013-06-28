@@ -35,7 +35,7 @@ class SimpleSearchBackendTestCase(TestCase):
         self.assertEqual(self.backend.search(u''), {'hits': 0, 'results': []})
 
         self.assertEqual(self.backend.search(u'*')['hits'], 24)
-        self.assertEqual([result.pk for result in self.backend.search(u'*')['results']], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 1])
+        self.assertEqual(sorted([result.pk for result in self.backend.search(u'*')['results']]), [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
 
         self.assertEqual(self.backend.search(u'daniel')['hits'], 23)
         self.assertEqual([result.pk for result in self.backend.search(u'daniel')['results']], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
