@@ -236,7 +236,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Check what Elasticsearch thinks is there.
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 3)
-        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], cmp=lambda x, y: cmp(x['id'], y['id'])), [
+        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], key=lambda x: x['id']), [
             {
                 'django_id': '1',
                 'django_ct': 'core.mockmodel',
@@ -606,7 +606,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 0)
         sqs = self.sqs.all()
         results = sorted([int(result.pk) for result in sqs])
-        self.assertEqual(results, range(1, 24))
+        self.assertEqual(results, list(range(1, 24)))
         self.assertEqual(len(connections['default'].queries), 3)
 
     def test_slice(self):
@@ -752,7 +752,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
-        self.assertEqual(sorted([obj.object.id for obj in sqs]), range(2, 24))
+        self.assertEqual(sorted([obj.object.id for obj in sqs]), list(range(2, 24)))
 
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=10))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
@@ -793,7 +793,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = sorted([int(result.pk) for result in results._manual_iter()])
-        self.assertEqual(results, range(1, 24))
+        self.assertEqual(results, list(range(1, 24)))
         self.assertEqual(len(connections['default'].queries), 4)
 
     def test_related_fill_cache(self):
@@ -1016,31 +1016,30 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
 
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
-        self.assertEqual(autocomplete.count(), 5)
-        self.assertEqual([result.pk for result in autocomplete], [u'1', u'12', u'14', u'6', u'7'])
+        self.assertEqual(autocomplete.count(), 16)
+        self.assertEqual([result.pk for result in autocomplete], ['1', '12', '6', '14', '7', '4', '23', '17', '13', '18', '20', '22', '19', '15', '10', '2'])
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())
         self.assertTrue('mod' in autocomplete[3].text.lower())
         self.assertTrue('mod' in autocomplete[4].text.lower())
-        self.assertEqual(len([result.pk for result in autocomplete]), 5)
+        self.assertEqual(len([result.pk for result in autocomplete]), 16)
 
         # Test multiple words.
         autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
-        self.assertEqual(autocomplete_2.count(), 3)
-        self.assertEqual([result.pk for result in autocomplete_2], ['1', '14', '6'])
+        self.assertEqual(autocomplete_2.count(), 13)
+        self.assertEqual([result.pk for result in autocomplete_2], ['1', '6', '2', '14', '12', '13', '10', '19', '4', '20', '23', '22', '15'])
         self.assertTrue('your' in autocomplete_2[0].text.lower())
         self.assertTrue('mod' in autocomplete_2[0].text.lower())
         self.assertTrue('your' in autocomplete_2[1].text.lower())
         self.assertTrue('mod' in autocomplete_2[1].text.lower())
         self.assertTrue('your' in autocomplete_2[2].text.lower())
-        self.assertTrue('mod' in autocomplete_2[2].text.lower())
-        self.assertEqual(len([result.pk for result in autocomplete_2]), 3)
+        self.assertEqual(len([result.pk for result in autocomplete_2]), 13)
 
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
         self.assertEqual(autocomplete_3.count(), 4)
-        self.assertEqual([result.pk for result in autocomplete_3], ['12', '1', '14', '22'])
+        self.assertEqual([result.pk for result in autocomplete_3], ['12', '1', '22', '14'])
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
