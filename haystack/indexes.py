@@ -2,6 +2,7 @@ import copy
 import threading
 import time
 import warnings
+from django.db import models
 from django.utils.encoding import force_unicode
 from django.core.exceptions import ImproperlyConfigured
 from haystack import connections, connection_router
@@ -147,7 +148,7 @@ class SearchIndex(threading.local):
 
         if start_date:
             if updated_field:
-                if model._meta.get_field(updated_field).__class__.__name__ == 'IntegerField':
+                if isinstance(model._meta.get_field(updated_field), models.IntegerField):
                     start_date = time.mktime(start_date.timetuple())
                 extra_lookup_kwargs['%s__gte' % updated_field] = start_date
             else:
@@ -155,7 +156,7 @@ class SearchIndex(threading.local):
 
         if end_date:
             if updated_field:
-                if model._meta.get_field(updated_field).__class__.__name__ == 'IntegerField':
+                if isinstance(model._meta.get_field(updated_field), models.IntegerField):
                     end_date = time.mktime(end_date.timetuple())
                 extra_lookup_kwargs['%s__lte' % updated_field] = end_date
             else:
