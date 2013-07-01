@@ -1,5 +1,6 @@
 # A couple models for Haystack to test with.
 import datetime
+import time
 from django.db import models
 
 
@@ -74,3 +75,7 @@ class ScoreMockModel(models.Model):
 
     def __unicode__(self):
         return self.score
+
+class TimestampMockModel(models.Model):
+    title = models.CharField(max_length=255)
+    pub_date_ts = models.IntegerField(default=time.time)

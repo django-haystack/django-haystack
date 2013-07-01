@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from mock import patch
 import pysolr
@@ -15,7 +16,7 @@ from haystack import connections
 from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
 
-from core.models import MockModel, MockTag
+from core.models import MockModel, TimestampMockModel, MockTag
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -28,6 +29,17 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_updated_field(self):
         return 'pub_date'
+
+
+class SolrTimestampMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, model_attr='title')
+    pub_date_ts = indexes.DateField(model_attr='pub_date_ts')
+
+    def get_model(self):
+        return TimestampMockModel
+
+    def get_updated_field(self):
+        return 'pub_date_ts'
 
 
 class SolrMockTagSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -48,7 +60,8 @@ class ManagementCommandTestCase(TestCase):
         self.old_ui = connections['default'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
-        self.ui.build(indexes=[self.smmi])
+        self.stsmi = SolrTimestampMockSearchIndex()
+        self.ui.build(indexes=[self.smmi, self.stsmi])
         connections['default']._index = self.ui
 
     def tearDown(self):
@@ -60,32 +73,32 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('update_index', verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('rebuild_index', interactive=False, verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
 
     def test_remove(self):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('update_index', verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
 
         # Remove a model instance.
         MockModel.objects.get(pk=1).delete()
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
 
         # Plain ``update_index`` doesn't fix it.
         call_command('update_index', verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
 
         # With the remove flag, it's gone.
         call_command('update_index', remove=True, verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 22)
+        self.assertEqual(self.solr.search('*:*').hits, 24)
 
     def test_age(self):
         call_command('clear_index', interactive=False, verbosity=0)
@@ -98,6 +111,21 @@ class ManagementCommandTestCase(TestCase):
         mock.pub_date = datetime.datetime.now() - datetime.timedelta(hours=2)
         mock.save()
         self.assertEqual(MockModel.objects.filter(pub_date__range=(start, end)).count(), 1)
+
+        call_command('update_index', age=3, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 1)
+    
+    def test_age_timestamp(self):
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        start = time.time() - 3*60*60
+        end = time.time()
+
+        mock = TimestampMockModel.objects.get(pk=1)
+        mock.pub_date_ts = time.time() - 2*60*60
+        mock.save()
+        self.assertEqual(TimestampMockModel.objects.filter(pub_date_ts__range=(start, end)).count(), 1)
 
         call_command('update_index', age=3, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 1)
@@ -143,7 +171,7 @@ class ManagementCommandTestCase(TestCase):
 
         # Watch the output, make sure there are multiple pids.
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.assertEqual(self.solr.search('*:*').hits, 25)
 
     def test_build_schema_wrong_backend(self):
 
