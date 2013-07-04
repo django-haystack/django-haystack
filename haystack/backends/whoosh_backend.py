@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import operator
 import threading
 import warnings
 from django.conf import settings
@@ -37,7 +38,7 @@ from whoosh import index
 from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.searching import ResultsPage
-from whoosh.spelling import SpellChecker
+from whoosh.spelling import Corrector
 from whoosh.writing import AsyncWriter
 from whoosh.sorting import FieldFacet
 
@@ -200,7 +201,7 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             # If spelling support is desired, add to the dictionary.
             if self.include_spelling is True:
-                sp = SpellChecker(self.storage)
+                sp = Corrector()
                 sp.add_field(self.index, self.content_field_name)
 
     def remove(self, obj_or_string, commit=True):
@@ -315,7 +316,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             sort_by = sort_by_list[0]
 
         if facets is not None:
-            facets = [FieldFacet(facet) for facet in facets]
+            facets = [FieldFacet(facet, allow_overlap=True) for facet in facets]
 
             #warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
 
@@ -572,14 +573,17 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         facets = {}
 
-        if len(raw_page.results.groups()):
+        if len(raw_page.results.facet_names()):
             facets = {
                 'fields': {},
                 'dates': {},
                 'queries': {},
             }
             for facet_fieldname in raw_page.results.facet_names():
-                facets['fields'][facet_fieldname] = [(name, len(value)) for name, value in raw_page.results.groups().items()]
+                facets['fields'][facet_fieldname] = sorted(
+                                                        [(name, len(value)) for name, value in raw_page.results.groups().items()],
+                                                        key=operator.itemgetter(1, 0),
+                                                        reverse=True)
 
 
         for doc_offset, raw_result in enumerate(raw_page):
@@ -638,7 +642,7 @@ class WhooshSearchBackend(BaseSearchBackend):
 
     def create_spelling_suggestion(self, query_string):
         spelling_suggestion = None
-        sp = SpellChecker(self.storage)
+        sp = Corrector(self.storage)
         cleaned_query = force_unicode(query_string)
 
         if not query_string:
