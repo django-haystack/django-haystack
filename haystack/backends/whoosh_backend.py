@@ -155,6 +155,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
 
+            if field_class.mapping:
+                schema_fields[field_class.index_fieldname].update(field_class.mapping)
+
         # Fail more gracefully than relying on the backend to die if no fields
         # are found.
         if len(schema_fields) <= initial_key_count:

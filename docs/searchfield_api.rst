@@ -212,6 +212,15 @@ Data templates are extremely useful, as they let you easily tie together
 different parts of the ``Model`` (and potentially related models). This leads
 to better search results with very little effort.
 
+``mapping``
+----------
+
+.. attribute:: SearchField.mapping
+
+Dictionary for advanced mapping options for search backend. Default is ``None``.
+
+For example, this is useful for change ``index`` or ``analyzer`` options for
+ElasticSearch backend.
 
 
 Method Reference
@@ -220,7 +229,7 @@ Method Reference
 ``__init__``
 ------------
 
-.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, faceted=False, default=NOT_PROVIDED, null=False, index_fieldname=None, facet_class=None, boost=1.0, weight=None)
+.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, faceted=False, default=NOT_PROVIDED, null=False, index_fieldname=None, facet_class=None, boost=1.0, weight=None, mapping=None)
 
 Instantiates a fresh ``SearchField`` instance.
 

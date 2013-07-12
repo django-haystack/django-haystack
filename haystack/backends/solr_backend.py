@@ -464,6 +464,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 if field_data['type'] == 'text_en':
                     field_data['type'] = 'string'
 
+            field_data.update(field_class.mapping)
             schema_fields.append(field_data)
 
         return (content_field_name, schema_fields)

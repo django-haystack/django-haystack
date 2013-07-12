@@ -72,3 +72,4 @@ Thanks to
     * Dan Watson (dcwatson) for various patches.
     * Andrew Schoen (andrewschoen) for the addition of ``HAYSTACK_IDENTIFIER_METHOD``
     * Pablo SEMINARIO (pabluk) for a docs fix.
+    * Denis Veselov (saippuakauppias) for the addition allow configuration ``mapping`` in fields.
