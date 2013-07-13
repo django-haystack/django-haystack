@@ -1,5 +1,7 @@
+import warnings
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
+from django.views.generic.list import MultipleObjectMixin, ListView
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -9,44 +11,25 @@ from haystack.query import EmptySearchQuerySet
 
 RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
-
-class SearchView(object):
-    template = 'search/search.html'
-    extra_context = {}
+class SearchMixin(MultipleObjectMixin):
+    template_name = 'search/search.html'
+    load_all = True
+    form_class = ModelSearchForm
+    searchqueryset = None
+    context_class = RequestContext
     query = ''
     results = EmptySearchQuerySet()
     request = None
     form = None
-    results_per_page = RESULTS_PER_PAGE
+    form_kwargs = {}
+    paginator_class = Paginator
+    paginate_by = RESULTS_PER_PAGE
+    paginate_orphans = 0
+    context_object_name = 'results'
 
-    def __init__(self, template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None):
-        self.load_all = load_all
-        self.form_class = form_class
-        self.context_class = context_class
-        self.searchqueryset = searchqueryset
-
-        if form_class is None:
-            self.form_class = ModelSearchForm
-
-        if not results_per_page is None:
-            self.results_per_page = results_per_page
-
-        if template:
-            self.template = template
-
-    def __call__(self, request):
-        """
-        Generates the actual response to the search.
-
-        Relies on internal, overridable methods to construct the response.
-        """
-        self.request = request
-
-        self.form = self.build_form()
-        self.query = self.get_query()
-        self.results = self.get_results()
-
-        return self.create_response()
+    # required for django<1.6
+    def get_paginate_orphans(self):
+        return self.paginate_orphans
 
     def build_form(self, form_kwargs=None):
         """
@@ -64,114 +47,123 @@ class SearchView(object):
 
         if self.searchqueryset is not None:
             kwargs['searchqueryset'] = self.searchqueryset
-
         return self.form_class(data, **kwargs)
 
     def get_query(self):
         """
-        Returns the query provided by the user.
-
-        Returns an empty string if the query is invalid.
+        Returns the queryset provided by the user.
+        Returns an empty string if the queryset is invalid.
         """
         if self.form.is_valid():
             return self.form.cleaned_data['q']
-
         return ''
 
-    def get_results(self):
+    def get_queryset(self):
         """
         Fetches the results via the form.
 
         Returns an empty list if there's no query to search with.
         """
-        return self.form.search()
+        self.form = self.build_form()
+        self.results = self.form.search()
+        return self.results
 
-    def build_page(self):
-        """
-        Paginates the results appropriately.
-
-        In case someone does not want to use Django's built-in pagination, it
-        should be a simple matter to override this method to do what they would
-        like.
-        """
-        try:
-            page_no = int(self.request.GET.get('page', 1))
-        except (TypeError, ValueError):
-            raise Http404("Not a valid number for page.")
-
-        if page_no < 1:
-            raise Http404("Pages should be 1 or greater.")
-
-        start_offset = (page_no - 1) * self.results_per_page
-        self.results[start_offset:start_offset + self.results_per_page]
-
-        paginator = Paginator(self.results, self.results_per_page)
-
-        try:
-            page = paginator.page(page_no)
-        except InvalidPage:
-            raise Http404("No such page!")
-
-        return (paginator, page)
-
-    def extra_context(self):
-        """
-        Allows the addition of more context variables as needed.
-
-        Must return a dictionary.
-        """
-        return {}
-
-    def create_response(self):
-        """
-        Generates the actual HttpResponse to send back to the user.
-        """
-        (paginator, page) = self.build_page()
-
-        context = {
-            'query': self.query,
-            'form': self.form,
-            'page': page,
-            'paginator': paginator,
-            'suggestion': None,
-        }
-
+    def get_context_data(self, **kwargs):
+        kwargs.update({
+            'form': self.build_form(),
+            'query': self.get_query(),
+            'object_list': self.get_queryset(),
+            'suggestion': None
+        })
+        context = super(SearchMixin, self).get_context_data(**kwargs)
+        if hasattr(self, 'extra_context'):
+            if callable(self.extra_context):
+                extra_context = self.extra_context()
+            else: 
+                extra_context = self.extra_context
+            context.update(extra_context)
+            warnings.warn("SearchView.extra_context is depricated use SearchView.get_get_context_data() instead.", PendingDeprecationWarning)
+            context.update(extra_context)
         if self.results and hasattr(self.results, 'query') and self.results.query.backend.include_spelling:
             context['suggestion'] = self.form.get_suggestion()
+        context['page'] = context['page_obj'] # for backward compatibility
+        return self.context_class(context)
 
-        context.update(self.extra_context())
-        return render_to_response(self.template, context, context_instance=self.context_class(self.request))
+    # Depricated methods and properties for backward compatibility
+
+    def get_results(self):
+        warnings.warn("SearchView.get_results() is depricated use SearchView.get_queryset() instead.", PendingDeprecationWarning)
+        return self.get_queryset()
+
+    def build_page(self):
+        queryset = self.get_queryset()
+        page_size = self.get_paginate_by()
+        (paginator, page, queryset, is_paginated) = self.paginate_queryset(queryset, page_size)
+        warnings.warn("SearchView.build_page is depricated.", PendingDeprecationWarning)
+        return (paginator, page)
+
+    @property
+    def template(self):
+        warnings.warn("SearchView.template is depricated use SearchView.template_name instead.", PendingDeprecationWarning)
+        return self.template_name
+
+    @template.setter
+    def template(self, value):
+        warnings.warn("SearchView.template is depricated use SearchView.template_name instead.", PendingDeprecationWarning)
+        self.template_name = value
+
+    @template.deleter
+    def template(self):
+        warnings.warn("SearchView.template is depricated use SearchView.template_name instead.", PendingDeprecationWarning)
+        del self.template_name
+
+    @property
+    def results_per_page(self):
+        warnings.warn("SearchView.results_per_page is depricated use SearchView.paginate_by instead.", PendingDeprecationWarning)
+        return self.paginate_by
+
+    @results_per_page.setter
+    def results_per_page(self, value):
+        warnings.warn("SearchView.results_per_page is depricated use SearchView.paginate_by instead.", PendingDeprecationWarning)
+        self.paginate_by = value
+
+    @results_per_page.deleter
+    def results_per_page(self):
+        warnings.warn("SearchView.results_per_page is depricated use SearchView.paginate_by instead.", PendingDeprecationWarning)
+        del self.paginate_by
+
+class FacetedSearchMixin(SearchMixin):
+    form_class = FacetedSearchForm
+
+    def build_form(self, form_kwargs=None):
+        if form_kwargs is None:
+            form_kwargs = {}
+        # This way the form can always receive a list containing zero or more
+        # facet expressions:
+        form_kwargs['selected_facets'] = self.request.GET.getlist("selected_facets")
+        return super(FacetedSearchView, self).build_form(form_kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(FacetSearchMixin, self).get_context_data(**kwargs)
+        context['facets'] = self.results.facet_counts()
+        return context
+
+class GenericSearchView(SearchMixin, ListView):
+    pass
+
+SearchView = GenericSearchView.as_view
+
+
+class GenericFacetedSearchView(FacetedSearchMixin, ListView):
+    pass
+
+FacetedSearchView = GenericFacetedSearchView.as_view
 
 
 def search_view_factory(view_class=SearchView, *args, **kwargs):
     def search_view(request):
         return view_class(*args, **kwargs)(request)
     return search_view
-
-
-class FacetedSearchView(SearchView):
-    def __init__(self, *args, **kwargs):
-        # Needed to switch out the default form class.
-        if kwargs.get('form_class') is None:
-            kwargs['form_class'] = FacetedSearchForm
-
-        super(FacetedSearchView, self).__init__(*args, **kwargs)
-
-    def build_form(self, form_kwargs=None):
-        if form_kwargs is None:
-            form_kwargs = {}
-
-        # This way the form can always receive a list containing zero or more
-        # facet expressions:
-        form_kwargs['selected_facets'] = self.request.GET.getlist("selected_facets")
-
-        return super(FacetedSearchView, self).build_form(form_kwargs)
-
-    def extra_context(self):
-        extra = super(FacetedSearchView, self).extra_context()
-        extra['request'] = self.request
-        extra['facets'] = self.results.facet_counts()
-        return extra
 
 
 def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None):
