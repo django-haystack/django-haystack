@@ -87,7 +87,7 @@ class SearchMixin(MultipleObjectMixin):
         if self.results and hasattr(self.results, 'query') and self.results.query.backend.include_spelling:
             context['suggestion'] = self.form.get_suggestion()
         context['page'] = context['page_obj'] # for backward compatibility
-        return self.context_class(context)
+        return context
 
     # Depricated methods and properties for backward compatibility
 
