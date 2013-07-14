@@ -318,8 +318,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         if facets is not None:
             facets = [FieldFacet(facet, allow_overlap=True) for facet in facets]
 
-            #warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
-
         if date_facets is not None:
             warnings.warn("Whoosh does not handle date faceting.", Warning, stacklevel=2)
 
@@ -362,7 +360,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                         'hits': 0,
                     }
 
-                if narrowed_results:
+                if narrowed_results is not None:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
@@ -384,7 +382,6 @@ class WhooshSearchBackend(BaseSearchBackend):
             # greater than 0.
             if not end_offset is None and end_offset <= 0:
                 end_offset = 1
-
             raw_results = searcher.search(parsed_query, limit=end_offset, sortedby=sort_by, groupedby=facets, reverse=reverse)
 
             # Handle the case where the results have been narrowed.
@@ -581,7 +578,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             }
             for facet_fieldname in raw_page.results.facet_names():
                 facets['fields'][facet_fieldname] = sorted(
-                                                        [(name, len(value)) for name, value in raw_page.results.groups().items()],
+                                                        [(name, len(value)) for name, value in raw_page.results.groups(facet_fieldname).items()],
                                                         key=operator.itemgetter(1, 0),
                                                         reverse=True)
 
