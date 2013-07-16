@@ -11,6 +11,7 @@ from django.utils.encoding import force_unicode
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, SearchBackendError
+from haystack.fields import BooleanField
 from haystack.inputs import PythonData, Clean, Exact, Raw
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
@@ -186,7 +187,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
+                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
                     "data": {
                         "index": index,
                         "object": get_identifier(obj)
@@ -579,7 +580,11 @@ class WhooshSearchBackend(BaseSearchBackend):
                     index = unified_index.get_index(model)
                     string_key = str(key)
 
-                    if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
+                    # Patch this up to exclude BooleanField because it's broken
+                    # https://github.com/toastdriven/django-haystack/issues/382
+                    if (string_key in index.fields and 
+                        callable(getattr(index.fields[string_key], 'convert', None)) and
+                        not isinstance(index.fields[string_key], BooleanField)):
                         # Special-cased due to the nature of KEYWORD fields.
                         if index.fields[string_key].is_multivalued:
                             if value is None or len(value) is 0:
