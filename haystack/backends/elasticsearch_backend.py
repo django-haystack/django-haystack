@@ -56,8 +56,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     },
                     "edgengram_analyzer": {
                         "type": "custom",
-                        "tokenizer": "lowercase",
-                        "filter": ["haystack_edgengram"]
+                        #"tokenizer": "lowercase",
+                        "tokenizer": "standard",
+                        #"filter": ["haystack_edgengram"]
+                        "filter": ["haystack_edgengram", "lowercase"]
                     }
                 },
                 "tokenizer": {
@@ -129,7 +131,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             try:
                 # Make sure the index is there first.
                 self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
-                self.conn.put_mapping(self.index_name, 'modelresult', current_mapping)
+                self.conn.put_mapping(doc_type='modelresult', mapping=current_mapping, index=self.index_name)
                 self.existing_mapping = current_mapping
             except Exception:
                 if not self.silently_fail:
@@ -680,7 +682,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 field_mapping['index'] = 'not_analyzed'
 
             if field_mapping['type'] == 'string' and field_class.indexed:
-                field_mapping["term_vector"] = "with_positions_offsets"
+                if field_class.term_vector:
+                    field_mapping["term_vector"] = "with_positions_offsets"
 
                 if not hasattr(field_class, 'facet_for') and not field_class.field_type in('ngram', 'edge_ngram'):
                     field_mapping["analyzer"] = "snowball"
