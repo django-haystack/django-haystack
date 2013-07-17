@@ -726,7 +726,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for dk, dv in date_values.items():
                     date_values[dk] = int(dv)
 
-                return datetime(
+                return datetime.datetime(
                     date_values['year'], date_values['month'],
                     date_values['day'], date_values['hour'],
                     date_values['minute'], date_values['second'])
