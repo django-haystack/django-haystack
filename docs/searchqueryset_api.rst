@@ -212,6 +212,10 @@ string with a ``-``::
 
     SearchQuerySet().filter(content='foo').order_by('-pub_date')
 
+To get random order, use ``?`` (at the moment supported only by Solr backend)::
+
+    SearchQuerySet().filter(content='foo').order_by('?')
+
 .. note::
 
     In general, ordering is locale-specific. Haystack makes no effort to try to
