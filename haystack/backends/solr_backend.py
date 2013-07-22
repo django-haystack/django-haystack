@@ -1,4 +1,5 @@
 import warnings
+import random
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
@@ -523,6 +524,10 @@ class SolrSearchQuery(BaseSearchQuery):
             'sfield': sfield,
         }
         self.order_by_distance.update(kwargs)
+
+    def order_random(self):
+        # http://lucene.apache.org/solr/4_3_1/solr-core/org/apache/solr/schema/RandomSortField.html
+        self.order_by = ['-rand_%04d' % random.randint(0, 9999)]
 
     def build_query_fragment(self, field, filter_type, value):
         from haystack import connections

@@ -10,6 +10,7 @@ MANIFEST
 .tox
 env
 env3
+.idea
 
 # Because I'm ghetto like that.
 tests/pyelasticsearch.py
