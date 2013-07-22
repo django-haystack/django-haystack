@@ -223,6 +223,19 @@ string with a ``-``::
     methods on your ``SearchIndex`` objects to transliterate the characters
     as you see fit.
 
+``order_random``
+~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.order_random(self)
+
+Sets order in which the results should appear to random. Takes no arguments.
+
+    SearchQuerySet().filter(content='foo').order_random()
+
+.. note::
+
+    At the moment this feature is implemented in Solr engine only. This method will throw exception in other engines.
+
 ``highlight``
 ~~~~~~~~~~~~~
 
