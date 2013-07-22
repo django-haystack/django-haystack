@@ -958,7 +958,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         }
 
         if self.end_offset is not None:
-            search_kwargs['end_offset'] = self.end_offset - self.start_offset
+            search_kwargs['end_offset'] = self.end_offset
 
         results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **search_kwargs)
         self._results = results.get('results', [])
