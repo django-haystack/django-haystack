@@ -642,6 +642,10 @@ class BaseSearchQuery(object):
         """Orders the search result by distance from point."""
         raise NotImplementedError("Subclasses must provide a way to add order by distance in the 'add_order_by_distance' method.")
 
+    def order_random(self):
+        """Changes order to random."""
+        raise NotImplementedError("'order_random' is not yet implemented in this Search Engine.")
+
     def clear_order_by(self):
         """
         Clears out all ordering that has been already added, reverting the

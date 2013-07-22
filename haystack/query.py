@@ -323,6 +323,12 @@ class SearchQuerySet(object):
         clone.query.add_order_by_distance(**kwargs)
         return clone
 
+    def order_random(self):
+        """Changes order to random."""
+        clone = self._clone()
+        clone.query.order_random()
+        return clone
+
     def highlight(self):
         """Adds highlighting to the results."""
         clone = self._clone()
