@@ -57,6 +57,22 @@ to enable the ``MoreLikeThisHandler``. Add the following line to your
 
     <requestHandler name="/mlt" class="solr.MoreLikeThisHandler" />
 
+.. _ref-solr-random-order:
+
+Random Order
+--------------
+
+To use random order feature by passing '?' to :ref:`ref-orderby`, you'll need to ensure that your ``schema.xml``
+contains required fieldType and dynamic field declaration ::
+
+    <fieldType name="random" class="solr.RandomSortField" />
+    ...
+    <dynamicField name="rand_*"  type="random" indexed="true"  stored="false"/>
+
+They should be there if you use Haystack default template for ``build_solr_schema``
+
+http://lucene.apache.org/solr/4_3_1/solr-core/org/apache/solr/schema/RandomSortField.html
+
 Spelling Suggestions
 --------------------
 
