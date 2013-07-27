@@ -78,7 +78,9 @@ class SearchViewTestCase(TestCase):
         form = sv.build_form()
         self.assertTrue(isinstance(form, InitialedSearchForm))
         self.assertEqual(form.fields['q'].initial, 'Search for...')
-        self.assertEqual(form.as_p(), u'<p><label for="id_q">Search:</label> <input type="text" name="q" value="Search for..." id="id_q" /></p>')
+        para = form.as_p()
+        self.assertTrue(u'<label for="id_q">Search:</label>' in para)
+        self.assertTrue(u'value="Search for..."' in para)
 
     def test_pagination(self):
         response = self.client.get(reverse('haystack_search'), {'q': 'haystack', 'page': 0})
