@@ -3,7 +3,7 @@ Haystack
 ========
 
 :author: Daniel Lindsley
-:date: 2013/04/28
+:date: 2013/07/28
 
 Haystack provides modular search for Django. It features a unified, familiar
 API that allows you to plug in different search backends (such as Solr_,
@@ -33,6 +33,7 @@ Documentation
 =============
 
 * Development version: http://docs.haystacksearch.org/
+* v2.1.X: http://django-haystack.readthedocs.org/en/v2.1.0/
 * v2.0.X: http://django-haystack.readthedocs.org/en/v2.0.0/
 * v1.2.X: http://django-haystack.readthedocs.org/en/v1.2.7/
 * v1.1.X: http://django-haystack.readthedocs.org/en/v1.1/
@@ -43,8 +44,8 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.5+
-* Django 1.3+
+* Python 2.6+ or Python 3.3+
+* Django 1.5+
 
 Additionally, each backend has its own requirements. You should refer to
 http://docs.haystacksearch.org/dev/installing_search_engines.html for more

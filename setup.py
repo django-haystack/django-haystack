@@ -10,7 +10,7 @@ except ImportError:
 
 setup(
     name='django-haystack',
-    version='2.0.1-dev',
+    version='2.1.0',
     description='Pluggable search for Django.',
     author='Daniel Lindsley',
     author_email='daniel@toastdriven.com',
@@ -38,7 +38,9 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Topic :: Utilities'
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
+        'Topic :: Utilities',
     ],
     zip_safe=False,
 )

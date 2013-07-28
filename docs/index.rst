@@ -110,24 +110,8 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.5+
-* Django 1.3+
+* Python 2.6+
+* Django 1.5+
 
 Additionally, each backend has its own requirements. You should refer to
 :doc:`installing_search_engines` for more details.
-
-
-Commercial Support
-==================
-
-If you're using Haystack in a commercial environment, paid support is available
-from `Toast Driven`_. Services offered include:
-
-* Advice/help with setup
-* Implementation in your project
-* Bugfixes in Haystack itself
-* Features in Haystack itself
-
-If you're interested, please contact Daniel Lindsley (daniel@toastdriven.com).
-
-.. _`Toast Driven`: http://toastdriven.com/
