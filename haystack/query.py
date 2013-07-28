@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
 import operator
 import warnings
+from django.utils import six
 from haystack import connections, connection_router
 from haystack.backends import SQ
 from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
@@ -78,7 +80,7 @@ class SearchQuerySet(object):
 
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
-        
+
         if len(self) > REPR_OUTPUT_SIZE:
             data[-1] = "...(remaining elements truncated)..."
 
@@ -173,7 +175,7 @@ class SearchQuerySet(object):
         # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
         # to be an acceptable loss for consistent and more efficient caching.
         if len(self._result_cache) == 0:
-            self._result_cache = [None for i in xrange(self.query.get_count())]
+            self._result_cache = [None for i in range(self.query.get_count())]
 
         if start is None:
             start = 0
@@ -238,7 +240,7 @@ class SearchQuerySet(object):
         """
         Retrieves an item or slice from the set of results.
         """
-        if not isinstance(k, (slice, int, long)):
+        if not isinstance(k, (slice, six.integer_types)):
             raise TypeError
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
@@ -375,11 +377,11 @@ class SearchQuerySet(object):
         clone = self._clone()
         clone.query.add_dwithin(field, point, distance)
         return clone
-    
+
     def stats(self, field):
         """Adds stats to a query for the provided field."""
         return self.stats_facet(field, facet_fields=None)
-    
+
     def stats_facet(self, field, facet_fields=None):
         """Adds stats facet for the given field and facet_fields represents
         the faceted fields."""
@@ -391,7 +393,7 @@ class SearchQuerySet(object):
             if facet_fields: stats_facets.append(facet_fields)
         clone.query.add_stats_query(field,stats_facets)
         return clone
-       
+
     def distance(self, field, point):
         """
         Spatial: Denotes results must have distance measurements from the
@@ -459,7 +461,7 @@ class SearchQuerySet(object):
                 }
                 query_bits.append(SQ(**kwargs))
 
-        return clone.filter(reduce(operator.__and__, query_bits))
+        return clone.filter(six.moves.reduce(operator.__and__, query_bits))
 
     def using(self, connection_name):
         """
@@ -516,7 +518,7 @@ class SearchQuerySet(object):
         else:
             clone = self._clone()
             return clone.query.get_stats()
-            
+
     def spelling_suggestion(self, preferred_query=None):
         """
         Returns the spelling suggestion found by the query.
@@ -772,7 +774,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
         """
         Retrieves an item or slice from the set of results.
         """
-        if not isinstance(k, (slice, int, long)):
+        if not isinstance(k, (slice, six.integer_types)):
             raise TypeError
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)

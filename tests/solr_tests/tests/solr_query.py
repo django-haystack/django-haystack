@@ -82,7 +82,14 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(title__gte='B'))
         self.sq.add_filter(SQ(id__in=[1, 2, 3]))
         self.sq.add_filter(SQ(rating__range=[3, 5]))
-        self.assertEqual(self.sq.build_query(), u'((_query_:"{!dismax qf=text}Don\'t panic") AND pub_date:([* TO "2009-02-10 01:59:00"]) AND author:({"daniel" TO *}) AND created:({* TO "2009-02-12 12:13:00"}) AND title:(["B" TO *]) AND id:("1" OR "2" OR "3") AND rating:(["3" TO "5"]))')
+        query = self.sq.build_query()
+        self.assertTrue(u'(_query_:"{!dismax qf=text}Don\'t panic")' in query)
+        self.assertTrue(u'pub_date:([* TO "2009-02-10 01:59:00"])' in query)
+        self.assertTrue(u'author:({"daniel" TO *})' in query)
+        self.assertTrue(u'created:({* TO "2009-02-12 12:13:00"})' in query)
+        self.assertTrue(u'title:(["B" TO *])' in query)
+        self.assertTrue(u'id:("1" OR "2" OR "3")' in query)
+        self.assertTrue(u'rating:(["3" TO "5"])' in query)
 
     def test_build_query_multiple_filter_types_with_datetimes(self):
         self.sq.add_filter(SQ(content='why'))
@@ -107,7 +114,14 @@ class SolrSearchQueryTestCase(TestCase):
     def test_build_query_in_with_set(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=set(["A Famous Paper", "An Infamous Article"])))
-        self.assertEqual(self.sq.build_query(), u'((why) AND title:("A Famous Paper" OR "An Infamous Article"))')
+        query = self.sq.build_query()
+        self.assertTrue(u'(why)' in query)
+
+        # Because ordering in Py3 is now random.
+        if 'title:("A ' in query:
+            self.assertTrue(u'title:("A Famous Paper" OR "An Infamous Article")' in query)
+        else:
+            self.assertTrue(u'title:("An Infamous Article" OR "A Famous Paper")' in query)
 
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))

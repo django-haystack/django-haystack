@@ -1,10 +1,11 @@
+from __future__ import unicode_literals
 import re
+
+from django.conf import settings
+from django.utils import six
 
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.utils.highlighting import Highlighter
-
-
-from django.conf import settings
 
 try:
     from django.utils import importlib
@@ -21,7 +22,7 @@ def default_get_identifier(obj_or_string):
 
     If not overridden, uses <app_label>.<object_name>.<pk>.
     """
-    if isinstance(obj_or_string, basestring):
+    if isinstance(obj_or_string, six.string_types):
         if not IDENTIFIER_REGEX.match(obj_or_string):
             raise AttributeError(u"Provided string '%s' is not a valid identifier." % obj_or_string)
 

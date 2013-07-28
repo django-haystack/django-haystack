@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
 import os
@@ -33,7 +35,7 @@ except ImportError:
 
 def clear_solr_index():
     # Wipe it clean.
-    print 'Clearing out Solr...'
+    print('Clearing out Solr...')
     raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     raw_solr.delete(q='*:*')
 
@@ -192,7 +194,7 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -438,21 +440,7 @@ class SolrSearchBackendTestCase(TestCase):
         (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(fields), 4)
-        self.assertEqual(fields, [
-            {
-                'indexed': 'true',
-                'type': 'text_en',
-                'stored': 'true',
-                'field_name': 'text',
-                'multi_valued': 'false'
-            },
-            {
-                'indexed': 'true',
-                'type': 'date',
-                'stored': 'true',
-                'field_name': 'pub_date',
-                'multi_valued': 'false'
-            },
+        self.assertEqual(sorted(fields, key=lambda x: x['field_name']), [
             {
                 'indexed': 'true',
                 'type': 'text_en',
@@ -466,7 +454,21 @@ class SolrSearchBackendTestCase(TestCase):
                 'stored': 'true',
                 'type': 'string',
                 'multi_valued': 'false'
-            }
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'stored': 'true',
+                'field_name': 'pub_date',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'text_en',
+                'stored': 'true',
+                'field_name': 'text',
+                'multi_valued': 'false'
+            },
         ])
 
         ui = UnifiedIndex()
@@ -610,7 +612,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
     def test_all_cases(self, mock_send_request, mock_log):
         self.sample_objs = []
 
-        for i in xrange(1, 4):
+        for i in range(1, 4):
             mock = MockModel()
             mock.id = i
             mock.author = 'daniel%s' % i
@@ -733,7 +735,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         global lssqstc_all_loaded
 
         if lssqstc_all_loaded is None:
-            print 'Reloading data...'
+            print('Reloading data...')
             lssqstc_all_loaded = True
 
             # Wipe it clean.
@@ -759,7 +761,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 0)
         sqs = self.sqs.all()
         results = [int(result.pk) for result in sqs]
-        self.assertEqual(results, range(1, 24))
+        self.assertEqual(results, list(range(1, 24)))
         self.assertEqual(len(connections['default'].queries), 3)
 
     def test_slice(self):
@@ -792,7 +794,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = [int(result.pk) for result in results._manual_iter()]
-        self.assertEqual(results, range(1, 24))
+        self.assertEqual(results, list(range(1, 24)))
         self.assertEqual(len(connections['default'].queries), 3)
 
     def test_fill_cache(self):
@@ -909,12 +911,12 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
-        self.assertEqual([obj.object.id for obj in sqs], range(2, 24))
+        self.assertEqual([obj.object.id for obj in sqs], list(range(2, 24)))
 
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=10))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
-        self.assertEqual([obj.object.id for obj in sqs], range(11, 24))
+        self.assertEqual([obj.object.id for obj in sqs], list(range(11, 24)))
         self.assertEqual([obj.object.id for obj in sqs[10:20]], [21, 22, 23])
 
     def test_related_iter(self):
@@ -922,7 +924,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 0)
         sqs = self.rsqs.all()
         results = [int(result.pk) for result in sqs]
-        self.assertEqual(results, range(1, 24))
+        self.assertEqual(results, list(range(1, 24)))
         self.assertEqual(len(connections['default'].queries), 4)
 
     def test_related_slice(self):
@@ -950,7 +952,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = [int(result.pk) for result in results._manual_iter()]
-        self.assertEqual(results, range(1, 24))
+        self.assertEqual(results, list(range(1, 24)))
         self.assertEqual(len(connections['default'].queries), 4)
 
     def test_related_fill_cache(self):
@@ -1269,7 +1271,7 @@ class SolrBoostBackendTestCase(TestCase):
 
         self.sample_objs = []
 
-        for i in xrange(1, 5):
+        for i in range(1, 5):
             mock = AFourthMockModel()
             mock.id = i
 

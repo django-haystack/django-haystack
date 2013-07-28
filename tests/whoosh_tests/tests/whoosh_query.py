@@ -93,7 +93,14 @@ class WhooshSearchQueryTestCase(TestCase):
     def test_build_query_in_with_set(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=set(["A Famous Paper", "An Infamous Article"])))
-        self.assertEqual(self.sq.build_query(), u'((why) AND title:("A Famous Paper" OR "An Infamous Article"))')
+        query = self.sq.build_query()
+        self.assertTrue(u'(why)' in query)
+
+        # Because ordering in Py3 is now random.
+        if 'title:("A ' in query:
+            self.assertTrue(u'title:("A Famous Paper" OR "An Infamous Article")' in query)
+        else:
+            self.assertTrue(u'title:("An Infamous Article" OR "A Famous Paper")' in query)
 
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))

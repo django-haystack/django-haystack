@@ -1,9 +1,11 @@
+from __future__ import unicode_literals
 import datetime
 import re
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
+from django.utils import six
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
@@ -145,7 +147,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -164,7 +166,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     final_data[key] = self._from_python(value)
 
                 prepped_docs.append(final_data)
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -189,7 +191,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -201,7 +203,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             if commit:
                 self.conn.refresh(index=self.index_name)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -226,7 +228,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 # a ``query`` root object. :/
                 query = {'query_string': {'query': " OR ".join(models_to_delete)}}
                 self.conn.delete_by_query(self.index_name, 'modelresult', query)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -512,7 +514,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             raw_results = self.conn.search(search_kwargs,
                                            index=self.index_name,
                                            doc_type='modelresult')
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -550,7 +552,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(self.index_name, 'modelresult', doc_id, [field_name], **params)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -710,8 +712,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         iso = self._iso_datetime(value)
         if iso:
             return iso
-        elif isinstance(value, str):
-            return unicode(value, errors='replace')  # TODO: Be stricter.
+        elif isinstance(value, six.binary_type):
+            # TODO: Be stricter.
+            return six.text_type(value, errors='replace')
         elif isinstance(value, set):
             return list(value)
         return value
@@ -721,7 +724,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if isinstance(value, (int, float, complex, list, tuple, bool)):
             return value
 
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             possible_datetime = DATETIME_REGEX.search(value)
 
             if possible_datetime:
@@ -788,7 +791,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if hasattr(value, 'values_list'):
                 value = list(value)
 
-            if isinstance(value, basestring):
+            if isinstance(value, six.string_types):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
             else:
@@ -828,7 +831,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                     # Iterate over terms & incorportate the converted form of each into the query.
                     terms = []
 
-                    if isinstance(prepared_value, basestring):
+                    if isinstance(prepared_value, six.string_types):
                         for possible_value in prepared_value.split(' '):
                             terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
                     else:
@@ -874,7 +877,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         kwarg_bits = []
 
         for key in sorted(kwargs.keys()):
-            if isinstance(kwargs[key], basestring) and ' ' in kwargs[key]:
+            if isinstance(kwargs[key], six.string_types) and ' ' in kwargs[key]:
                 kwarg_bits.append(u"%s='%s'" % (key, kwargs[key]))
             else:
                 kwarg_bits.append(u"%s=%s" % (key, kwargs[key]))

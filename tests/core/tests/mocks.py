@@ -32,7 +32,7 @@ class MockSearchResult(SearchResult):
         super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
         self._model = get_model('core', model_name)
 
-MOCK_SEARCH_RESULTS = [MockSearchResult('core', 'MockModel', i, 1 - (i / 100.0)) for i in xrange(1, 100)]
+MOCK_SEARCH_RESULTS = [MockSearchResult('core', 'MockModel', i, 1 - (i / 100.0)) for i in range(1, 100)]
 MOCK_INDEX_DATA = {}
 
 class MockSearchBackend(BaseSearchBackend):
@@ -71,7 +71,7 @@ class MockSearchBackend(BaseSearchBackend):
 
         sliced = sorted(MOCK_INDEX_DATA, key=junk_sort)
 
-        for result in sliced:
+        for i, result in enumerate(sliced):
             app_label, model_name, pk = result.split('.')
             model = get_model(app_label, model_name)
 

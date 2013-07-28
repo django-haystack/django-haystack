@@ -196,7 +196,7 @@ class BaseSearchQueryTestCase(TestCase):
 
         self.bsq.add_stats_query('moof',['bar','baz'])
         self.assertEqual(self.bsq.stats,{'foo':['bar'],'moof':['bar','baz']})
-        
+
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
         self.assertEqual(self.bsq.narrow_queries, set(['foo:bar']))
@@ -357,7 +357,7 @@ class SearchQuerySetTestCase(TestCase):
     def test_repr(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        self.assertEqual(repr(self.msqs), "[<SearchResult: core.mockmodel (pk=u'1')>, <SearchResult: core.mockmodel (pk=u'2')>, <SearchResult: core.mockmodel (pk=u'3')>, <SearchResult: core.mockmodel (pk=u'4')>, <SearchResult: core.mockmodel (pk=u'5')>, <SearchResult: core.mockmodel (pk=u'6')>, <SearchResult: core.mockmodel (pk=u'7')>, <SearchResult: core.mockmodel (pk=u'8')>, <SearchResult: core.mockmodel (pk=u'9')>, <SearchResult: core.mockmodel (pk=u'10')>, <SearchResult: core.mockmodel (pk=u'11')>, <SearchResult: core.mockmodel (pk=u'12')>, <SearchResult: core.mockmodel (pk=u'13')>, <SearchResult: core.mockmodel (pk=u'14')>, <SearchResult: core.mockmodel (pk=u'15')>, <SearchResult: core.mockmodel (pk=u'16')>, <SearchResult: core.mockmodel (pk=u'17')>, <SearchResult: core.mockmodel (pk=u'18')>, <SearchResult: core.mockmodel (pk=u'19')>, '...(remaining elements truncated)...']")
+        self.assertEqual(repr(self.msqs).replace("u'", "'"), "[<SearchResult: core.mockmodel (pk='1')>, <SearchResult: core.mockmodel (pk='2')>, <SearchResult: core.mockmodel (pk='3')>, <SearchResult: core.mockmodel (pk='4')>, <SearchResult: core.mockmodel (pk='5')>, <SearchResult: core.mockmodel (pk='6')>, <SearchResult: core.mockmodel (pk='7')>, <SearchResult: core.mockmodel (pk='8')>, <SearchResult: core.mockmodel (pk='9')>, <SearchResult: core.mockmodel (pk='10')>, <SearchResult: core.mockmodel (pk='11')>, <SearchResult: core.mockmodel (pk='12')>, <SearchResult: core.mockmodel (pk='13')>, <SearchResult: core.mockmodel (pk='14')>, <SearchResult: core.mockmodel (pk='15')>, <SearchResult: core.mockmodel (pk='16')>, <SearchResult: core.mockmodel (pk='17')>, <SearchResult: core.mockmodel (pk='18')>, <SearchResult: core.mockmodel (pk='19')>, '...(remaining elements truncated)...']")
         self.assertEqual(len(connections['default'].queries), 1)
 
     def test_iter(self):
@@ -662,7 +662,7 @@ class SearchQuerySetTestCase(TestCase):
         try:
             sqs = self.msqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='smarblaph')
             self.fail()
-        except FacetingError, e:
+        except FacetingError as e:
             self.assertEqual(str(e), "The gap_by ('smarblaph') must be one of the following: year, month, day, hour, minute, second.")
 
         sqs = self.msqs.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month')
@@ -699,7 +699,7 @@ class SearchQuerySetTestCase(TestCase):
         sqs3 = self.msqs.stats_facet('foo','bar').stats_facet('moof','baz')
         self.assertTrue(isinstance(sqs3, SearchQuerySet))
         self.assertEqual(len(sqs3.query.stats),2)
-        
+
     def test_narrow(self):
         sqs = self.msqs.narrow('foo:moof')
         self.assertTrue(isinstance(sqs, SearchQuerySet))

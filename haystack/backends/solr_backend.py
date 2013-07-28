@@ -1,7 +1,9 @@
+from __future__ import unicode_literals
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
+from django.utils import six
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
@@ -64,7 +66,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if len(docs) > 0:
             try:
                 self.conn.add(docs, commit=commit, boost=index.get_field_weights())
-            except (IOError, SolrError), e:
+            except (IOError, SolrError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -79,7 +81,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 ID: solr_id
             }
             self.conn.delete(**kwargs)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -100,7 +102,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
             # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
             self.conn.optimize()
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -121,7 +123,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.search(query_string, **search_kwargs)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -319,7 +321,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
-        except (IOError, SolrError), e:
+        except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
 
@@ -353,7 +355,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 for facet_field in facets[key]:
                     # Convert to a two-tuple, as Solr's json format returns a list of
                     # pairs.
-                    facets[key][facet_field] = zip(facets[key][facet_field][::2], facets[key][facet_field][1::2])
+                    facets[key][facet_field] = list(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
 
         if self.include_spelling is True:
             if hasattr(raw_results, 'spellcheck'):
@@ -495,7 +497,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             return self.conn.extract(file_obj)
-        except StandardError, e:
+        except Exception as e:
             self.log.warning(u"Unable to extract file contents: %s", e,
                              exc_info=True, extra={"data": {"file": file_obj}})
             return None
@@ -533,7 +535,7 @@ class SolrSearchQuery(BaseSearchQuery):
             if hasattr(value, 'values_list'):
                 value = list(value)
 
-            if isinstance(value, basestring):
+            if isinstance(value, six.string_types):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
             else:
@@ -616,7 +618,7 @@ class SolrSearchQuery(BaseSearchQuery):
         kwarg_bits = []
 
         for key in sorted(kwargs.keys()):
-            if isinstance(kwargs[key], basestring) and ' ' in kwargs[key]:
+            if isinstance(kwargs[key], six.string_types) and ' ' in kwargs[key]:
                 kwarg_bits.append(u"%s='%s'" % (key, kwargs[key]))
             else:
                 kwarg_bits.append(u"%s=%s" % (key, kwargs[key]))
