@@ -4,7 +4,17 @@ Primary Authors:
     * Matt Croydon (some documentation, sanity checks and the sweet name)
     * Travis Cline (the original SQ implementation, improvements to ModelSearchIndex)
     * David Sauve (notanumber) for the Xapian backend, the simple backend and various patches.
-    * Jannis Leidel
+    * Jannis Leidel (jezdez)
+    * Chris Adams (acdha)
+    * Justin Caratzas (acdha)
+    * Andrew Schoen (andrewschoen)
+    * Dan Watson (dcwatson)
+    * Matt Woodward (mpwoodward)
+    * Alex Vidal (avidal)
+    * Zach Smith (zmsmith)
+    * Stefan Wehrmeyer (stefanw)
+    * George Hickman (ghickman)
+    * Ben Spaulding (benspaulding)
 
 
 Thanks to
