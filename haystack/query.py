@@ -337,7 +337,7 @@ class SearchQuerySet(object):
 
         for model in models:
             if not model in connections[self.query._using].get_unified_index().get_indexed_models():
-                warnings.warn('The model %r is not registered for search.' % model)
+                warnings.warn('The model %r is not registered for search.' % (model,))
 
             clone.query.add_model(model)
 
