@@ -25,6 +25,7 @@ Syntax::
 
 Example::
 
+    {% load highlight %}
     # Highlight summary with default behavior.
     {% highlight result.summary with query %}
     
