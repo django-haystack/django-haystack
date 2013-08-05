@@ -148,7 +148,7 @@
     <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
 
 {% for field in fields %}
-    {% if field.field_name != ID }}
+    {% if field.field_name != ID %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />
     {% endif %}
 {% endfor %}
