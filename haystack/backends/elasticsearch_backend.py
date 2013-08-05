@@ -43,7 +43,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
     # The '\\' must come first, so as not to overwrite the other slash replacements.
     RESERVED_CHARACTERS = (
         '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}',
-        '[', ']', '^', '"', '~', '*', '?', ':',
+        '[', ']', '^', '"', '~', '*', '?', ':', '/',
     )
 
     # Settings to add an n-gram & edge n-gram analyzer.
