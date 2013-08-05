@@ -129,6 +129,8 @@
   </types>
 
   <fields>
+    <!-- version is required in Solr 4 -->
+    <field name="_version_" type="long" indexed="true" stored ="true"/>
     <!-- general -->
     <field name="{{ ID }}" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
     <field name="{{ DJANGO_CT }}" type="string" indexed="true" stored="true" multiValued="false"/>
