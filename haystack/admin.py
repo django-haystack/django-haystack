@@ -59,8 +59,10 @@ class SearchChangeList(ChangeList):
 
 
 class SearchModelAdmin(ModelAdmin):
+    changelist = SearchChangeList
+
     def get_changelist(self, request, **kwargs):
         if self.model in connections['default'].get_unified_index().get_indexed_models():
-            return SearchChangeList
+            return self.changelist
         else:
             return super(SearchModelAdmin, self).get_changelist(request, **kwargs)
