@@ -79,6 +79,14 @@ def do_update(backend, index, qs, start, end, total, verbosity=1):
     small_cache_qs = qs.all()
     current_qs = small_cache_qs[start:end]
 
+    select_related_fields = index.get_select_related_fields()
+    if select_related_fields:
+        current_qs = current_qs.select_related(*select_related_fields)
+
+    prefetch_related_fields = index.get_prefetch_related_fields()
+    if prefetch_related_fields:
+        current_qs = current_qs.prefetch_related(*prefetch_related_fields)
+
     if verbosity >= 2:
         if hasattr(os, 'getppid') and os.getpid() == os.getppid():
             print("  indexed %s - %d of %d." % (start + 1, end, total))
