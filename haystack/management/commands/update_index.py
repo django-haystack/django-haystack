@@ -96,7 +96,7 @@ def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1):
     # Fetch a list of results.
     # Can't do pk range, because id's are strings (thanks comments
     # & UUIDs!).
-    stuff_in_the_index = SearchQuerySet().models(model)[start:upper_bound]
+    stuff_in_the_index = SearchQuerySet(using=backend.connection_alias).models(model)[start:upper_bound]
 
     # Iterate over those results.
     for result in stuff_in_the_index:
