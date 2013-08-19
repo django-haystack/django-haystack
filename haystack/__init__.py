@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import logging
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -7,7 +8,7 @@ from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 0, 0, 'beta')
+__version__ = (2, 1, 1, 'dev')
 
 
 # Setup default logging.
@@ -40,16 +41,16 @@ connections = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)
 # Load the router(s).
 connection_router = loading.ConnectionRouter()
 
-# Setup the signal processor.
-signal_processor_path = getattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', 'haystack.signals.BaseSignalProcessor')
-signal_processor_class = loading.import_class(signal_processor_path)
-signal_processor = signal_processor_class(connections, connection_router)
-
 if hasattr(settings, 'HAYSTACK_ROUTERS'):
     if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
         raise ImproperlyConfigured("The HAYSTACK_ROUTERS setting must be either a list or tuple.")
 
     connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
+
+# Setup the signal processor.
+signal_processor_path = getattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', 'haystack.signals.BaseSignalProcessor')
+signal_processor_class = loading.import_class(signal_processor_path)
+signal_processor = signal_processor_class(connections, connection_router)
 
 
 # Per-request, reset the ghetto query log.

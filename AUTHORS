@@ -4,7 +4,17 @@ Primary Authors:
     * Matt Croydon (some documentation, sanity checks and the sweet name)
     * Travis Cline (the original SQ implementation, improvements to ModelSearchIndex)
     * David Sauve (notanumber) for the Xapian backend, the simple backend and various patches.
-    * Jannis Leidel
+    * Jannis Leidel (jezdez)
+    * Chris Adams (acdha)
+    * Justin Caratzas (acdha)
+    * Andrew Schoen (andrewschoen)
+    * Dan Watson (dcwatson)
+    * Matt Woodward (mpwoodward)
+    * Alex Vidal (avidal)
+    * Zach Smith (zmsmith)
+    * Stefan Wehrmeyer (stefanw)
+    * George Hickman (ghickman)
+    * Ben Spaulding (benspaulding)
 
 
 Thanks to
@@ -67,3 +77,11 @@ Thanks to
     * Rodrigo Guzman (rz) for a fix to query handling in the ``simple`` backend.
     * Martin J. Laubach (mjl) for fixing the logic used when combining querysets
     * Eric Holscher (ericholscher) for a docs fix.
+    * Erik Rose (erikrose) for a quick pyelasticsearch-compatibility patch
+    * Stefan Wehrmeyer (stefanw) for a simple search filter fix
+    * Dan Watson (dcwatson) for various patches.
+    * Andrew Schoen (andrewschoen) for the addition of ``HAYSTACK_IDENTIFIER_METHOD``
+    * Pablo SEMINARIO (pabluk) for a docs fix.
+    * Eric Thurgood (ethurgood) for a import fix in the Elasticssearch backend.
+    * Revolution Systems & The Python Software Foundation for funding a significant portion of the port to Python 3!
+    * Artem Kostiuk (postatum) for patch allowing to search for slash character in ElasticSearch since Lucene 4.0.

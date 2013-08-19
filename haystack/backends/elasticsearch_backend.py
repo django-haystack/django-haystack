@@ -1,13 +1,16 @@
+from __future__ import unicode_literals
 import datetime
+import re
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
+from django.utils import six
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
 from haystack.exceptions import MissingDependency, MoreLikeThisError
-from haystack.inputs import PythonData, Clean, Exact
+from haystack.inputs import PythonData, Clean, Exact, Raw
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
 from haystack.utils import log as logging
@@ -20,6 +23,11 @@ try:
     import pyelasticsearch
 except ImportError:
     raise MissingDependency("The 'elasticsearch' backend requires the installation of 'pyelasticsearch'. Please refer to the documentation.")
+
+
+DATETIME_REGEX = re.compile(
+    r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T'
+    r'(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d+)?$')
 
 
 class ElasticsearchSearchBackend(BaseSearchBackend):
@@ -35,7 +43,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
     # The '\\' must come first, so as not to overwrite the other slash replacements.
     RESERVED_CHARACTERS = (
         '\\', '+', '-', '&&', '||', '!', '(', ')', '{', '}',
-        '[', ']', '^', '"', '~', '*', '?', ':',
+        '[', ']', '^', '"', '~', '*', '?', ':', '/',
     )
 
     # Settings to add an n-gram & edge n-gram analyzer.
@@ -115,7 +123,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.content_field_name, field_mapping = self.build_schema(unified_index.all_searchfields())
         current_mapping = {
             'modelresult': {
-                'properties': field_mapping
+                'properties': field_mapping,
+                '_boost': {
+                    'name': 'boost',
+                    'null_value': 1.0
+                }
             }
         }
 
@@ -135,7 +147,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -151,17 +163,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 # Convert the data to make sure it's happy.
                 for key, value in prepped_data.items():
-                    final_data[key] = self.conn.from_python(value)
+                    final_data[key] = self._from_python(value)
 
                 prepped_docs.append(final_data)
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__name__, exc_info=True, extra={
+                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
                     "data": {
                         "index": index,
                         "object": get_identifier(obj)
@@ -179,7 +191,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
                 if not self.silently_fail:
                     raise
 
@@ -191,7 +203,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             if commit:
                 self.conn.refresh(index=self.index_name)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -216,10 +228,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 # a ``query`` root object. :/
                 query = {'query_string': {'query': " OR ".join(models_to_delete)}}
                 self.conn.delete_by_query(self.index_name, 'modelresult', query)
-
-            if commit:
-                self.conn.refresh(index=self.index_name)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -309,8 +318,16 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 }
             }
 
-        if self.include_spelling is True:
-            warnings.warn("Elasticsearch does not handle spelling suggestions.", Warning, stacklevel=2)
+        if self.include_spelling:
+            kwargs['suggest'] = {
+                'suggest': {
+                    'text': spelling_query or query_string,
+                    'term': {
+                        # Using content_field here will result in suggestions of stemmed words.
+                        'field': '_all',
+                    },
+                },
+            }
 
         if narrow_queries is None:
             narrow_queries = set()
@@ -318,13 +335,21 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs.setdefault('facets', {})
 
-            for facet_fieldname in facets:
-                kwargs['facets'][facet_fieldname] = {
+            for facet_fieldname, extra_options in facets.items():
+                facet_options = {
                     'terms': {
                         'field': facet_fieldname,
                         'size': 100,
                     },
                 }
+                # Special cases for options applied at the facet level (not the terms level).
+                if extra_options.pop('global_scope', False):
+                    # Renamed "global_scope" since "global" is a python keyword.
+                    facet_options['global'] = True
+                if 'facet_filter' in extra_options:
+                    facet_options['facet_filter'] = extra_options.pop('facet_filter')
+                facet_options['terms'].update(extra_options)
+                kwargs['facets'][facet_fieldname] = facet_options
 
         if date_facets is not None:
             kwargs.setdefault('facets', {})
@@ -346,8 +371,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     'facet_filter': {
                         "range": {
                             facet_fieldname: {
-                                'from': self.conn.from_python(value.get('start_date')),
-                                'to': self.conn.from_python(value.get('end_date')),
+                                'from': self._from_python(value.get('start_date')),
+                                'to': self._from_python(value.get('end_date')),
                             }
                         }
                     }
@@ -489,7 +514,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             raw_results = self.conn.search(search_kwargs,
                                            index=self.index_name,
                                            doc_type='modelresult')
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -527,7 +552,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(self.index_name, 'modelresult', doc_id, [field_name], **params)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError), e:
+        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
             if not self.silently_fail:
                 raise
 
@@ -547,6 +572,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         if result_class is None:
             result_class = SearchResult
+
+        if self.include_spelling and 'suggest' in raw_results:
+            raw_suggest = raw_results['suggest']['suggest']
+            spelling_suggestion = ' '.join([word['text'] if len(word['options']) == 0 else word['options'][0]['text'] for word in raw_suggest])
 
         if 'facets' in raw_results:
             facets = {
@@ -583,7 +612,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         additional_fields[string_key] = index.fields[string_key].convert(value)
                     else:
-                        additional_fields[string_key] = self.conn.to_python(value)
+                        additional_fields[string_key] = self._to_python(value)
 
                 del(additional_fields[DJANGO_CT])
                 del(additional_fields[DJANGO_ID])
@@ -666,6 +695,67 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return (content_field_name, mapping)
 
+    def _iso_datetime(self, value):
+        """
+        If value appears to be something datetime-like, return it in ISO format.
+
+        Otherwise, return None.
+        """
+        if hasattr(value, 'strftime'):
+            if hasattr(value, 'hour'):
+                return value.isoformat()
+            else:
+                return '%sT00:00:00' % value.isoformat()
+
+    def _from_python(self, value):
+        """Convert more Python data types to ES-understandable JSON."""
+        iso = self._iso_datetime(value)
+        if iso:
+            return iso
+        elif isinstance(value, six.binary_type):
+            # TODO: Be stricter.
+            return six.text_type(value, errors='replace')
+        elif isinstance(value, set):
+            return list(value)
+        return value
+
+    def _to_python(self, value):
+        """Convert values from ElasticSearch to native Python values."""
+        if isinstance(value, (int, float, complex, list, tuple, bool)):
+            return value
+
+        if isinstance(value, six.string_types):
+            possible_datetime = DATETIME_REGEX.search(value)
+
+            if possible_datetime:
+                date_values = possible_datetime.groupdict()
+
+                for dk, dv in date_values.items():
+                    date_values[dk] = int(dv)
+
+                return datetime.datetime(
+                    date_values['year'], date_values['month'],
+                    date_values['day'], date_values['hour'],
+                    date_values['minute'], date_values['second'])
+
+        try:
+            # This is slightly gross but it's hard to tell otherwise what the
+            # string's original type might have been. Be careful who you trust.
+            converted_value = eval(value)
+
+            # Try to handle most built-in types.
+            if isinstance(
+                    converted_value,
+                    (int, list, tuple, set, dict, float, complex)):
+                return converted_value
+        except Exception:
+            # If it fails (SyntaxError or its ilk) or we don't trust it,
+            # continue on.
+            pass
+
+        return value
+
+
 
 # Sucks that this is almost an exact copy of what's in the Solr backend,
 # but we can't import due to dependencies.
@@ -701,7 +791,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if hasattr(value, 'values_list'):
                 value = list(value)
 
-            if isinstance(value, basestring):
+            if isinstance(value, six.string_types):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
             else:
@@ -712,7 +802,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         if not isinstance(prepared_value, (set, list, tuple)):
             # Then convert whatever we get back to what pysolr wants if needed.
-            prepared_value = self.backend.conn.from_python(prepared_value)
+            prepared_value = self.backend._from_python(prepared_value)
 
         # 'content' is a special reserved word, much like 'pk' in
         # Django's ORM layer. It indicates 'no special field'.
@@ -741,11 +831,11 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                     # Iterate over terms & incorportate the converted form of each into the query.
                     terms = []
 
-                    if isinstance(prepared_value, basestring):
+                    if isinstance(prepared_value, six.string_types):
                         for possible_value in prepared_value.split(' '):
-                            terms.append(filter_types[filter_type] % self.backend.conn.from_python(possible_value))
+                            terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
                     else:
-                        terms.append(filter_types[filter_type] % self.backend.conn.from_python(prepared_value))
+                        terms.append(filter_types[filter_type] % self.backend._from_python(prepared_value))
 
                     if len(terms) == 1:
                         query_frag = terms[0]
@@ -755,12 +845,12 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                 in_options = []
 
                 for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend.conn.from_python(possible_value))
+                    in_options.append(u'"%s"' % self.backend._from_python(possible_value))
 
                 query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
-                start = self.backend.conn.from_python(prepared_value[0])
-                end = self.backend.conn.from_python(prepared_value[1])
+                start = self.backend._from_python(prepared_value[0])
+                end = self.backend._from_python(prepared_value[1])
                 query_frag = u'["%s" TO "%s"]' % (start, end)
             elif filter_type == 'exact':
                 if value.input_type_name == 'exact':
@@ -774,8 +864,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
                 query_frag = filter_types[filter_type] % prepared_value
 
-        if len(query_frag) and not query_frag.startswith('(') and not query_frag.endswith(')'):
-            query_frag = "(%s)" % query_frag
+        if len(query_frag) and not isinstance(value, Raw):
+            if not query_frag.startswith('(') and not query_frag.endswith(')'):
+                query_frag = "(%s)" % query_frag
 
         return u"%s%s" % (index_fieldname, query_frag)
 
@@ -786,7 +877,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         kwarg_bits = []
 
         for key in sorted(kwargs.keys()):
-            if isinstance(kwargs[key], basestring) and ' ' in kwargs[key]:
+            if isinstance(kwargs[key], six.string_types) and ' ' in kwargs[key]:
                 kwarg_bits.append(u"%s='%s'" % (key, kwargs[key]))
             else:
                 kwarg_bits.append(u"%s=%s" % (key, kwargs[key]))
@@ -826,7 +917,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             search_kwargs['end_offset'] = self.end_offset
 
         if self.facets:
-            search_kwargs['facets'] = list(self.facets)
+            search_kwargs['facets'] = self.facets
 
         if self.fields:
             search_kwargs['fields'] = self.fields
@@ -870,6 +961,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         search_kwargs = {
             'start_offset': self.start_offset,
             'result_class': self.result_class,
+            'models': self.models
         }
 
         if self.end_offset is not None:

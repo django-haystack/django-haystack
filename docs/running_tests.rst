@@ -7,10 +7,29 @@ Running Tests
 Dependencies
 ============
 
-``Haystack`` uses the `Mock <http://pypi.python.org/pypi/mock>`_ library for
-testing. You will need to install it before running the tests::
+Everything
+----------
+
+The simplest way to get up and running with Haystack's tests is to run::
+
+    pip install -r tests/requirements.txt
+
+This installs all of the backend libraries & all dependencies for getting the
+tests going. You will still have to setup search servers (for running Solr
+tests, the spatial Solr tests & the Elasticsearch tests).
+
+
+Cherry-Picked
+-------------
+
+If you'd rather not run all the tests, install only the backends you need.
+Additionally, ``Haystack`` uses the Mock_ library for testing. You will need
+to install it before running the tests::
 
     pip install mock
+
+.. _Mock: http://pypi.python.org/pypi/mock
+
 
 Core Haystack Functionality
 ===========================

@@ -23,6 +23,10 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content=True))
         self.assertEqual(self.sq.build_query(), '(True)')
 
+    def test_regression_slash_search(self):
+        self.sq.add_filter(SQ(content='hello/'))
+        self.assertEqual(self.sq.build_query(), '(hello\\/)')
+
     def test_build_query_datetime(self):
         self.sq.add_filter(SQ(content=datetime.datetime(2009, 5, 8, 11, 28)))
         self.assertEqual(self.sq.build_query(), '(2009-05-08T11:28:00)')
@@ -93,7 +97,9 @@ class ElasticsearchSearchQueryTestCase(TestCase):
     def test_build_query_in_with_set(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=set(["A Famous Paper", "An Infamous Article"])))
-        self.assertEqual(self.sq.build_query(), u'((why) AND title:("A Famous Paper" OR "An Infamous Article"))')
+        self.assertTrue('((why) AND title:(' in self.sq.build_query())
+        self.assertTrue('"A Famous Paper"' in self.sq.build_query())
+        self.assertTrue('"An Infamous Article"' in self.sq.build_query())
 
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
@@ -103,7 +109,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
         self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')
-        self.assertEqual(self.sq.clean('hello AND OR NOT TO + - && || ! ( ) { } [ ] ^ " ~ * ? : \ world'), 'hello and or not to \\+ \\- \\&& \\|| \\! \\( \\) \\{ \\} \\[ \\] \\^ \\" \\~ \\* \\? \\: \\\\ world')
+        self.assertEqual(self.sq.clean('hello AND OR NOT TO + - && || ! ( ) { } [ ] ^ " ~ * ? : \ / world'), 'hello and or not to \\+ \\- \\&& \\|| \\! \\( \\) \\{ \\} \\[ \\] \\^ \\" \\~ \\* \\? \\: \\\\ \\/ world')
         self.assertEqual(self.sq.clean('so please NOTe i am in a bAND and bORed'), 'so please NOTe i am in a bAND and bORed')
 
     def test_build_query_with_models(self):

@@ -1,15 +1,13 @@
+from __future__ import unicode_literals
 import copy
 import inspect
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.datastructures import SortedDict
+from django.utils import importlib
 from django.utils.module_loading import module_has_submodule
 from haystack.constants import Indexable, DEFAULT_ALIAS
 from haystack.exceptions import NotHandled, SearchFieldError
-try:
-    from django.utils import importlib
-except ImportError:
-    from haystack.utils import importlib
 
 
 def import_class(path):
@@ -200,7 +198,13 @@ class UnifiedIndex(object):
             model = index.get_model()
 
             if model in self.indexes:
-                raise ImproperlyConfigured("Model '%s' has more than one 'SearchIndex`` handling it. Please exclude either '%s' or '%s' using the 'HAYSTACK_EXCLUDED_INDEXES' setting." % (model, self.indexes[model], index))
+                raise ImproperlyConfigured(
+                    "Model '%s' has more than one 'SearchIndex`` handling it. "
+                    "Please exclude either '%s' or '%s' using the 'EXCLUDED_INDEXES' "
+                    "setting defined in 'settings.HAYSTACK_CONNECTIONS'." % (
+                        model, self.indexes[model], index
+                    )
+                )
 
             self.indexes[model] = index
             self.collect_fields(index)
@@ -267,7 +271,7 @@ class UnifiedIndex(object):
         if not self._built:
             self.build()
 
-        return self.indexes.keys()
+        return list(self.indexes.keys())
 
     def get_index_fieldname(self, field):
         if not self._built:

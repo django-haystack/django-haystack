@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
@@ -11,7 +12,6 @@ RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
 class SearchView(object):
-    __name__ = 'SearchView'
     template = 'search/search.html'
     extra_context = {}
     query = ''
@@ -151,8 +151,6 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 
 class FacetedSearchView(SearchView):
-    __name__ = 'FacetedSearchView'
-
     def __init__(self, *args, **kwargs):
         # Needed to switch out the default form class.
         if kwargs.get('form_class') is None:

@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
 import datetime
 from django.template.loader import render_to_string
+from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from haystack import connections
 from debug_toolbar.panels import DebugPanel
@@ -59,7 +61,7 @@ class HaystackDebugPanel(DebugPanel):
 
             if query.get('additional_kwargs'):
                 if query['additional_kwargs'].get('result_class'):
-                    query['additional_kwargs']['result_class'] = unicode(query['additional_kwargs']['result_class'])
+                    query['additional_kwargs']['result_class'] = six.text_type(query['additional_kwargs']['result_class'])
 
             try:
                 query['width_ratio'] = (float(query['time']) / self._search_time) * 100
