@@ -199,3 +199,5 @@ the items to avoid sending the wrong content to the search engine::
 
         def index_queryset(self, using=None):
             return Post.objects.filter(language=using)
+
+The index update command will respect the ``LANGUAGE_CODE`` Django setting and will index translated strings.
