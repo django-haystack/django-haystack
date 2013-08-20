@@ -179,6 +179,18 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         # nullable `ForeignKey` as well as what seems like other cases.
         return index_qs.filter(**extra_lookup_kwargs).order_by(model._meta.pk.name)
 
+    def get_select_related_fields(self):
+        """
+        Return a tuple of related models that should be selected (within batches) for speed optimisation.
+        """
+        return ()
+
+    def get_prefetch_related_fields(self):
+        """
+        Return a tuple of related models that should be prefetched (within batches) for speed optimisation.
+        """
+        return ()
+
     def prepare(self, obj):
         """
         Fetches and adds/alters data before indexing.
