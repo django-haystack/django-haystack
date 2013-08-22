@@ -1202,3 +1202,28 @@ class ElasticsearchBoostBackendTestCase(TestCase):
         self.assertEqual(self.sb._to_python('2009-05-09T16:14:00'), datetime.datetime(2009, 5, 9, 16, 14))
         self.assertEqual(self.sb._to_python('2009-05-09T00:00:00'), datetime.datetime(2009, 5, 9, 0, 0))
         self.assertEqual(self.sb._to_python(None), None)
+
+
+class RecreateIndexTestCase(TestCase):
+    def setUp(self):
+        self.raw_es = pyelasticsearch.ElasticSearch(
+            settings.HAYSTACK_CONNECTIONS['default']['URL'])
+
+    def test_recreate_index(self):
+        clear_elasticsearch_index()
+
+        sb = connections['default'].get_backend()
+        sb.silently_fail = True
+        sb.setup()
+
+        original_mapping = self.raw_es.get_mapping(sb.index_name)
+
+        sb.clear()
+        sb.setup()
+
+        try:
+            updated_mapping = self.raw_es.get_mapping(sb.index_name)
+        except pyelasticsearch.ElasticHttpNotFoundError:
+            self.fail("There is no mapping after recreating the index")
+        self.assertEqual(original_mapping, updated_mapping,
+            "Mapping after recreating the index differs from the original one")
