@@ -604,10 +604,10 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         super(LiveElasticsearchSearchQuerySetTestCase, self).tearDown()
 
     def test_load_all(self):
-        sqs = self.sqs.load_all()
+        sqs = self.sqs.order_by('pub_date').load_all()
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue(len(sqs) > 0)
-        self.assertEqual(sqs[0].object.foo, u'In addition, you may specify other fields to be populated along with the document. In this case, we also index the user who authored the document as well as the date the document was published. The variable you assign the SearchField to should directly map to the field your search backend is expecting. You instantiate most search fields with a parameter that points to the attribute of the object to populate that field with.')
+        self.assertEqual(sqs[2].object.foo, u'In addition, you may specify other fields to be populated along with the document. In this case, we also index the user who authored the document as well as the date the document was published. The variable you assign the SearchField to should directly map to the field your search backend is expecting. You instantiate most search fields with a parameter that points to the attribute of the object to populate that field with.')
 
     def test_iter(self):
         reset_search_queries()
@@ -620,8 +620,8 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     def test_slice(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        results = self.sqs.all()
-        self.assertEqual([int(result.pk) for result in results[1:11]], [7, 12, 17, 1, 6, 11, 16, 23, 5, 10])
+        results = self.sqs.all().order_by('pub_date')
+        self.assertEqual([int(result.pk) for result in results[1:11]], [3, 2, 4, 5, 6, 7, 8, 9, 10, 11])
         self.assertEqual(len(connections['default'].queries), 1)
 
         reset_search_queries()
@@ -646,8 +646,8 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        results = [int(result.pk) for result in results._manual_iter()]
-        self.assertEqual(results, [2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20])
+        results = set([int(result.pk) for result in results._manual_iter()])
+        self.assertEqual(results, set([2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20]))
         self.assertEqual(len(connections['default'].queries), 3)
 
     def test_fill_cache(self):
@@ -748,10 +748,10 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     # RelatedSearchQuerySet Tests
 
     def test_related_load_all(self):
-        sqs = self.rsqs.load_all()
+        sqs = self.rsqs.order_by('pub_date').load_all()
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue(len(sqs) > 0)
-        self.assertEqual(sqs[0].object.foo, u'In addition, you may specify other fields to be populated along with the document. In this case, we also index the user who authored the document as well as the date the document was published. The variable you assign the SearchField to should directly map to the field your search backend is expecting. You instantiate most search fields with a parameter that points to the attribute of the object to populate that field with.')
+        self.assertEqual(sqs[2].object.foo, u'In addition, you may specify other fields to be populated along with the document. In this case, we also index the user who authored the document as well as the date the document was published. The variable you assign the SearchField to should directly map to the field your search backend is expecting. You instantiate most search fields with a parameter that points to the attribute of the object to populate that field with.')
 
     def test_related_load_all_queryset(self):
         sqs = self.rsqs.load_all()
@@ -765,22 +765,22 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=10))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
-        self.assertEqual([obj.object.id for obj in sqs], [12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20])
-        self.assertEqual([obj.object.id for obj in sqs[10:20]], [13, 18, 20])
+        self.assertEqual(set([obj.object.id for obj in sqs]), set([12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20]))
+        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), set([13, 18, 20]))
 
     def test_related_iter(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         sqs = self.rsqs.all()
-        results = [int(result.pk) for result in sqs]
-        self.assertEqual(results, [2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20])
+        results = set([int(result.pk) for result in sqs])
+        self.assertEqual(results, set([2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20]))
         self.assertEqual(len(connections['default'].queries), 4)
 
     def test_related_slice(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        results = self.rsqs.all()
-        self.assertEqual([int(result.pk) for result in results[1:11]], [7, 12, 17, 1, 6, 11, 16, 23, 5, 10])
+        results = self.rsqs.all().order_by('pub_date')
+        self.assertEqual([int(result.pk) for result in results[1:11]], [3, 2, 4, 5, 6, 7, 8, 9, 10, 11])
         self.assertEqual(len(connections['default'].queries), 3)
 
         reset_search_queries()
@@ -792,7 +792,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         results = self.rsqs.all()
-        self.assertEqual([int(result.pk) for result in results[20:30]], [13, 18, 20])
+        self.assertEqual(set([int(result.pk) for result in results[20:30]]), set([13, 18, 20]))
         self.assertEqual(len(connections['default'].queries), 4)
 
     def test_related_manual_iter(self):
@@ -922,17 +922,17 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
         self.assertEqual(mlt.count(), 4)
-        self.assertEqual([result.pk for result in mlt], [u'2', u'6', u'16', u'23'])
+        self.assertEqual(set([result.pk for result in mlt]), set([u'2', u'6', u'16', u'23']))
         self.assertEqual(len([result.pk for result in mlt]), 4)
 
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=2))
         self.assertEqual(alt_mlt.count(), 6)
-        self.assertEqual([result.pk for result in alt_mlt], [u'2', u'6', u'16', u'23', u'1', u'11'])
+        self.assertEqual(set([result.pk for result in alt_mlt]), set([u'2', u'6', u'16', u'23', u'1', u'11']))
         self.assertEqual(len([result.pk for result in alt_mlt]), 6)
 
         alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
         self.assertEqual(alt_mlt_with_models.count(), 4)
-        self.assertEqual([result.pk for result in alt_mlt_with_models], [u'2', u'6', u'16', u'23'])
+        self.assertEqual(set([result.pk for result in alt_mlt_with_models]), set([u'2', u'6', u'16', u'23']))
         self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 4)
 
         if hasattr(MockModel.objects, 'defer'):
@@ -1025,7 +1025,7 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
         self.assertEqual(autocomplete.count(), 16)
-        self.assertEqual([result.pk for result in autocomplete], ['1', '12', '6', '14', '7', '4', '23', '17', '13', '18', '20', '22', '19', '15', '10', '2'])
+        self.assertEqual(set([result.pk for result in autocomplete]), set(['1', '12', '6', '14', '7', '4', '23', '17', '13', '18', '20', '22', '19', '15', '10', '2']))
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())
@@ -1036,7 +1036,7 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         # Test multiple words.
         autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
         self.assertEqual(autocomplete_2.count(), 13)
-        self.assertEqual([result.pk for result in autocomplete_2], ['1', '6', '2', '14', '12', '13', '10', '19', '4', '20', '23', '22', '15'])
+        self.assertEqual(set([result.pk for result in autocomplete_2]), set(['1', '6', '2', '14', '12', '13', '10', '19', '4', '20', '23', '22', '15']))
         self.assertTrue('your' in autocomplete_2[0].text.lower())
         self.assertTrue('mod' in autocomplete_2[0].text.lower())
         self.assertTrue('your' in autocomplete_2[1].text.lower())
@@ -1047,7 +1047,7 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
         self.assertEqual(autocomplete_3.count(), 4)
-        self.assertEqual([result.pk for result in autocomplete_3], ['12', '1', '22', '14'])
+        self.assertEqual(set([result.pk for result in autocomplete_3]), set(['12', '1', '22', '14']))
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
@@ -1185,12 +1185,12 @@ class ElasticsearchBoostBackendTestCase(TestCase):
 
         results = SearchQuerySet().filter(SQ(author='daniel') | SQ(editor='daniel'))
 
-        self.assertEqual([result.id for result in results], [
+        self.assertEqual(set([result.id for result in results]), set([
             'core.afourthmockmodel.4',
             'core.afourthmockmodel.3',
             'core.afourthmockmodel.1',
             'core.afourthmockmodel.2'
-        ])
+        ]))
 
     def test__to_python(self):
         self.assertEqual(self.sb._to_python('abc'), 'abc')
