@@ -255,7 +255,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         backend = self._get_backend(using)
 
         if backend is not None:
-            backend.update(self, self.index_queryset())
+            backend.update(self, self.index_queryset(using=using))
 
     def update_object(self, instance, using=None, **kwargs):
         """
