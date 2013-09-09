@@ -103,6 +103,20 @@ class ElasticsearchBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return data
 
 
+class ElasticsearchFacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True)
+    author = indexes.CharField(model_attr='author', faceted=True)
+    editor = indexes.CharField(model_attr='editor', faceted=True)
+    pub_date = indexes.DateField(model_attr='pub_date', faceted=True)
+    facet_field = indexes.FacetCharField(model_attr='author')
+
+    def prepare_text(self, obj):
+        return '%s %s' % (obj.author, obj.editor)
+
+    def get_model(self):
+        return AFourthMockModel
+
+
 class ElasticsearchRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default='')
     name = indexes.CharField()
@@ -1227,3 +1241,89 @@ class RecreateIndexTestCase(TestCase):
             self.fail("There is no mapping after recreating the index")
         self.assertEqual(original_mapping, updated_mapping,
             "Mapping after recreating the index differs from the original one")
+
+
+class ElasticsearchFacetingTestCase(TestCase):
+    def setUp(self):
+        super(ElasticsearchFacetingTestCase, self).setUp()
+
+        # Wipe it clean.
+        clear_elasticsearch_index()
+
+        # Stow.
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = ElasticsearchFacetingMockSearchIndex()
+        self.ui.build(indexes=[self.smmi])
+        connections['default']._index = self.ui
+        self.sb = connections['default'].get_backend()
+
+        # Force the backend to rebuild the mapping each time.
+        self.sb.existing_mapping = {}
+        self.sb.setup()
+
+        self.sample_objs = []
+
+        for i in range(1, 10):
+            mock = AFourthMockModel()
+            mock.id = i
+            if i > 5:
+                mock.editor = 'George Taylor'
+            else:
+                mock.editor = 'Perry White'
+            if i % 2:
+                mock.author = 'Daniel Lindsley'
+            else:
+                mock.author = 'Dan Watson'
+            mock.pub_date = datetime.date(2013, 9, (i % 4) + 1)
+            self.sample_objs.append(mock)
+
+    def tearDown(self):
+        connections['default']._index = self.old_ui
+        super(ElasticsearchFacetingTestCase, self).tearDown()
+
+    def test_facet(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        counts = SearchQuerySet().facet('author').facet('editor').facet_counts()
+        self.assertEqual(counts['fields']['author'], [
+            ('Daniel Lindsley', 5),
+            ('Dan Watson', 4),
+        ])
+        self.assertEqual(counts['fields']['editor'], [
+            ('Perry White', 5),
+            ('George Taylor', 4),
+        ])
+        counts = SearchQuerySet().filter(content='white').facet('facet_field', order='reverse_count').facet_counts()
+        self.assertEqual(counts['fields']['facet_field'], [
+            ('Dan Watson', 2),
+            ('Daniel Lindsley', 3),
+        ])
+
+    def test_narrow(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        counts = SearchQuerySet().facet('author').facet('editor').narrow('editor_exact:"Perry White"').facet_counts()
+        self.assertEqual(counts['fields']['author'], [
+            ('Daniel Lindsley', 3),
+            ('Dan Watson', 2),
+        ])
+        self.assertEqual(counts['fields']['editor'], [
+            ('Perry White', 5),
+        ])
+
+    def test_date_facet(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        start = datetime.date(2013, 9, 1)
+        end = datetime.date(2013, 9, 30)
+        # Facet by day
+        counts = SearchQuerySet().date_facet('pub_date', start_date=start, end_date=end, gap_by='day').facet_counts()
+        self.assertEqual(counts['dates']['pub_date'], [
+            (datetime.datetime(2013, 9, 1), 2),
+            (datetime.datetime(2013, 9, 2), 3),
+            (datetime.datetime(2013, 9, 3), 2),
+            (datetime.datetime(2013, 9, 4), 2),
+        ])
+        # By month
+        counts = SearchQuerySet().date_facet('pub_date', start_date=start, end_date=end, gap_by='month').facet_counts()
+        self.assertEqual(counts['dates']['pub_date'], [
+            (datetime.datetime(2013, 9, 1), 9),
+        ])
