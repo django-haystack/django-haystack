@@ -235,9 +235,12 @@ class SolrSearchBackendTestCase(TestCase):
     def test_update(self):
         self.sb.update(self.smmi, self.sample_objs)
 
+        results = self.raw_solr.search('*:*')
+        for result in results:
+            del result['_version_']
         # Check what Solr thinks is there.
-        self.assertEqual(self.raw_solr.search('*:*').hits, 3)
-        self.assertEqual(self.raw_solr.search('*:*').docs, [
+        self.assertEqual(results.hits, 3)
+        self.assertEqual(results.docs, [
             {
                 'django_id': '1',
                 'django_ct': 'core.mockmodel',
@@ -272,8 +275,11 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
 
         self.sb.remove(self.sample_objs[0])
-        self.assertEqual(self.raw_solr.search('*:*').hits, 2)
-        self.assertEqual(self.raw_solr.search('*:*').docs, [
+        results = self.raw_solr.search('*:*')
+        for result in results:
+            del result['_version_']
+        self.assertEqual(results.hits, 2)
+        self.assertEqual(results.docs, [
             {
                 'django_id': '2',
                 'django_ct': 'core.mockmodel',
