@@ -2,6 +2,7 @@
 import datetime
 from decimal import Decimal
 import logging as std_logging
+import operator
 
 import pyelasticsearch
 import requests
@@ -294,7 +295,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.sb.remove(self.sample_objs[0])
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 2)
-        self.assertEqual([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], [
+        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], key=operator.itemgetter('django_id')), [
             {
                 'django_id': '2',
                 'django_ct': 'core.mockmodel',
@@ -343,12 +344,12 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('*:*')['hits'], 3)
-        self.assertEqual([result.pk for result in self.sb.search('*:*')['results']], [u'2', u'1', u'3'])
+        self.assertEqual(set([result.pk for result in self.sb.search('*:*')['results']]), set([u'2', u'1', u'3']))
 
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
-        self.assertEqual([result.highlighted for result in self.sb.search('Index', highlight=True)['results']],
-            [[u'<em>Indexed</em>!\n2'], [u'<em>Indexed</em>!\n1'], [u'<em>Indexed</em>!\n3']])
+        self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight=True)['results']]),
+            [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
@@ -640,8 +641,8 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        results = self.sqs.all()
-        self.assertEqual(int(results[21].pk), 18)
+        results = self.sqs.all().order_by('pub_date')
+        self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(connections['default'].queries), 1)
 
     def test_count(self):
@@ -768,7 +769,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(sqs[2].object.foo, u'In addition, you may specify other fields to be populated along with the document. In this case, we also index the user who authored the document as well as the date the document was published. The variable you assign the SearchField to should directly map to the field your search backend is expecting. You instantiate most search fields with a parameter that points to the attribute of the object to populate that field with.')
 
     def test_related_load_all_queryset(self):
-        sqs = self.rsqs.load_all()
+        sqs = self.rsqs.load_all().order_by('pub_date')
         self.assertEqual(len(sqs._load_all_querysets), 0)
 
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=1))
@@ -780,7 +781,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
         self.assertEqual(set([obj.object.id for obj in sqs]), set([12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20]))
-        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), set([13, 18, 20]))
+        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), set([21, 22, 23]))
 
     def test_related_iter(self):
         reset_search_queries()
@@ -799,14 +800,14 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        results = self.rsqs.all()
-        self.assertEqual(int(results[21].pk), 18)
+        results = self.rsqs.all().order_by('pub_date')
+        self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(connections['default'].queries), 4)
 
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        results = self.rsqs.all()
-        self.assertEqual(set([int(result.pk) for result in results[20:30]]), set([13, 18, 20]))
+        results = self.rsqs.all().order_by('pub_date')
+        self.assertEqual(set([int(result.pk) for result in results[20:30]]), set([21, 22, 23]))
         self.assertEqual(len(connections['default'].queries), 4)
 
     def test_related_manual_iter(self):
