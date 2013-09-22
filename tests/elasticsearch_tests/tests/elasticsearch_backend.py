@@ -50,6 +50,18 @@ class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
+class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True)
+    name = indexes.CharField(model_attr='author', faceted=True)
+    pub_date = indexes.DateField(model_attr='pub_date')
+
+    def get_model(self):
+        return MockModel
+
+    def prepare_text(self, obj):
+        return obj.foo
+
+
 class ElasticsearchMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
@@ -904,6 +916,49 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         # Reset to default.
         sqs = self.sqs.result_class(None).all()
         self.assertTrue(isinstance(sqs[0], SearchResult))
+
+
+class LiveElasticsearchSpellingTestCase(TestCase):
+    """Used to test actual implementation details of the SearchQuerySet."""
+    fixtures = ['bulk_data.json']
+
+    def setUp(self):
+        super(LiveElasticsearchSpellingTestCase, self).setUp()
+
+        # Stow.
+        self.old_debug = settings.DEBUG
+        settings.DEBUG = True
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = ElasticsearchMockSpellingIndex()
+        self.ui.build(indexes=[self.smmi])
+        connections['default']._index = self.ui
+
+        self.sqs = SearchQuerySet()
+
+        # Ugly but not constantly reindexing saves us almost 50% runtime.
+        global lssqstc_all_loaded
+
+        if lssqstc_all_loaded is None:
+            lssqstc_all_loaded = True
+
+            # Wipe it clean.
+            clear_elasticsearch_index()
+
+            # Force indexing of the content.
+            self.smmi.update()
+
+    def tearDown(self):
+        # Restore.
+        connections['default']._index = self.old_ui
+        settings.DEBUG = self.old_debug
+        super(LiveElasticsearchSpellingTestCase, self).tearDown()
+
+    def test_spelling(self):
+        self.assertEqual(self.sqs.auto_query('structurd').spelling_suggestion(), 'structured')
+        self.assertEqual(self.sqs.spelling_suggestion('structurd'), 'structured')
+        self.assertEqual(self.sqs.auto_query('srchindex instanc').spelling_suggestion(), 'searchindex instance')
+        self.assertEqual(self.sqs.spelling_suggestion('srchindex instanc'), 'searchindex instance')
 
 
 class LiveElasticsearchMoreLikeThisTestCase(TestCase):
