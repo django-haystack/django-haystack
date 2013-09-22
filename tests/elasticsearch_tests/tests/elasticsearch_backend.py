@@ -936,17 +936,14 @@ class LiveElasticsearchSpellingTestCase(TestCase):
 
         self.sqs = SearchQuerySet()
 
-        # Ugly but not constantly reindexing saves us almost 50% runtime.
-        global lssqstc_all_loaded
+        # Wipe it clean.
+        clear_elasticsearch_index()
 
-        if lssqstc_all_loaded is None:
-            lssqstc_all_loaded = True
+        # Reboot the schema.
+        self.sb = connections['default'].get_backend()
+        self.sb.setup()
 
-            # Wipe it clean.
-            clear_elasticsearch_index()
-
-            # Force indexing of the content.
-            self.smmi.update()
+        self.smmi.update()
 
     def tearDown(self):
         # Restore.
