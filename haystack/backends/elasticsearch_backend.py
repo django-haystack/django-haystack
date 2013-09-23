@@ -181,7 +181,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 })
 
         if upsert:
-            self.conn.bulk_update(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+            self.conn.bulk_update(self.index_name, 'modelresult', prepped_docs, id_field=ID, upsert=True)
         else:
             self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
 
