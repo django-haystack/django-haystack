@@ -3,7 +3,7 @@ from django.conf import settings
 from django.http import HttpRequest
 from haystack.forms import SearchForm
 from haystack.views import SearchView
-from whoosh_tests.tests.whoosh_backend import LiveWhooshRoundTripTestCase
+from whoosh_tests.tests.test_whoosh_backend import LiveWhooshRoundTripTestCase
 
 
 class SpellingSuggestionTestCase(LiveWhooshRoundTripTestCase):
