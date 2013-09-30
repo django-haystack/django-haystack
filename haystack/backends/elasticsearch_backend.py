@@ -143,7 +143,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         self.setup_complete = True
 
-    def update(self, index, iterable, commit=True):
+    def update(self, index, iterable, commit=True, upsert=False):
         if not self.setup_complete:
             try:
                 self.setup()
@@ -180,7 +180,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 })
 
-        self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
+        if upsert:
+            self.conn.bulk_update(self.index_name, 'modelresult', prepped_docs, id_field=ID, upsert=True)
+        else:
+            self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
 
         if commit:
             self.conn.refresh(index=self.index_name)
