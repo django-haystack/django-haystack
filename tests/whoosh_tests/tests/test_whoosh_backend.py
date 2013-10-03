@@ -956,6 +956,10 @@ class LiveWhooshAutocompleteTestCase(TestCase):
         autocomplete = self.sqs.autocomplete(text_auto='ngm')
         self.assertEqual(autocomplete.count(), 0)
 
+    def test_extra_whitespace(self):
+        autocomplete = self.sqs.autocomplete(text_auto='mod ')
+        self.assertEqual(autocomplete.count(), 5)
+
 
 class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default='')
