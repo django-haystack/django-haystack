@@ -35,6 +35,7 @@ Solr
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
+* Random order
 * Requires: pysolr (2.0.13+) & Solr 3.5+
 
 Elasticsearch

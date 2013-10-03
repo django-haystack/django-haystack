@@ -130,6 +130,8 @@
         <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
       </analyzer>
     </fieldType>
+
+    <fieldType name="random" class="solr.RandomSortField" />
   </types>
 
   <fields>
@@ -149,6 +151,7 @@
     <dynamicField name="*_dt" type="date" indexed="true" stored="true"/>
     <dynamicField name="*_p" type="location" indexed="true" stored="true"/>
     <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
+    <dynamicField name="rand_*"  type="random" indexed="true"  stored="false"/>
 
 {% for field in fields %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />

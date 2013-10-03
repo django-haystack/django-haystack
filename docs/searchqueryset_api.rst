@@ -196,6 +196,8 @@ Narrows the search by looking for (and including) certain attributes. Join
 behavior in the query is forced to be ``OR``. Used primarily by the ``filter``
 method.
 
+.. _ref-orderby:
+
 ``order_by``
 ~~~~~~~~~~~~
 
@@ -211,6 +213,10 @@ Default behavior is ascending order. To specify descending order, prepend the
 string with a ``-``::
 
     SearchQuerySet().filter(content='foo').order_by('-pub_date')
+
+To get random order, use ``?`` (at the moment supported only by :ref:`Solr backend <ref-solr-random-order>`)::
+
+    SearchQuerySet().filter(content='foo').order_by('?')
 
 .. note::
 
@@ -670,8 +676,7 @@ Example::
  
 Returns the stats results found by the query.
 
- This will cause the query to
-execute and should generally be used when presenting the data (template-level).
+ This will cause the query to execute and should generally be used when presenting the data (template-level).
 
 You receive back a dictionary with three keys: ``fields``, ``dates`` and
 ``queries``. Each contains the facet counts for whatever facets you specified
