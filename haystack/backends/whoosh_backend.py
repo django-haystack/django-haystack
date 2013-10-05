@@ -379,7 +379,8 @@ class WhooshSearchBackend(BaseSearchBackend):
             narrow_searcher = self.index.searcher()
 
             for nq in narrow_queries:
-                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_text(nq)))
+                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_text(nq)),
+                                                                 limit=None)
 
                 if len(recent_narrowed_results) <= 0:
                     return {
@@ -507,7 +508,8 @@ class WhooshSearchBackend(BaseSearchBackend):
             narrow_searcher = self.index.searcher()
 
             for nq in narrow_queries:
-                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_text(nq)))
+                recent_narrowed_results = narrow_searcher.search(self.parser.parse(force_text(nq)),
+                                                                 limit=None)
 
                 if len(recent_narrowed_results) <= 0:
                     return {

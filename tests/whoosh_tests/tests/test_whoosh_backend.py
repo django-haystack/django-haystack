@@ -814,9 +814,6 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         connections['default']._index = self.old_ui
         super(LiveWhooshMultiSearchQuerySetTestCase, self).tearDown()
 
-    # We expect failure here because, despite not changing the code, Whoosh
-    # 2.5.1 returns incorrect counts/results. Huzzah.
-    @unittest.expectedFailure
     def test_searchquerysets_with_models(self):
         sqs = self.sqs.all()
         self.assertEqual(sqs.query.build_query(), u'*')
