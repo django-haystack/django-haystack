@@ -610,7 +610,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
 
         for doc_offset, raw_result in enumerate(raw_page):
-            score = raw_page.score(doc_offset) or 0
             app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
@@ -645,7 +644,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result.score or 0, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
