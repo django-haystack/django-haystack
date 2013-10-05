@@ -410,8 +410,9 @@ class WhooshSearchBackend(BaseSearchBackend):
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
-
-        self.index = self.index.refresh()
+            # We only need to refresh the index if we ended up needing to
+            # narrow the search.
+            self.index = self.index.refresh()
 
         if self.index.doc_count():
             searcher = self.index.searcher()
@@ -539,10 +540,11 @@ class WhooshSearchBackend(BaseSearchBackend):
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
+            # We only need to refresh the index if we ended up needing to
+            # narrow the search.
+            self.index = self.index.refresh()
 
         page_num, page_length = self.calculate_page(start_offset, end_offset)
-
-        self.index = self.index.refresh()
         raw_results = EmptyResults()
 
         if self.index.doc_count():
