@@ -865,9 +865,6 @@ class LiveWhooshMoreLikeThisTestCase(TestCase):
         connections['default']._index = self.old_ui
         super(LiveWhooshMoreLikeThisTestCase, self).tearDown()
 
-    # We expect failure here because, despite not changing the code, Whoosh
-    # 2.5.1 returns incorrect counts/results. Huzzah.
-    @unittest.expectedFailure
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=22))
         self.assertEqual(mlt.count(), 22)
