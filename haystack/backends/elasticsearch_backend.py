@@ -224,7 +224,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 models_to_delete = []
 
                 for model in models:
-                    models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
+                    models_to_delete.append('%s:"%s.%s"' % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
 
                 # Delete by query in Elasticsearch asssumes you're dealing with
                 # a ``query`` root object. :/
@@ -408,7 +408,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if narrow_queries is None:
                 narrow_queries = set()
 
-            narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(model_choices)))
+            narrow_queries.add('%s:("%s")' % (DJANGO_CT, '" OR "'.join(model_choices)))
 
         if narrow_queries:
             kwargs['query'].setdefault('filtered', {})
