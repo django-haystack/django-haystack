@@ -211,7 +211,7 @@ class SearchBackend(BaseSearchBackend):
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, result_class=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, fields=None, **kwargs):
         # Handle deferred models.
         if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
             model_klass = get_proxied_model(model_instance._meta)
@@ -219,7 +219,16 @@ class SearchBackend(BaseSearchBackend):
             model_klass = type(model_instance)
 
         index = self.site.get_index(model_klass)
-        field_name = index.get_content_field()
+        field_name = None
+
+        if fields:
+            if isinstance(fields, (list, tuple)):
+                field_name = ','.join(fields)
+            else:
+                field_name = fields
+        else:
+            field_name = index.get_content_field()
+
         params = {
             'fl': '*,score',
         }

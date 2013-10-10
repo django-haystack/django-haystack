@@ -439,7 +439,7 @@ Example::
 ``more_like_this``
 ~~~~~~~~~~~~~~~~~~
 
-.. method:: SearchQuerySet.more_like_this(self, model_instance)
+.. method:: SearchQuerySet.more_like_this(self, model_instance, fields=None)
 
 Finds similar results to the object passed in.
 
@@ -451,6 +451,9 @@ Previously called methods will have an effect on the provided results.
 It will evaluate its own backend-specific query and populate the
 `SearchQuerySet`` in the same manner as other methods.
 
+If fields are passed, it match aginst those fields alone. Otherwise it match with
+all possible fields.
+
 Example::
 
     entry = Entry.objects.get(slug='haystack-one-oh-released')
@@ -460,6 +463,11 @@ Example::
 
     # ...or...
     mlt = SearchQuerySet().filter(public=True).exclude(pub_date__lte=datetime.date(2009, 7, 21)).more_like_this(entry)
+    mlt.count() # 2
+    mlt[0].object.title # "Haystack Beta 1 Released"
+
+    # ...or...
+    mlt = SearchQuerySet().filter(public=True).exclude(pub_date__lte=datetime.date(2009, 7, 21)).more_like_this(entry, fields=['title', 'doc'])
     mlt.count() # 2
     mlt[0].object.title # "Haystack Beta 1 Released"
 

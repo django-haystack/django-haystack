@@ -423,7 +423,7 @@ class SearchBackend(BaseSearchBackend):
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, result_class=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, fields=None,  **kwargs):
         if not self.setup_complete:
             self.setup()
 

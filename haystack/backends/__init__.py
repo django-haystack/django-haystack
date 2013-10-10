@@ -659,10 +659,11 @@ class BaseSearchQuery(object):
         self._raw_query = query_string
         self._raw_query_params = kwargs
 
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, fields=None):
         """
         Allows backends with support for "More Like This" to return results
-        similar to the provided instance.
+        similar to the provided instance. If fields are provided, it will matche
+        against those fields otherwise from all possible fields  
         """
         self._more_like_this = True
         self._mlt_instance = model_instance
