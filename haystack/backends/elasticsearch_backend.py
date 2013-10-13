@@ -136,17 +136,28 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         }
 
         if current_mapping != self.existing_mapping:
+            need_update_settings = False
             try:
                 # Make sure the index is there first.
                 self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
             except pyelasticsearch.IndexAlreadyExistsError:
+                need_update_settings = True
+            except pyelasticsearch.ElasticHttpError as inst:
+                # sometimes the `pyelasticsearch.IndexAlreadyExistsError` is not raised
+                # so we got to catch it the old way
+                if inst.status_code == 400 and 'Index already exists' in inst.error:
+                    need_update_settings = True
+                else:
+                    raise
+            except Exception:
+                if not self.silently_fail:
+                    raise
+
+            if need_update_settings:
                 # Or update the index settings
                 self.conn.close_index(self.index_name)
                 self.conn.update_settings(self.index_name, self.DEFAULT_SETTINGS)
                 self.conn.open_index(self.index_name)
-            except Exception:
-                if not self.silently_fail:
-                    raise
 
             try:
                 self.conn.put_mapping(self.index_name, 'modelresult', current_mapping)
