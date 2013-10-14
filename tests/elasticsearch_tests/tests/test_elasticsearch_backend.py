@@ -1380,3 +1380,31 @@ class ElasticsearchFacetingTestCase(TestCase):
         self.assertEqual(counts['dates']['pub_date'], [
             (datetime.datetime(2013, 9, 1), 9),
         ])
+
+class ElasticsearchSearchBackendNonSilentTestCase(TestCase):
+    def setUp(self):
+        super(ElasticsearchSearchBackendNonSilentTestCase, self).setUp()
+
+        # Wipe it clean.
+        clear_elasticsearch_index()
+
+        # Stow.
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = ElasticsearchMockSearchIndex()
+        self.ui.build(indexes=[self.smmi])
+        connections['default']._index = self.ui
+        self.sb = connections['default'].backend('default', SILENTLY_FAIL=False, **settings.HAYSTACK_CONNECTIONS['default'])
+
+    def tearDown(self):
+        connections['default']._index = self.old_ui
+        super(ElasticsearchSearchBackendNonSilentTestCase, self).tearDown()
+
+    def test_no_initial_mapping_exception(self):
+        """Shouldn't raise a `pyelasticsearch.ElasticHttpNotFoundError` 404 exception"""
+        self.sb.setup()
+
+    def test_setup_an_already_existing_index_exception(self):
+        """Shouldn't raise a `pyelasticsearch.ElasticHttpNotFoundError` 404 exception"""
+        self.sb.setup()  # first time create the mapping and the index
+        self.sb.setup()  # second time need to only update the index
