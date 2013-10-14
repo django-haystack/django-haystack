@@ -116,12 +116,14 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             self.existing_mapping = self.conn.get_mapping(index=self.index_name)
         except pyelasticsearch.ElasticHttpNotFoundError as inst:
-            # we authorize no mapping
+            # we authorize no initial mapping
             if inst.status_code != 404:
                 raise
-        except Exception:
+            self.log.info("No initial mapping, it will be created.")
+        except Exception as inst:
             if not self.silently_fail:
                 raise
+            self.log.error(inst)
 
         unified_index = haystack.connections[self.connection_alias].get_unified_index()
         self.content_field_name, field_mapping = self.build_schema(unified_index.all_searchfields())
@@ -142,16 +144,19 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
             except pyelasticsearch.IndexAlreadyExistsError:
                 need_update_settings = True
+                self.log.info("Index already exists.")
             except pyelasticsearch.ElasticHttpError as inst:
                 # sometimes the `pyelasticsearch.IndexAlreadyExistsError` is not raised
                 # so we got to catch it the old way
                 if inst.status_code == 400 and 'Index already exists' in inst.error:
                     need_update_settings = True
+                    self.log.info("Index already exists.")
                 else:
                     raise
-            except Exception:
+            except Exception as inst:
                 if not self.silently_fail:
                     raise
+                self.log.error(inst)
 
             if need_update_settings:
                 # Or update the index settings
@@ -162,9 +167,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             try:
                 self.conn.put_mapping(self.index_name, 'modelresult', current_mapping)
                 self.existing_mapping = current_mapping
-            except Exception:
+            except Exception as inst:
                 if not self.silently_fail:
                     raise
+                self.log.error(inst)
 
         self.setup_complete = True
 
