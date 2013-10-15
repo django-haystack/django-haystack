@@ -418,7 +418,7 @@ class SearchIndexTestCase(TestCase):
 
     def test_clear(self):
         self.mi.update()
-        self.assertEqual(self.sb.search('*')['hits'], 3)
+        self.assertGreater(self.sb.search('*')['hits'], 0)
 
         self.mi.clear()
         self.assertEqual(self.sb.search('*')['hits'], 0)

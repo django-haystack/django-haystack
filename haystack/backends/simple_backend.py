@@ -64,7 +64,7 @@ class SimpleSearchBackend(BaseSearchBackend):
                     for term in query_string.split():
                         queries = []
 
-                        for field in model._meta._fields():
+                        for field in model._meta.fields:
                             if hasattr(field, 'related'):
                                 continue
 

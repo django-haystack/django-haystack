@@ -11,9 +11,9 @@ from haystack.query import (SearchQuerySet, EmptySearchQuerySet,
                             ValuesSearchQuerySet, ValuesListSearchQuerySet)
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel, AnotherMockModel, CharPKMockModel, AFifthMockModel
-from core.tests.indexes import ReadQuerySetTestSearchIndex, GhettoAFifthMockModelSearchIndex, TextReadQuerySetTestSearchIndex
 from core.tests.mocks import MockSearchQuery, MockSearchBackend, CharPKMockSearchBackend, MixedMockSearchBackend, ReadQuerySetMockSearchBackend, MOCK_SEARCH_RESULTS
-from core.tests.views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
+from core.tests.test_indexes import ReadQuerySetTestSearchIndex, GhettoAFifthMockModelSearchIndex, TextReadQuerySetTestSearchIndex
+from core.tests.test_views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
 
 test_pickling = True
 

@@ -1,1 +1,1 @@
-from overrides.tests.altered_internal_names import *
+from overrides.tests.test_altered_internal_names import *

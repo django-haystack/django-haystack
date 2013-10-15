@@ -814,9 +814,6 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         connections['default']._index = self.old_ui
         super(LiveWhooshMultiSearchQuerySetTestCase, self).tearDown()
 
-    # We expect failure here because, despite not changing the code, Whoosh
-    # 2.5.1 returns incorrect counts/results. Huzzah.
-    @unittest.expectedFailure
     def test_searchquerysets_with_models(self):
         sqs = self.sqs.all()
         self.assertEqual(sqs.query.build_query(), u'*')
@@ -955,6 +952,10 @@ class LiveWhooshAutocompleteTestCase(TestCase):
     def test_edgengram_regression(self):
         autocomplete = self.sqs.autocomplete(text_auto='ngm')
         self.assertEqual(autocomplete.count(), 0)
+
+    def test_extra_whitespace(self):
+        autocomplete = self.sqs.autocomplete(text_auto='mod ')
+        self.assertEqual(autocomplete.count(), 5)
 
 
 class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):

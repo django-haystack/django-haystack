@@ -2,9 +2,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from optparse import make_option
 import sys
-import six
 
 from django.core.management.base import BaseCommand
+from django.utils import six
 
 
 class Command(BaseCommand):

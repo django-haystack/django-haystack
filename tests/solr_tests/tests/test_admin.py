@@ -4,7 +4,7 @@ from django.test import TestCase
 from haystack import connections, reset_search_queries
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel
-from solr_tests.tests.solr_backend import SolrMockModelSearchIndex, clear_solr_index
+from solr_tests.tests.test_solr_backend import SolrMockModelSearchIndex, clear_solr_index
 
 
 class SearchModelAdminTestCase(TestCase):
