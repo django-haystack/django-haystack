@@ -1402,9 +1402,21 @@ class ElasticsearchSearchBackendNonSilentTestCase(TestCase):
 
     def test_no_initial_mapping_exception(self):
         """Shouldn't raise a `pyelasticsearch.ElasticHttpNotFoundError` 404 exception"""
-        self.sb.setup()
+        try:
+            self.sb.setup()
+        except pyelasticsearch.ElasticHttpNotFoundError:
+            self.fail("an ElasticHttpNotFoundError exception is raised whereas it should create the necessary index")
 
     def test_setup_an_already_existing_index_exception(self):
-        """Shouldn't raise a `pyelasticsearch.ElasticHttpNotFoundError` 404 exception"""
-        self.sb.setup()  # first time create the mapping and the index
-        self.sb.setup()  # second time need to only update the index
+        """Shouldn't raise a `pyelasticsearch.IndexAlreadyExistsError` exception"""
+        # first time create the mapping and the index
+        self.sb.setup()
+
+        # second time need to only update the index
+        #
+        # NB: currenlty no need to actually modify the mapping
+        #     since it always diff
+        try:
+            self.sb.setup()
+        except pyelasticsearch.IndexAlreadyExistsError:
+            self.fail("an IndexAlreadyExistsError exception is raised whereas it should setup the index")
