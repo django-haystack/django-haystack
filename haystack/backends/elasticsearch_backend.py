@@ -172,6 +172,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     raise
                 self.log.error(inst)
 
+        # Wait for cluster to be ready before running any bulk indexing on it
+        self.conn.health(self.index_name, wait_for_status='yellow')
+
         self.setup_complete = True
 
     def update(self, index, iterable, commit=True):
