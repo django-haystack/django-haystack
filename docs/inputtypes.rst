@@ -125,7 +125,7 @@ Example::
 
 .. class:: haystack.inputs.AltParser
 
-``AltParser`` let's you specify that a portion of the query should use a
+``AltParser`` lets you specify that a portion of the query should use a
 separate parser in the search engine. This is search-engine-specific, so it may
 decrease the portability of your app.
 
@@ -153,7 +153,7 @@ The ``prepare`` method lets you alter the query the user provided before it
 becomes of the main query. It is lazy, called as late as possible, right before
 the final query is built & shipped to the engine.
 
-A full, if somewhat silly, example look like::
+A full, if somewhat silly, example looks like::
 
     from haystack.inputs import Clean
 

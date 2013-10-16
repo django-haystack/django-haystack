@@ -12,10 +12,10 @@ class MockModel(models.Model):
     foo = models.CharField(max_length=255, blank=True)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
     tag = models.ForeignKey(MockTag)
-    
+
     def __unicode__(self):
         return self.author
-    
+
     def hello(self):
         return 'World!'
 
@@ -23,7 +23,7 @@ class MockModel(models.Model):
 class AnotherMockModel(models.Model):
     author = models.CharField(max_length=255)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
-    
+
     def __unicode__(self):
         return self.author
 
@@ -41,7 +41,7 @@ class AFourthMockModel(models.Model):
     author = models.CharField(max_length=255)
     editor = models.CharField(max_length=255)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
-    
+
     def __unicode__(self):
         return self.author
 
@@ -68,3 +68,9 @@ class ASixthMockModel(models.Model):
 
     def __unicode__(self):
         return self.name
+
+class ScoreMockModel(models.Model):
+    score = models.CharField(max_length=10)
+
+    def __unicode__(self):
+        return self.score

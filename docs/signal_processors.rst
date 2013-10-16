@@ -100,7 +100,7 @@ other updates to the management commands, you'd implement the following code::
     from haystack import signals
 
 
-    class UserOnlySignalProcessor(BaseSignalProcessor):
+    class UserOnlySignalProcessor(signals.BaseSignalProcessor):
         def setup(self):
             # Listen only to the ``User`` model.
             models.signals.post_save.connect(self.handle_save, sender=User)

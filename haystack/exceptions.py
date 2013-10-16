@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class HaystackError(Exception):
     """A generic exception for all others to extend."""
     pass
@@ -28,4 +31,8 @@ class FacetingError(HaystackError):
 
 class SpatialError(HaystackError):
     """Raised when incorrect arguments have been provided for spatial."""
+    pass
+
+class StatsError(HaystackError):
+    "Raised when incorrect arguments have been provided for stats"
     pass

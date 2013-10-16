@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
@@ -156,8 +157,6 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 
 class FacetedSearchView(SearchView):
-    __name__ = 'FacetedSearchView'
-
     def __init__(self, *args, **kwargs):
         # Needed to switch out the default form class.
         if kwargs.get('form_class') is None:

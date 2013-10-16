@@ -6,7 +6,7 @@
 
 .. class:: SearchField
 
-The ``SearchField`` and it's subclasses provides a way to declare what data
+The ``SearchField`` and its subclasses provides a way to declare what data
 you're interested in indexing. They are used with ``SearchIndexes``, much like
 ``forms.*Field`` are used within forms or ``models.*Field`` within models.
 
@@ -108,7 +108,7 @@ to be the primary field for searching within. Default is ``False``.
 
 .. attribute:: SearchField.indexed
 
-A boolean flag for indicating whether or not the the data from this field will
+A boolean flag for indicating whether or not the data from this field will
 be searchable within the index. Default is ``True``.
 
 The companion of this option is ``stored``.
@@ -162,7 +162,7 @@ not to contain any data. Default is ``False``.
 
     Unlike Django's database layer, which injects a ``NULL`` into the database
     when a field is marked nullable, ``null=True`` will actually exclude that
-    field from being included with the document. This more efficient for the
+    field from being included with the document. This is more efficient for the
     search engine to deal with.
 
 ``stored``

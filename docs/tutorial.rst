@@ -27,8 +27,14 @@ which ever search engine you choose.
     If you hit a stumbling block, there is both a `mailing list`_ and
     `#haystack on irc.freenode.net`_ to get help.
 
+.. note::
+
+   You can participate in and/or track the development of Haystack by
+   subscribing to the `development mailing list`_.
+
 .. _mailing list: http://groups.google.com/group/django-haystack
 .. _#haystack on irc.freenode.net: irc://irc.freenode.net/haystack
+.. _development mailing list: http://groups.google.com/group/django-haystack-dev
 
 This tutorial assumes that you have a basic familiarity with the various major
 parts of Django (models/forms/views/settings/URLconfs) and tailored to the
@@ -55,6 +61,16 @@ Finally, before starting with Haystack, you will want to choose a search
 backend to get started. There is a quick-start guide to
 :doc:`installing_search_engines`, though you may want to defer to each engine's
 official instructions.
+
+
+Installation
+=============
+
+Use your favorite Python package manager to install the app from PyPI, e.g.
+
+Example::
+
+    pip install django-haystack
 
 
 Configuration
@@ -156,7 +172,7 @@ Example::
     import os
     HAYSTACK_CONNECTIONS = {
         'default': {
-            'ENGINE': 'haystack.backends.xapian_backend.XapianEngine',
+            'ENGINE': 'xapian_backend.XapianEngine',
             'PATH': os.path.join(os.path.dirname(__file__), 'xapian_index'),
         },
     }

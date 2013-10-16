@@ -2,6 +2,7 @@ import datetime
 
 from mock import patch
 import pysolr
+from tempfile import mkdtemp
 
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
@@ -144,6 +145,13 @@ class ManagementCommandTestCase(TestCase):
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
+    def test_build_schema_wrong_backend(self):
+
+        settings.HAYSTACK_CONNECTIONS['whoosh'] = {'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+                                                   'PATH': mkdtemp(prefix='dummy-path-'),}
+
+        connections['whoosh']._index = self.ui
+        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema',using='whoosh', interactive=False)
 
 class AppModelManagementCommandTestCase(TestCase):
     fixtures = ['bulk_data.json']

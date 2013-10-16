@@ -1,4 +1,5 @@
 # Backport of Django 1.2's ``django.utils.decorators``.
+from __future__ import unicode_literals
 try:
     from functools import wraps, update_wrapper, WRAPPER_ASSIGNMENTS
 except ImportError:

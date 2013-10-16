@@ -1,0 +1,8 @@
+Django==1.4.2
+Whoosh==2.4.1
+httplib2==0.8
+mock==1.0.1
+pyelasticsearch==0.5
+pysolr==3.0.6
+pysqlite==2.6.3
+geopy==0.95.1
