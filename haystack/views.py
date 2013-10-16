@@ -4,6 +4,8 @@ from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.generic.base import TemplateResponseMixin
+
 from haystack.forms import ModelSearchForm, FacetedSearchForm
 from haystack.query import EmptySearchQuerySet
 
@@ -11,7 +13,8 @@ from haystack.query import EmptySearchQuerySet
 RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
 
-class SearchView(object):
+class SearchView(TemplateResponseMixin):
+    __name__ = 'SearchView'
     template = 'search/search.html'
     extra_context = {}
     query = ''
@@ -141,7 +144,10 @@ class SearchView(object):
             context['suggestion'] = self.form.get_suggestion()
 
         context.update(self.extra_context())
-        return render_to_response(self.template, context, context_instance=self.context_class(self.request))
+        return self.render_to_response(context)
+
+    def get_template_names(self):
+        return self.template
 
 
 def search_view_factory(view_class=SearchView, *args, **kwargs):

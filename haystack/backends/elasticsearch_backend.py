@@ -105,6 +105,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.log = logging.getLogger('haystack')
         self.setup_complete = False
         self.existing_mapping = {}
+        self._auto_gen_phrase_query = connection_options.get('AUTO_GENERATE_PHRASE_QUERY', True)
+        self._analyse_wildcard = connection_options.get('ANALYZE_WILDCARD', True)
 
     def setup(self):
         """
@@ -268,8 +270,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                                 'default_field': content_field,
                                 'default_operator': DEFAULT_OPERATOR,
                                 'query': query_string,
-                                'analyze_wildcard': True,
-                                'auto_generate_phrase_queries': True,
+                                'analyze_wildcard': self._analyse_wildcard,
+                                'auto_generate_phrase_queries': self._auto_gen_phrase_query,
                             },
                         },
                     },
