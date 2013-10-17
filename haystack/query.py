@@ -448,10 +448,11 @@ class SearchQuerySet(object):
         clone.query.add_order_by("-%s" % date_field)
         return clone.best_match()
 
-    def more_like_this(self, model_instance):
+    def more_like_this(self, model_instance, fields=None):
         """Finds similar results to the object passed in."""
+        self.query._mlt_fields = fields
         clone = self._clone()
-        clone.query.more_like_this(model_instance)
+        clone.query.more_like_this(model_instance, fields=fields)
         return clone
 
     def facet_counts(self):
