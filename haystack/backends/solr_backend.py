@@ -527,6 +527,9 @@ class SearchQuery(BaseSearchQuery):
         if self.end_offset is not None:
             kwargs['end_offset'] = self.end_offset - self.start_offset
 
+        if self._mlt_fields is not None:
+            kwargs['fields'] = self._mlt_fields
+
         results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)

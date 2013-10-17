@@ -450,8 +450,9 @@ class SearchQuerySet(object):
 
     def more_like_this(self, model_instance, fields=None):
         """Finds similar results to the object passed in."""
+        self.query._mlt_fields = fields
         clone = self._clone()
-        clone.query.more_like_this(model_instance, fields)
+        clone.query.more_like_this(model_instance, fields=fields)
         return clone
 
     def facet_counts(self):

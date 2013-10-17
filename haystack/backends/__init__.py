@@ -298,6 +298,7 @@ class BaseSearchQuery(object):
         self._raw_query_params = {}
         self._more_like_this = False
         self._mlt_instance = None
+        self._mlt_fields = None
         self._results = None
         self._hit_count = None
         self._facet_counts = None
@@ -762,4 +763,5 @@ class BaseSearchQuery(object):
         clone.result_class = self.result_class
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+        clone._mlt_fields = self._mlt_fields
         return clone
