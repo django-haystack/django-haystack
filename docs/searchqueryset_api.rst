@@ -483,15 +483,6 @@ Example::
 
     SearchQuerySet().filter(content='foo').load_all()
 
-``load_all_queryset``
-~~~~~~~~~~~~~~~~~~~~~
-
-.. method:: SearchQuerySet.load_all_queryset(self, model_class, queryset)
-
-Deprecated for removal before Haystack 1.0-final.
-
-Please see the docs on ``RelatedSearchQuerySet``.
-
 ``auto_query``
 ~~~~~~~~~~~~~~
 
