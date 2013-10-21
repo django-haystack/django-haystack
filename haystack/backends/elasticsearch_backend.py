@@ -16,13 +16,10 @@ from haystack.utils import get_identifier
 from haystack.utils import log as logging
 
 try:
-    import requests
+    import elasticsearch
+    from elasticsearch.helpers import bulk_index
 except ImportError:
-    raise MissingDependency("The 'elasticsearch' backend requires the installation of 'requests'.")
-try:
-    import pyelasticsearch
-except ImportError:
-    raise MissingDependency("The 'elasticsearch' backend requires the installation of 'pyelasticsearch'. Please refer to the documentation.")
+    raise MissingDependency("The 'elasticsearch' backend requires the installation of 'elasticsearch'. Please refer to the documentation.")
 
 
 DATETIME_REGEX = re.compile(
@@ -100,7 +97,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not 'INDEX_NAME' in connection_options:
             raise ImproperlyConfigured("You must specify a 'INDEX_NAME' in your settings for connection '%s'." % connection_alias)
 
-        self.conn = pyelasticsearch.ElasticSearch(connection_options['URL'], timeout=self.timeout)
+        self.conn = elasticsearch.Elasticsearch(connection_options['URL'], timeout=self.timeout)
         self.index_name = connection_options['INDEX_NAME']
         self.log = logging.getLogger('haystack')
         self.setup_complete = False
@@ -114,7 +111,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # during the ``update`` & if it doesn't match, we'll put the new
         # mapping.
         try:
-            self.existing_mapping = self.conn.get_mapping(index=self.index_name)
+            self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
         except Exception:
             if not self.silently_fail:
                 raise
@@ -134,8 +131,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if current_mapping != self.existing_mapping:
             try:
                 # Make sure the index is there first.
-                self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
-                self.conn.put_mapping(self.index_name, 'modelresult', current_mapping)
+                self.conn.indices.create(self.index_name, self.DEFAULT_SETTINGS)
+                self.conn.indices.put_mapping(index=self.index_name, doc_type='modelresult', body=current_mapping)
                 self.existing_mapping = current_mapping
             except Exception:
                 if not self.silently_fail:
@@ -147,7 +144,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+            except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise
 
@@ -164,9 +161,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 # Convert the data to make sure it's happy.
                 for key, value in prepped_data.items():
                     final_data[key] = self._from_python(value)
+                final_data['_id'] = final_data[ID]
 
                 prepped_docs.append(final_data)
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+            except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise
 
@@ -180,16 +178,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 })
 
-        try:
-            self.conn.bulk_index(self.index_name, 'modelresult', prepped_docs, id_field=ID)
-        except ValueError:
-            # pyelasticsearch raise a ValueError exception
-            # when prepped_docs is empty
-            if not self.silently_fail:
-                raise
+        bulk_index(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
 
         if commit:
-            self.conn.refresh(index=self.index_name)
+            self.conn.indices.refresh(index=self.index_name)
 
     def remove(self, obj_or_string, commit=True):
         doc_id = get_identifier(obj_or_string)
@@ -197,7 +189,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+            except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise
 
@@ -205,11 +197,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 return
 
         try:
-            self.conn.delete(self.index_name, 'modelresult', doc_id)
+            self.conn.delete(index=self.index_name, doc_type='modelresult', id=doc_id)
 
             if commit:
-                self.conn.refresh(index=self.index_name)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+                self.conn.indices.refresh(index=self.index_name)
+        except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
 
@@ -223,7 +215,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             if not models:
-                self.conn.delete_index(self.index_name)
+                self.conn.indices.delete(index=self.index_name)
                 self.setup_complete = False
                 self.existing_mapping = {}
             else:
@@ -235,8 +227,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 # Delete by query in Elasticsearch asssumes you're dealing with
                 # a ``query`` root object. :/
                 query = {'query_string': {'query': " OR ".join(models_to_delete)}}
-                self.conn.delete_by_query(self.index_name, 'modelresult', query)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+                self.conn.delete_by_query(index=self.index_name, doc_type='modelresult', body=query)
+        except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
 
@@ -493,10 +485,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             search_kwargs['size'] = end_offset - start_offset
 
         try:
-            raw_results = self.conn.search(search_kwargs,
+            raw_results = self.conn.search(body=search_kwargs,
                                            index=self.index_name,
                                            doc_type='modelresult')
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+        except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
 
@@ -533,8 +525,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         doc_id = get_identifier(model_instance)
 
         try:
-            raw_results = self.conn.more_like_this(self.index_name, 'modelresult', doc_id, [field_name], **params)
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError) as e:
+            raw_results = self.conn.mlt(index=self.index_name, doc_type='modelresult', id=doc_id, mlt_fields=[field_name], **params)
+        except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
 
