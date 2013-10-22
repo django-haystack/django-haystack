@@ -252,29 +252,24 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if query_string == '*:*':
             kwargs = {
                 'query': {
-                    'filtered': {
-                        'query': {
-                            "match_all": {}
-                        },
-                    },
+                    "match_all": {}
                 },
             }
         else:
             kwargs = {
                 'query': {
-                    'filtered': {
-                        'query': {
-                            'query_string': {
-                                'default_field': content_field,
-                                'default_operator': DEFAULT_OPERATOR,
-                                'query': query_string,
-                                'analyze_wildcard': True,
-                                'auto_generate_phrase_queries': True,
-                            },
-                        },
+                    'query_string': {
+                        'default_field': content_field,
+                        'default_operator': DEFAULT_OPERATOR,
+                        'query': query_string,
+                        'analyze_wildcard': True,
+                        'auto_generate_phrase_queries': True,
                     },
                 },
             }
+
+        # so far, no filters
+        filters = []
 
         if fields:
             if isinstance(fields, (list, set)):
@@ -411,9 +406,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(model_choices)))
 
         if narrow_queries:
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            kwargs['query']['filtered']['filter'] = {
+            filters.append({
                 'fquery': {
                     'query': {
                         'query_string': {
@@ -422,7 +415,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     },
                     '_cache': True,
                 }
-            }
+            })
 
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
@@ -442,18 +435,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 },
             }
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            if kwargs['query']['filtered']['filter']:
-                compound_filter = {
-                    "and": [
-                        kwargs['query']['filtered']['filter'],
-                        within_filter,
-                    ]
-                }
-                kwargs['query']['filtered']['filter'] = compound_filter
-            else:
-                kwargs['query']['filtered']['filter'] = within_filter
+            filters.append(within_filter)
 
         if dwithin is not None:
             lng, lat = dwithin['point'].get_coords()
@@ -466,23 +448,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 }
             }
-            kwargs['query'].setdefault('filtered', {})
-            kwargs['query']['filtered'].setdefault('filter', {})
-            if kwargs['query']['filtered']['filter']:
-                compound_filter = {
-                    "and": [
-                        kwargs['query']['filtered']['filter'],
-                        dwithin_filter
-                    ]
-                }
-                kwargs['query']['filtered']['filter'] = compound_filter
-            else:
-                kwargs['query']['filtered']['filter'] = dwithin_filter
+            filters.append(dwithin_filter)
 
-        # Remove the "filtered" key if we're not filtering. Otherwise,
-        # Elasticsearch will blow up.
-        if not kwargs['query']['filtered'].get('filter'):
-            kwargs['query'] = kwargs['query']['filtered']['query']
+        # if we want to filter, change the query type to filteres
+        if filters:
+            kwargs["query"] = {"filtered": {"query": kwargs.pop("query")}}
+            if len(filters) == 1:
+                kwargs['query']['filtered']["filter"] = filters[0]
+            else:
+                kwargs['query']['filtered']["filter"] = {"bool": {"must": filters}}
 
         return kwargs
 
