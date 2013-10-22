@@ -403,7 +403,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if narrow_queries is None:
                 narrow_queries = set()
 
-            narrow_queries.add('%s:(%s)' % (DJANGO_CT, ' OR '.join(model_choices)))
+            filters.append({"terms": {DJANGO_CT: model_choices}})
 
         if narrow_queries:
             filters.append({
