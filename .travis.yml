@@ -1,9 +1,32 @@
 language: python
 python:
-    - "2.6"
-    - "2.7"
-    - "3.2"
+  - "2.7"
 
-branches:
-    only:
-        - travis-config
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libxapian22 python-xapian default-jdk
+  - curl https://raw.github.com/moliware/travis-solr/master/travis-solr.sh | SOLR_CONFS="tests/schema.xml tests/solrconfig.xml" SOLR_VERSION=4.4.0 bash
+
+install:
+  - pip install tox
+  - pip install -e .
+
+script:
+  - tox -e $TOX_ENV
+
+env:
+  - TOX_ENV=py26-django1.4
+  - TOX_ENV=py26-django1.5
+  - TOX_ENV=py26-django1.6
+  - TOX_ENV=py27-django1.4
+  - TOX_ENV=py27-django1.5
+  - TOX_ENV=py27-django1.6
+  - TOX_ENV=py32-django1.5
+  - TOX_ENV=py32-django1.6
+
+services:
+  - elasticsearch
+
+notifications:
+  #irc: "irc.freenode.org#haystack"
+  email: false
