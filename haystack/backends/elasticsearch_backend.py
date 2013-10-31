@@ -115,9 +115,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # mapping.
         try:
             self.existing_mapping = self.conn.get_mapping(index=self.index_name)
-        except Exception:
+        except pyelasticsearch.ElasticHttpNotFoundError as inst:
+            # we authorize no initial mapping
+            if inst.status_code != 404:
+                raise
+            self.log.info("No initial mapping, it will be created.")
+        except Exception as inst:
             if not self.silently_fail:
                 raise
+            self.log.error(inst)
 
         unified_index = haystack.connections[self.connection_alias].get_unified_index()
         self.content_field_name, field_mapping = self.build_schema(unified_index.all_searchfields())
@@ -132,14 +138,42 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         }
 
         if current_mapping != self.existing_mapping:
+            need_update_settings = False
             try:
                 # Make sure the index is there first.
                 self.conn.create_index(self.index_name, self.DEFAULT_SETTINGS)
-                self.conn.put_mapping(self.index_name, 'modelresult', current_mapping)
-                self.existing_mapping = current_mapping
-            except Exception:
+            except pyelasticsearch.IndexAlreadyExistsError:
+                need_update_settings = True
+                self.log.info("Index already exists.")
+            except pyelasticsearch.ElasticHttpError as inst:
+                # sometimes the `pyelasticsearch.IndexAlreadyExistsError` is not raised
+                # so we got to catch it the old way
+                if inst.status_code == 400 and 'Index already exists' in inst.error:
+                    need_update_settings = True
+                    self.log.info("Index already exists.")
+                else:
+                    raise
+            except Exception as inst:
                 if not self.silently_fail:
                     raise
+                self.log.error(inst)
+
+            if need_update_settings:
+                # Or update the index settings
+                self.conn.close_index(self.index_name)
+                self.conn.update_settings(self.index_name, self.DEFAULT_SETTINGS)
+                self.conn.open_index(self.index_name)
+
+            try:
+                self.conn.put_mapping(self.index_name, 'modelresult', current_mapping)
+                self.existing_mapping = current_mapping
+            except Exception as inst:
+                if not self.silently_fail:
+                    raise
+                self.log.error(inst)
+
+        # Wait for cluster to be ready before running any bulk indexing on it
+        self.conn.health(self.index_name, wait_for_status='yellow')
 
         self.setup_complete = True
 
