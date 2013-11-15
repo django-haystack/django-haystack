@@ -152,17 +152,16 @@ locally. Modifications should be done in a YAML file, the stock one being
       logs: /usr/local/var/log
       data: /usr/local/var/data
 
-You'll also need an Elasticsearch binding: pyelasticsearch_ (**NOT**
-``pyes``). Place ``pyelasticsearch`` somewhere on your ``PYTHONPATH``
-(usually ``python setup.py install`` or ``pip install pyelasticsearch``).
+You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
+``pyes``). Place ``elasticsearch`` somewhere on your ``PYTHONPATH``
+(usually ``python setup.py install`` or ``pip install elasticsearch``).
 
-.. _pyelasticsearch: http://pypi.python.org/pypi/pyelasticsearch/
+.. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
 
-    ``pyelasticsearch`` has its own dependencies that aren't covered by
-    Haystack. You'll also need ``requests`` & ``simplejson`` for speedier
-    JSON construction/parsing.
+    ``elasticsearch`` has its own dependencies that aren't covered by
+    Haystack. You'll also need ``urllib3``.
 
 
 Whoosh
