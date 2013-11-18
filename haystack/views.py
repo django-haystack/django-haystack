@@ -19,8 +19,11 @@ class SearchView(object):
     request = None
     form = None
     results_per_page = RESULTS_PER_PAGE
+    paginator_class = Paginator
 
-    def __init__(self, template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None):
+    def __init__(self, template=None, load_all=True, form_class=None,
+                 searchqueryset=None, context_class=RequestContext,
+                 results_per_page=None, paginator_class=None):
         self.load_all = load_all
         self.form_class = form_class
         self.context_class = context_class
@@ -31,6 +34,9 @@ class SearchView(object):
 
         if not results_per_page is None:
             self.results_per_page = results_per_page
+
+        if paginator_class is not None:
+            self.paginator_class = paginator_class
 
         if template:
             self.template = template
@@ -106,7 +112,7 @@ class SearchView(object):
         start_offset = (page_no - 1) * self.results_per_page
         self.results[start_offset:start_offset + self.results_per_page]
 
-        paginator = Paginator(self.results, self.results_per_page)
+        paginator = self.paginator_class(self.results, self.results_per_page)
 
         try:
             page = paginator.page(page_no)
