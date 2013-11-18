@@ -107,7 +107,7 @@ However, this can also hit the database quite heavily (think
 ``.get(pk=result.id)`` per object). If your search is popular, this can lead
 to a big performance hit. There are two ways to prevent this. The first way is
 ``SearchQuerySet.load_all``, which tries to group all similar objects and pull
-them though one query instead of many. This still hits the DB and incurs a
+them through one query instead of many. This still hits the DB and incurs a
 performance penalty.
 
 The other option is to leverage stored fields. By default, all fields in
@@ -159,7 +159,7 @@ see, the churn rate of your data and what concerns are important to you
 The conventional method is to use ``SearchIndex`` in combination with cron
 jobs. Running a ``./manage.py update_index`` every couple hours will keep your
 data in sync within that timeframe and will handle the updates in a very
-efficient batch. Additionally, Whoosh (and to a lesser extent Xapian) behave
+efficient batch. Additionally, Whoosh (and to a lesser extent Xapian) behaves
 better when using this approach.
 
 Another option is to use ``RealtimeSignalProcessor``, which uses Django's
@@ -236,7 +236,7 @@ you might write the following code::
             return "%s <%s>" % (obj.user.get_full_name(), obj.user.email)
 
 This method should return a single value (or list/tuple/dict) to populate that
-fields data upon indexing. Note that this method takes priority over whatever
+field's data upon indexing. Note that this method takes priority over whatever
 data may come from the field itself.
 
 Just like ``Form.clean_FOO``, the field's ``prepare`` runs before the
@@ -330,6 +330,7 @@ object and write its ``prepare`` method to populate/alter the data any way you
 choose. For instance, a (naive) user-created ``GeoPointField`` might look
 something like::
 
+    from django.utils import six
     from haystack import indexes
 
     class GeoPointField(indexes.CharField):
@@ -338,7 +339,7 @@ something like::
             super(GeoPointField, self).__init__(**kwargs)
 
         def prepare(self, obj):
-            return unicode("%s-%s" % (obj.latitude, obj.longitude))
+            return six.text_type("%s-%s" % (obj.latitude, obj.longitude))
 
 The ``prepare`` method simply returns the value to be used for that field. It's
 entirely possible to include data that's not directly referenced to the object
@@ -565,11 +566,11 @@ The ``ModelSearchIndex`` class allows for automatic generation of a
 
 With the exception of the automated introspection, it is a ``SearchIndex``
 class, so all notes above pertaining to ``SearchIndexes`` apply. As with the
-``ModelForm`` class in Django, it employs an inner class called ``Meta``,
-which should either contain a ``pass`` to include all fields, a ``fields`` list
-to specify a whitelisted set of fields or ``excludes`` to prevent certain fields
-from appearing in the class. Unlike ``ModelForm``, you should **NOT** specify
-a ``model`` attribute, as that is already handled when registering the class.
+``ModelForm`` class in Django, it employs an inner class called ``Meta``, which
+should contain a ``model`` attribute. By default all non-relational model
+fields are included as search fields on the index, but fields can be restricted
+by way of a ``fields`` whitelist, or excluded with an ``excludes`` list, to
+prevent certain fields from appearing in the class.
 
 In addition, it adds a `text` field that is the ``document=True`` field and
 has `use_template=True` option set, just like the ``BasicSearchIndex``.

@@ -1,7 +1,10 @@
+from __future__ import print_function
+from __future__ import unicode_literals
 from optparse import make_option
 import sys
 
 from django.core.management.base import BaseCommand
+from django.utils import six
 
 
 class Command(BaseCommand):
@@ -28,23 +31,23 @@ class Command(BaseCommand):
             using = connections.connections_info.keys()
 
         if options.get('interactive', True):
-            print
-            print "WARNING: This will irreparably remove EVERYTHING from your search index in connection '%s'." % "', '".join(using)
-            print "Your choices after this are to restore from backups or rebuild via the `rebuild_index` command."
+            print()
+            print("WARNING: This will irreparably remove EVERYTHING from your search index in connection '%s'." % "', '".join(using))
+            print("Your choices after this are to restore from backups or rebuild via the `rebuild_index` command.")
 
-            yes_or_no = raw_input("Are you sure you wish to continue? [y/N] ")
+            yes_or_no = six.moves.input("Are you sure you wish to continue? [y/N] ")
             print
 
             if not yes_or_no.lower().startswith('y'):
-                print "No action taken."
+                print("No action taken.")
                 sys.exit()
 
         if self.verbosity >= 1:
-            print "Removing all documents from your index because you said so."
+            print("Removing all documents from your index because you said so.")
 
         for backend_name in using:
             backend = connections[backend_name].get_backend()
             backend.clear()
 
         if self.verbosity >= 1:
-            print "All documents removed."
+            print("All documents removed.")

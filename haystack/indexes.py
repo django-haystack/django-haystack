@@ -1,12 +1,19 @@
+from __future__ import unicode_literals
 import copy
 import threading
 import warnings
-from django.utils.encoding import force_unicode
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.six import with_metaclass
 from haystack import connections, connection_router
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
 from haystack.fields import *
+from haystack.manager import SearchIndexManager
 from haystack.utils import get_identifier, get_facet_field_name
+
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 
 
 class DeclarativeMetaclass(type):
@@ -38,11 +45,13 @@ class DeclarativeMetaclass(type):
 
                 facet_fields[obj.facet_for].append(field_name)
 
+        built_fields = {}
+
         for field_name, obj in attrs.items():
             if isinstance(obj, SearchField):
-                field = attrs.pop(field_name)
+                field = attrs[field_name]
                 field.set_instance_name(field_name)
-                attrs['fields'][field_name] = field
+                built_fields[field_name] = field
 
                 # Only check non-faceted fields for the following info.
                 if not hasattr(field, 'facet_for'):
@@ -53,12 +62,21 @@ class DeclarativeMetaclass(type):
                             shadow_facet_name = get_facet_field_name(field_name)
                             shadow_facet_field = field.facet_class(facet_for=field_name)
                             shadow_facet_field.set_instance_name(shadow_facet_name)
-                            attrs['fields'][shadow_facet_name] = shadow_facet_field
+                            built_fields[shadow_facet_name] = shadow_facet_field
+
+        attrs['fields'].update(built_fields)
+
+        # Assigning default 'objects' query manager if it does not already exist
+        if not 'objects' in attrs:
+            try:
+                attrs['objects'] = SearchIndexManager(attrs['Meta'].index_label)
+            except (KeyError, AttributeError):
+                attrs['objects'] = SearchIndexManager(DEFAULT_ALIAS)
 
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(threading.local):
+class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
     """
     Base class for building indexes.
 
@@ -80,8 +98,6 @@ class SearchIndex(threading.local):
                 return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
     """
-    __metaclass__ = DeclarativeMetaclass
-
     def __init__(self):
         self.prepared_data = None
         content_fields = []
@@ -170,7 +186,7 @@ class SearchIndex(threading.local):
         self.prepared_data = {
             ID: get_identifier(obj),
             DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
-            DJANGO_ID: force_unicode(obj.pk),
+            DJANGO_ID: force_text(obj.pk),
         }
 
         for field_name, field in self.fields.items():
@@ -239,7 +255,7 @@ class SearchIndex(threading.local):
         backend = self._get_backend(using)
 
         if backend is not None:
-            backend.update(self, self.index_queryset())
+            backend.update(self, self.index_queryset(using=using))
 
     def update_object(self, instance, using=None, **kwargs):
         """
@@ -269,7 +285,7 @@ class SearchIndex(threading.local):
         backend = self._get_backend(using)
 
         if backend is not None:
-            backend.remove(instance)
+            backend.remove(instance, **kwargs)
 
     def clear(self, using=None):
         """

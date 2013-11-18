@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import logging
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -7,7 +8,7 @@ from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 0, 0, 'beta')
+__version__ = (2, 1, 1, 'dev')
 
 
 # Setup default logging.

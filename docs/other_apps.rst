@@ -28,6 +28,14 @@ Also provides a queue-based setup, this time centered around Celery. Useful
 for keeping the index fresh per model instance or with the included task
 to call the ``update_index`` management command instead.
 
+haystack-rqueue
+---------------
+
+https://github.com/mandx/haystack-rqueue (2.X compatible)
+
+Also provides a queue-based setup, this time centered around RQ. Useful
+for keeping the index fresh using ``./manage.py rqworker``.
+
 django-celery-haystack
 ----------------------
 

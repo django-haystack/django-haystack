@@ -5,7 +5,7 @@ from haystack.forms import SearchForm, ModelSearchForm, model_choices, FacetedSe
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 from core.models import MockModel, AnotherMockModel
-from core.tests.views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
+from core.tests.test_views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
 
 
 class SearchFormTestCase(TestCase):

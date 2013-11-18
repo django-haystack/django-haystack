@@ -43,36 +43,37 @@ class AlteredInternalNamesTestCase(TestCase):
 
     def test_solr_schema(self):
         command = Command()
-        self.assertEqual(command.build_context(using=DEFAULT_ALIAS).dicts[0], {
-            'DJANGO_ID': 'my_django_id',
-            'content_field_name': 'text',
-            'fields': [
-                {
-                    'indexed': 'true',
-                    'type': 'text_en',
-                    'stored': 'true',
-                    'field_name': 'text',
-                    'multi_valued': 'false'
-                },
-                {
-                    'indexed': 'true',
-                    'type': 'date',
-                    'stored': 'true',
-                    'field_name': 'pub_date',
-                    'multi_valued': 'false'
-                },
-                {
-                    'indexed': 'true',
-                    'type': 'text_en',
-                    'stored': 'true',
-                    'field_name': 'name',
-                    'multi_valued': 'false'
-                }
-            ],
-            'DJANGO_CT': 'my_django_ct',
-            'default_operator': 'AND',
-            'ID': 'my_id'
-        })
+        context_data = command.build_context(using=DEFAULT_ALIAS).dicts[-1]
+        self.assertEqual(len(context_data), 6)
+        self.assertEqual(context_data['DJANGO_ID'], 'my_django_id')
+        self.assertEqual(context_data['content_field_name'], 'text')
+        self.assertEqual(context_data['DJANGO_CT'], 'my_django_ct')
+        self.assertEqual(context_data['default_operator'], 'AND')
+        self.assertEqual(context_data['ID'], 'my_id')
+        self.assertEqual(len(context_data['fields']), 3)
+        self.assertEqual(sorted(context_data['fields'], key=lambda x: x['field_name']), [
+            {
+                'indexed': 'true',
+                'type': 'text_en',
+                'stored': 'true',
+                'field_name': 'name',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'date',
+                'stored': 'true',
+                'field_name': 'pub_date',
+                'multi_valued': 'false'
+            },
+            {
+                'indexed': 'true',
+                'type': 'text_en',
+                'stored': 'true',
+                'field_name': 'text',
+                'multi_valued': 'false'
+            },
+        ])
 
         schema_xml = command.build_template(using=DEFAULT_ALIAS)
         self.assertTrue('<uniqueKey>my_id</uniqueKey>' in schema_xml)

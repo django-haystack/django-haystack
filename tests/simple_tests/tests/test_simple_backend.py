@@ -1,3 +1,4 @@
+# coding: utf-8
 from datetime import date
 from django.conf import settings
 from django.test import TestCase
@@ -34,7 +35,7 @@ class SimpleSearchBackendTestCase(TestCase):
         self.assertEqual(self.backend.search(u''), {'hits': 0, 'results': []})
 
         self.assertEqual(self.backend.search(u'*')['hits'], 24)
-        self.assertEqual([result.pk for result in self.backend.search(u'*')['results']], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 1])
+        self.assertEqual(sorted([result.pk for result in self.backend.search(u'*')['results']]), [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
 
         self.assertEqual(self.backend.search(u'daniel')['hits'], 23)
         self.assertEqual([result.pk for result in self.backend.search(u'daniel')['results']], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
@@ -125,6 +126,9 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
         self.assertTrue(len(self.sqs.filter(text='index')) > 0)
         self.assertTrue(len(self.sqs.exclude(name='daniel')) > 0)
         self.assertTrue(len(self.sqs.order_by('-pub_date')) > 0)
+
+    def test_general_queries_unicode(self):
+        self.assertEqual(len(self.sqs.auto_query(u'Привет')), 0)
 
     def test_more_like_this(self):
         # MLT shouldn't be horribly broken. This used to throw an exception.
