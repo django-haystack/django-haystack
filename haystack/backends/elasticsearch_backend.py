@@ -575,7 +575,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if result_class is None:
             result_class = SearchResult
 
-        if self.include_spelling and 'suggest' in raw_results and 'suggest' in raw_results['suggest']:
+        raw_suggest = raw_results['suggest'].get('suggest')
+        if raw_suggest:
             raw_suggest = raw_results['suggest']['suggest']
             spelling_suggestion = ' '.join([word['text'] if len(word['options']) == 0 else word['options'][0]['text'] for word in raw_suggest])
 
