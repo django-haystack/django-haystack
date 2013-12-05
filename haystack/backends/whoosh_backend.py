@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import os
 import re
 import shutil
+import operator
 import threading
 import warnings
 from django.conf import settings
@@ -44,6 +45,7 @@ from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
+from whoosh.sorting import FieldFacet
 
 # Handle minimum requirement.
 if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
@@ -343,7 +345,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             sort_by = sort_by_list[0]
 
         if facets is not None:
-            warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
+            facets = [FieldFacet(facet, allow_overlap=True) for facet in facets]
 
         if date_facets is not None:
             warnings.warn("Whoosh does not handle date faceting.", Warning, stacklevel=2)
@@ -388,7 +390,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                         'hits': 0,
                     }
 
-                if narrowed_results:
+                if narrowed_results is not None:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
@@ -412,6 +414,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 'pagelen': page_length,
                 'sortedby': sort_by,
                 'reverse': reverse,
+                'groupedby': facets,
             }
 
             # Handle the case where the results have been narrowed.
@@ -580,10 +583,24 @@ class WhooshSearchBackend(BaseSearchBackend):
         if result_class is None:
             result_class = SearchResult
 
-        facets = {}
         spelling_suggestion = None
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
+
+        facets = {}
+
+        if len(raw_page.results.facet_names()):
+            facets = {
+                'fields': {},
+                'dates': {},
+                'queries': {},
+            }
+            for facet_fieldname in raw_page.results.facet_names():
+                facets['fields'][facet_fieldname] = sorted(
+                                                        [(name, len(value)) for name, value in raw_page.results.groups(facet_fieldname).items()],
+                                                        key=operator.itemgetter(1, 0),
+                                                        reverse=True)
+
 
         for doc_offset, raw_result in enumerate(raw_page):
             score = raw_page.score(doc_offset) or 0
