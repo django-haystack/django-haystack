@@ -244,10 +244,9 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(self.sb.search(u'Indexe')['spelling_suggestion'], u'indexed')
 
         self.assertEqual(self.sb.search(u'', facets=['name']), {'hits': 0, 'results': []})
-        results = self.sb.search(u'Index*', facets=['name'])
         results = self.sb.search(u'index*', facets=['name'])
         self.assertEqual(results['hits'], 23)
-        self.assertEqual(results['facets'], {})
+        self.assertEqual(results['facets']['fields']['name'], [('daniel3', 9), ('daniel2', 7), ('daniel1', 7)])
 
         self.assertEqual(self.sb.search(u'', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}}), {'hits': 0, 'results': []})
         results = self.sb.search(u'Index*', date_facets={'pub_date': {'start_date': date(2008, 2, 26), 'end_date': date(2008, 2, 26), 'gap': '/MONTH'}})
@@ -261,9 +260,9 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(results['hits'], 23)
         self.assertEqual(results['facets'], {})
 
-        # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
-        # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
-        # self.assertEqual(results['hits'], 1)
+        self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
+        results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
+        self.assertEqual(results['hits'], 7)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sb.search(u'Index*', result_class=MockSearchResult)['results'][0], MockSearchResult))
