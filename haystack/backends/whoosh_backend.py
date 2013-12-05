@@ -609,10 +609,17 @@ class WhooshSearchBackend(BaseSearchBackend):
                 'queries': {},
             }
             for facet_fieldname in raw_page.results.facet_names():
-                facets['fields'][facet_fieldname] = sorted(
-                                                        [(name, len(value)) for name, value in raw_page.results.groups(facet_fieldname).items()],
-                                                        key=operator.itemgetter(1, 0),
-                                                        reverse=True)
+                # split up the list and filter out None-names so we can
+                # sort them in python3 without getting a type error
+                facet_items = []
+                facet_none = []
+                for name, value in raw_page.results.groups(facet_fieldname).items():
+                    if name is not None:
+                        facet_items.append((name, len(value)))
+                    else:
+                        facet_none.append((name, len(value)))
+                facet_items.sort(key=operator.itemgetter(1, 0), reverse=True)
+                facets['fields'][facet_fieldname] = facet_items + facet_none
 
 
         for doc_offset, raw_result in enumerate(raw_page):
