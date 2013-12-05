@@ -254,10 +254,12 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(
             self.sb.search("", facets=["name"]), {"hits": 0, "results": []}
         )
-        results = self.sb.search("Index*", facets=["name"])
         results = self.sb.search("index*", facets=["name"])
         self.assertEqual(results["hits"], 23)
-        self.assertEqual(results["facets"], {})
+        self.assertEqual(
+            results["facets"]["fields"]["name"],
+            [("daniel3", 9), ("daniel2", 7), ("daniel1", 7)],
+        )
 
         self.assertEqual(
             self.sb.search(
@@ -304,9 +306,12 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(results["hits"], 23)
         self.assertEqual(results["facets"], {})
 
-        # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
-        # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
-        # self.assertEqual(results['hits'], 1)
+        self.assertEqual(
+            self.sb.search("", narrow_queries=set(["name:daniel1"])),
+            {"hits": 0, "results": []},
+        )
+        results = self.sb.search("Index*", narrow_queries=set(["name:daniel1"]))
+        self.assertEqual(results["hits"], 7)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(
