@@ -218,7 +218,7 @@ class UnifiedIndexTestCase(TestCase):
         self.ui = loading.UnifiedIndex()
 
     def test_get_index(self):
-        self.assertRaises(NotHandled, self.ui.get_index, MockModel)
+        self.assertRaisesRegexp(NotHandled, "MockModel", self.ui.get_index, MockModel)
 
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
         self.assertTrue(isinstance(self.ui.get_index(MockModel), indexes.BasicSearchIndex))
