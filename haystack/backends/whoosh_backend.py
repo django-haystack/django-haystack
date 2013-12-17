@@ -325,8 +325,9 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if order_by.startswith('-'):
                     reverse_counter += 1
 
-            if len(sort_by) > 1 and reverse_counter > 1:
-                raise SearchBackendError("Whoosh does not handle more than one field and any field being ordered in reverse.")
+            if reverse_counter > 0 and reverse_counter != len(sort_by):
+                raise SearchBackendError("Whoosh does not handle reverse sorting "
+                            "by some fields and not others.")
 
             for order_by in sort_by:
                 if order_by.startswith('-'):
