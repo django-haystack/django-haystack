@@ -418,17 +418,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
 
-            ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
+            ((south, west), (north, east)) = generate_bounding_box(within['point_1'], within['point_2'])
             within_filter = {
                 "geo_bounding_box": {
                     within['field']: {
                         "top_left": {
-                            "lat": max_lat,
-                            "lon": min_lng
+                            "lat": north,
+                            "lon": west
                         },
                         "bottom_right": {
-                            "lat": min_lat,
-                            "lon": max_lng
+                            "lat": south,
+                            "lon": east
                         }
                     }
                 },
