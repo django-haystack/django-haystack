@@ -87,3 +87,5 @@ Thanks to
     * Artem Kostiuk (postatum) for patch allowing to search for slash character in ElasticSearch since Lucene 4.0.
     * Luis Barrueco (luisbarrueco) for a simple fix regarding updating indexes using multiple backends.
     * Szymon Teżewski (jasisz) for an update to the bounding-box calculation for spatial queries
+    * Chris Wilson (qris) and Orlando Fiol (overflow) for an update allowing the use of multiple order_by()
+      fields with Whoosh as long as they share a consistent sort direction
