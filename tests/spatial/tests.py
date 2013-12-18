@@ -54,6 +54,15 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(max_lat, 38.973081081164715)
         self.assertEqual(max_lng, -95.23362278938293)
 
+    def test_generate_bounding_box_crossing_line_date(self):
+        downtown_bottom_left = Point(95.23947, 38.9637903)
+        downtown_top_right = Point(-95.23362278938293, 38.973081081164715)
+        ((south, west), (north, east)) = generate_bounding_box(downtown_bottom_left, downtown_top_right)
+        self.assertEqual(south, 38.9637903)
+        self.assertEqual(west, 95.23947)
+        self.assertEqual(north, 38.973081081164715)
+        self.assertEqual(east, -95.23362278938293)
+
 
 class SpatialSolrNoDistanceTestCase(TestCase):
     fixtures = ['sample_spatial_data.json']
