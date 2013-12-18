@@ -988,7 +988,10 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         # Should not have empty terms.
         self.assertEqual(sqs.query.build_query(), u"(44\xb048'40''N 20\xb028'32''E)")
         # Should not cause Solr to 500.
-        self.assertEqual(sqs.count(), 0)
+        try:
+            sqs.count()
+        except Exception as exc:
+            self.fail("raised unexpected error: %s" % exc)
 
         sqs = self.sqs.auto_query('blazing')
         self.assertEqual(sqs.query.build_query(), u'(blazing)')
