@@ -1094,7 +1094,8 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         filtered_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
         self.assertLess(filtered_mlt.count(), all_mlt.count())
         top_filtered_results = [int(result.pk) for result in filtered_mlt[:5]]
-        for i in (23, 13, 17, 16, 19):
+
+        for i in (16, 17, 19, 22, 23):
             self.assertIn(i, top_filtered_results)
 
         filtered_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
