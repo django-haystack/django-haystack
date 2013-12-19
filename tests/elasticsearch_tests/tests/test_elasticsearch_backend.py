@@ -1293,6 +1293,8 @@ class RecreateIndexTestCase(TestCase):
         clear_elasticsearch_index()
 
         sb = connections['default'].get_backend()
+        # reset the backend
+        sb.existing_mapping = {}
         sb.silently_fail = True
         sb.setup()
 

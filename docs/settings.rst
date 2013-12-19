@@ -285,3 +285,9 @@ An example::
     HAYSTACK_IDENTIFIER_METHOD = 'my_app.module.get_identifier'
 
 Default is ``haystack.utils.default_get_identifier``.
+
+.. note::
+
+    The elasticsearch backend relies on this format, if you change the format
+    you need to make sure its `get_type_and_id` method keeps working.
+
