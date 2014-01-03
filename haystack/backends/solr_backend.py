@@ -40,7 +40,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if not 'URL' in connection_options:
             raise ImproperlyConfigured("You must specify a 'URL' in your settings for connection '%s'." % connection_alias)
 
-        self.conn = Solr(connection_options['URL'], timeout=self.timeout)
+        self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
 
     def update(self, index, iterable, commit=True):
