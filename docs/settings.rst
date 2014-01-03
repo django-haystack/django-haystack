@@ -288,6 +288,9 @@ Default is ``haystack.utils.default_get_identifier``.
 
 .. note::
 
-    The elasticsearch backend relies on this format, if you change the format
-    you need to make sure its `get_type_and_id` method keeps working.
+    The Elasticsearch backend relies on the default
+    ``<app.label>.<object_name>.<pk>`` format. If you use Elasticsearch and
+    your custom identifier method returns a different format, you will need to
+    subclass ``ElasticsearchSearchBackend`` and override ``get_type_and_id`` to
+    handle the custom identifier format.
 
