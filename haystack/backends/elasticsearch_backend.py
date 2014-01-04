@@ -118,7 +118,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         unified_index = haystack.connections[self.connection_alias].get_unified_index()
         # Get mappings for all ElasticSearch types/models
-        for model, index in unified_index.indexes.iteritems():
+        for model, index in unified_index.indexes.items():
             es_type = self.get_es_type(index)
 
             self.content_field_name, field_mapping = self.build_schema(index.fields)
