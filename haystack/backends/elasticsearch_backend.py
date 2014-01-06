@@ -641,6 +641,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 field_mapping['type'] = 'float'
             elif field_class.field_type == 'boolean':
                 field_mapping['type'] = 'boolean'
+                del field_mapping['index']
             elif field_class.field_type == 'ngram':
                 field_mapping['analyzer'] = "ngram_analyzer"
             elif field_class.field_type == 'edge_ngram':
