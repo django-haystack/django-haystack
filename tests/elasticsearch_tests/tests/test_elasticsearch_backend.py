@@ -1371,6 +1371,13 @@ class ElasticsearchFacetingTestCase(TestCase):
             ('Daniel Lindsley', 3),
         ])
 
+    def test_multiple_narrow(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        counts = SearchQuerySet().narrow('editor_exact:"Perry White"').narrow('author_exact:"Daniel Lindsley"').facet('author').facet_counts()
+        self.assertEqual(counts['fields']['author'], [
+            ('Daniel Lindsley', 3),
+        ])
+
     def test_narrow(self):
         self.sb.update(self.smmi, self.sample_objs)
         counts = SearchQuerySet().facet('author').facet('editor').narrow('editor_exact:"Perry White"').facet_counts()

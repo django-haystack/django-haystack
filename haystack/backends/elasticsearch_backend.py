@@ -403,12 +403,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             filters.append({"terms": {DJANGO_CT: model_choices}})
 
-        if narrow_queries:
+        for q in narrow_queries:
             filters.append({
                 'fquery': {
                     'query': {
                         'query_string': {
-                            'query': u' AND '.join(list(narrow_queries)),
+                            'query': q
                         },
                     },
                     '_cache': True,
