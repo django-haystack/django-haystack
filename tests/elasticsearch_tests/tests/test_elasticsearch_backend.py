@@ -440,10 +440,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 4)
         self.assertEqual(mapping, {
-            'text': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'pub_date': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'name': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'name_exact': {'index': 'not_analyzed', 'term_vector': 'with_positions_offsets', 'boost': 1.0, 'store': 'yes', 'type': 'string'}
+            'text': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
+            'pub_date': {'store': 'yes', 'type': 'date'},
+            'name': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
+            'name_exact': {'index': 'not_analyzed', 'store': 'yes', 'type': 'string'}
         })
 
         ui = UnifiedIndex()
@@ -452,21 +452,21 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 15)
         self.assertEqual(mapping, {
-            'name': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'is_active_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'boolean'},
-            'created': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'post_count': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'long'},
-            'created_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'sites_exact': {'index': 'not_analyzed', 'term_vector': 'with_positions_offsets', 'boost': 1.0, 'store': 'yes', 'type': 'string'},
-            'is_active': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'boolean'},
-            'sites': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'post_count_i': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'long'},
-            'average_rating': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'float'},
-            'text': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'pub_date_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'name_exact': {'index': 'not_analyzed', 'term_vector': 'with_positions_offsets', 'boost': 1.0, 'store': 'yes', 'type': 'string'},
-            'pub_date': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'average_rating_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'float'}
+            'name': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
+            'is_active_exact': {'store': 'yes', 'type': 'boolean'},
+            'created': {'store': 'yes', 'type': 'date'},
+            'post_count': {'store': 'yes', 'type': 'long'},
+            'created_exact': {'store': 'yes', 'type': 'date'},
+            'sites_exact': {'index': 'not_analyzed', 'store': 'yes', 'type': 'string'},
+            'is_active': {'store': 'yes', 'type': 'boolean'},
+            'sites': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
+            'post_count_i': {'store': 'yes', 'type': 'long'},
+            'average_rating': {'store': 'yes', 'type': 'float'},
+            'text': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
+            'pub_date_exact': {'type': 'date', 'store': 'yes'},
+            'name_exact': {'index': 'not_analyzed', 'store': 'yes', 'type': 'string'},
+            'pub_date': {'store': 'yes', 'type': 'date'},
+            'average_rating_exact': {'store': 'yes', 'type': 'float'}
         })
 
     def test_verify_type(self):
@@ -1069,41 +1069,27 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         content_name, mapping = self.sb.build_schema(self.ui.all_searchfields())
         self.assertEqual(mapping, {
             'name_auto': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
-                'boost': 1.0,
                 'store': 'yes'
             },
             'text': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'snowball',
-                'boost': 1.0,
                 'store': 'yes'
             },
             'pub_date': {
-                'index': 'analyzed',
-                'boost': 1.0,
                 'store': 'yes',
                 'type': 'date'
             },
             'name': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'snowball',
-                'boost': 1.0,
                 'store': 'yes'
             },
             'text_auto': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
-                'boost': 1.0,
                 'store': 'yes'
             }
         })
