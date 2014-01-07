@@ -287,3 +287,12 @@ An example::
     HAYSTACK_IDENTIFIER_METHOD = 'my_app.module.get_identifier'
 
 Default is ``haystack.utils.default_get_identifier``.
+
+.. note::
+
+    The Elasticsearch backend relies on the default
+    ``<app.label>.<object_name>.<pk>`` format. If you use Elasticsearch and
+    your custom identifier method returns a different format, you will need to
+    subclass ``ElasticsearchSearchBackend`` and override ``get_type_and_id`` to
+    handle the custom identifier format.
+
