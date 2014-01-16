@@ -911,6 +911,10 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         search_kwargs = self.build_params(spelling_query, **kwargs)
+
+        if kwargs:
+            search_kwargs.update(kwargs)
+
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
