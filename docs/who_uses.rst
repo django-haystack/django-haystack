@@ -236,7 +236,7 @@ AstroBin
 
 For general search.
 
-Using: ???
+Using: Solr
 
 * http://www.astrobin.com/
 
@@ -259,3 +259,99 @@ For general search.
 Using: ???
 
 * http://mountain-op.com/
+
+
+Crate
+-----
+
+Crate is a PyPI mirror/replacement. It's using Haystack to power all search &
+faceted navigation on the site.
+
+Using: Elasticsearch
+
+* https://crate.io/
+
+
+Pix Populi
+----------
+
+Pix Populi is a popular French photo sharing site.
+
+Using: Solr
+
+* http://www.pix-populi.fr/
+
+
+LocalWiki
+----------
+
+LocalWiki is a tool for collaborating in local, geographic communities.
+It's using Haystack to power search on every LocalWiki instance.
+
+Using: Solr
+
+* http://localwiki.org/
+
+
+Pitchup
+-------
+
+For faceting, geo and autocomplete.
+
+Using: ???
+
+* http://www.pitchup.com/search/
+
+
+Gidsy
+-----
+
+Gidsy makes it easy for anyone to organize and find exciting things
+to do everywhere in the world.
+
+For activity search, area pages, forums and private messages.
+
+Using: Elasticsearch
+
+* https://gidsy.com/
+* https://gidsy.com/search/
+* https://gidsy.com/forum/
+
+
+GroundCity
+----------
+
+Groundcity is a Romanian dynamic real estate site.
+
+For real estate, forums and comments.
+
+Using: Whoosh
+
+* http://groundcity.ro/cautare/
+
+
+Docket Alarm
+------------
+
+Docket Alarm allows people to search court dockets across
+the country. With it, you can search court dockets in the International Trade
+Commission (ITC), the Patent Trial and Appeal Board (PTAB) and All Federal
+Courts.
+
+Using: Elasticsearch
+
+* https://www.docketalarm.com/search/ITC
+* https://www.docketalarm.com/search/PTAB
+* https://www.docketalarm.com/search/dockets
+
+
+Educreations
+-------------
+
+Educreations makes it easy for anyone to teach what they know and learn
+what they don't with a recordable whiteboard. Haystack is used to
+provide search across users and lessons.
+
+Using: Solr
+
+* http://www.educreations.com/browse/

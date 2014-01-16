@@ -93,8 +93,8 @@ The following options are optional:
 * ``INCLUDE_SPELLING`` - Include spelling suggestions. Default is ``False``
 * ``BATCH_SIZE`` - How many records should be updated at once via the management
   commands. Default is ``1000``.
-* ``TIMEOUT`` - (Solr-only) How long to wait (in seconds) before the connection
-  times out. Default is ``10``.
+* ``TIMEOUT`` - (Solr and ElasticSearch) How long to wait (in seconds) before
+  the connection times out. Default is ``10``.
 * ``STORAGE`` - (Whoosh-only) Which storage engine to use. Accepts ``file`` or
   ``ram``. Default is ``file``.
 * ``POST_LIMIT`` - (Whoosh-only) How large the file sizes can be. Default is
@@ -103,6 +103,8 @@ The following options are optional:
 * ``EXCLUDED_INDEXES`` - A list of strings (as Python import paths) to indexes
   you do **NOT** want included. Useful for omitting third-party things you
   don't want indexed or for when you want to replace an index.
+* ``KWARGS`` - (Solr and ElasticSearch) Any additional keyword arguments that
+  should be passed on to the underlying client library.
 
 
 ``HAYSTACK_ROUTERS``
@@ -118,6 +120,21 @@ An example::
     HAYSTACK_ROUTERS = ['search_routers.MasterSlaveRouter', 'haystack.routers.DefaultRouter']
 
 Defaults to ``['haystack.routers.DefaultRouter']``.
+
+
+``HAYSTACK_SIGNAL_PROCESSOR``
+=============================
+
+**Optional**
+
+This setting controls what ``SignalProcessor`` class is used to handle Django's
+signals & keep the search index up-to-date.
+
+An example::
+
+    HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+Defaults to ``'haystack.signals.BaseSignalProcessor'``.
 
 
 ``HAYSTACK_DOCUMENT_FIELD``
@@ -253,3 +270,20 @@ An example::
     HAYSTACK_DJANGO_ID_FIELD = 'my_django_id'
 
 Default is ``django_id``.
+
+
+``HAYSTACK_IDENTIFIER_METHOD``
+==============================
+
+**Optional**
+
+This setting allows you to provide a custom method for
+``haystack.utils.get_identifier``. Useful when the default identifier
+pattern of <app.label>.<object_name>.<pk> isn't suited to your
+needs.
+
+An example::
+
+    HAYSTACK_IDENTIFIER_METHOD = 'my_app.module.get_identifier'
+
+Default is ``haystack.utils.default_get_identifier``.

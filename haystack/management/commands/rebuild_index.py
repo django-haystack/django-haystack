@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from haystack.management.commands.clear_index import Command as ClearCommand

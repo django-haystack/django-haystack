@@ -277,10 +277,18 @@ Example::
 ``facet``
 ~~~~~~~~~
 
-.. method:: SearchQuerySet.facet(self, field)
+.. method:: SearchQuerySet.facet(self, field, **options)
 
 Adds faceting to a query for the provided field. You provide the field (from one
-of the ``SearchIndex`` classes) you like to facet on.
+of the ``SearchIndex`` classes) you like to facet on. Any keyword options you
+provide will be passed along to the backend for that facet.
+
+Example::
+
+    # For SOLR (setting f.author.facet.*; see http://wiki.apache.org/solr/SimpleFacetParameters#Parameters)
+    SearchQuerySet().facet('author', mincount=1, limit=10)
+    # For ElasticSearch (see http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html)
+    SearchQuerySet().facet('author', size=10, order='term')
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.
@@ -303,7 +311,7 @@ amount of time between gaps as ``gap_by`` (one of ``'year'``, ``'month'``,
 
 You can also optionally provide a ``gap_amount`` to specify a different
 increment than ``1``. For example, specifying gaps by week (every seven days)
-would would be ``gap_by='day', gap_amount=7``).
+would be ``gap_by='day', gap_amount=7``).
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.
@@ -352,9 +360,40 @@ Spatial: Adds a distance-based search to the query.
 
 See the :ref:`ref-spatial` docs for more information.
 
+``stats``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.stats(self, field):
+
+Adds stats to a query for the provided field. This is supported on
+Solr only. You provide the field (from one of the ``SearchIndex``
+classes) you would like stats on.
+
+In the search results you get back, stats will be populated in the
+``SearchResult`` object. You can access them via the `` stats_results`` method.
+
+Example::
+
+    # Get stats on the author field.
+    SearchQuerySet().filter(content='foo').stats('author')
+
+``stats_facet``
+~~~~~~~~~~~~~~~
+.. method:: SearchQuerySet.stats_facet(self, field,
+.. facet_fields=None):
+
+Adds stats facet for the given field and facet_fields represents the
+faceted fields. This is supported on Solr only.
+
+Example::
+
+    # Get stats on the author field, and stats on the author field
+    faceted by bookstore.
+    SearchQuerySet().filter(content='foo').stats_facet('author','bookstore')
+
+
 ``distance``
 ~~~~~~~~~~~~
-
 .. method:: SearchQuerySet.distance(self, field, point):
 
 Spatial: Denotes results must have distance measurements from the
@@ -444,15 +483,6 @@ Example::
 
     SearchQuerySet().filter(content='foo').load_all()
 
-``load_all_queryset``
-~~~~~~~~~~~~~~~~~~~~~
-
-.. method:: SearchQuerySet.load_all_queryset(self, model_class, queryset)
-
-Deprecated for removal before Haystack 1.0-final.
-
-Please see the docs on ``RelatedSearchQuerySet``.
-
 ``auto_query``
 ~~~~~~~~~~~~~~
 
@@ -505,7 +535,7 @@ for similar results. The instance you pass in should be an indexed object.
 Previously called methods will have an effect on the provided results.
 
 It will evaluate its own backend-specific query and populate the
-`SearchQuerySet`` in the same manner as other methods.
+``SearchQuerySet`` in the same manner as other methods.
 
 Example::
 
@@ -624,6 +654,52 @@ Example::
     #     'queries': {}
     # }
 
+``stats_results``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.stats_results(self):
+
+Returns the stats results found by the query.
+
+This will cause the query to execute and should generally be used when
+presenting the data (template-level).
+
+You receive back a dictionary with three keys: ``fields``, ``dates`` and
+``queries``. Each contains the facet counts for whatever facets you specified
+within your ``SearchQuerySet``.
+
+.. note::
+
+    The resulting dictionary may change before 1.0 release. It's fairly
+    backend-specific at the time of writing. Standardizing is waiting on
+    implementing other backends that support faceting and ensuring that the
+    results presented will meet their needs as well.
+
+Example::
+
+    # Count document hits for each author.
+    sqs = SearchQuerySet().filter(content='foo').stats('price')
+
+    sqs.stats_results()
+
+    # Gives the following response
+    # {
+    #    'stats_fields':{
+    #       'author:{
+    #            'min': 0.0, 
+    #            'max': 2199.0,  
+    #            'sum': 5251.2699999999995,
+    #            'count': 15,
+    #            'missing': 11,
+    #            'sumOfSquares': 6038619.160300001,
+    #            'mean': 350.08466666666664,
+    #            'stddev': 547.737557906113
+    #        }
+    #    }
+    #    
+    # }
+
+
 ``spelling_suggestion``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -632,7 +708,8 @@ Example::
 Returns the spelling suggestion found by the query.
 
 To work, you must set ``INCLUDE_SPELLING`` within your connection's
-settings dictionary to ``True``. Otherwise, ``None`` will be returned.
+settings dictionary to ``True``, and you must rebuild your index afterwards. 
+Otherwise, ``None`` will be returned.
 
 This method causes the query to evaluate and run the search if it hasn't already
 run. Search results will be populated as normal but with an additional spelling
@@ -730,7 +807,15 @@ The actual behavior of these lookups is backend-specific.
 
 .. warning::
 
-    The ``contains``
+    The ``contains`` filter became the new default filter as of Haystack v2.X
+    (the default in Haystack v1.X was ``exact``). This changed because ``exact``
+    caused problems and was unintuitive for new people trying to use Haystack.
+    ``contains`` is a much more natural usage.
+
+    If you had an app built on Haystack v1.X & are upgrading, you'll need to
+    sanity-check & possibly change any code that was relying on the default.
+    The solution is just to add ``__exact`` to any "bare" field in a
+    ``.filter(...)`` clause.
 
 Example::
 

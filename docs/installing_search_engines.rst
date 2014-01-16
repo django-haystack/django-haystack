@@ -14,7 +14,7 @@ than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 3.5+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple::
 
-    curl -O http://apache.mirrors.tds.net/lucene/solr/3.5.0/apache-solr-3.5.0.tgz
+    curl -O https://archive.apache.org/dist/lucene/solr/3.5.0/apache-solr-3.5.0.tgz
     tar xvzf apache-solr-3.5.0.tgz
     cd apache-solr-3.5.0
     cd example
@@ -42,7 +42,7 @@ somewhere on your ``PYTHONPATH``.
 
 .. note::
 
-    ``pysolr`` has it's own dependencies that aren't covered by Haystack. For
+    ``pysolr`` has its own dependencies that aren't covered by Haystack. For
     best results, you should have an ElementTree variant install (preferably the
     ``lxml`` variant), ``httplib2`` for timeouts (though it will fall back to
     ``httplib``) and either the ``json`` module that comes with Python 2.5+ or
@@ -74,7 +74,7 @@ Something like the following is suggested::
         suggestions = indexes.FacetCharField()
 
         def prepare(self, obj):
-            prepared_data = super(NoteIndex, self).prepare(object)
+            prepared_data = super(MySearchIndex, self).prepare(obj)
             prepared_data['suggestions'] = prepared_data['text']
             return prepared_data
 
@@ -117,8 +117,8 @@ Official Download Location: http://www.elasticsearch.org/download/
 
 Elasticsearch is Java but comes in a pre-packaged form that requires very
 little other than the JRE. It's also very performant, scales easily and has
-an advanced featureset. Haystack requires at least version 0.17.7 (0.18.6 is
-current as of writing). Installation is best done using a package manager::
+an advanced featureset. Haystack requires at least version 0.90.0+.
+Installation is best done using a package manager::
 
     # On Mac OS X...
     brew install elasticsearch
@@ -130,7 +130,7 @@ current as of writing). Installation is best done using a package manager::
     elasticsearch -f -D es.config=<path to YAML config>
 
     # Example:
-    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.17.7/config/elasticsearch.yml
+    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.90.0/config/elasticsearch.yml
 
 You may have to alter the configuration to run on ``localhost`` when developing
 locally. Modifications should be done in a YAML file, the stock one being
@@ -152,18 +152,16 @@ locally. Modifications should be done in a YAML file, the stock one being
       logs: /usr/local/var/log
       data: /usr/local/var/data
 
-You'll also need an Elasticsearch binding, ``pyelasticsearch`` (**NOT** ``pyes``).
-The unofficial, Haystack-compatible ``pyelasticsearch`` package,
-hosted on GitHub_, is the best version to use. Place ``pyelasticsearch.py``
-somewhere on your ``PYTHONPATH`` (usually ``python setup.py install``).
+You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
+``pyes``). Place ``elasticsearch`` somewhere on your ``PYTHONPATH``
+(usually ``python setup.py install`` or ``pip install elasticsearch``).
 
-.. _GitHub: https://github.com/toastdriven/pyelasticsearch
+.. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
 
-    ``pyelasticsearch`` has it's own dependencies that aren't covered by
-    Haystack. You'll also need ``requests`` & ``simplejson`` for speedier
-    JSON construction/parsing.
+    ``elasticsearch`` has its own dependencies that aren't covered by
+    Haystack. You'll also need ``urllib3``.
 
 
 Whoosh
@@ -173,11 +171,8 @@ Official Download Location: http://bitbucket.org/mchaput/whoosh/
 
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. The
-current recommended version is 1.3.1+. You can install via PyPI_ using::
-
-    sudo easy_install whoosh
-    # ... or ...
-    sudo pip install whoosh
+current recommended version is 1.3.1+. You can install via PyPI_ using
+``sudo easy_install whoosh`` or ``sudo pip install whoosh``.
 
 Note that, while capable otherwise, the Whoosh backend does not currently
 support "More Like This" or faceting. Support for these features has recently

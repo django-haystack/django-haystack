@@ -15,7 +15,7 @@ Supported Backends
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Elasticsearch: http://elasticsearch.org/
-.. _Whoosh: http://whoosh.ca/
+.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 
@@ -46,11 +46,11 @@ Elasticsearch
 * Automatic query building
 * "More Like This" functionality
 * Term Boosting
-* Faceting
+* Faceting (up to 100 facets)
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: pyelasticsearch (toastdriven git master) & Elasticsearch 0.17.7+
+* Requires: elasticsearch-py 0.4.3+ & Elasticsearch 0.17.7+
 
 Whoosh
 ------
@@ -59,10 +59,11 @@ Whoosh
 
 * Full SearchQuerySet support
 * Automatic query building
+* "More Like This" functionality
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
-* Requires: whoosh (1.1.1+)
+* Requires: whoosh (2.0.0+)
 
 Xapian
 ------
@@ -79,6 +80,8 @@ Xapian
 * Requires: Xapian 1.0.5+ & python-xapian 1.0.5+
 * Backend can be downloaded here: `xapian-haystack <http://github.com/notanumber/xapian-haystack/>`_
 
+Backend Support Matrix
+======================
 
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
 | Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting | Spatial |
@@ -87,7 +90,7 @@ Xapian
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
 | Elasticsearch  | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          | Yes     |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
-| Whoosh         | Yes                    | Yes                 | No             | Yes        | No       | Yes           | Yes          | No      |
+| Whoosh         | Yes                    | Yes                 | Yes            | Yes        | No       | Yes           | Yes          | No      |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
 | Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes (plugin) | No      |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+

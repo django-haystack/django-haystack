@@ -163,3 +163,39 @@ via the ``SearchQuerySet.using`` method::
   Note that the models a ``SearchQuerySet`` is trying to pull from must all come
   from the same index. Haystack is not able to combine search queries against
   different indexes.
+
+
+Custom Index Selection
+======================
+
+If a specific backend has been selected, the ``SearchIndex.index_queryset`` and
+``SearchIndex.read_queryset`` will receive the backend name, giving indexes the
+opportunity to customize the returned queryset.
+
+For example, a site which uses separate indexes for recent items and older
+content might define ``index_queryset`` to filter the items based on date::
+
+        def index_queryset(self, using=None):
+            qs = Note.objects.all()
+            archive_limit = datetime.datetime.now() - datetime.timedelta(days=90)
+
+            if using == "archive":
+                return qs.filter(pub_date__lte=archive_limit)
+            else:
+                return qs.filter(pub_date__gte=archive_limit)
+
+
+Multi-lingual Content
+---------------------
+
+Most search engines require you to set the language at the index level. For
+example, a multi-lingual site using Solr can use `multiple cores <http://wiki.apache.org/solr/CoreAdmin>`_ and corresponding Haystack
+backends using the language name. Under this scenario, queries are simple::
+
+    sqs = SearchQuerySet.using(lang).auto_query(…)
+
+During index updates, the Index's ``index_queryset`` method will need to filter
+the items to avoid sending the wrong content to the search engine::
+
+        def index_queryset(self, using=None):
+            return Post.objects.filter(language=using)

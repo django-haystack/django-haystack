@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance, D
 from haystack.constants import WGS_84_SRID
@@ -60,15 +61,14 @@ def ensure_distance(dist):
     return dist
 
 
-def generate_bounding_box(point_1, point_2):
+def generate_bounding_box(bottom_left, top_right):
     """
-    Takes two opposite corners of a bounding box (in any order) & generates
+    Takes two opposite corners of a bounding box (order matters!) & generates
     a two-tuple of the correct coordinates for the bounding box.
 
     The two-tuple is in the form ``((min_lat, min_lng), (max_lat, max_lng))``.
     """
-    lng_1, lat_1 = point_1.get_coords()
-    lng_2, lat_2 = point_2.get_coords()
+    west, lat_1 = bottom_left.get_coords()
+    east, lat_2 = top_right.get_coords()
     min_lat, max_lat = min(lat_1, lat_2), max(lat_1, lat_2)
-    min_lng, max_lng = min(lng_1, lng_2), max(lng_1, lng_2)
-    return ((min_lat, min_lng), (max_lat, max_lng))
+    return ((min_lat, west), (max_lat, east))
