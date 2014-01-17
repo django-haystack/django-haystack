@@ -440,10 +440,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 4)
         self.assertEqual(mapping, {
-            'text': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
-            'pub_date': {'store': 'yes', 'type': 'date'},
-            'name': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
-            'name_exact': {'index': 'not_analyzed', 'store': 'yes', 'type': 'string'}
+            'text': {'type': 'string', 'analyzer': 'snowball'},
+            'pub_date': {'type': 'date'},
+            'name': {'type': 'string', 'analyzer': 'snowball'},
+            'name_exact': {'index': 'not_analyzed', 'type': 'string'}
         })
 
         ui = UnifiedIndex()
@@ -452,21 +452,21 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 15)
         self.assertEqual(mapping, {
-            'name': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
-            'is_active_exact': {'store': 'yes', 'type': 'boolean'},
-            'created': {'store': 'yes', 'type': 'date'},
-            'post_count': {'store': 'yes', 'type': 'long'},
-            'created_exact': {'store': 'yes', 'type': 'date'},
-            'sites_exact': {'index': 'not_analyzed', 'store': 'yes', 'type': 'string'},
-            'is_active': {'store': 'yes', 'type': 'boolean'},
-            'sites': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
-            'post_count_i': {'store': 'yes', 'type': 'long'},
-            'average_rating': {'store': 'yes', 'type': 'float'},
-            'text': {'type': 'string', 'analyzer': 'snowball', 'store': 'yes'},
-            'pub_date_exact': {'type': 'date', 'store': 'yes'},
-            'name_exact': {'index': 'not_analyzed', 'store': 'yes', 'type': 'string'},
-            'pub_date': {'store': 'yes', 'type': 'date'},
-            'average_rating_exact': {'store': 'yes', 'type': 'float'}
+            'name': {'type': 'string', 'analyzer': 'snowball'},
+            'is_active_exact': {'type': 'boolean'},
+            'created': {'type': 'date'},
+            'post_count': {'type': 'long'},
+            'created_exact': {'type': 'date'},
+            'sites_exact': {'index': 'not_analyzed', 'type': 'string'},
+            'is_active': {'type': 'boolean'},
+            'sites': {'type': 'string', 'analyzer': 'snowball'},
+            'post_count_i': {'type': 'long'},
+            'average_rating': {'type': 'float'},
+            'text': {'type': 'string', 'analyzer': 'snowball'},
+            'pub_date_exact': {'type': 'date'},
+            'name_exact': {'index': 'not_analyzed', 'type': 'string'},
+            'pub_date': {'type': 'date'},
+            'average_rating_exact': {'type': 'float'}
         })
 
     def test_verify_type(self):
@@ -1071,26 +1071,21 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
             'name_auto': {
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
-                'store': 'yes'
             },
             'text': {
                 'type': 'string',
                 'analyzer': 'snowball',
-                'store': 'yes'
             },
             'pub_date': {
-                'store': 'yes',
                 'type': 'date'
             },
             'name': {
                 'type': 'string',
                 'analyzer': 'snowball',
-                'store': 'yes'
             },
             'text_auto': {
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
-                'store': 'yes'
             }
         })
 

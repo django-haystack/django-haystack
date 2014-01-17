@@ -624,13 +624,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
 
-            # The docs claim nothing is needed for multivalue...
-            # if field_class.is_multivalued:
-            #     field_data['multi_valued'] = 'true'
-
-            if field_class.stored:
-                field_mapping['store'] = 'yes'
-
             # Do this last to override `text` fields.
             if field_mapping['type'] == 'string':
                 if field_class.indexed is False or hasattr(field_class, 'facet_for'):
