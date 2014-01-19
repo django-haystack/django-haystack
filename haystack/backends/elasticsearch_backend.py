@@ -99,6 +99,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         self.conn = elasticsearch.Elasticsearch(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.index_name = connection_options['INDEX_NAME']
+        self.facet_size = connection_options.get('FACET_SIZE', 100)
         self.log = logging.getLogger('haystack')
         self.setup_complete = False
         self.existing_mapping = {}
@@ -334,7 +335,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 facet_options = {
                     'terms': {
                         'field': facet_fieldname,
-                        'size': 100,
+                        'size': self.facet_size,
                     },
                 }
                 # Special cases for options applied at the facet level (not the terms level).

@@ -93,6 +93,8 @@ The following options are optional:
 * ``INCLUDE_SPELLING`` - Include spelling suggestions. Default is ``False``
 * ``BATCH_SIZE`` - How many records should be updated at once via the management
   commands. Default is ``1000``.
+* ``FACET_SIZE`` - (ElasticSearch-only) Controls how many facet entries will be returned.
+  Returning too many results may impact performance. Default is ``100``.
 * ``TIMEOUT`` - (Solr and ElasticSearch) How long to wait (in seconds) before
   the connection times out. Default is ``10``.
 * ``STORAGE`` - (Whoosh-only) Which storage engine to use. Accepts ``file`` or
