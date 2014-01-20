@@ -114,7 +114,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         create_index, update_settings = False, False
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
-        except urllib3.HTTPError as e:
+        except urllib3.exceptions.HTTPError as e:
             if e.code in [404, 400]:
                 # There is no mapping, the index may not have been created
                 try:
