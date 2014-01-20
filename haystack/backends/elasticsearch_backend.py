@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import datetime
 import re
 import warnings
-import urllib3
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
@@ -114,8 +113,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         create_index, update_settings = False, False
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
-        except urllib3.exceptions.HTTPError as e:
-            if e.code in [404, 400]:
+        except elasticsearch.TransportError as e:
+            if e.status_code() in [404, 400]:
                 # There is no mapping, the index may not have been created
                 try:
                     self.conn.indices.status(index=self.index_name)
