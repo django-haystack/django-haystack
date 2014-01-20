@@ -114,7 +114,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
         except elasticsearch.TransportError as e:
-            if e.status_code() in [404, 400]:
+            if e.status_code in [404, 400]:
                 # There is no mapping, the index may not have been created
                 try:
                     self.conn.indices.status(index=self.index_name)
