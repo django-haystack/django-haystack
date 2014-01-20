@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import datetime
 import re
 import warnings
+import urllib3
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
@@ -110,8 +111,21 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # Get the existing mapping & cache it. We'll compare it
         # during the ``update`` & if it doesn't match, we'll put the new
         # mapping.
+        create_index, update_settings = False, False
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
+        except urllib3.HTTPError as e:
+            if e.code in [404, 400]:
+                # There is no mapping, the index may not have been created
+                try:
+                    self.conn.indices.status(index=self.index_name)
+                    update_settings = True
+                    self.log.debug("Index '%s' found, but no mapping. Updating settings."%(self.index_name))
+                except Exception, e:
+                    self.log.info("Index '%s' not found. Creating."%(self.index_name))
+                    create_index = True
+            elif not self.silently_fail:
+                raise
         except Exception:
             if not self.silently_fail:
                 raise
@@ -131,7 +145,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if current_mapping != self.existing_mapping:
             try:
                 # Make sure the index is there first.
-                self.conn.indices.create(self.index_name, self.DEFAULT_SETTINGS)
+                if create_index:
+                    self.conn.indices.create(index=self.index_name, body=self.DEFAULT_SETTINGS)
+                else:
+                    self.conn.indices.put_settings(index=self.index_name, body=self.DEFAULT_SETTINGS)
                 self.conn.indices.put_mapping(index=self.index_name, doc_type='modelresult', body=current_mapping)
                 self.existing_mapping = current_mapping
             except Exception:
@@ -570,8 +587,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         content_field = unified_index.document_field
 
         for raw_result in raw_results.get('hits', {}).get('hits', []):
-            source = raw_result['_source']
-            app_label, model_name = source[DJANGO_CT].split('.')
+            source = raw_result.get('_source', {}) # source may be turned off.
+            id = raw_result['_id']
+            app_label, model_name, idnum = id.split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
 
@@ -585,8 +603,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self._to_python(value)
 
-                del(additional_fields[DJANGO_CT])
-                del(additional_fields[DJANGO_ID])
+                if DJANGO_CT in additional_fields: 
+                    del(additional_fields[DJANGO_CT])
+                if DJANGO_ID in additional_fields: 
+                    del(additional_fields[DJANGO_ID])
 
                 if 'highlight' in raw_result:
                     additional_fields['highlighted'] = raw_result['highlight'].get(content_field, '')
@@ -600,7 +620,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields['_distance'] = None
 
-                result = result_class(app_label, model_name, source[DJANGO_ID], raw_result['_score'], **additional_fields)
+                result = result_class(app_label, model_name, idnum, 
+                            raw_result['_score'], **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
