@@ -614,7 +614,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
     def build_schema(self, fields):
         content_field_name = ''
-        mapping = {}
+        mapping = {
+            DJANGO_CT: {'type': 'string', 'index': 'not_analyzed', 'include_in_all': False},
+            DJANGO_ID: {'type': 'string', 'index': 'not_analyzed', 'include_in_all': False},
+        }
 
         for field_name, field_class in fields.items():
             field_mapping = FIELD_MAPPINGS.get(field_class.field_type, DEFAULT_FIELD_MAPPING).copy()

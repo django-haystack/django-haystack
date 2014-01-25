@@ -438,8 +438,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         (content_field_name, mapping) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(mapping), 4)
+        self.assertEqual(len(mapping), 4+2) # +2 management fields
         self.assertEqual(mapping, {
+            'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'text': {'type': 'string', 'analyzer': 'snowball'},
             'pub_date': {'type': 'date'},
             'name': {'type': 'string', 'analyzer': 'snowball'},
@@ -450,8 +452,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(mapping), 15)
+        self.assertEqual(len(mapping), 15+2) # +2 management fields
         self.assertEqual(mapping, {
+            'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'name': {'type': 'string', 'analyzer': 'snowball'},
             'is_active_exact': {'type': 'boolean'},
             'created': {'type': 'date'},
@@ -1068,6 +1072,8 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         self.sb = connections['default'].get_backend()
         content_name, mapping = self.sb.build_schema(self.ui.all_searchfields())
         self.assertEqual(mapping, {
+            'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'name_auto': {
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
