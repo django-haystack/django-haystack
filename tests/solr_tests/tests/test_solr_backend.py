@@ -1,26 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-from __future__ import unicode_literals
-import datetime
-from decimal import Decimal
-import os
-import logging as std_logging
+from __future__ import print_function, unicode_literals
 
-from mock import patch
+import datetime
+import logging as std_logging
+import os
+from decimal import Decimal
 
 import pysolr
-
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, reset_search_queries
-from haystack import indexes
-from haystack.inputs import AutoQuery, AltParser, Raw
-from haystack.models import SearchResult
-from haystack.query import SearchQuerySet, RelatedSearchQuerySet, SQ
-from haystack.utils.loading import UnifiedIndex
-from core.models import (MockModel, AnotherMockModel,
-                         AFourthMockModel, ASixthMockModel)
+from django.utils.unittest import skipIf
+from mock import patch
+
+from core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from core.tests.mocks import MockSearchResult
+from haystack import connections, indexes, reset_search_queries
+from haystack.inputs import AltParser, AutoQuery, Raw
+from haystack.models import SearchResult
+from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
+from haystack.utils.loading import UnifiedIndex
 
 test_pickling = True
 
@@ -1313,6 +1311,7 @@ class SolrBoostBackendTestCase(TestCase):
         ])
 
 
+@skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
 class LiveSolrContentExtractionTestCase(TestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
