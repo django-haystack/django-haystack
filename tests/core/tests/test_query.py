@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 import datetime
+
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
-from haystack.backends import SQ, BaseSearchQuery
+from mock import patch
+
+from core.models import AnotherMockModel, CharPKMockModel, MockModel
+from core.tests.mocks import (CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS,
+                              MockSearchBackend, MockSearchQuery, ReadQuerySetMockSearchBackend)
+from core.tests.test_indexes import (GhettoAFifthMockModelSearchIndex,
+                                     TextReadQuerySetTestSearchIndex)
+from core.tests.test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
+from haystack import connections, indexes, reset_search_queries
+from haystack.backends import BaseSearchQuery, SQ
 from haystack.exceptions import FacetingError
-from haystack import indexes
 from haystack.models import SearchResult
-from haystack.query import (SearchQuerySet, EmptySearchQuerySet,
-                            ValuesSearchQuerySet, ValuesListSearchQuerySet)
+from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from core.models import MockModel, AnotherMockModel, CharPKMockModel, AFifthMockModel
-from core.tests.mocks import MockSearchQuery, MockSearchBackend, CharPKMockSearchBackend, MixedMockSearchBackend, ReadQuerySetMockSearchBackend, MOCK_SEARCH_RESULTS
-from core.tests.test_indexes import ReadQuerySetTestSearchIndex, GhettoAFifthMockModelSearchIndex, TextReadQuerySetTestSearchIndex
-from core.tests.test_views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
 
 test_pickling = True
 
@@ -219,7 +222,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.bsq.set_result_class(None)
         self.assertTrue(issubclass(self.bsq.result_class, SearchResult))
 
-    def test_run(self):
+    def test_get_results(self):
         # Stow.
         self.old_unified_index = connections['default']._index
         self.ui = UnifiedIndex()
@@ -239,6 +242,24 @@ class BaseSearchQueryTestCase(TestCase):
 
         # Restore.
         connections['default']._index = self.old_unified_index
+
+    def test_run(self):
+        backend = connections['default'].get_backend()
+        test_q = connections['default'].get_query()
+
+        fake_results = {'results': [], 'hits': 0}
+
+        with patch.object(backend, 'search', return_value=fake_results) as mock_search:
+            res = test_q.run()
+            self.assertTrue(mock_search.called)
+            self.assertEqual(res, fake_results)
+
+            # Now to confirm that post_process_results() can actually change the filtered results:
+            test_post_process_q = connections['default'].get_query()
+            fake_override = {'results': []}
+            with patch.object(test_post_process_q, 'post_process_results', return_value=fake_override):
+                override_res = test_post_process_q.run()
+                self.assertEqual(override_res, fake_override)
 
     def test_clone(self):
         self.bsq.add_filter(SQ(foo='bar'))
