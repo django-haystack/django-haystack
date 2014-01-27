@@ -199,3 +199,8 @@ the items to avoid sending the wrong content to the search engine::
 
         def index_queryset(self, using=None):
             return Post.objects.filter(language=using)
+
+Management commands that manipulate data accept a ``--locale`` flag to specify
+locale to activate before indexing. For example::
+
+    ./manage.py rebuild_index --noinput --using=de --locale=de
