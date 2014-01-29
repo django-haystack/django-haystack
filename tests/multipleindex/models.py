@@ -15,3 +15,10 @@ class Bar(models.Model):
 
     def __unicode__(self):
         return self.author
+
+
+class Baz(models.Model):
+    body = models.TextField()
+
+    def __unicode__(self):
+        return self.body

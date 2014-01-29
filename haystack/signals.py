@@ -45,7 +45,11 @@ class BaseSignalProcessor(object):
         for using in using_backends:
             try:
                 index = self.connections[using].get_unified_index().get_index(sender)
-                index.update_object(instance, using=using)
+                qs = index.index_queryset(using=using)
+                if qs.filter(pk=instance.pk).count() > 0:
+                    index.update_object(instance, using=using)
+                else:
+                    index.remove_object(instance, using=using)
             except NotHandled:
                 # TODO: Maybe log it or let the exception bubble?
                 pass
