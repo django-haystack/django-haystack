@@ -46,7 +46,7 @@ class BaseSignalProcessor(object):
             try:
                 index = self.connections[using].get_unified_index().get_index(sender)
                 qs = index.index_queryset(using=using)
-                if qs.filter(pk=instance.pk).count() > 0:
+                if qs.filter(pk=instance.pk).exists():
                     index.update_object(instance, using=using)
                 else:
                     index.remove_object(instance, using=using)
