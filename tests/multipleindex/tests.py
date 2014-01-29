@@ -221,7 +221,6 @@ class SignalProcessorTestCase(TestCase):
         self.ui = connections['default'].get_unified_index()
         self.fi = self.ui.get_index(Foo)
         self.bi = self.ui.get_index(Bar)
-        self.zi = self.ui.get_index(Baz)
         self.solr_backend = connections['default'].get_backend()
         self.whoosh_backend = connections['whoosh'].get_backend()
 
@@ -312,7 +311,8 @@ class SignalProcessorTestCase(TestCase):
     longMessage = True
 
     def test_object_not_included_in_queryset_is_not_indexed(self):
-        self.zi.clear()
+        zi = connections['filtered_whoosh'].get_unified_index().get_index(Baz)
+        zi.clear()
 
         new_sqs = lambda: SearchQuerySet().using('filtered_whoosh').models(Baz)
 
