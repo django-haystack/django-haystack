@@ -392,7 +392,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
-                   narrowed_results = recent_narrowed_results
+                    narrowed_results = recent_narrowed_results
 
         self.index = self.index.refresh()
 
@@ -521,7 +521,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
-                   narrowed_results = recent_narrowed_results
+                    narrowed_results = recent_narrowed_results
 
         page_num, page_length = self.calculate_page(start_offset, end_offset)
 

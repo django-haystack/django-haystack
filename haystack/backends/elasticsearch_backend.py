@@ -498,7 +498,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
             raw_results = {}
 
-        return self._process_results(raw_results,
+        return self._process_results(
+            raw_results,
             highlight=kwargs.get('highlight'),
             result_class=kwargs.get('result_class', SearchResult),
             distance_point=kwargs.get('distance_point'), geo_sort=geo_sort)
@@ -709,15 +710,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 DEFAULT_FIELD_MAPPING = {'type': 'string', 'analyzer': 'snowball'}
 FIELD_MAPPINGS = {
     'edge_ngram': {'type': 'string', 'analyzer': 'edgengram_analyzer'},
-    'ngram':      {'type': 'string', 'analyzer': 'ngram_analyzer'},
-    'date':       {'type': 'date'},
-    'datetime':   {'type': 'date'},
+    'ngram': {'type': 'string', 'analyzer': 'ngram_analyzer'},
+    'date': {'type': 'date'},
+    'datetime': {'type': 'date'},
 
-    'location':   {'type': 'geo_point'},
-    'boolean':    {'type': 'boolean'},
-    'float':      {'type': 'float'},
-    'long':       {'type': 'long'},
-    'integer':    {'type': 'long'},
+    'location': {'type': 'geo_point'},
+    'boolean': {'type': 'boolean'},
+    'float': {'type': 'float'},
+    'long': {'type': 'long'},
+    'integer': {'type': 'long'},
 }
 
 

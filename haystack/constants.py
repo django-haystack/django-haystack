@@ -21,6 +21,7 @@ REPR_OUTPUT_SIZE = 20
 # Number of SearchResults to load at a time.
 ITERATOR_LOAD_PER_QUERY = getattr(settings, 'HAYSTACK_ITERATOR_LOAD_PER_QUERY', 10)
 
+
 # A marker class in the hierarchy to indicate that it handles search data.
 class Indexable(object):
     haystack_use_for_indexing = True
