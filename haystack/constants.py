@@ -15,7 +15,7 @@ DJANGO_ID = getattr(settings, 'HAYSTACK_DJANGO_ID_FIELD', 'django_id')
 DEFAULT_OPERATOR = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', 'AND')
 
 # Valid expression extensions.
-VALID_FILTERS = set(['contains', 'exact', 'gt', 'gte', 'lt', 'lte', 'in', 'startswith', 'range'])
+VALID_FILTERS = set(['contains', 'exact', 'gt', 'gte', 'lt', 'lte', 'in', 'startswith', 'range', 'fuzzy'])
 FILTER_SEPARATOR = '__'
 
 # The maximum number of items to display in a SearchQuerySet.__repr__

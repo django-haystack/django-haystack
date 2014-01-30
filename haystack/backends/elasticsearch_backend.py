@@ -94,6 +94,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         }
     }
 
+    # Default values on elasticsearch
+    FUZZY_MIN_SIM = 0.5
+    FUZZY_MAX_EXPANSIONS = 50
+
     def __init__(self, connection_alias, **connection_options):
         super(ElasticsearchSearchBackend, self).__init__(connection_alias, **connection_options)
 
@@ -272,6 +276,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                         'query': query_string,
                         'analyze_wildcard': True,
                         'auto_generate_phrase_queries': True,
+                        'fuzzy_min_sim': self.FUZZY_MIN_SIM,
+                        'fuzzy_max_expansions': self.FUZZY_MAX_EXPANSIONS,
                     },
                 },
             }
@@ -782,12 +788,13 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             'gte': u'[%s TO *]',
             'lt': u'{* TO %s}',
             'lte': u'[* TO %s]',
+            'fuzzy': u'%s~',
         }
 
         if value.post_process is False:
             query_frag = prepared_value
         else:
-            if filter_type in ['contains', 'startswith']:
+            if filter_type in ['contains', 'startswith', 'fuzzy']:
                 if value.input_type_name == 'exact':
                     query_frag = prepared_value
                 else:
