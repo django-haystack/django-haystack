@@ -287,3 +287,25 @@ An example::
     HAYSTACK_IDENTIFIER_METHOD = 'my_app.module.get_identifier'
 
 Default is ``haystack.utils.default_get_identifier``.
+
+
+``HAYSTACK_FUZZY_MIN_SIM``
+==========================
+
+**Optional**
+
+This settings allows you to change the required similarity when using ``fuzzy``
+filter.
+
+Defaults is ``0.5``
+
+
+``HAYSTACK_FUZZY_MAX_EXPANSIONS``
+==========================
+
+**Optional**
+
+This settings allows you to change the number of terms fuzzy queries will
+expand to when using ``fuzzy`` filter.
+
+Defaults is ``50``
