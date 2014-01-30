@@ -14,6 +14,10 @@ DJANGO_ID = getattr(settings, 'HAYSTACK_DJANGO_ID_FIELD', 'django_id')
 # Default operator. Valid options are AND/OR.
 DEFAULT_OPERATOR = getattr(settings, 'HAYSTACK_DEFAULT_OPERATOR', 'AND')
 
+# Default values on elasticsearch
+FUZZY_MIN_SIM = getattr(settings, 'HAYSTACK_FUZZY_MIN_SIM', 0.5)
+FUZZY_MAX_EXPANSIONS = getattr(settings, 'HAYSTACK_FUZZY_MAX_EXPANSIONS', 50)
+
 # Valid expression extensions.
 VALID_FILTERS = set(['contains', 'exact', 'gt', 'gte', 'lt', 'lte', 'in', 'startswith', 'range', 'fuzzy'])
 FILTER_SEPARATOR = '__'
