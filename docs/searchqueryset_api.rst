@@ -686,8 +686,8 @@ Example::
     # {
     #    'stats_fields':{
     #       'author:{
-    #            'min': 0.0, 
-    #            'max': 2199.0,  
+    #            'min': 0.0,
+    #            'max': 2199.0,
     #            'sum': 5251.2699999999995,
     #            'count': 15,
     #            'missing': 11,
@@ -696,7 +696,7 @@ Example::
     #            'stddev': 547.737557906113
     #        }
     #    }
-    #    
+    #
     # }
 
 
@@ -708,7 +708,7 @@ Example::
 Returns the spelling suggestion found by the query.
 
 To work, you must set ``INCLUDE_SPELLING`` within your connection's
-settings dictionary to ``True``, and you must rebuild your index afterwards. 
+settings dictionary to ``True``, and you must rebuild your index afterwards.
 Otherwise, ``None`` will be returned.
 
 This method causes the query to evaluate and run the search if it hasn't already
@@ -791,8 +791,9 @@ The following lookup types are supported:
 * in
 * startswith
 * range
+* fuzzy
 
-These options are similar in function to the way Django's lookup types work.
+Except by ``fuzzy``, these options are similar in function to the way Django's lookup types work.
 The actual behavior of these lookups is backend-specific.
 
 .. warning::
