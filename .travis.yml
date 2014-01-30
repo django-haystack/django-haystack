@@ -15,14 +15,12 @@ script:
   - tox -e $TOX_ENV
 
 env:
-  - TOX_ENV=py26-django1.4
   - TOX_ENV=py26-django1.5
   - TOX_ENV=py26-django1.6
-  - TOX_ENV=py27-django1.4
   - TOX_ENV=py27-django1.5
   - TOX_ENV=py27-django1.6
-  - TOX_ENV=py32-django1.5
-  - TOX_ENV=py32-django1.6
+  - TOX_ENV=py33-django1.5
+  - TOX_ENV=py33-django1.6
 
 services:
   - elasticsearch
