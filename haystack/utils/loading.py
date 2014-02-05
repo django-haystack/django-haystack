@@ -283,6 +283,10 @@ class UnifiedIndex(object):
         if not self._built:
             self.build()
 
+        # Index deferred models as if they were the underlying model
+        if hasattr(model_klass, '_deferred') and model_klass._deferred:
+            model_klass = model_klass._meta.proxy_for_model
+
         if model_klass not in self.indexes:
             raise NotHandled('The model %s is not registered' % model_klass.__class__)
 
