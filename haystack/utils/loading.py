@@ -153,6 +153,7 @@ class UnifiedIndex(object):
         self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
         self._fieldnames = {}
         self._facet_fieldnames = {}
+        self._boosted_fields = set()
 
     def collect_indexes(self):
         indexes = []
@@ -187,6 +188,7 @@ class UnifiedIndex(object):
         self._built = False
         self._fieldnames = {}
         self._facet_fieldnames = {}
+        self._boosted_fields = set()
 
     def build(self, indexes=None):
         self.reset()
@@ -213,6 +215,8 @@ class UnifiedIndex(object):
 
     def collect_fields(self, index):
         for fieldname, field_object in index.fields.items():
+            if field_object.boost > 1:
+                self._boosted_fields.add(field_object)
             if field_object.document is True:
                 if field_object.index_fieldname != self.document_field:
                     raise SearchFieldError("All 'SearchIndex' classes must use the same '%s' fieldname for the 'document=True' field. Offending index is '%s'." % (self.document_field, index))
@@ -311,3 +315,8 @@ class UnifiedIndex(object):
             self.build()
 
         return self.fields
+
+    def get_boosted_fields(self):
+        if not self._built:
+            self.build()
+        return self._boosted_fields
