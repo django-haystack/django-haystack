@@ -10,5 +10,6 @@ def smoketest():
     # Check settings.
     assert 'haystack' in settings.INSTALLED_APPS
     # Check connections.
-    for connection in connections:
-        assert connection.smoketest() is True
+    for connection_id in settings.HAYSTACK_CONNECTIONS.keys():
+        backend = connections[connection_id]
+        assert backend._backend.conn.smoketest() is True
