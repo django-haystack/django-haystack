@@ -215,7 +215,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             if not models:
-                self.conn.indices.delete(index=self.index_name)
+                self.conn.indices.delete(index=self.index_name, ignore=404)
                 self.setup_complete = False
                 self.existing_mapping = {}
             else:
