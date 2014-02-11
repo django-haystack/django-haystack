@@ -197,7 +197,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 return
 
         try:
-            self.conn.delete(index=self.index_name, doc_type='modelresult', id=doc_id)
+            self.conn.delete(index=self.index_name, doc_type='modelresult', id=doc_id, ignore=404)
 
             if commit:
                 self.conn.indices.refresh(index=self.index_name)

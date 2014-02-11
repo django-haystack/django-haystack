@@ -237,6 +237,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
     def tearDown(self):
         connections['default']._index = self.old_ui
         super(ElasticsearchSearchBackendTestCase, self).tearDown()
+        self.sb.silently_fail = True
 
     def raw_search(self, query):
         try:
@@ -346,6 +347,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'id': 'core.mockmodel.3'
             }
         ])
+
+    def test_remove_succeeds_on_404(self):
+        self.sb.silently_fail = False
+        self.sb.remove('core.mockmodel.421')
 
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
