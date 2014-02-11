@@ -159,6 +159,13 @@ You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
 .. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
+ 
+  Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
+  you have the proper version of `elasticsearch-py` installed - releases with
+  major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4
+  releases are meant to work with Elasticsearch 0.90.X.
+
+.. note::
 
     ``elasticsearch`` has its own dependencies that aren't covered by
     Haystack. You'll also need ``urllib3``.
