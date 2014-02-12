@@ -78,7 +78,7 @@ class SolrSearchBackend(BaseSearchBackend):
         try:
             kwargs = {
                 'commit': commit,
-                ID: solr_id
+                'id': solr_id
             }
             self.conn.delete(**kwargs)
         except (IOError, SolrError) as e:
