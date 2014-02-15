@@ -1,6 +1,6 @@
 from django.contrib import admin
 from haystack.admin import SearchModelAdmin
-from core.models import MockModel
+from .models import MockModel
 
 
 class MockModelAdmin(SearchModelAdmin):

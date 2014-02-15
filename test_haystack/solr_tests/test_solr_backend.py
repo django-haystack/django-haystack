@@ -12,13 +12,14 @@ from django.test import TestCase
 from django.utils.unittest import skipIf
 from mock import patch
 
-from core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
-from core.tests.mocks import MockSearchResult
 from haystack import connections, indexes, reset_search_queries
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
 from haystack.utils.loading import UnifiedIndex
+from ..core.models import (MockModel, AnotherMockModel,
+                         AFourthMockModel, ASixthMockModel)
+from ..mocks import MockSearchResult
 
 test_pickling = True
 
@@ -34,7 +35,7 @@ except ImportError:
 def clear_solr_index():
     # Wipe it clean.
     print('Clearing out Solr...')
-    raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+    raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['solr']['URL'])
     raw_solr.delete(q='*:*')
 
 
@@ -177,18 +178,18 @@ class SolrSearchBackendTestCase(TestCase):
         super(SolrSearchBackendTestCase, self).setUp()
 
         # Wipe it clean.
-        self.raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+        self.raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['solr']['URL'])
         clear_solr_index()
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
         self.smtmmi = SolrMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
-        self.sb = connections['default'].get_backend()
-        self.sq = connections['default'].get_query()
+        connections['solr']._index = self.ui
+        self.sb = connections['solr'].get_backend()
+        self.sq = connections['solr'].get_query()
 
         self.sample_objs = []
 
@@ -200,11 +201,11 @@ class SolrSearchBackendTestCase(TestCase):
             self.sample_objs.append(mock)
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(SolrSearchBackendTestCase, self).tearDown()
 
     def test_non_silent(self):
-        bad_sb = connections['default'].backend('bad', URL='http://omg.wtf.bbq:1000/solr', SILENTLY_FAIL=False, TIMEOUT=1)
+        bad_sb = connections['solr'].backend('bad', URL='http://omg.wtf.bbq:1000/solr', SILENTLY_FAIL=False, TIMEOUT=1)
 
         try:
             bad_sb.update(self.smmi, self.sample_objs)
@@ -439,7 +440,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual([result.pk for result in self.sb.more_like_this(self.sample_objs[0])['results']], [])
 
     def test_build_schema(self):
-        old_ui = connections['default'].get_unified_index()
+        old_ui = connections['solr'].get_unified_index()
 
         (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
@@ -590,17 +591,17 @@ class SolrSearchBackendTestCase(TestCase):
         ])
 
     def test_verify_type(self):
-        old_ui = connections['default'].get_unified_index()
+        old_ui = connections['solr'].get_unified_index()
         ui = UnifiedIndex()
         smtmmi = SolrMaintainTypeMockSearchIndex()
         ui.build(indexes=[smtmmi])
-        connections['default']._index = ui
-        sb = connections['default'].get_backend()
+        connections['solr']._index = ui
+        sb = connections['solr'].get_backend()
         sb.update(smtmmi, self.sample_objs)
 
         self.assertEqual(sb.search('*:*')['hits'], 3)
         self.assertEqual([result.month for result in sb.search('*:*')['results']], [u'02', u'02', u'02'])
-        connections['default']._index = old_ui
+        connections['solr']._index = old_ui
 
 
 class CaptureHandler(std_logging.Handler):
@@ -627,8 +628,8 @@ class FailedSolrSearchBackendTestCase(TestCase):
         ui = UnifiedIndex()
         smmi = SolrMockSearchIndex()
         ui.build(indexes=[smmi])
-        connections['default']._index = ui
-        sb = connections['default'].get_backend()
+        connections['solr']._index = ui
+        sb = connections['solr'].get_backend()
 
         # Prior to the addition of the try/except bits, these would all fail miserably.
         sb.update(smmi, self.sample_objs)
@@ -660,19 +661,19 @@ class LiveSolrSearchQueryTestCase(TestCase):
         clear_solr_index()
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
-        self.sb = connections['default'].get_backend()
-        self.sq = connections['default'].get_query()
+        connections['solr']._index = self.ui
+        self.sb = connections['solr'].get_backend()
+        self.sq = connections['solr'].get_query()
 
         # Force indexing of the content.
         self.smmi.update()
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(LiveSolrSearchQueryTestCase, self).tearDown()
 
     def test_get_spelling(self):
@@ -683,31 +684,31 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def test_log_query(self):
         from django.conf import settings
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
 
         # Stow.
         old_debug = settings.DEBUG
         settings.DEBUG = False
 
         len(self.sq.get_results())
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
 
         settings.DEBUG = True
         # Redefine it to clear out the cached results.
-        self.sq = connections['default'].query()
+        self.sq = connections['solr'].query()
         self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
-        self.assertEqual(len(connections['default'].queries), 1)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
+        self.assertEqual(len(connections['solr'].queries), 1)
+        self.assertEqual(connections['solr'].queries[0]['query_string'], 'name:(bar)')
 
         # And again, for good measure.
-        self.sq = connections['default'].query()
+        self.sq = connections['solr'].query()
         self.sq.add_filter(SQ(name='bar'))
         self.sq.add_filter(SQ(text='moof'))
         len(self.sq.get_results())
-        self.assertEqual(len(connections['default'].queries), 2)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
-        self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:(bar) AND text:(moof))')
+        self.assertEqual(len(connections['solr'].queries), 2)
+        self.assertEqual(connections['solr'].queries[0]['query_string'], 'name:(bar)')
+        self.assertEqual(connections['solr'].queries[1]['query_string'], u'(name:(bar) AND text:(moof))')
 
         # Restore.
         settings.DEBUG = old_debug
@@ -726,11 +727,11 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         # Stow.
         self.old_debug = settings.DEBUG
         settings.DEBUG = True
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
+        connections['solr']._index = self.ui
 
         self.sqs = SearchQuerySet()
         self.rsqs = RelatedSearchQuerySet()
@@ -750,7 +751,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
     def tearDown(self):
         # Restore.
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         settings.DEBUG = self.old_debug
         super(LiveSolrSearchQuerySetTestCase, self).tearDown()
 
@@ -758,70 +759,70 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.load_all()
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue(len(sqs) > 0)
-        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the default indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
+        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the solr indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
 
     def test_iter(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         sqs = self.sqs.all()
         results = [int(result.pk) for result in sqs]
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['default'].queries), 3)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test_slice(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.sqs.all()
         self.assertEqual([int(result.pk) for result in results[1:11]], [2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['solr'].queries), 1)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.sqs.all()
         self.assertEqual(int(results[21].pk), 22)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['solr'].queries), 1)
 
     def test_count(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         sqs = self.sqs.all()
         self.assertEqual(sqs.count(), 23)
         self.assertEqual(sqs.count(), 23)
         self.assertEqual(len(sqs), 23)
         self.assertEqual(sqs.count(), 23)
         # Should only execute one query to count the length of the result set.
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['solr'].queries), 1)
 
     def test_manual_iter(self):
         results = self.sqs.all()
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = [int(result.pk) for result in results._manual_iter()]
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['default'].queries), 3)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test_fill_cache(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.sqs.all()
         self.assertEqual(len(results._result_cache), 0)
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results._fill_cache(0, 10)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 10)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['solr'].queries), 1)
         results._fill_cache(10, 20)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
-        self.assertEqual(len(connections['default'].queries), 2)
+        self.assertEqual(len(connections['solr'].queries), 2)
 
     def test_cache_is_full(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.all()
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['default'].queries), 3)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test___and__(self):
         sqs1 = self.sqs.filter(content='foo')
@@ -906,7 +907,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.rsqs.load_all()
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue(len(sqs) > 0)
-        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the default indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
+        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the solr indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
 
     def test_related_load_all_queryset(self):
         sqs = self.rsqs.load_all()
@@ -925,61 +926,61 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
     def test_related_iter(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         sqs = self.rsqs.all()
         results = [int(result.pk) for result in sqs]
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['default'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 4)
 
     def test_related_slice(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual([int(result.pk) for result in results[1:11]], [2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-        self.assertEqual(len(connections['default'].queries), 3)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual(int(results[21].pk), 22)
-        self.assertEqual(len(connections['default'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 4)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual([int(result.pk) for result in results[20:30]], [21, 22, 23])
-        self.assertEqual(len(connections['default'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 4)
 
     def test_related_manual_iter(self):
         results = self.rsqs.all()
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = [int(result.pk) for result in results._manual_iter()]
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['default'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 4)
 
     def test_related_fill_cache(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual(len(results._result_cache), 0)
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         results._fill_cache(0, 10)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 10)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['solr'].queries), 1)
         results._fill_cache(10, 20)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
-        self.assertEqual(len(connections['default'].queries), 2)
+        self.assertEqual(len(connections['solr'].queries), 2)
 
     def test_related_cache_is_full(self):
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['solr'].queries), 0)
         self.assertEqual(self.rsqs._cache_is_full(), False)
         results = self.rsqs.all()
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['default'].queries), 5)
+        self.assertEqual(len(connections['solr'].queries), 5)
 
     def test_quotes_regression(self):
         sqs = self.sqs.auto_query(u"44°48'40''N 20°28'32''E")
@@ -1044,7 +1045,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.result_class(MockSearchResult).all()
         self.assertTrue(isinstance(sqs[0], MockSearchResult))
 
-        # Reset to default.
+        # Reset to solr.
         sqs = self.sqs.result_class(None).all()
         self.assertTrue(isinstance(sqs[0], SearchResult))
 
@@ -1058,12 +1059,12 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         # Wipe it clean.
         clear_solr_index()
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockModelSearchIndex()
         self.sammi = SolrAnotherMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi, self.sammi])
-        connections['default']._index = self.ui
+        connections['solr']._index = self.ui
 
         self.sqs = SearchQuerySet()
 
@@ -1072,7 +1073,7 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
     def tearDown(self):
         # Restore.
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(LiveSolrMoreLikeThisTestCase, self).tearDown()
 
     def test_more_like_this(self):
@@ -1127,11 +1128,11 @@ class LiveSolrAutocompleteTestCase(TestCase):
         clear_solr_index()
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrAutocompleteMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
+        connections['solr']._index = self.ui
 
         self.sqs = SearchQuerySet()
 
@@ -1139,7 +1140,7 @@ class LiveSolrAutocompleteTestCase(TestCase):
 
     def tearDown(self):
         # Restore.
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(LiveSolrAutocompleteTestCase, self).tearDown()
 
     def test_autocomplete(self):
@@ -1180,12 +1181,12 @@ class LiveSolrRoundTripTestCase(TestCase):
         clear_solr_index()
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.srtsi = SolrRoundTripSearchIndex()
         self.ui.build(indexes=[self.srtsi])
-        connections['default']._index = self.ui
-        self.sb = connections['default'].get_backend()
+        connections['solr']._index = self.ui
+        self.sb = connections['solr'].get_backend()
 
         self.sqs = SearchQuerySet()
 
@@ -1196,7 +1197,7 @@ class LiveSolrRoundTripTestCase(TestCase):
 
     def tearDown(self):
         # Restore.
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(LiveSolrRoundTripTestCase, self).tearDown()
 
     def test_round_trip(self):
@@ -1231,12 +1232,12 @@ if test_pickling:
             clear_solr_index()
 
             # Stow.
-            self.old_ui = connections['default'].get_unified_index()
+            self.old_ui = connections['solr'].get_unified_index()
             self.ui = UnifiedIndex()
             self.smmi = SolrMockModelSearchIndex()
             self.sammi = SolrAnotherMockModelSearchIndex()
             self.ui.build(indexes=[self.smmi, self.sammi])
-            connections['default']._index = self.ui
+            connections['solr']._index = self.ui
 
             self.sqs = SearchQuerySet()
 
@@ -1245,7 +1246,7 @@ if test_pickling:
 
         def tearDown(self):
             # Restore.
-            connections['default']._index = self.old_ui
+            connections['solr']._index = self.old_ui
             super(LiveSolrPickleTestCase, self).tearDown()
 
         def test_pickling(self):
@@ -1266,16 +1267,16 @@ class SolrBoostBackendTestCase(TestCase):
         super(SolrBoostBackendTestCase, self).setUp()
 
         # Wipe it clean.
-        self.raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+        self.raw_solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['solr']['URL'])
         clear_solr_index()
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrBoostMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
-        self.sb = connections['default'].get_backend()
+        connections['solr']._index = self.ui
+        self.sb = connections['solr'].get_backend()
 
         self.sample_objs = []
 
@@ -1294,7 +1295,7 @@ class SolrBoostBackendTestCase(TestCase):
             self.sample_objs.append(mock)
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(SolrBoostBackendTestCase, self).tearDown()
 
     def test_boost(self):
@@ -1316,7 +1317,7 @@ class LiveSolrContentExtractionTestCase(TestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
 
-        self.sb = connections['default'].get_backend()
+        self.sb = connections['solr'].get_backend()
 
     def test_content_extraction(self):
         f = open(os.path.join(os.path.dirname(__file__),

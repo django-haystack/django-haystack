@@ -4,7 +4,7 @@ from mock import call, patch
 from django.template import Template, Context
 from django.test import TestCase
 
-from core.models import MockModel
+from ..core.models import MockModel
 
 
 @patch("haystack.templatetags.more_like_this.SearchQuerySet")

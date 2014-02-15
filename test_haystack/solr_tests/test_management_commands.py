@@ -15,7 +15,7 @@ from haystack import connections
 from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
 
-from core.models import MockModel, MockTag
+from ..core.models import MockModel, MockTag
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -42,17 +42,17 @@ class ManagementCommandTestCase(TestCase):
 
     def setUp(self):
         super(ManagementCommandTestCase, self).setUp()
-        self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+        self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['solr']['URL'])
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
+        connections['solr']._index = self.ui
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(ManagementCommandTestCase, self).tearDown()
 
     def test_basic_commands(self):
@@ -158,18 +158,18 @@ class AppModelManagementCommandTestCase(TestCase):
 
     def setUp(self):
         super(AppModelManagementCommandTestCase, self).setUp()
-        self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+        self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['solr']['URL'])
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
         self.smtmi = SolrMockTagSearchIndex()
         self.ui.build(indexes=[self.smmi, self.smtmi])
-        connections['default']._index = self.ui
+        connections['solr']._index = self.ui
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections['solr']._index = self.old_ui
         super(AppModelManagementCommandTestCase, self).tearDown()
 
     def test_app_model_variations(self):
