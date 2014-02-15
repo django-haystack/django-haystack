@@ -107,7 +107,7 @@ class WhooshSearchBackendTestCase(TestCase):
         super(WhooshSearchBackendTestCase, self).setUp()
 
         # Stow.
-        temp_path = os.path.join('tmp', 'test_whoosh_query')
+        temp_path = os.path.join('tmp', 'test_whoosh_backend')
         self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
         settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
