@@ -1,4 +1,5 @@
 import os
+from tempfile import mkdtemp
 
 SECRET_KEY = "Please do not spew DeprecationWarnings"
 
@@ -22,10 +23,13 @@ INSTALLED_APPS = [
     'test_haystack.discovery',
     'test_haystack.core',
     'test_haystack.spatial',
+    'test_haystack.multipleindex',
 ]
 
 SITE_ID = 1
 ROOT_URLCONF = 'test_haystack.core.urls'
+
+HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter', 'test_haystack.multipleindex.routers.MultipleIndexRouter']
 
 HAYSTACK_CONNECTIONS = {
     'default': {
@@ -35,6 +39,11 @@ HAYSTACK_CONNECTIONS = {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
         'PATH': os.path.join('tmp', 'test_whoosh_query'),
         'INCLUDE_SPELLING': True,
+    },
+    'filtered_whoosh': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': mkdtemp(prefix='haystack-multipleindex-filtered-whoosh-tests-'),
+        'EXCLUDED_INDEXES': ['test_haystack.multipleindex.search_indexes.BarIndex'],
     },
     'elasticsearch': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',

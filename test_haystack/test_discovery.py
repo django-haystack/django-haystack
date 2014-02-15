@@ -14,7 +14,7 @@ class ManualDiscoveryTestCase(TestCase):
         old_ui = connections['default'].get_unified_index()
         connections['default']._index = UnifiedIndex()
         ui = connections['default'].get_unified_index()
-        self.assertEqual(len(ui.get_indexed_models()), 3)
+        self.assertEqual(len(ui.get_indexed_models()), 5)
 
         ui.build(indexes=[FooIndex()])
 
@@ -31,16 +31,16 @@ class AutomaticDiscoveryTestCase(TestCase):
         old_ui = connections['default'].get_unified_index()
         connections['default']._index = UnifiedIndex()
         ui = connections['default'].get_unified_index()
-        self.assertEqual(len(ui.get_indexed_models()), 3)
+        self.assertEqual(len(ui.get_indexed_models()), 5)
 
         # Test exclusions.
         ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex']
         ui.build()
 
-        self.assertEqual(len(ui.get_indexed_models()), 2)
+        self.assertEqual(len(ui.get_indexed_models()), 4)
 
         ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex', 'test_haystack.discovery.search_indexes.FooIndex']
         ui.build()
 
-        self.assertEqual(len(ui.get_indexed_models()), 1)
+        self.assertEqual(len(ui.get_indexed_models()), 3)
         connections['default']._index = old_ui

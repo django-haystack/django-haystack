@@ -1,5 +1,5 @@
 from haystack import indexes
-from multipleindex.models import Foo, Bar
+from .models import Foo, Bar
 
 
 # To test additional ignores...
