@@ -670,7 +670,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
         self.sq = connections['solr'].get_query()
 
         # Force indexing of the content.
-        self.smmi.update()
+        self.smmi.update('solr')
 
     def tearDown(self):
         connections['solr']._index = self.old_ui
@@ -695,14 +695,14 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
         settings.DEBUG = True
         # Redefine it to clear out the cached results.
-        self.sq = connections['solr'].query()
+        self.sq = connections['solr'].get_query()
         self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
         self.assertEqual(len(connections['solr'].queries), 1)
         self.assertEqual(connections['solr'].queries[0]['query_string'], 'name:(bar)')
 
         # And again, for good measure.
-        self.sq = connections['solr'].query()
+        self.sq = connections['solr'].get_query()
         self.sq.add_filter(SQ(name='bar'))
         self.sq.add_filter(SQ(text='moof'))
         len(self.sq.get_results())
@@ -733,8 +733,8 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
 
-        self.sqs = SearchQuerySet()
-        self.rsqs = RelatedSearchQuerySet()
+        self.sqs = SearchQuerySet('solr')
+        self.rsqs = RelatedSearchQuerySet('solr')
 
         # Ugly but not constantly reindexing saves us almost 50% runtime.
         global lssqstc_all_loaded
@@ -747,7 +747,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
             clear_solr_index()
 
             # Force indexing of the content.
-            self.smmi.update()
+            self.smmi.update('solr')
 
     def tearDown(self):
         # Restore.
@@ -759,7 +759,8 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.sqs.load_all()
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue(len(sqs) > 0)
-        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the solr indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
+        self.maxDiff = None
+        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the default indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
 
     def test_iter(self):
         reset_search_queries()
@@ -907,7 +908,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.rsqs.load_all()
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue(len(sqs) > 0)
-        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the solr indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
+        self.assertEqual(sqs[0].object.foo, u"Registering indexes in Haystack is very similar to registering models and ``ModelAdmin`` classes in the `Django admin site`_.  If you want to override the default indexing behavior for your model you can specify your own ``SearchIndex`` class.  This is useful for ensuring that future-dated or non-live content is not indexed and searchable. Our ``Note`` model has a ``pub_date`` field, so let's update our code to include our own ``SearchIndex`` to exclude indexing future-dated notes:")
 
     def test_related_load_all_queryset(self):
         sqs = self.rsqs.load_all()
@@ -1066,10 +1067,10 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.ui.build(indexes=[self.smmi, self.sammi])
         connections['solr']._index = self.ui
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('solr')
 
-        self.smmi.update()
-        self.sammi.update()
+        self.smmi.update('solr')
+        self.sammi.update('solr')
 
     def tearDown(self):
         # Restore.
@@ -1134,9 +1135,9 @@ class LiveSolrAutocompleteTestCase(TestCase):
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('solr')
 
-        self.smmi.update()
+        self.smmi.update(using='solr')
 
     def tearDown(self):
         # Restore.
@@ -1188,7 +1189,7 @@ class LiveSolrRoundTripTestCase(TestCase):
         connections['solr']._index = self.ui
         self.sb = connections['solr'].get_backend()
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('solr')
 
         # Fake indexing.
         mock = MockModel()
@@ -1239,10 +1240,10 @@ if test_pickling:
             self.ui.build(indexes=[self.smmi, self.sammi])
             connections['solr']._index = self.ui
 
-            self.sqs = SearchQuerySet()
+            self.sqs = SearchQuerySet('solr')
 
-            self.smmi.update()
-            self.sammi.update()
+            self.smmi.update('solr')
+            self.sammi.update('solr')
 
         def tearDown(self):
             # Restore.
@@ -1302,7 +1303,7 @@ class SolrBoostBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 4)
 
-        results = SearchQuerySet().filter(SQ(author='daniel') | SQ(editor='daniel'))
+        results = SearchQuerySet('solr').filter(SQ(author='daniel') | SQ(editor='daniel'))
 
         self.assertEqual([result.id for result in results], [
             'core.afourthmockmodel.1',
@@ -1321,7 +1322,7 @@ class LiveSolrContentExtractionTestCase(TestCase):
 
     def test_content_extraction(self):
         f = open(os.path.join(os.path.dirname(__file__),
-                              "..", "..", "content_extraction", "test.pdf"),
+                              "content_extraction", "test.pdf"),
                  "rb")
 
         data = self.sb.extract_file_contents(f)

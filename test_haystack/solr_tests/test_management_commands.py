@@ -190,13 +190,13 @@ class AppModelManagementCommandTestCase(TestCase):
 
         self.assertRaises(ImproperlyConfigured, call_command, 'update_index', 'fake_app_thats_not_there', interactive=False)
 
-        call_command('update_index', 'core', 'solr_tests', interactive=False, verbosity=0)
+        call_command('update_index', 'core', 'discovery', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 25)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('update_index', 'solr_tests', interactive=False, verbosity=0)
+        call_command('update_index', 'discovery', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('clear_index', interactive=False, verbosity=0)
