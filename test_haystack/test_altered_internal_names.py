@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.test import TestCase
 from haystack import connections, connection_router
-from haystack.constants import DEFAULT_ALIAS
-from haystack import indexes
+from haystack import indexes, constants
 from haystack.management.commands.build_solr_schema import Command
 from haystack.query import SQ
 from haystack.utils.loading import UnifiedIndex
-from core.models import MockModel, AnotherMockModel
+from test_haystack.core.models import MockModel, AnotherMockModel
+from test_haystack.utils import check_solr
 
 
 class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -20,19 +20,27 @@ class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 class AlteredInternalNamesTestCase(TestCase):
     def setUp(self):
+        check_solr()
         super(AlteredInternalNamesTestCase, self).setUp()
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['solr'].get_unified_index()
         ui = UnifiedIndex()
         ui.build(indexes=[MockModelSearchIndex()])
-        connections['default']._index = ui
+        connections['solr']._index = ui
+
+        constants.ID  = 'my_id'
+        constants.DJANGO_CT  = 'my_django_ct'
+        constants.DJANGO_ID  = 'my_django_id'
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        constants.ID  = 'id'
+        constants.DJANGO_CT  = 'django_ct'
+        constants.DJANGO_ID  = 'django_id'
+        connections['solr']._index = self.old_ui
         super(AlteredInternalNamesTestCase, self).tearDown()
 
     def test_altered_names(self):
-        sq = connections['default'].get_query()
+        sq = connections['solr'].get_query()
 
         sq.add_filter(SQ(content='hello'))
         sq.add_model(MockModel)
@@ -43,7 +51,7 @@ class AlteredInternalNamesTestCase(TestCase):
 
     def test_solr_schema(self):
         command = Command()
-        context_data = command.build_context(using=DEFAULT_ALIAS).dicts[-1]
+        context_data = command.build_context(using='solr').dicts[-1]
         self.assertEqual(len(context_data), 6)
         self.assertEqual(context_data['DJANGO_ID'], 'my_django_id')
         self.assertEqual(context_data['content_field_name'], 'text')
@@ -75,7 +83,7 @@ class AlteredInternalNamesTestCase(TestCase):
             },
         ])
 
-        schema_xml = command.build_template(using=DEFAULT_ALIAS)
+        schema_xml = command.build_template(using='solr')
         self.assertTrue('<uniqueKey>my_id</uniqueKey>' in schema_xml)
         self.assertTrue('<field name="my_id" type="string" indexed="true" stored="true" multiValued="false" required="true"/>' in schema_xml)
         self.assertTrue('<field name="my_django_ct" type="string" indexed="true" stored="true" multiValued="false"/>' in schema_xml)
