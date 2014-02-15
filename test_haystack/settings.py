@@ -41,6 +41,9 @@ HAYSTACK_CONNECTIONS = {
         'INDEX_NAME': 'test_default',
         'INCLUDE_SPELLING': True,
     },
+    'simple': {
+        'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+    },
 }
 
 SITE_ID = 1

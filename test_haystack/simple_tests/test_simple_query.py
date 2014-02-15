@@ -7,7 +7,7 @@ from haystack.query import SQ
 class SimpleSearchQueryTestCase(TestCase):
     def setUp(self):
         super(SimpleSearchQueryTestCase, self).setUp()
-        self.sq = connections['default'].get_query()
+        self.sq = connections['simple'].get_query()
 
     def test_build_query_all(self):
         self.assertEqual(self.sq.build_query(), '*')

@@ -6,9 +6,9 @@ from haystack import connections, connection_router
 from haystack import indexes
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from core.models import MockModel, ScoreMockModel
-from core.tests.mocks import MockSearchResult
-from simple_tests.search_indexes import SimpleMockSearchIndex
+from ..core.models import MockModel, ScoreMockModel
+from ..mocks import MockSearchResult
+from .search_indexes import SimpleMockSearchIndex, SimpleMockScoreIndex
 
 
 class SimpleSearchBackendTestCase(TestCase):
@@ -17,8 +17,10 @@ class SimpleSearchBackendTestCase(TestCase):
     def setUp(self):
         super(SimpleSearchBackendTestCase, self).setUp()
 
-        self.backend = connections['default'].get_backend()
-        self.index = connections['default'].get_unified_index().get_index(MockModel)
+        self.backend = connections['simple'].get_backend()
+        ui = connections['simple'].get_unified_index()
+        self.index = SimpleMockSearchIndex()
+        ui.build(indexes=[self.index, SimpleMockScoreIndex()])
         self.sample_objs = MockModel.objects.all()
 
     def test_update(self):
@@ -86,7 +88,7 @@ class SimpleSearchBackendTestCase(TestCase):
 
     def test_score_field_collision(self):
 
-        index = connections['default'].get_unified_index().get_index(ScoreMockModel)
+        index = connections['simple'].get_unified_index().get_index(ScoreMockModel)
         sample_objs = ScoreMockModel.objects.all()
 
         self.backend.update(index, self.sample_objs)
@@ -104,18 +106,18 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
         # Stow.
         self.old_debug = settings.DEBUG
         settings.DEBUG = True
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['simple'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SimpleMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
+        connections['simple']._index = self.ui
 
         self.sample_objs = MockModel.objects.all()
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet(using='simple')
 
     def tearDown(self):
         # Restore.
-        connections['default']._index = self.old_ui
+        connections['simple']._index = self.old_ui
         settings.DEBUG = self.old_debug
         super(LiveSimpleSearchQuerySetTestCase, self).tearDown()
 

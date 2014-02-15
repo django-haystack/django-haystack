@@ -1,5 +1,5 @@
 from haystack import indexes
-from core.models import MockModel, ScoreMockModel
+from ..core.models import MockModel, ScoreMockModel
 
 
 class SimpleMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
