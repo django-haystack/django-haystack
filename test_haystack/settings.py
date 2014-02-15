@@ -21,6 +21,7 @@ INSTALLED_APPS = [
 
     'test_haystack.discovery',
     'test_haystack.core',
+    'test_haystack.spatial',
 ]
 
 SITE_ID = 1
@@ -43,6 +44,10 @@ HAYSTACK_CONNECTIONS = {
     },
     'simple': {
         'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+    },
+    'solr': {
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': 'http://localhost:8983/solr/',
     },
 }
 

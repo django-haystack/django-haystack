@@ -1,5 +1,5 @@
 from haystack import indexes
-from spatial.models import Checkin
+from .models import Checkin
 
 
 class CheckinSearchIndex(indexes.SearchIndex, indexes.Indexable):

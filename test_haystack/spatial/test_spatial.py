@@ -7,7 +7,7 @@ from haystack import connections
 from haystack.exceptions import SpatialError
 from haystack.query import SearchQuerySet
 from haystack.utils.geo import Point, D, ensure_geometry, ensure_point, ensure_wgs84, ensure_distance, generate_bounding_box
-from spatial.models import Checkin
+from .models import Checkin
 
 
 class SpatialUtilitiesTestCase(TestCase):
@@ -66,7 +66,7 @@ class SpatialUtilitiesTestCase(TestCase):
 
 class SpatialSolrNoDistanceTestCase(TestCase):
     fixtures = ['sample_spatial_data.json']
-    using = 'default'
+    using = 'solr'
 
     def setUp(self):
         super(SpatialSolrNoDistanceTestCase, self).setUp()
