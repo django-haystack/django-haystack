@@ -4,13 +4,13 @@ from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
 from haystack.query import SQ
-from core.models import MockModel, AnotherMockModel
+from ..core.models import MockModel, AnotherMockModel
 
 
 class ElasticsearchSearchQueryTestCase(TestCase):
     def setUp(self):
         super(ElasticsearchSearchQueryTestCase, self).setUp()
-        self.sq = connections['default'].get_query()
+        self.sq = connections['elasticsearch'].get_query()
 
     def test_build_query_all(self):
         self.assertEqual(self.sq.build_query(), '*:*')

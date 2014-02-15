@@ -6,7 +6,7 @@ from haystack import inputs
 class ElasticsearchInputTestCase(TestCase):
     def setUp(self):
         super(ElasticsearchInputTestCase, self).setUp()
-        self.query_obj = connections['default'].get_query()
+        self.query_obj = connections['elasticsearch'].get_query()
 
     def test_raw_init(self):
         raw = inputs.Raw('hello OR there, :you')
