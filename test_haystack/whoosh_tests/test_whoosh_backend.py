@@ -10,8 +10,8 @@ from django.utils.datetime_safe import date, datetime
 from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
-from core.models import AFourthMockModel, AnotherMockModel, MockModel
-from core.tests.mocks import MockSearchResult
+from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
+from ..mocks import MockSearchResult
 from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SearchBackendError
 from haystack.inputs import AutoQuery
@@ -108,16 +108,16 @@ class WhooshSearchBackendTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
         self.wmtmmi = WhooshMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -127,11 +127,11 @@ class WhooshSearchBackendTestCase(TestCase):
         self.sample_objs = MockModel.objects.all()
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.old_ui
         super(WhooshSearchBackendTestCase, self).tearDown()
 
     def whoosh_search(self, query):
@@ -140,7 +140,7 @@ class WhooshSearchBackendTestCase(TestCase):
         return searcher.search(self.parser.parse(query), limit=1000)
 
     def test_non_silent(self):
-        bad_sb = connections['default'].backend('bad', PATH='/tmp/bad_whoosh', SILENTLY_FAIL=False)
+        bad_sb = connections['whoosh'].backend('bad', PATH='/tmp/bad_whoosh', SILENTLY_FAIL=False)
         bad_sb.use_file_storage = False
         bad_sb.storage = 'omg.wtf.bbq'
 
@@ -383,26 +383,26 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertTrue(isinstance(schema._fields['is_active'], BOOLEAN))
 
     def test_verify_type(self):
-        old_ui = connections['default'].get_unified_index()
+        old_ui = connections['whoosh'].get_unified_index()
         ui = UnifiedIndex()
         wmtmmi = WhooshMaintainTypeMockSearchIndex()
         ui.build(indexes=[wmtmmi])
-        connections['default']._index = ui
-        sb = connections['default'].get_backend()
+        connections['whoosh']._index = ui
+        sb = connections['whoosh'].get_backend()
         sb.setup()
         sb.update(wmtmmi, self.sample_objs)
 
         self.assertEqual(sb.search(u'*')['hits'], 23)
         self.assertEqual([result.month for result in sb.search(u'*')['results']], [u'06', u'07', u'06', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07', u'07'])
-        connections['default']._index = old_ui
+        connections['whoosh']._index = old_ui
 
     @unittest.expectedFailure
     def test_writable(self):
         if getattr(settings, 'HAYSTACK_WHOOSH_STORAGE', 'file') == 'file':
-            if not os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-                os.makedirs(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+            if not os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+                os.makedirs(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-            os.chmod(settings.HAYSTACK_CONNECTIONS['default']['PATH'], 0o400)
+            os.chmod(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'], 0o400)
 
             try:
                 self.sb.setup()
@@ -411,7 +411,7 @@ class WhooshSearchBackendTestCase(TestCase):
                 # Yay. We failed
                 pass
 
-            os.chmod(settings.HAYSTACK_CONNECTIONS['default']['PATH'], 0o755)
+            os.chmod(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'], 0o755)
 
     def test_slicing(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -445,15 +445,15 @@ class WhooshBoostBackendTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshBoostMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -476,11 +476,11 @@ class WhooshBoostBackendTestCase(TestCase):
             self.sample_objs.append(mock)
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.ui
         super(WhooshBoostBackendTestCase, self).tearDown()
 
     @unittest.expectedFailure
@@ -490,7 +490,7 @@ class WhooshBoostBackendTestCase(TestCase):
         searcher = self.raw_whoosh.searcher()
         self.assertEqual(len(searcher.search(self.parser.parse(u'*'), limit=1000)), 2)
 
-        results = SearchQuerySet().filter(SQ(author='daniel') | SQ(editor='daniel'))
+        results = SearchQuerySet('whoosh').filter(SQ(author='daniel') | SQ(editor='daniel'))
 
         self.assertEqual([result.id for result in results], [
             'core.afourthmockmodel.1',
@@ -505,16 +505,16 @@ class LiveWhooshSearchQueryTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
         self.wmtmmi = WhooshMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -530,14 +530,14 @@ class LiveWhooshSearchQueryTestCase(TestCase):
             mock.pub_date = date(2009, 2, 25) - timedelta(days=i)
             self.sample_objs.append(mock)
 
-        self.sq = connections['default'].get_query()
+        self.sq = connections['whoosh'].get_query()
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.old_ui
         super(LiveWhooshSearchQueryTestCase, self).tearDown()
 
     def test_get_spelling(self):
@@ -549,31 +549,31 @@ class LiveWhooshSearchQueryTestCase(TestCase):
     def test_log_query(self):
         from django.conf import settings
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
 
         # Stow.
         old_debug = settings.DEBUG
         settings.DEBUG = False
 
         len(self.sq.get_results())
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
 
         settings.DEBUG = True
         # Redefine it to clear out the cached results.
-        self.sq = connections['default'].get_query()
+        self.sq = connections['whoosh'].get_query()
         self.sq.add_filter(SQ(name='bar'))
         len(self.sq.get_results())
-        self.assertEqual(len(connections['default'].queries), 1)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
+        self.assertEqual(len(connections['whoosh'].queries), 1)
+        self.assertEqual(connections['whoosh'].queries[0]['query_string'], 'name:(bar)')
 
         # And again, for good measure.
-        self.sq = connections['default'].get_query()
+        self.sq = connections['whoosh'].get_query()
         self.sq.add_filter(SQ(name='baz'))
         self.sq.add_filter(SQ(text='foo'))
         len(self.sq.get_results())
-        self.assertEqual(len(connections['default'].queries), 2)
-        self.assertEqual(connections['default'].queries[0]['query_string'], 'name:(bar)')
-        self.assertEqual(connections['default'].queries[1]['query_string'], u'(name:(baz) AND text:(foo))')
+        self.assertEqual(len(connections['whoosh'].queries), 2)
+        self.assertEqual(connections['whoosh'].queries[0]['query_string'], 'name:(bar)')
+        self.assertEqual(connections['whoosh'].queries[1]['query_string'], u'(name:(baz) AND text:(foo))')
 
         # Restore.
         settings.DEBUG = old_debug
@@ -585,15 +585,15 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         # Stow.
         self.old_debug = settings.DEBUG
@@ -613,15 +613,15 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
             mock.pub_date = date(2009, 2, 25) - timedelta(days=i)
             self.sample_objs.append(mock)
 
-        self.sq = connections['default'].get_query()
-        self.sqs = SearchQuerySet()
+        self.sq = connections['whoosh'].get_query()
+        self.sqs = SearchQuerySet('whoosh')
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.old_ui
         super(LiveWhooshSearchQuerySetTestCase, self).tearDown()
 
     def test_various_searchquerysets(self):
@@ -664,18 +664,18 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs), 3)
 
     def test_all_regression(self):
-        sqs = SearchQuerySet()
+        sqs = SearchQuerySet('whoosh')
         self.assertEqual([result.pk for result in sqs], [])
 
         self.sb.update(self.wmmi, self.sample_objs)
         self.assertTrue(self.sb.index.doc_count() > 0)
 
-        sqs = SearchQuerySet()
+        sqs = SearchQuerySet('whoosh')
         self.assertEqual(len(sqs), 3)
         self.assertEqual(sorted([result.pk for result in sqs]), [u'1', u'2', u'3'])
 
         try:
-            sqs = repr(SearchQuerySet())
+            sqs = repr(SearchQuerySet('whoosh'))
         except:
             self.fail()
 
@@ -683,71 +683,71 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.sb.update(self.wmmi, self.sample_objs)
         self.assertTrue(self.sb.index.doc_count() > 0)
 
-        sqs = SearchQuerySet().auto_query(" ")
+        sqs = SearchQuerySet('whoosh').auto_query(" ")
         self.assertEqual(len(sqs), 3)
-        sqs = SearchQuerySet().filter(content=" ")
+        sqs = SearchQuerySet('whoosh').filter(content=" ")
         self.assertEqual(len(sqs), 0)
 
     def test_iter(self):
         self.sb.update(self.wmmi, self.sample_objs)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         sqs = self.sqs.auto_query('Indexed!')
         results = [int(result.pk) for result in sqs]
         self.assertEqual(sorted(results), [1, 2, 3])
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
 
     def test_slice(self):
         self.sb.update(self.wmmi, self.sample_objs)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         results = self.sqs.auto_query('Indexed!')
         self.assertEqual(sorted([int(result.pk) for result in results[1:3]]), [1, 2])
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         results = self.sqs.auto_query('Indexed!')
         self.assertEqual(int(results[0].pk), 1)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
 
     def test_manual_iter(self):
         self.sb.update(self.wmmi, self.sample_objs)
         results = self.sqs.auto_query('Indexed!')
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         results = [int(result.pk) for result in results._manual_iter()]
         self.assertEqual(sorted(results), [1, 2, 3])
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
 
     def test_fill_cache(self):
         self.sb.update(self.wmmi, self.sample_objs)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         results = self.sqs.auto_query('Indexed!')
         self.assertEqual(len(results._result_cache), 0)
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         results._fill_cache(0, 10)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 3)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
         results._fill_cache(10, 20)
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 3)
-        self.assertEqual(len(connections['default'].queries), 2)
+        self.assertEqual(len(connections['whoosh'].queries), 2)
 
     def test_cache_is_full(self):
         self.sb.update(self.wmmi, self.sample_objs)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.auto_query('Indexed!')
         [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
 
     def test_count(self):
         more_samples = []
@@ -762,11 +762,11 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.sb.update(self.wmmi, more_samples)
 
         reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
+        self.assertEqual(len(connections['whoosh'].queries), 0)
         results = self.sqs.all()
         self.assertEqual(len(results), 49)
         self.assertEqual(results._cache_is_full(), False)
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertEqual(len(connections['whoosh'].queries), 1)
 
     def test_query_generation(self):
         sqs = self.sqs.filter(SQ(content=AutoQuery("hello world")) | SQ(title=AutoQuery("hello world")))
@@ -795,31 +795,31 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         super(LiveWhooshMultiSearchQuerySetTestCase, self).setUp()
 
         # Stow.
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
         self.wamsi = WhooshAnotherMockSearchIndex()
         self.ui.build(indexes=[self.wmmi, self.wamsi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
         self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
         self.sb.delete_index()
 
-        self.wmmi.update()
-        self.wamsi.update()
+        self.wmmi.update(using='whoosh')
+        self.wamsi.update(using='whoosh')
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('whoosh')
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.old_ui
         super(LiveWhooshMultiSearchQuerySetTestCase, self).tearDown()
 
     def test_searchquerysets_with_models(self):
@@ -844,16 +844,16 @@ class LiveWhooshMoreLikeThisTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
         self.wamsi = WhooshAnotherMockSearchIndex()
         self.ui.build(indexes=[self.wmmi, self.wamsi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         self.sb.setup()
         self.raw_whoosh = self.sb.index
@@ -863,14 +863,14 @@ class LiveWhooshMoreLikeThisTestCase(TestCase):
         self.wmmi.update()
         self.wamsi.update()
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('whoosh')
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.old_ui
         super(LiveWhooshMoreLikeThisTestCase, self).tearDown()
 
     # We expect failure here because, despite not changing the code, Whoosh
@@ -913,15 +913,15 @@ class LiveWhooshAutocompleteTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wacsi = WhooshAutocompleteMockModelSearchIndex()
         self.ui.build(indexes=[self.wacsi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         # Stow.
         import haystack
@@ -929,20 +929,19 @@ class LiveWhooshAutocompleteTestCase(TestCase):
         settings.DEBUG = True
 
         self.sb.setup()
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('whoosh')
 
         # Wipe it clean.
         self.sqs.query.backend.clear()
 
-        for mock in MockModel.objects.all():
-            self.wacsi.update_object(mock)
+        self.wacsi.update(using='whoosh')
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
+        connections['whoosh']._index = self.old_ui
         settings.DEBUG = self.old_debug
         super(LiveWhooshAutocompleteTestCase, self).tearDown()
 
@@ -1007,15 +1006,15 @@ class LiveWhooshRoundTripTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wrtsi = WhooshRoundTripSearchIndex()
         self.ui.build(indexes=[self.wrtsi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         self.old_debug = settings.DEBUG
         settings.DEBUG = True
@@ -1025,7 +1024,7 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
         self.sb.delete_index()
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('whoosh')
 
         # Wipe it clean.
         self.sqs.query.backend.clear()
@@ -1036,10 +1035,10 @@ class LiveWhooshRoundTripTestCase(TestCase):
         self.sb.update(self.wrtsi, [mock])
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
         settings.DEBUG = self.old_debug
         super(LiveWhooshRoundTripTestCase, self).tearDown()
 
@@ -1074,15 +1073,15 @@ class LiveWhooshRamStorageTestCase(TestCase):
         super(LiveWhooshRamStorageTestCase, self).setUp()
 
         # Stow.
-        self.old_whoosh_storage = settings.HAYSTACK_CONNECTIONS['default'].get('STORAGE', 'file')
-        settings.HAYSTACK_CONNECTIONS['default']['STORAGE'] = 'ram'
+        self.old_whoosh_storage = settings.HAYSTACK_CONNECTIONS['whoosh'].get('STORAGE', 'file')
+        settings.HAYSTACK_CONNECTIONS['whoosh']['STORAGE'] = 'ram'
 
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wrtsi = WhooshRoundTripSearchIndex()
         self.ui.build(indexes=[self.wrtsi])
-        self.sb = connections['default'].get_backend()
-        connections['default']._index = self.ui
+        self.sb = connections['whoosh'].get_backend()
+        connections['whoosh']._index = self.ui
 
         # Stow.
         import haystack
@@ -1093,7 +1092,7 @@ class LiveWhooshRamStorageTestCase(TestCase):
         self.raw_whoosh = self.sb.index
         self.parser = QueryParser(self.sb.content_field_name, schema=self.sb.schema)
 
-        self.sqs = SearchQuerySet()
+        self.sqs = SearchQuerySet('whoosh')
 
         # Wipe it clean.
         self.sqs.query.backend.clear()
@@ -1106,8 +1105,8 @@ class LiveWhooshRamStorageTestCase(TestCase):
     def tearDown(self):
         self.sqs.query.backend.clear()
 
-        settings.HAYSTACK_CONNECTIONS['default']['STORAGE'] = self.old_whoosh_storage
-        connections['default']._index = self.old_ui
+        settings.HAYSTACK_CONNECTIONS['whoosh']['STORAGE'] = self.old_whoosh_storage
+        connections['whoosh']._index = self.old_ui
         settings.DEBUG = self.old_debug
         super(LiveWhooshRamStorageTestCase, self).tearDown()
 

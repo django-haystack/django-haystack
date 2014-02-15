@@ -7,7 +7,7 @@ from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
 from haystack.query import SQ
-from core.models import MockModel, AnotherMockModel
+from ..core.models import MockModel, AnotherMockModel
 
 
 class WhooshSearchQueryTestCase(TestCase):
@@ -16,16 +16,16 @@ class WhooshSearchQueryTestCase(TestCase):
 
         # Stow.
         temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = temp_path
+        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
 
-        self.sq = connections['default'].get_query()
+        self.sq = connections['whoosh'].get_query()
 
     def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['default']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['default']['PATH'])
+        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
+            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
 
-        settings.HAYSTACK_CONNECTIONS['default']['PATH'] = self.old_whoosh_path
+        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
         super(WhooshSearchQueryTestCase, self).tearDown()
 
     def test_build_query_all(self):

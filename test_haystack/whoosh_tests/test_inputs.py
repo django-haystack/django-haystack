@@ -6,7 +6,7 @@ from haystack import inputs
 class WhooshInputTestCase(TestCase):
     def setUp(self):
         super(WhooshInputTestCase, self).setUp()
-        self.query_obj = connections['default'].get_query()
+        self.query_obj = connections['whoosh'].get_query()
 
     def test_raw_init(self):
         raw = inputs.Raw('hello OR there, :you')
