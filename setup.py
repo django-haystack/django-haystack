@@ -7,6 +7,23 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
+install_requires = [
+    'Django',
+]
+
+tests_require = [
+    'elasticsearch==0.4.3',
+    'pysolr>=3.2.0',
+    'whoosh==2.5.4',
+    'lxml==3.2.3',
+    'python-dateutil',
+    'geopy==0.95.1',
+    'httplib2==0.8',
+
+    'nose',
+    'mock',
+    'coverage',
+]
 
 setup(
     name='django-haystack',
@@ -43,4 +60,7 @@ setup(
         'Topic :: Utilities',
     ],
     zip_safe=False,
+    install_requires=install_requires,
+    tests_require=tests_require,
+    test_suite = "test_haystack.run_tests.run_all",
 )

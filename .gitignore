@@ -10,6 +10,5 @@ MANIFEST
 .tox
 env
 env3
-
-# Because I'm ghetto like that.
-tests/pyelasticsearch.py
+*.egg
+.coverage
