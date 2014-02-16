@@ -12,3 +12,6 @@ env
 env3
 *.egg
 .coverage
+
+test_haystack/solr_tests/server/solr-4.6.0.tgz
+test_haystack/solr_tests/server/solr4/
