@@ -178,7 +178,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
             kwargs['spellcheck.collate'] = 'true'
-            kwargs['spellcheck.count'] = 1
+            kwargs['spellcheck.count'] = getattr(settings, 'HAYSTACK_SPELLING_SUGGESTIONS_COUNT', 1)
 
             if spelling_query:
                 kwargs['spellcheck.q'] = spelling_query
