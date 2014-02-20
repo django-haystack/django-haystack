@@ -4,8 +4,7 @@ from decimal import Decimal
 import logging as std_logging
 import operator
 
-import pyelasticsearch
-import requests
+import elasticsearch
 from django.conf import settings
 from django.test import TestCase
 from django.utils import unittest
@@ -33,11 +32,11 @@ except ImportError:
 
 def clear_elasticsearch_index():
     # Wipe it clean.
-    raw_es = pyelasticsearch.ElasticSearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+    raw_es = elasticsearch.Elasticsearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     try:
-        raw_es.delete_index(settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
-        raw_es.refresh()
-    except (requests.RequestException, pyelasticsearch.ElasticHttpError):
+        raw_es.indices.delete(index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
+        raw_es.indices.refresh()
+    except elasticsearch.TransportError:
         pass
 
 
@@ -198,13 +197,19 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ASixthMockModel
 
+class TestSettings(TestCase):
+    def test_kwargs_are_passed_on(self):
+        from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
+        backend = ElasticsearchSearchBackend('alias', **{'URL': {}, 'INDEX_NAME': 'testing', 'KWARGS': {'max_retries': 42}})
+
+        self.assertEqual(backend.conn.transport.max_retries, 42)
 
 class ElasticsearchSearchBackendTestCase(TestCase):
     def setUp(self):
         super(ElasticsearchSearchBackendTestCase, self).setUp()
 
         # Wipe it clean.
-        self.raw_es = pyelasticsearch.ElasticSearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+        self.raw_es = elasticsearch.Elasticsearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
         clear_elasticsearch_index()
 
         # Stow.
@@ -232,11 +237,12 @@ class ElasticsearchSearchBackendTestCase(TestCase):
     def tearDown(self):
         connections['default']._index = self.old_ui
         super(ElasticsearchSearchBackendTestCase, self).tearDown()
+        self.sb.silently_fail = True
 
     def raw_search(self, query):
         try:
-            return self.raw_es.search('*:*', index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
-        except (requests.RequestException, pyelasticsearch.ElasticHttpError):
+            return self.raw_es.search(q='*:*', index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
+        except elasticsearch.TransportError:
             return {}
 
     def test_non_silent(self):
@@ -342,6 +348,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             }
         ])
 
+    def test_remove_succeeds_on_404(self):
+        self.sb.silently_fail = False
+        self.sb.remove('core.mockmodel.421')
+
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_search('*:*').get('hits', {}).get('total', 0), 3)
@@ -433,35 +443,39 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         (content_field_name, mapping) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(mapping), 4)
+        self.assertEqual(len(mapping), 4+2) # +2 management fields
         self.assertEqual(mapping, {
-            'text': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'pub_date': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'name': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'name_exact': {'index': 'not_analyzed', 'term_vector': 'with_positions_offsets', 'boost': 1.0, 'store': 'yes', 'type': 'string'}
+            'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'text': {'type': 'string', 'analyzer': 'snowball'},
+            'pub_date': {'type': 'date'},
+            'name': {'type': 'string', 'analyzer': 'snowball'},
+            'name_exact': {'index': 'not_analyzed', 'type': 'string'}
         })
 
         ui = UnifiedIndex()
         ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(mapping), 15)
+        self.assertEqual(len(mapping), 15+2) # +2 management fields
         self.assertEqual(mapping, {
-            'name': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'is_active_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'boolean'},
-            'created': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'post_count': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'long'},
-            'created_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'sites_exact': {'index': 'not_analyzed', 'term_vector': 'with_positions_offsets', 'boost': 1.0, 'store': 'yes', 'type': 'string'},
-            'is_active': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'boolean'},
-            'sites': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'post_count_i': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'long'},
-            'average_rating': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'float'},
-            'text': {'index': 'analyzed', 'term_vector': 'with_positions_offsets', 'type': 'string', 'analyzer': 'snowball', 'boost': 1.0, 'store': 'yes'},
-            'pub_date_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'name_exact': {'index': 'not_analyzed', 'term_vector': 'with_positions_offsets', 'boost': 1.0, 'store': 'yes', 'type': 'string'},
-            'pub_date': {'index': 'analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'date'},
-            'average_rating_exact': {'index': 'not_analyzed', 'boost': 1.0, 'store': 'yes', 'type': 'float'}
+            'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'name': {'type': 'string', 'analyzer': 'snowball'},
+            'is_active_exact': {'type': 'boolean'},
+            'created': {'type': 'date'},
+            'post_count': {'type': 'long'},
+            'created_exact': {'type': 'date'},
+            'sites_exact': {'index': 'not_analyzed', 'type': 'string'},
+            'is_active': {'type': 'boolean'},
+            'sites': {'type': 'string', 'analyzer': 'snowball'},
+            'post_count_i': {'type': 'long'},
+            'average_rating': {'type': 'float'},
+            'text': {'type': 'string', 'analyzer': 'snowball'},
+            'pub_date_exact': {'type': 'date'},
+            'name_exact': {'index': 'not_analyzed', 'type': 'string'},
+            'pub_date': {'type': 'date'},
+            'average_rating_exact': {'type': 'float'}
         })
 
     def test_verify_type(self):
@@ -1063,43 +1077,26 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         self.sb = connections['default'].get_backend()
         content_name, mapping = self.sb.build_schema(self.ui.all_searchfields())
         self.assertEqual(mapping, {
+            'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
+            'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'name_auto': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
-                'boost': 1.0,
-                'store': 'yes'
             },
             'text': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'snowball',
-                'boost': 1.0,
-                'store': 'yes'
             },
             'pub_date': {
-                'index': 'analyzed',
-                'boost': 1.0,
-                'store': 'yes',
                 'type': 'date'
             },
             'name': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'snowball',
-                'boost': 1.0,
-                'store': 'yes'
             },
             'text_auto': {
-                'index': 'analyzed',
-                'term_vector': 'with_positions_offsets',
                 'type': 'string',
                 'analyzer': 'edgengram_analyzer',
-                'boost': 1.0,
-                'store': 'yes'
             }
         })
 
@@ -1226,7 +1223,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
         super(ElasticsearchBoostBackendTestCase, self).setUp()
 
         # Wipe it clean.
-        self.raw_es = pyelasticsearch.ElasticSearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+        self.raw_es = elasticsearch.Elasticsearch(settings.HAYSTACK_CONNECTIONS['default']['URL'])
         clear_elasticsearch_index()
 
         # Stow.
@@ -1258,7 +1255,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
         super(ElasticsearchBoostBackendTestCase, self).tearDown()
 
     def raw_search(self, query):
-        return self.raw_es.search('*:*', index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
+        return self.raw_es.search(q='*:*', index=settings.HAYSTACK_CONNECTIONS['default']['INDEX_NAME'])
 
     def test_boost(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -1287,7 +1284,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
 
 class RecreateIndexTestCase(TestCase):
     def setUp(self):
-        self.raw_es = pyelasticsearch.ElasticSearch(
+        self.raw_es = elasticsearch.Elasticsearch(
             settings.HAYSTACK_CONNECTIONS['default']['URL'])
 
     def test_recreate_index(self):
@@ -1297,14 +1294,14 @@ class RecreateIndexTestCase(TestCase):
         sb.silently_fail = True
         sb.setup()
 
-        original_mapping = self.raw_es.get_mapping(sb.index_name)
+        original_mapping = self.raw_es.indices.get_mapping(index=sb.index_name)
 
         sb.clear()
         sb.setup()
 
         try:
-            updated_mapping = self.raw_es.get_mapping(sb.index_name)
-        except pyelasticsearch.ElasticHttpNotFoundError:
+            updated_mapping = self.raw_es.indices.get_mapping(sb.index_name)
+        except elasticsearch.NotFoundError:
             self.fail("There is no mapping after recreating the index")
         self.assertEqual(original_mapping, updated_mapping,
             "Mapping after recreating the index differs from the original one")
@@ -1363,6 +1360,13 @@ class ElasticsearchFacetingTestCase(TestCase):
         counts = SearchQuerySet().filter(content='white').facet('facet_field', order='reverse_count').facet_counts()
         self.assertEqual(counts['fields']['facet_field'], [
             ('Dan Watson', 2),
+            ('Daniel Lindsley', 3),
+        ])
+
+    def test_multiple_narrow(self):
+        self.sb.update(self.smmi, self.sample_objs)
+        counts = SearchQuerySet().narrow('editor_exact:"Perry White"').narrow('author_exact:"Daniel Lindsley"').facet('author').facet_counts()
+        self.assertEqual(counts['fields']['author'], [
             ('Daniel Lindsley', 3),
         ])
 

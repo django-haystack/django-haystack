@@ -27,9 +27,9 @@ class LoadBackendTestCase(TestCase):
 
     def test_load_elasticsearch(self):
         try:
-            import pyelasticsearch
+            import elasticsearch
         except ImportError:
-            warnings.warn("Pyelasticsearch doesn't appear to be installed. Unable to test loading the ElasticSearch backend.")
+            warnings.warn("elasticsearch-py doesn't appear to be installed. Unable to test loading the ElasticSearch backend.")
             return
 
         backend = loading.load_backend('haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine')
