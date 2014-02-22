@@ -1,6 +1,6 @@
 from django.conf import settings
+from django.utils.unittest import SkipTest
 
-from unittest import SkipTest
 
 def check_solr(using='solr'):
     try:
@@ -13,4 +13,3 @@ def check_solr(using='solr'):
         solr.search('*:*')
     except SolrError as e:
         raise SkipTest("solr not running on %r" % settings.HAYSTACK_CONNECTIONS[using]['URL'], e)
-
