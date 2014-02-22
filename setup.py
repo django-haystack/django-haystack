@@ -62,5 +62,5 @@ setup(
     zip_safe=False,
     install_requires=install_requires,
     tests_require=tests_require,
-    test_suite = "test_haystack.run_tests.run_all",
+    test_suite="test_haystack.run_tests.run_all",
 )
