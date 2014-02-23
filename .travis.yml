@@ -5,7 +5,7 @@ python:
 before_install:
   - sudo apt-get update
   - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libxapian22 python-xapian default-jdk
-  - curl https://raw.github.com/moliware/travis-solr/master/travis-solr.sh | SOLR_CONFS="tests/schema.xml tests/solrconfig.xml" SOLR_VERSION=4.4.0 bash
+  - curl https://raw.github.com/moliware/travis-solr/master/travis-solr.sh | SOLR_CONFS="test_haystack/solr_tests/server/schema.xml test_haystack/solr_tests/server/solrconfig.xml" SOLR_VERSION=4.4.0 bash
 
 install:
   - pip install tox
