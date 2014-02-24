@@ -89,3 +89,5 @@ Thanks to
     * Szymon Teżewski (jasisz) for an update to the bounding-box calculation for spatial queries
     * Chris Wilson (qris) and Orlando Fiol (overflow) for an update allowing the use of multiple order_by()
       fields with Whoosh as long as they share a consistent sort direction
+    * J Leadbetter (kamni) for a fix to the Whoosh backend to allow updates to continue when there is an
+      error with a single object
