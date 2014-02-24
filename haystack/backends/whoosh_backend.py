@@ -202,6 +202,10 @@ class WhooshSearchBackend(BaseSearchBackend):
                         "object": get_identifier(obj)
                     }
                 })
+                
+                # reset the writer so there is no 'start_doc' error from the
+                # previous failed update attempt
+                writer = AsyncWriter(self.index)
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
