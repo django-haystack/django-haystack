@@ -276,6 +276,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             kwargs['fields'] = fields
 
         if sort_by is not None:
+            sort_kwargs = None
             order_list = []
             for field, direction in sort_by:
                 if field == 'distance' and distance_point:
@@ -292,12 +293,26 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     if field == 'distance':
                         warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
 
-                    # Regular sorting.
-                    sort_kwargs = {field: {'order': direction}}
+                    if field == '?':
+                        seed = direction
+                        kwargs['query'] = {
+                            "function_score":{
+                                "query": kwargs['query'],
+                                "random_score": {}
+                            }
+                        }
+                        try:
 
-                order_list.append(sort_kwargs)
-
-            kwargs['sort'] = order_list
+                            kwargs['query']['function_score']['random_score']['seed'] = int(seed)
+                        except ValueError:
+                            pass
+                    else:
+                        # Regular sorting.
+                        sort_kwargs = {field: {'order': direction}}
+                if sort_kwargs is not None:
+                    order_list.append(sort_kwargs)
+            if order_list:
+                kwargs['sort'] = order_list
 
         # From/size offsets don't seem to work right in Elasticsearch's DSL. :/
         # if start_offset is not None:
@@ -854,11 +869,14 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                 order_by_list = []
 
             for field in self.order_by:
-                direction = 'asc'
-                if field.startswith('-'):
-                    direction = 'desc'
-                    field = field[1:]
-                order_by_list.append((field, direction))
+                if field.startswith('?'):
+                    order_by_list.append(('?', field[1:]))
+                else:
+                    direction = 'asc'
+                    if field.startswith('-'):
+                        direction = 'desc'
+                        field = field[1:]
+                    order_by_list.append((field, direction))
 
             search_kwargs['sort_by'] = order_by_list
 

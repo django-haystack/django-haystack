@@ -50,6 +50,7 @@ Elasticsearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
+* Random ordering with seed support
 * Requires: elasticsearch-py 0.4.3+ & Elasticsearch 0.17.7+
 
 Whoosh
