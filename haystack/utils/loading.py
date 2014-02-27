@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import copy
 import inspect
+import threading
 import warnings
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import module_has_submodule
@@ -92,7 +92,7 @@ def load_router(full_router_path):
 class ConnectionHandler(object):
     def __init__(self, connections_info):
         self.connections_info = connections_info
-        self._connections = {}
+        self._local = threading.local()
         self._index = None
 
     def ensure_defaults(self, alias):
@@ -105,16 +105,20 @@ class ConnectionHandler(object):
             conn['ENGINE'] = 'haystack.backends.simple_backend.SimpleEngine'
 
     def __getitem__(self, key):
-        if key in self._connections:
-            return self._connections[key]
+        if not hasattr(self._local, '_connections'):
+            self._local.connections = {}
+        elif key in self._local.connections:
+            return self._local.connections[key]
 
         self.ensure_defaults(key)
-        self._connections[key] = load_backend(self.connections_info[key]['ENGINE'])(using=key)
-        return self._connections[key]
+        self._local.connections[key] = load_backend(self.connections_info[key]['ENGINE'])(using=key)
+        return self._local.connections[key]
 
     def reload(self, key):
+        if not hasattr(self._local, '_connections'):
+            self._local.connections = {}
         try:
-            del self._connections[key]
+            del self._local.connections[key]
         except KeyError:
             pass
 
