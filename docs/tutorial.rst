@@ -20,7 +20,7 @@ sources.
 
 Haystack also does pluggable backends (much like Django's database
 layer), so virtually all of the code you write ought to be portable between
-which ever search engine you choose.
+whichever search engine you choose.
 
 .. note::
 
