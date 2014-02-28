@@ -441,7 +441,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections['default'].get_unified_index()
 
-        (content_field_name, mapping) = self.sb.build_schema(old_ui.all_searchfields())
+        (content_field_name, mapping, source) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 4+2) # +2 management fields
         self.assertEqual(mapping, {
@@ -452,10 +452,11 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'name': {'type': 'string', 'analyzer': 'snowball'},
             'name_exact': {'index': 'not_analyzed', 'type': 'string'}
         })
+        self.assertEqual(source, {u'excludes': []})
 
         ui = UnifiedIndex()
         ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
-        (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
+        (content_field_name, mapping, _source) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 15+2) # +2 management fields
         self.assertEqual(mapping, {
@@ -477,6 +478,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'pub_date': {'type': 'date'},
             'average_rating_exact': {'type': 'float'}
         })
+        self.assertEqual(source, {u'excludes': []})
 
     def test_verify_type(self):
         old_ui = connections['default'].get_unified_index()
@@ -1075,7 +1077,7 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
 
     def test_build_schema(self):
         self.sb = connections['default'].get_backend()
-        content_name, mapping = self.sb.build_schema(self.ui.all_searchfields())
+        content_name, mapping, _source = self.sb.build_schema(self.ui.all_searchfields())
         self.assertEqual(mapping, {
             'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
