@@ -197,6 +197,16 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ASixthMockModel
 
+
+class ElasticsearchUnstoredMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(model_attr='author', document=True)
+    unstored = indexes.CharField(model_attr='foo', stored=False)
+    unstored_facet = indexes.CharField(model_attr='foo', stored=False, faceted=True)
+
+    def get_model(self):
+        return MockModel
+
+
 class TestSettings(TestCase):
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
@@ -479,6 +489,22 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'average_rating_exact': {'type': 'float'}
         })
         self.assertEqual(source, {u'excludes': []})
+
+    def test_stored_fields_mapping(self):
+        ui = UnifiedIndex()
+        ui.build(indexes=[ElasticsearchUnstoredMockSearchIndex()])
+        (_content_field_name, _mapping, source) = self.sb.build_schema(ui.all_searchfields())
+        self.assertEqual(source, {u"excludes": ["unstored", "unstored_facet"]})
+
+    def test_stored_fields_query(self):
+        ui = UnifiedIndex()
+        index = ElasticsearchUnstoredMockSearchIndex()
+        ui.build(indexes=[index])
+        self.sb.build_schema(ui.all_searchfields())
+        connections['default']._index = ui
+        sb = connections['default'].get_backend()
+        sb.update(index, self.sample_objs)
+        results = sb.search('*:*')
 
     def test_verify_type(self):
         old_ui = connections['default'].get_unified_index()
