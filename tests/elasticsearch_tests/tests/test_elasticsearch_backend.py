@@ -494,7 +494,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         ui = UnifiedIndex()
         ui.build(indexes=[ElasticsearchUnstoredMockSearchIndex()])
         (_content_field_name, _mapping, source) = self.sb.build_schema(ui.all_searchfields())
-        self.assertEqual(source, {u"excludes": ["unstored", "unstored_facet"]})
+        self.assertItemsEqual(source['excludes'], ["unstored", "unstored_facet"])
+        self.assertEqual(len(source), 1)
 
     def test_stored_fields_query(self):
         ui = UnifiedIndex()
