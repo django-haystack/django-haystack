@@ -117,14 +117,16 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 raise
 
         unified_index = haystack.connections[self.connection_alias].get_unified_index()
-        self.content_field_name, field_mapping = self.build_schema(unified_index.all_searchfields())
+        self.content_field_name, field_mapping, source = self.build_schema(
+            unified_index.all_searchfields())
         current_mapping = {
             'modelresult': {
                 'properties': field_mapping,
                 '_boost': {
                     'name': 'boost',
                     'null_value': 1.0
-                }
+                },
+                '_source': source,
             }
         }
 
@@ -618,6 +620,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             DJANGO_CT: {'type': 'string', 'index': 'not_analyzed', 'include_in_all': False},
             DJANGO_ID: {'type': 'string', 'index': 'not_analyzed', 'include_in_all': False},
         }
+        source_excludes = []
 
         for field_name, field_class in fields.items():
             field_mapping = FIELD_MAPPINGS.get(field_class.field_type, DEFAULT_FIELD_MAPPING).copy()
@@ -634,8 +637,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     del field_mapping['analyzer']
 
             mapping[field_class.index_fieldname] = field_mapping
+            if field_class.stored is False:
+                source_excludes.append(field_name)
 
-        return (content_field_name, mapping)
+        return (content_field_name, mapping, {"excludes": source_excludes})
 
     def _iso_datetime(self, value):
         """
