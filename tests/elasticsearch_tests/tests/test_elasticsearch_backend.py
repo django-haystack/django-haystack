@@ -485,27 +485,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         })
         self.assertEqual(source, {u'excludes': [u'name_exact']})
 
-    def test_stored_fields_mapping(self):
-        ui = UnifiedIndex()
-        ui.build(indexes=[ElasticsearchUnstoredMockSearchIndex()])
-        (_content_field_name, _mapping, source) = self.sb.build_schema(ui.all_searchfields())
-        self.assertItemsEqual(
-            source['excludes'],
-            ["unstored", "unstored_facet", "unstored_facet_exact"])
-        self.assertEqual(len(source), 1)
-
-    def test_stored_fields_query(self):
-        ui = UnifiedIndex()
-        index = ElasticsearchUnstoredMockSearchIndex()
-        ui.build(indexes=[index])
-        self.sb.build_schema(ui.all_searchfields())
-        connections['default']._index = ui
-        sb = connections['default'].get_backend()
-        sb.update(index, self.sample_objs)
-        results = sb.search('*:*')
-        # import ipdb; ipdb.set_trace()
-        # print 
-
     def test_verify_type(self):
         old_ui = connections['default'].get_unified_index()
         ui = UnifiedIndex()
@@ -1426,3 +1405,47 @@ class ElasticsearchFacetingTestCase(TestCase):
         self.assertEqual(counts['dates']['pub_date'], [
             (datetime.datetime(2013, 9, 1), 9),
         ])
+
+
+class StoredFieldsTestCase(TestCase):
+    def setUp(self):
+        super(StoredFieldsTestCase, self).setUp()
+        # Wipe it clean.
+        clear_elasticsearch_index()
+
+        # Stow.
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.es_unstored_index = ElasticsearchUnstoredMockSearchIndex()
+        self.ui.build(indexes=[self.es_unstored_index])
+        connections['default']._index = self.ui
+        self.sb = connections['default'].get_backend()
+        self.sb.existing_mapping = {}
+        self.sb.setup()
+
+        # Fake indexing.
+        mock = MockModel()
+        mock.id = 1
+        self.sb.update(self.es_unstored_index, [mock])
+
+    def tearDown(self):
+        connections['default']._index = self.old_ui
+        super(StoredFieldsTestCase, self).tearDown()
+
+    def test_stored_fields_mapping(self):
+        (_content_field_name, _mapping, source) = self.sb.build_schema(self.ui.all_searchfields())
+        self.assertEqual(
+            sorted(source['excludes']),
+            ["unstored", "unstored_facet", "unstored_facet_exact"])
+        self.assertEqual(len(source), 1)
+
+    def test_stored_fields_query(self):
+        search_kwargs = self.sb.build_search_kwargs('*:*')
+        raw_results = self.sb.conn.search(body=search_kwargs,
+                                          index=self.sb.index_name,
+                                          doc_type='modelresult')
+        document_source = raw_results['hits']['hits'][0]['_source']
+        self.assertIn("text", document_source)
+        self.assertNotIn("unstored", document_source)
+        self.assertNotIn("unstored_facet", document_source)
+        self.assertNotIn("unstored_facet_exact", document_source)
