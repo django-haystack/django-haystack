@@ -306,7 +306,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '1',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel1',
-                'name_exact': 'daniel1',
                 'text': 'Indexed!\n1',
                 'pub_date': '2009-02-24T00:00:00',
                 'id': 'core.mockmodel.1'
@@ -315,7 +314,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '2',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel2',
-                'name_exact': 'daniel2',
                 'text': 'Indexed!\n2',
                 'pub_date': '2009-02-23T00:00:00',
                 'id': 'core.mockmodel.2'
@@ -324,7 +322,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '3',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel3',
-                'name_exact': 'daniel3',
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00',
                 'id': 'core.mockmodel.3'
@@ -342,7 +339,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '2',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel2',
-                'name_exact': 'daniel2',
                 'text': 'Indexed!\n2',
                 'pub_date': '2009-02-23T00:00:00',
                 'id': 'core.mockmodel.2'
@@ -351,7 +347,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '3',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel3',
-                'name_exact': 'daniel3',
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00',
                 'id': 'core.mockmodel.3'
@@ -462,7 +457,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'name': {'type': 'string', 'analyzer': 'snowball'},
             'name_exact': {'index': 'not_analyzed', 'type': 'string'}
         })
-        self.assertEqual(source, {u'excludes': []})
+        self.assertEqual(source, {u'excludes': [u'name_exact']})
 
         ui = UnifiedIndex()
         ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
@@ -488,13 +483,15 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'pub_date': {'type': 'date'},
             'average_rating_exact': {'type': 'float'}
         })
-        self.assertEqual(source, {u'excludes': []})
+        self.assertEqual(source, {u'excludes': [u'name_exact']})
 
     def test_stored_fields_mapping(self):
         ui = UnifiedIndex()
         ui.build(indexes=[ElasticsearchUnstoredMockSearchIndex()])
         (_content_field_name, _mapping, source) = self.sb.build_schema(ui.all_searchfields())
-        self.assertItemsEqual(source['excludes'], ["unstored", "unstored_facet"])
+        self.assertItemsEqual(
+            source['excludes'],
+            ["unstored", "unstored_facet", "unstored_facet_exact"])
         self.assertEqual(len(source), 1)
 
     def test_stored_fields_query(self):
@@ -506,6 +503,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         sb = connections['default'].get_backend()
         sb.update(index, self.sample_objs)
         results = sb.search('*:*')
+        # import ipdb; ipdb.set_trace()
+        # print 
 
     def test_verify_type(self):
         old_ui = connections['default'].get_unified_index()
