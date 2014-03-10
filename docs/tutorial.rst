@@ -256,8 +256,8 @@ which field is the primary field for searching within.
     it won't matter. It's simply a convention to call it ``text``.
 
 Additionally, we're providing ``use_template=True`` on the ``text`` field. This
-allows us to use a data template (rather than error prone concatenation) to
-build the document the search engine will use in searching. You’ll need to
+allows us to use a data template (rather than error-prone concatenation) to
+build the document the search engine will index. You’ll need to
 create a new template inside your template directory called
 ``search/indexes/myapp/note_text.txt`` and place the following inside::
 
