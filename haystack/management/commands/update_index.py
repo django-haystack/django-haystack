@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
 from datetime import timedelta
 from optparse import make_option
 import logging
@@ -278,19 +276,25 @@ class Command(LabelCommand):
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
                     pks_seen = set(smart_bytes(pk) for pk in qs)
-
                     total = len(pks_seen)
                 else:
                     pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
+                    # get the total number of indexes in the search index there might be difference in
+                    # the no of objects in query set and the searchindex.
+                    total = len(SearchQuerySet(using=backend.connection_alias).models(model))
 
                 if self.workers > 0:
                     ghetto_queue = []
 
-                for start in range(0, total, batch_size):
-                    upper_bound = start + batch_size
+                # start deleting objects from back of the search-indexes so that it doesn't miss the objects
+                # when we slice in subsequent runs.
+                for upper_bound in range(total, 0, -batch_size):
+                    start = upper_bound - batch_size
+                    if start < 0:
+                        start = 0
 
                     if self.workers == 0:
-                        do_remove(backend, index, model, pks_seen, start, upper_bound)
+                        do_remove(backend, index, model, pks_seen, start, upper_bound, self.verbosity)
                     else:
                         ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using, self.verbosity))
 
