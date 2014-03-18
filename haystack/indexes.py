@@ -198,7 +198,12 @@ class SearchIndex(threading.local):
         """
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
-            self.backend.update(self, [instance])
+            # also check if this should be removed
+            qs = self.index_queryset()
+            if qs.filter(pk=instance.pk).count() > 0:
+                self.backend.update(self, [instance])
+            else:
+                self.backend.remove(instance)
 
     def remove_object(self, instance, **kwargs):
         """
