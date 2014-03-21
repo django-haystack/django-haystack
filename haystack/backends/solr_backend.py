@@ -213,7 +213,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if range_facets is not None:
             kwargs['facet'] = 'on'
-            for field, options in range_facets:
+            for field, options in range_facets.items():
                 kwargs['facet.range'] = field
                 for key, value in options.items():
                     if key in ['start', 'end', 'gap', 'hardend', 'other', 'include'] or 1:

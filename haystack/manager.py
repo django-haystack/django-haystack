@@ -64,6 +64,9 @@ class SearchIndexManager(object):
     def query_facet(self, field, query):
         return self.get_search_queryset().query_facet(field, query)
 
+    def range_facet(self, field, **options):
+        return self.get_search_queryset().range_facet(field, **options)
+
     def narrow(self, query):
         return self.get_search_queryset().narrow(query)
 
