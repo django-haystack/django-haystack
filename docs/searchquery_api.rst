@@ -306,6 +306,15 @@ Adds a date-based facet on a field.
 
 Adds a query facet on a field.
 
+``add_range_facet``
+~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_range_facet(self, field, **options)
+
+Adds a range facet on a field. Available only for Solr. Supported options are: start, end,
+gap, hardend, other, include. See `Solr wiki
+<http://wiki.apache.org/solr/SimpleFacetParameters#Facet_by_Range>`_ for more information.
+
 ``add_narrow_query``
 ~~~~~~~~~~~~~~~~~~~~
 
