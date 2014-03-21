@@ -105,6 +105,11 @@ class ManagerTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.query_facets), 1)
 
+    def test_range_facets(self):
+        sqs = self.search_index.objects.range_facet('foo', start=0.0, end=100.0, gap=20.0)
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.range_facets), 1)
+
     def test_narrow(self):
         sqs = self.search_index.objects.narrow("content:foo")
         self.assertTrue(isinstance(sqs, SearchQuerySet))
