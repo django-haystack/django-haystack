@@ -752,6 +752,8 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if isinstance(value, six.string_types):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
+            elif isinstance(value, bool):
+                value = PythonData('true' if value else 'false')
             else:
                 value = PythonData(value)
 
