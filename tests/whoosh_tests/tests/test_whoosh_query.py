@@ -6,7 +6,7 @@ from django.test import TestCase
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ
+from haystack.query import SQ, SearchQuerySet
 from core.models import MockModel, AnotherMockModel
 
 
@@ -148,3 +148,9 @@ class WhooshSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:(1 OR 2 OR 3))')
+
+    def test_narrow_sq(self):
+        sqs = SearchQuerySet().narrow(SQ(foo='moof'))
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
+        self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
