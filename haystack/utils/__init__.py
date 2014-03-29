@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import re
 
+import django
 from django.conf import settings
 from django.utils import six
 
@@ -67,8 +68,15 @@ def _lookup_identifier_method():
 get_identifier = _lookup_identifier_method()
 
 
+if django.VERSION >= (1, 7):
+    def get_model_ct_tuple(model):
+        return (model._meta.app_label, model._meta.model_name)
+else:
+    def get_model_ct_tuple(model):
+        return (model._meta.app_label, model._meta.module_name)
+
 def get_model_ct(model):
-    return "%s.%s" % (model._meta.app_label, model._meta.module_name)
+    return "%s.%s" % get_model_ct_tuple(model)
 
 
 def get_facet_field_name(fieldname):
