@@ -29,11 +29,8 @@ def default_get_identifier(obj_or_string):
 
         return obj_or_string
 
-    return u"%s.%s.%s" % (
-        obj_or_string._meta.app_label,
-        obj_or_string._meta.module_name,
-        obj_or_string._get_pk_val()
-    )
+    return u"%s.%s" % (get_model_ct(obj_or_string),
+                       obj_or_string._get_pk_val())
 
 
 def _lookup_identifier_method():
