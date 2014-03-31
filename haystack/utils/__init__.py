@@ -30,7 +30,7 @@ def default_get_identifier(obj_or_string):
 
     return u"%s.%s.%s" % (
         obj_or_string._meta.app_label,
-        obj_or_string._meta.module_name,
+        obj_or_string._meta.model_name,
         obj_or_string._get_pk_val()
     )
 
@@ -68,7 +68,7 @@ get_identifier = _lookup_identifier_method()
 
 
 def get_model_ct(model):
-    return "%s.%s" % (model._meta.app_label, model._meta.module_name)
+    return "%s.%s" % (model._meta.app_label, model._meta.model_name)
 
 
 def get_facet_field_name(fieldname):

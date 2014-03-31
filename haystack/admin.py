@@ -121,7 +121,7 @@ class SearchModelAdmin(ModelAdmin):
             'All %(total_count)s selected', changelist.result_count)
 
         context = {
-            'module_name': force_text(self.model._meta.verbose_name_plural),
+            'model_name': force_text(self.model._meta.verbose_name_plural),
             'selection_note': selection_note % {'count': len(changelist.result_list)},
             'selection_note_all': selection_note_all % {'total_count': changelist.result_count},
             'title': changelist.title,

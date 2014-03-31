@@ -222,7 +222,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 models_to_delete = []
 
                 for model in models:
-                    models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
+                    models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.model_name))
 
                 # Delete by query in Elasticsearch asssumes you're dealing with
                 # a ``query`` root object. :/
@@ -389,7 +389,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
         if models and len(models):
-            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.model_name) for model in models])
         elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.
