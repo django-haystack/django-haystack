@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils import six
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact, Raw
 from haystack.models import SearchResult
@@ -132,7 +132,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult), distance_point=kwargs.get('distance_point'))
 
-    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+    def build_search_kwargs(self, query_string, sort_by=None, query_operator=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
@@ -164,6 +164,10 @@ class SolrSearchBackend(BaseSearchBackend):
 
                 # Regular sorting.
                 kwargs['sort'] = sort_by
+
+        if query_operator is not None:
+            if query_operator != DEFAULT_OPERATOR:
+                kwargs['q.op'] = query_operator
 
         if start_offset is not None:
             kwargs['start'] = start_offset
@@ -643,6 +647,9 @@ class SolrSearchQuery(BaseSearchQuery):
                     order_by_list.append('%s asc' % order_by)
 
             search_kwargs['sort_by'] = ", ".join(order_by_list)
+
+        if self.query_operator:
+            search_kwargs['query_operator'] = self.query_operator
 
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
