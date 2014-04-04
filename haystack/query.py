@@ -328,6 +328,7 @@ class SearchQuerySet(object):
     def query_operator(self, op):
         clone = self._clone()
         clone.query.set_query_operator(op)
+        return clone
 
     def highlight(self):
         """Adds highlighting to the results."""
