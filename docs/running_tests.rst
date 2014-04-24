@@ -78,11 +78,7 @@ Configuring Solr
 ----------------
 
 Haystack assumes that you have a Solr server running on port ``9001`` which uses the schema and
-configuration provided in the ``tests/`` directory. Currently, these steps will result in a working
-test server:
+configuration provided in the ``tests/`` directory. For convenience, a script is provided which
+will download, configure and start a test Solr server::
 
-#. Download the current Solr release from http://lucene.apache.org/solr/
-#. Copy ``tests/solrconfig.xml`` to ``example/solr/conf/solrconfig.xml``
-#. Copy ``tests/solr_test_schema.xml`` to ``example/solr/conf/schema.xml``
-#. Change into the ``example`` directory
-#. Start Solr: ``java -Djetty.port=9001 -jar start.jar``
+    tests/start-solr-test-server.sh

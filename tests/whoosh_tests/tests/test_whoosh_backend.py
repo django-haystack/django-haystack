@@ -1,21 +1,23 @@
-from datetime import timedelta
-from decimal import Decimal
 import os
 import shutil
-from whoosh.fields import TEXT, KEYWORD, NUMERIC, DATETIME, BOOLEAN
-from whoosh.qparser import QueryParser
+from datetime import timedelta
+from decimal import Decimal
+
 from django.conf import settings
-from django.utils.datetime_safe import datetime, date
-from django.utils import unittest
 from django.test import TestCase
-from haystack import connections, connection_router, reset_search_queries
-from haystack import indexes
+from django.utils import unittest
+from django.utils.datetime_safe import date, datetime
+from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
+from whoosh.qparser import QueryParser
+
+from core.models import AFourthMockModel, AnotherMockModel, MockModel
+from core.tests.mocks import MockSearchResult
+from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import SearchBackendError
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, SQ
 from haystack.utils.loading import UnifiedIndex
-from core.models import MockModel, AnotherMockModel, AFourthMockModel
-from core.tests.mocks import MockSearchResult
 
 
 class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -313,6 +315,13 @@ class WhooshSearchBackendTestCase(TestCase):
 
         results = self.sb.search(u'*', sort_by=['-id'])
         self.assertEqual([result.pk for result in results['results']], [u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'23', u'22', u'21', u'20', u'2', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'1'])
+
+        results = self.sb.search(u'*', sort_by=['-pub_date', '-id'])
+        self.assertEqual([result.pk for result in results['results']],
+                         [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12',
+                          u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'2', u'3', u'1' ])
+
+        self.assertRaises(SearchBackendError, self.sb.search, u'*', sort_by=['-pub_date', 'id'])
 
     def test__from_python(self):
         self.assertEqual(self.sb._from_python('abc'), u'abc')
@@ -735,7 +744,7 @@ class LiveWhooshSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.auto_query('Indexed!')
-        fire_the_iterator_and_fill_cache = [result for result in results]
+        [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(connections['default'].queries), 1)
 
@@ -785,7 +794,6 @@ class LiveWhooshMultiSearchQuerySetTestCase(TestCase):
         super(LiveWhooshMultiSearchQuerySetTestCase, self).setUp()
 
         # Stow.
-        temp_path = os.path.join('tmp', 'test_whoosh_query')
         self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['default']['PATH']
         self.old_ui = connections['default'].get_unified_index()
         self.ui = UnifiedIndex()

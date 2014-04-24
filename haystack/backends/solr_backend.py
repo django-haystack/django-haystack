@@ -40,7 +40,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if not 'URL' in connection_options:
             raise ImproperlyConfigured("You must specify a 'URL' in your settings for connection '%s'." % connection_alias)
 
-        self.conn = Solr(connection_options['URL'], timeout=self.timeout)
+        self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
 
     def update(self, index, iterable, commit=True):
@@ -78,7 +78,7 @@ class SolrSearchBackend(BaseSearchBackend):
         try:
             kwargs = {
                 'commit': commit,
-                ID: solr_id
+                'id': solr_id
             }
             self.conn.delete(**kwargs)
         except (IOError, SolrError) as e:
@@ -689,6 +689,9 @@ class SolrSearchQuery(BaseSearchQuery):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         search_kwargs = self.build_params(spelling_query, **kwargs)
+
+        if kwargs:
+            search_kwargs.update(kwargs)
 
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])

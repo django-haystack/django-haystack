@@ -97,7 +97,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not 'INDEX_NAME' in connection_options:
             raise ImproperlyConfigured("You must specify a 'INDEX_NAME' in your settings for connection '%s'." % connection_alias)
 
-        self.conn = elasticsearch.Elasticsearch(connection_options['URL'], timeout=self.timeout)
+        self.conn = elasticsearch.Elasticsearch(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.index_name = connection_options['INDEX_NAME']
         self.log = logging.getLogger('haystack')
         self.setup_complete = False
@@ -197,7 +197,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 return
 
         try:
-            self.conn.delete(index=self.index_name, doc_type='modelresult', id=doc_id)
+            self.conn.delete(index=self.index_name, doc_type='modelresult', id=doc_id, ignore=404)
 
             if commit:
                 self.conn.indices.refresh(index=self.index_name)
@@ -215,7 +215,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         try:
             if not models:
-                self.conn.indices.delete(index=self.index_name)
+                self.conn.indices.delete(index=self.index_name, ignore=404)
                 self.setup_complete = False
                 self.existing_mapping = {}
             else:
@@ -398,17 +398,14 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             model_choices = []
 
         if len(model_choices) > 0:
-            if narrow_queries is None:
-                narrow_queries = set()
-
             filters.append({"terms": {DJANGO_CT: model_choices}})
 
-        if narrow_queries:
+        for q in narrow_queries:
             filters.append({
                 'fquery': {
                     'query': {
                         'query_string': {
-                            'query': u' AND '.join(list(narrow_queries)),
+                            'query': q
                         },
                     },
                     '_cache': True,
@@ -418,17 +415,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
 
-            ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(within['point_1'], within['point_2'])
+            ((south, west), (north, east)) = generate_bounding_box(within['point_1'], within['point_2'])
             within_filter = {
                 "geo_bounding_box": {
                     within['field']: {
                         "top_left": {
-                            "lat": max_lat,
-                            "lon": min_lng
+                            "lat": north,
+                            "lon": west
                         },
                         "bottom_right": {
-                            "lat": min_lat,
-                            "lon": max_lng
+                            "lat": south,
+                            "lon": east
                         }
                     }
                 },
@@ -548,8 +545,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             result_class = SearchResult
 
         if self.include_spelling and 'suggest' in raw_results:
-            raw_suggest = raw_results['suggest']['suggest']
-            spelling_suggestion = ' '.join([word['text'] if len(word['options']) == 0 else word['options'][0]['text'] for word in raw_suggest])
+            raw_suggest = raw_results['suggest'].get('suggest')
+            if raw_suggest:
+                spelling_suggestion = ' '.join([word['text'] if len(word['options']) == 0 else word['options'][0]['text'] for word in raw_suggest])
 
         if 'facets' in raw_results:
             facets = {
@@ -617,53 +615,24 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
     def build_schema(self, fields):
         content_field_name = ''
-        mapping = {}
+        mapping = {
+            DJANGO_CT: {'type': 'string', 'index': 'not_analyzed', 'include_in_all': False},
+            DJANGO_ID: {'type': 'string', 'index': 'not_analyzed', 'include_in_all': False},
+        }
 
         for field_name, field_class in fields.items():
-            field_mapping = {
-                'boost': field_class.boost,
-                'index': 'analyzed',
-                'store': 'yes',
-                'type': 'string',
-            }
+            field_mapping = FIELD_MAPPINGS.get(field_class.field_type, DEFAULT_FIELD_MAPPING).copy()
+            if field_class.boost != 1.0:
+                field_mapping['boost'] = field_class.boost
 
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
 
-            # DRL_FIXME: Perhaps move to something where, if none of these
-            #            checks succeed, call a custom method on the form that
-            #            returns, per-backend, the right type of storage?
-            if field_class.field_type in ['date', 'datetime']:
-                field_mapping['type'] = 'date'
-            elif field_class.field_type == 'integer':
-                field_mapping['type'] = 'long'
-            elif field_class.field_type == 'float':
-                field_mapping['type'] = 'float'
-            elif field_class.field_type == 'boolean':
-                field_mapping['type'] = 'boolean'
-            elif field_class.field_type == 'ngram':
-                field_mapping['analyzer'] = "ngram_analyzer"
-            elif field_class.field_type == 'edge_ngram':
-                field_mapping['analyzer'] = "edgengram_analyzer"
-            elif field_class.field_type == 'location':
-                field_mapping['type'] = 'geo_point'
-
-            # The docs claim nothing is needed for multivalue...
-            # if field_class.is_multivalued:
-            #     field_data['multi_valued'] = 'true'
-
-            if field_class.stored is False:
-                field_mapping['store'] = 'no'
-
             # Do this last to override `text` fields.
-            if field_class.indexed is False or hasattr(field_class, 'facet_for'):
-                field_mapping['index'] = 'not_analyzed'
-
-            if field_mapping['type'] == 'string' and field_class.indexed:
-                field_mapping["term_vector"] = "with_positions_offsets"
-
-                if not hasattr(field_class, 'facet_for') and not field_class.field_type in('ngram', 'edge_ngram'):
-                    field_mapping["analyzer"] = "snowball"
+            if field_mapping['type'] == 'string':
+                if field_class.indexed is False or hasattr(field_class, 'facet_for'):
+                    field_mapping['index'] = 'not_analyzed'
+                    del field_mapping['analyzer']
 
             mapping[field_class.index_fieldname] = field_mapping
 
@@ -729,6 +698,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return value
 
+# DRL_FIXME: Perhaps move to something where, if none of these
+#            match, call a custom method on the form that returns, per-backend,
+#            the right type of storage?
+DEFAULT_FIELD_MAPPING = {'type': 'string', 'analyzer': 'snowball'}
+FIELD_MAPPINGS = {
+    'edge_ngram': {'type': 'string', 'analyzer': 'edgengram_analyzer'},        
+    'ngram':      {'type': 'string', 'analyzer': 'ngram_analyzer'},        
+    'date':       {'type': 'date'},
+    'datetime':   {'type': 'date'},
+
+    'location':   {'type': 'geo_point'},        
+    'boolean':    {'type': 'boolean'},
+    'float':      {'type': 'float'},
+    'long':       {'type': 'long'},
+    'integer':    {'type': 'long'},
+}
 
 
 # Sucks that this is almost an exact copy of what's in the Solr backend,
@@ -920,6 +905,10 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
         search_kwargs = self.build_params(spelling_query, **kwargs)
+
+        if kwargs:
+            search_kwargs.update(kwargs)
+
         results = self.backend.search(final_query, **search_kwargs)
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
