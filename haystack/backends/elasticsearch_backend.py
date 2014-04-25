@@ -302,7 +302,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                             }
                         }
                         try:
-
                             kwargs['query']['function_score']['random_score']['seed'] = int(seed)
                         except ValueError:
                             pass
