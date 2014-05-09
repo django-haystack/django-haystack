@@ -95,7 +95,7 @@ class SearchQuerySet(object):
                 self._result_count = 0
 
         # This needs to return the actual number of hits, not what's in the cache.
-        return self._result_count - self._ignored_result_count
+        return max([self._result_count - self._ignored_result_count, 0])
 
     def __iter__(self):
         if self._cache_is_full():
@@ -122,7 +122,7 @@ class SearchQuerySet(object):
         if not self.query.has_run():
             return False
 
-        if len(self) <= 0:
+        if len(self) == 0:
             return True
 
         try:
