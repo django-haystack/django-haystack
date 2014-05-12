@@ -616,7 +616,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     from whoosh import analysis
                     from whoosh.highlight import highlight, ContextFragmenter, UppercaseFormatter
                     sa = analysis.StemmingAnalyzer()
-                    terms = [term.replace('*', '') for term in query_string.split()]
+                    terms = [token.text for token in sa(query_string)]
 
                     additional_fields['highlighted'] = {
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name),
