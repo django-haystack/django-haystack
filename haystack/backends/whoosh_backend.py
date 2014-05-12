@@ -619,7 +619,11 @@ class WhooshSearchBackend(BaseSearchBackend):
                     terms = [term.replace('*', '') for term in query_string.split()]
 
                     additional_fields['highlighted'] = {
-                        self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
+                        self.content_field_name: [highlight(additional_fields.get(self.content_field_name),
+                                                            terms,
+                                                            sa,
+                                                            ContextFragmenter(),
+                                                            UppercaseFormatter())],
                     }
 
                 result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
