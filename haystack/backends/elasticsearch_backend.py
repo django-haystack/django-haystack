@@ -440,9 +440,20 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         if dwithin is not None:
             lng, lat = dwithin['point'].get_coords()
+
+            # NB: the 1.0.0 release of elasticsearch introduce an
+            #     incompatible change on the distance filter formating
+            if elasticsearch.VERSION >= (1, 0, 0):
+                distance = "%(dist)f%(unit)s" % {
+                        'dist': dwithin['distance'].km,
+                        'unit': "km"
+                    }
+            else:
+                distance = dwithin['distance'].km
+
             dwithin_filter = {
                 "geo_distance": {
-                    "distance": dwithin['distance'].km,
+                    "distance": distance,
                     dwithin['field']: {
                         "lat": lat,
                         "lon": lng
