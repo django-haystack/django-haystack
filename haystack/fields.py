@@ -98,8 +98,8 @@ class SearchField(object):
                     else:
                         raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(obj), attr))
 
-            if callable(current_object):
-                return current_object()
+                if callable(current_object):
+                    current_object = current_object()
 
             return current_object
 
