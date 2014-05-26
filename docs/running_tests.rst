@@ -41,6 +41,13 @@ list of possible options::
 
 .. _nose: https://nose.readthedocs.org/en/latest/
 
+Or, to run the Elasticsearch backend's tests::
+
+    cd django-haystack/tests
+    export PYTHONPATH=`pwd`/..:`pwd`
+    export GEOS_LIBRARY_PATH=/opt/boxen/homebrew/lib/libgeos_c.dylib
+    export GDAL_LIBRARY_PATH=/opt/boxen/homebrew/lib/libgdal.dylib
+    django-admin.py test elasticsearch_tests --settings=elasticsearch_settings
 
 Configuring Solr
 ================

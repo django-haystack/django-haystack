@@ -444,7 +444,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             # NB: the 1.0.0 release of elasticsearch introduce an
             #     incompatible change on the distance filter formating
             if elasticsearch.VERSION >= (1, 0, 0):
-                distance = "%(dist)f%(unit)s" % {
+                distance = "%(dist).6f%(unit)s" % {
                         'dist': dwithin['distance'].km,
                         'unit': "km"
                     }
