@@ -222,11 +222,6 @@ class WhooshSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search(u'*')['hits'], 23)
         self.assertEqual([result.pk for result in self.sb.search(u'*')['results']], [u'%s' % i for i in range(1, 24)])
 
-        self.assertEqual(self.sb.search(u'', highlight=True), {'hits': 0, 'results': []})
-        self.assertEqual(self.sb.search(u'index*', highlight=True)['hits'], 23)
-        # DRL_FIXME: Uncomment once highlighting works.
-        # self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index*', highlight=True)['results']], ['<em>Indexed</em>!\n3', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n1'])
-
         self.assertEqual(self.sb.search(u'Indexe')['hits'], 23)
         self.assertEqual(self.sb.search(u'Indexe')['spelling_suggestion'], u'indexed')
 
@@ -270,6 +265,17 @@ class WhooshSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_highlight(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+        self.assertEqual(len(self.whoosh_search(u'*')), 23)
+
+        self.assertEqual(self.sb.search(u'', highlight=True), {'hits': 0, 'results': []})
+        self.assertEqual(self.sb.search(u'index*', highlight=True)['hits'], 23)
+
+        query = self.sb.search('Index*', highlight=True)['results']
+        result = [result.highlighted['text'][0] for result in query]
+        self.assertEqual(result, ['<em>Indexed</em>!\n%d' % i for i in range(1, 24)])
 
     def test_search_all_models(self):
         wamsi = WhooshAnotherMockSearchIndex()
