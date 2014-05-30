@@ -226,7 +226,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 # Delete by query in Elasticsearch asssumes you're dealing with
                 # a ``query`` root object. :/
-                query = {'query_string': {'query': " OR ".join(models_to_delete)}}
+                query = {'query': {'query_string': {'query': " OR ".join(models_to_delete)}}}
                 self.conn.delete_by_query(index=self.index_name, doc_type='modelresult', body=query)
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
