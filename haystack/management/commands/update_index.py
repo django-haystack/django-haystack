@@ -37,6 +37,57 @@ APP = 'app'
 MODEL = 'model'
 
 
+def is_app_or_model(label):
+    label_bits = label.split('.')
+
+    if len(label_bits) == 1:
+        return APP
+    elif len(label_bits) == 2:
+        return MODEL
+    else:
+        raise ImproperlyConfigured("'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
+
+
+try:
+    from django.apps import apps
+
+    def load_apps():
+        return [x.label for x in apps.get_app_configs()]
+
+    def get_models(label):
+        if is_app_or_model(label) == APP:
+            return apps.get_app_config(label).get_models()
+        else:
+            app_label, model_name = label.split('.')
+            return apps.get_app_config(app_label).get_model(model_name)
+
+except ImportError:
+    def load_apps():
+        from django.db.models import get_app
+        # Do all, in an INSTALLED_APPS sorted order.
+        items = []
+
+        for app in settings.INSTALLED_APPS:
+            try:
+                app_label = app.split('.')[-1]
+                loaded_app = get_app(app_label)
+                items.append(app_label)
+            except:
+                # No models, no problem.
+                pass
+        return items
+
+    def get_models(label):
+        from django.db.models import get_app, get_models as _get_models, get_model
+        app_or_model = is_app_or_model(label)
+
+        if app_or_model == APP:
+            app_mod = get_app(label)
+            return _get_models(app_mod)
+        else:
+            app_label, model_name = label.split('.')
+            return [get_model(app_label, model_name)]
+
 def worker(bits):
     # We need to reset the connections, otherwise the different processes
     # will try to share the connection, which causes things to blow up.
@@ -179,41 +230,9 @@ class Command(LabelCommand):
                 pass
 
         if not items:
-            from django.db.models import get_app
-            # Do all, in an INSTALLED_APPS sorted order.
-            items = []
-
-            for app in settings.INSTALLED_APPS:
-                try:
-                    app_label = app.split('.')[-1]
-                    loaded_app = get_app(app_label)
-                    items.append(app_label)
-                except:
-                    # No models, no problem.
-                    pass
+            items = load_apps()
 
         return super(Command, self).handle(*items, **options)
-
-    def is_app_or_model(self, label):
-        label_bits = label.split('.')
-
-        if len(label_bits) == 1:
-            return APP
-        elif len(label_bits) == 2:
-            return MODEL
-        else:
-            raise ImproperlyConfigured("'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
-
-    def get_models(self, label):
-        from django.db.models import get_app, get_models, get_model
-        app_or_model = self.is_app_or_model(label)
-
-        if app_or_model == APP:
-            app_mod = get_app(label)
-            return get_models(app_mod)
-        else:
-            app_label, model_name = label.split('.')
-            return [get_model(app_label, model_name)]
 
     def handle_label(self, label, **options):
         for using in self.backends:
@@ -232,7 +251,7 @@ class Command(LabelCommand):
         if self.workers > 0:
             import multiprocessing
 
-        for model in self.get_models(label):
+        for model in get_models(label):
             try:
                 index = unified_index.get_index(model)
             except NotHandled:
