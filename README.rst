@@ -48,5 +48,5 @@ Haystack has a relatively easily-met set of requirements.
 * Django 1.5+
 
 Additionally, each backend has its own requirements. You should refer to
-http://docs.haystacksearch.org/dev/installing_search_engines.html for more
+http://django-haystack.readthedocs.org/en/latest/installing_search_engines.html for more
 details.
