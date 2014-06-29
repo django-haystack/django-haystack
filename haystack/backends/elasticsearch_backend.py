@@ -484,7 +484,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             raw_results = self.conn.search(body=search_kwargs,
                                            index=self.index_name,
-                                           doc_type='modelresult')
+                                           doc_type='modelresult',
+                                           _source=True)
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
@@ -703,12 +704,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 #            the right type of storage?
 DEFAULT_FIELD_MAPPING = {'type': 'string', 'analyzer': 'snowball'}
 FIELD_MAPPINGS = {
-    'edge_ngram': {'type': 'string', 'analyzer': 'edgengram_analyzer'},        
-    'ngram':      {'type': 'string', 'analyzer': 'ngram_analyzer'},        
+    'edge_ngram': {'type': 'string', 'analyzer': 'edgengram_analyzer'},
+    'ngram':      {'type': 'string', 'analyzer': 'ngram_analyzer'},
     'date':       {'type': 'date'},
     'datetime':   {'type': 'date'},
 
-    'location':   {'type': 'geo_point'},        
+    'location':   {'type': 'geo_point'},
     'boolean':    {'type': 'boolean'},
     'float':      {'type': 'float'},
     'long':       {'type': 'long'},
