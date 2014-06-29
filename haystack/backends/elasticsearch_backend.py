@@ -490,7 +490,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             raw_results = self.conn.search(body=search_kwargs,
                                            index=self.index_name,
-                                           doc_type='modelresult')
+                                           doc_type='modelresult',
+                                           _source=True)
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
