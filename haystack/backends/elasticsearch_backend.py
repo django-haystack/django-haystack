@@ -112,7 +112,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # mapping.
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
-        except pyelasticsearch.ElasticHttpNotFoundError as inst:
+        except elasticsearch.RequestError as inst:
             # we authorize no initial mapping
             if inst.status_code != 404:
                 raise
@@ -138,14 +138,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             need_update_settings = False
             try:
                 # Make sure the index is there first.
-                self.conn.indices.create_index(self.index_name, self.DEFAULT_SETTINGS)
-            except pyelasticsearch.IndexAlreadyExistsError:
-                need_update_settings = True
-                self.log.info("Index already exists.")
-            except pyelasticsearch.ElasticHttpError as inst:
-                # sometimes the `pyelasticsearch.IndexAlreadyExistsError` is not raised
-                # so we got to catch it the old way
-                if inst.status_code == 400 and 'Index already exists' in inst.error:
+                self.conn.indices.create(self.index_name, self.DEFAULT_SETTINGS)
+            except elasticsearch.RequestError as inst:
+                if inst.status_code != 404:
                     need_update_settings = True
                     self.log.info("Index already exists.")
                 else:
@@ -157,12 +152,14 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             if need_update_settings:
                 # Or update the index settings
-                self.conn.close_index(self.index_name)
-                self.conn.update_settings(self.index_name, self.DEFAULT_SETTINGS)
-                self.conn.open_index(self.index_name)
+                self.conn.indices.close(self.index_name)
+                self.conn.indices.put_settings(index=self.index_name,
+                    body=self.DEFAULT_SETTINGS)
+                self.conn.indices.open(self.index_name)
 
             try:
-                self.conn.indices.put_mapping(self.index_name, 'modelresult', current_mapping)
+                self.conn.indices.put_mapping(doc_type='modelresult',
+                    index=self.index_name, body=current_mapping)
                 self.existing_mapping = current_mapping
             except Exception as inst:
                 if not self.silently_fail:
