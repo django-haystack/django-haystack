@@ -112,10 +112,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # mapping.
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
-        except elasticsearch.RequestError as inst:
+        except elasticsearch.NotFoundError as inst:
             # we authorize no initial mapping
-            if inst.status_code != 404:
-                raise
             self.log.info("No initial mapping, it will be created.")
         except Exception as inst:
             if not self.silently_fail:
@@ -167,7 +165,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 self.log.error(inst)
 
         # Wait for cluster to be ready before running any bulk indexing on it
-        self.conn.health(self.index_name, wait_for_status='yellow')
+        self.conn.cluster.health(self.index_name, wait_for_status='yellow')
 
         self.setup_complete = True
 
