@@ -194,13 +194,11 @@ class SearchQuerySet(object):
 
         # Check if we wish to load all objects.
         if self._load_all:
-            original_results = []
             models_pks = {}
             loaded_objects = {}
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.
@@ -722,13 +720,11 @@ class RelatedSearchQuerySet(SearchQuerySet):
 
         # Check if we wish to load all objects.
         if self._load_all:
-            original_results = []
             models_pks = {}
             loaded_objects = {}
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.
