@@ -18,6 +18,7 @@ from haystack.utils import log as logging
 try:
     import elasticsearch
     from elasticsearch.helpers import bulk_index
+    from elasticsearch.exceptions import NotFoundError
 except ImportError:
     raise MissingDependency("The 'elasticsearch' backend requires the installation of 'elasticsearch'. Please refer to the documentation.")
 
@@ -112,6 +113,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # mapping.
         try:
             self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
+        except NotFoundError:
+            pass
         except Exception:
             if not self.silently_fail:
                 raise
