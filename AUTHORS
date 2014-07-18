@@ -86,6 +86,8 @@ Thanks to
     * Revolution Systems & The Python Software Foundation for funding a significant portion of the port to Python 3!
     * Artem Kostiuk (postatum) for patch allowing to search for slash character in ElasticSearch since Lucene 4.0.
     * Luis Barrueco (luisbarrueco) for a simple fix regarding updating indexes using multiple backends.
+    * parruc for basic Whoosh faceting support
+    * Jens Kadenbach (audax) for updating and testing Whoosh faceting support
     * Szymon Teżewski (jasisz) for an update to the bounding-box calculation for spatial queries
     * Chris Wilson (qris) and Orlando Fiol (overflow) for an update allowing the use of multiple order_by()
       fields with Whoosh as long as they share a consistent sort direction
