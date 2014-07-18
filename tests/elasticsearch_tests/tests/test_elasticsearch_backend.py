@@ -3,6 +3,7 @@ import datetime
 from decimal import Decimal
 import logging as std_logging
 import operator
+import random
 
 import elasticsearch
 from django.conf import settings
@@ -726,6 +727,19 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(connections['default'].queries), 3)
+
+    def test_random_order_without_seed(self):
+        reset_search_queries()
+        results1 = self.sqs.all().order_by('?')
+        results2 = self.sqs.all().order_by('?')
+        self.assertNotEqual([x.pk for x in results1], [x.pk for x in results2])
+
+    def test_random_order_with_seed(self):
+        reset_search_queries()
+        seed = random.randint(0, 1000000)
+        results1 = self.sqs.all().order_by('?%s' % seed)
+        results2 = self.sqs.all().order_by('?%s' % seed)
+        self.assertEqual([x.pk for x in results1], [x.pk for x in results2])
 
     def test___and__(self):
         sqs1 = self.sqs.filter(content='foo')
