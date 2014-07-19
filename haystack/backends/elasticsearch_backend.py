@@ -8,7 +8,7 @@ from django.db.models.loading import get_model
 from django.utils import six
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, DEFAULT_OPERATOR, FUZZY_MIN_SIM, FUZZY_MAX_EXPANSIONS
 from haystack.exceptions import MissingDependency, MoreLikeThisError
 from haystack.inputs import PythonData, Clean, Exact, Raw
 from haystack.models import SearchResult
@@ -88,6 +88,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             }
         }
     }
+
 
     def __init__(self, connection_alias, **connection_options):
         super(ElasticsearchSearchBackend, self).__init__(connection_alias, **connection_options)
@@ -265,6 +266,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                         'query': query_string,
                         'analyze_wildcard': True,
                         'auto_generate_phrase_queries': True,
+                        'fuzzy_min_sim': FUZZY_MIN_SIM,
+                        'fuzzy_max_expansions': FUZZY_MAX_EXPANSIONS,
                     },
                 },
             }
@@ -495,7 +498,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
             raw_results = {}
 
-        return self._process_results(raw_results,
+        return self._process_results(
+            raw_results,
             highlight=kwargs.get('highlight'),
             result_class=kwargs.get('result_class', SearchResult),
             distance_point=kwargs.get('distance_point'), geo_sort=geo_sort)
@@ -706,16 +710,16 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 #            the right type of storage?
 DEFAULT_FIELD_MAPPING = {'type': 'string', 'analyzer': 'snowball'}
 FIELD_MAPPINGS = {
-    'edge_ngram': {'type': 'string', 'analyzer': 'edgengram_analyzer'},        
-    'ngram':      {'type': 'string', 'analyzer': 'ngram_analyzer'},        
-    'date':       {'type': 'date'},
-    'datetime':   {'type': 'date'},
+    'edge_ngram': {'type': 'string', 'analyzer': 'edgengram_analyzer'},
+    'ngram': {'type': 'string', 'analyzer': 'ngram_analyzer'},
+    'date': {'type': 'date'},
+    'datetime': {'type': 'date'},
 
-    'location':   {'type': 'geo_point'},        
-    'boolean':    {'type': 'boolean'},
-    'float':      {'type': 'float'},
-    'long':       {'type': 'long'},
-    'integer':    {'type': 'long'},
+    'location': {'type': 'geo_point'},
+    'boolean': {'type': 'boolean'},
+    'float': {'type': 'float'},
+    'long': {'type': 'long'},
+    'integer': {'type': 'long'},
 }
 
 
@@ -781,12 +785,13 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             'gte': u'[%s TO *]',
             'lt': u'{* TO %s}',
             'lte': u'[* TO %s]',
+            'fuzzy': u'%s~',
         }
 
         if value.post_process is False:
             query_frag = prepared_value
         else:
-            if filter_type in ['contains', 'startswith']:
+            if filter_type in ['contains', 'startswith', 'fuzzy']:
                 if value.input_type_name == 'exact':
                     query_frag = prepared_value
                 else:

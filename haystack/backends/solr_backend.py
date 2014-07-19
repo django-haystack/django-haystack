@@ -341,8 +341,8 @@ class SolrSearchBackend(BaseSearchBackend):
         if result_class is None:
             result_class = SearchResult
 
-        if hasattr(raw_results,'stats'):
-            stats = raw_results.stats.get('stats_fields',{})
+        if hasattr(raw_results, 'stats'):
+            stats = raw_results.stats.get('stats_fields', {})
 
         if hasattr(raw_results, 'facets'):
             facets = {
@@ -563,12 +563,13 @@ class SolrSearchQuery(BaseSearchQuery):
             'gte': u'[%s TO *]',
             'lt': u'{* TO %s}',
             'lte': u'[* TO %s]',
+            'fuzzy': u'%s~',
         }
 
         if value.post_process is False:
             query_frag = prepared_value
         else:
-            if filter_type in ['contains', 'startswith']:
+            if filter_type in ['contains', 'startswith', 'fuzzy']:
                 if value.input_type_name == 'exact':
                     query_frag = prepared_value
                 else:
@@ -697,7 +698,7 @@ class SolrSearchQuery(BaseSearchQuery):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
-        self._stats = results.get('stats',{})
+        self._stats = results.get('stats', {})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
 
     def run_mlt(self, **kwargs):
