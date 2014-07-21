@@ -55,6 +55,24 @@ LOCALS = threading.local()
 LOCALS.RAM_STORE = None
 
 
+class ScoredResultsPage(ResultsPage):
+    """
+    A wrapper around the standard ResultsPage, to fix the fact that
+    a Results object's len() is not indicitive of the scored result set anymore;
+    instead we have to use scored_length()
+    """
+    def __init__(self, results, pagenum, pagelen=10):
+        # swap the Results out for a list of the real items, whose
+        # length is checked in the super method.
+        swapped_results = results.top_n
+        super(ScoredResultsPage, self).__init__(results=swapped_results,
+                                                pagenum=pagenum,
+                                                pagelen=pagelen)
+        # Having let the super method calculate page information from the
+        # correct length, restore the original Results.
+        self.results = results
+
+
 class WhooshSearchBackend(BaseSearchBackend):
     # Word reserved by Whoosh for special use.
     RESERVED_WORDS = (
@@ -393,8 +411,9 @@ class WhooshSearchBackend(BaseSearchBackend):
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
-
-        self.index = self.index.refresh()
+            # We only need to refresh the index if we ended up needing to
+            # narrow the search.
+            self.index = self.index.refresh()
 
         if self.index.doc_count():
             searcher = self.index.searcher()
@@ -522,10 +541,11 @@ class WhooshSearchBackend(BaseSearchBackend):
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                    narrowed_results = recent_narrowed_results
+            # We only need to refresh the index if we ended up needing to
+            # narrow the search.
+            self.index = self.index.refresh()
 
         page_num, page_length = self.calculate_page(start_offset, end_offset)
-
-        self.index = self.index.refresh()
         raw_results = EmptyResults()
 
         if self.index.doc_count():
@@ -541,8 +561,12 @@ class WhooshSearchBackend(BaseSearchBackend):
             if narrowed_results is not None and hasattr(raw_results, 'filter'):
                 raw_results.filter(narrowed_results)
 
+        page_klass = ResultsPage
+        if hasattr(raw_results, 'top_n'):
+            page_klass = ScoredResultsPage
+
         try:
-            raw_page = ResultsPage(raw_results, page_num, page_length)
+            raw_page = page_klass(raw_results, page_num, page_length)
         except ValueError:
             if not self.silently_fail:
                 raise
@@ -587,7 +611,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
 
         for doc_offset, raw_result in enumerate(raw_page):
-            score = raw_page.score(doc_offset) or 0
             app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
@@ -622,7 +645,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                         self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
                     }
 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result.score or 0, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
