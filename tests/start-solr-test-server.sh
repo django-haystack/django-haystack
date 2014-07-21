@@ -2,7 +2,7 @@
 
 set -e
 
-export TEST_ROOT=$(realpath $( dirname $0 ) )
+export TEST_ROOT=$(cd $(dirname $0) && pwd)
 
 if [ ! -f solr-4.6.0.tgz ]; then
     curl -O http://archive.apache.org/dist/lucene/solr/4.6.0/solr-4.6.0.tgz
