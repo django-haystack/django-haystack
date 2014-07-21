@@ -197,6 +197,16 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ASixthMockModel
 
+
+class ElasticsearchUnstoredMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(model_attr='author', document=True)
+    unstored = indexes.CharField(model_attr='foo', stored=False)
+    unstored_facet = indexes.CharField(model_attr='foo', stored=False, faceted=True)
+
+    def get_model(self):
+        return MockModel
+
+
 class TestSettings(TestCase):
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
@@ -296,7 +306,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '1',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel1',
-                'name_exact': 'daniel1',
                 'text': 'Indexed!\n1',
                 'pub_date': '2009-02-24T00:00:00',
                 'id': 'core.mockmodel.1'
@@ -305,7 +314,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '2',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel2',
-                'name_exact': 'daniel2',
                 'text': 'Indexed!\n2',
                 'pub_date': '2009-02-23T00:00:00',
                 'id': 'core.mockmodel.2'
@@ -314,7 +322,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '3',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel3',
-                'name_exact': 'daniel3',
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00',
                 'id': 'core.mockmodel.3'
@@ -332,7 +339,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '2',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel2',
-                'name_exact': 'daniel2',
                 'text': 'Indexed!\n2',
                 'pub_date': '2009-02-23T00:00:00',
                 'id': 'core.mockmodel.2'
@@ -341,7 +347,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'django_id': '3',
                 'django_ct': 'core.mockmodel',
                 'name': 'daniel3',
-                'name_exact': 'daniel3',
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00',
                 'id': 'core.mockmodel.3'
@@ -441,7 +446,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections['default'].get_unified_index()
 
-        (content_field_name, mapping) = self.sb.build_schema(old_ui.all_searchfields())
+        (content_field_name, mapping, source) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 4+2) # +2 management fields
         self.assertEqual(mapping, {
@@ -452,10 +457,11 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'name': {'type': 'string', 'analyzer': 'snowball'},
             'name_exact': {'index': 'not_analyzed', 'type': 'string'}
         })
+        self.assertEqual(source, {u'excludes': [u'name_exact']})
 
         ui = UnifiedIndex()
         ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
-        (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
+        (content_field_name, mapping, _source) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
         self.assertEqual(len(mapping), 15+2) # +2 management fields
         self.assertEqual(mapping, {
@@ -477,6 +483,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
             'pub_date': {'type': 'date'},
             'average_rating_exact': {'type': 'float'}
         })
+        self.assertEqual(source, {u'excludes': [u'name_exact']})
 
     def test_verify_type(self):
         old_ui = connections['default'].get_unified_index()
@@ -1075,7 +1082,7 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
 
     def test_build_schema(self):
         self.sb = connections['default'].get_backend()
-        content_name, mapping = self.sb.build_schema(self.ui.all_searchfields())
+        content_name, mapping, _source = self.sb.build_schema(self.ui.all_searchfields())
         self.assertEqual(mapping, {
             'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
@@ -1398,3 +1405,47 @@ class ElasticsearchFacetingTestCase(TestCase):
         self.assertEqual(counts['dates']['pub_date'], [
             (datetime.datetime(2013, 9, 1), 9),
         ])
+
+
+class StoredFieldsTestCase(TestCase):
+    def setUp(self):
+        super(StoredFieldsTestCase, self).setUp()
+        # Wipe it clean.
+        clear_elasticsearch_index()
+
+        # Stow.
+        self.old_ui = connections['default'].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.es_unstored_index = ElasticsearchUnstoredMockSearchIndex()
+        self.ui.build(indexes=[self.es_unstored_index])
+        connections['default']._index = self.ui
+        self.sb = connections['default'].get_backend()
+        self.sb.existing_mapping = {}
+        self.sb.setup()
+
+        # Fake indexing.
+        mock = MockModel()
+        mock.id = 1
+        self.sb.update(self.es_unstored_index, [mock])
+
+    def tearDown(self):
+        connections['default']._index = self.old_ui
+        super(StoredFieldsTestCase, self).tearDown()
+
+    def test_stored_fields_mapping(self):
+        (_content_field_name, _mapping, source) = self.sb.build_schema(self.ui.all_searchfields())
+        self.assertEqual(
+            sorted(source['excludes']),
+            ["unstored", "unstored_facet", "unstored_facet_exact"])
+        self.assertEqual(len(source), 1)
+
+    def test_stored_fields_query(self):
+        search_kwargs = self.sb.build_search_kwargs('*:*')
+        raw_results = self.sb.conn.search(body=search_kwargs,
+                                          index=self.sb.index_name,
+                                          doc_type='modelresult')
+        document_source = raw_results['hits']['hits'][0]['_source']
+        self.assertIn("text", document_source)
+        self.assertNotIn("unstored", document_source)
+        self.assertNotIn("unstored_facet", document_source)
+        self.assertNotIn("unstored_facet_exact", document_source)

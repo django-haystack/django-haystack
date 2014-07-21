@@ -455,7 +455,7 @@ class SolrSearchBackendTestCase(TestCase):
             {
                 'indexed': 'true',
                 'field_name': 'name_exact',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'string',
                 'multi_valued': 'false'
             },
@@ -493,7 +493,7 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'average_rating_exact',
                 'indexed': 'true',
                 'multi_valued': 'false',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'float'
             },
             {
@@ -507,7 +507,7 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'created_exact',
                 'indexed': 'true',
                 'multi_valued': 'false',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'date'
             },
             {
@@ -521,7 +521,7 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'is_active_exact',
                 'indexed': 'true',
                 'multi_valued': 'false',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'boolean'
             },
             {
@@ -535,7 +535,7 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'name_exact',
                 'indexed': 'true',
                 'multi_valued': 'false',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'string'
             },
             {
@@ -563,7 +563,7 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'pub_date_exact',
                 'indexed': 'true',
                 'multi_valued': 'false',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'date'
             },
             {
@@ -577,7 +577,7 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'sites_exact',
                 'indexed': 'true',
                 'multi_valued': 'true',
-                'stored': 'true',
+                'stored': 'false',
                 'type': 'string'
             },
             {
