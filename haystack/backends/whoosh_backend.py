@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils.datetime_safe import datetime
+from django.utils.module_loading import import_by_path
 from django.utils import six
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
@@ -87,6 +88,12 @@ class WhooshSearchBackend(BaseSearchBackend):
         self.use_file_storage = True
         self.post_limit = getattr(connection_options, 'POST_LIMIT', 128 * 1024 * 1024)
         self.path = connection_options.get('PATH')
+        self.analyzer = connection_options.get('ANALYZER')
+
+        if self.analyzer:
+            self.analyzer = import_by_path(self.analyzer)
+        else:
+            self.analyzer = StemmingAnalyzer
 
         if connection_options.get('STORAGE', 'file') != 'file':
             self.use_file_storage = False
@@ -165,7 +172,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             elif field_class.field_type == 'edge_ngram':
                 schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, at='start', stored=field_class.stored, field_boost=field_class.boost)
             else:
-                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer(), field_boost=field_class.boost, sortable=True)
+                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=self.analyzer(), field_boost=field_class.boost, sortable=True)
 
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
@@ -623,7 +630,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 del(additional_fields[DJANGO_ID])
 
                 if highlight:
-                    sa = StemmingAnalyzer()
+                    sa = self.analyzer()
                     formatter = WhooshHtmlFormatter('em')
                     terms = [token.text for token in sa(query_string)]
 

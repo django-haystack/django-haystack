@@ -83,6 +83,8 @@ Additionally, each backend may have additional options it requires:
 * Whoosh
 
   * ``PATH`` - The filesystem path to where the index data is located.
+  * ``ANALYZER`` - The analyzer function which returns tokens for a unicode
+    string. Default is ``whoosh.analysis.StemmingAnalyzer``.
 
 * Xapian
 
