@@ -498,72 +498,82 @@ class BaseSearchQuery(object):
         """Indicates if any query has been been run."""
         return None not in (self._results, self._hit_count)
 
-    def build_params(self, spelling_query=None):
+    def build_params(self, spelling_query=None, **kwargs):
         """Generates a list of params to use when searching."""
-        kwargs = {
+        params = {
             'start_offset': self.start_offset,
         }
 
         if self.order_by:
-            kwargs['sort_by'] = self.order_by
+            params['sort_by'] = self.order_by
 
         if self.end_offset is not None:
-            kwargs['end_offset'] = self.end_offset
+            params['end_offset'] = self.end_offset
 
         if self.highlight:
-            kwargs['highlight'] = self.highlight
+            params['highlight'] = self.highlight
 
         if self.facets:
-            kwargs['facets'] = self.facets
+            params['facets'] = self.facets
 
         if self.date_facets:
-            kwargs['date_facets'] = self.date_facets
+            params['date_facets'] = self.date_facets
 
         if self.query_facets:
-            kwargs['query_facets'] = self.query_facets
+            params['query_facets'] = self.query_facets
 
         if self.narrow_queries:
-            kwargs['narrow_queries'] = self.narrow_queries
+            params['narrow_queries'] = self.narrow_queries
 
         if spelling_query:
-            kwargs['spelling_query'] = spelling_query
+            params['spelling_query'] = spelling_query
 
         if self.boost:
-            kwargs['boost'] = self.boost
+            params['boost'] = self.boost
 
         if self.within:
-            kwargs['within'] = self.within
+            params['within'] = self.within
 
         if self.dwithin:
-            kwargs['dwithin'] = self.dwithin
+            params['dwithin'] = self.dwithin
 
         if self.distance_point:
-            kwargs['distance_point'] = self.distance_point
+            params['distance_point'] = self.distance_point
 
         if self.result_class:
-            kwargs['result_class'] = self.result_class
+            params['result_class'] = self.result_class
 
         if self.fields:
-            kwargs['fields'] = self.fields
+            params['fields'] = self.fields
 
         if self.models:
-            kwargs['models'] = self.models
+            params['models'] = self.models
 
-        return kwargs
+        if kwargs:
+            params.update(kwargs)
+
+        return params
 
     def run(self, spelling_query=None, **kwargs):
         """Builds and executes the query. Returns a list of search results."""
         final_query = self.build_query()
-        search_kwargs = self.build_params(spelling_query=spelling_query)
 
-        if kwargs:
-            search_kwargs.update(kwargs)
+        search_kwargs = self.build_params(spelling_query=spelling_query, **kwargs)
 
         results = self.backend.search(final_query, **search_kwargs)
+
+        results = self.post_process_results(results, search_kwargs)
+
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
         self._spelling_suggestion = results.get('spelling_suggestion', None)
+
+        return results
+
+    def post_process_results(self, results, search_kwargs):
+        """Extension point to alter results before standard processing"""
+        return results
 
     def run_mlt(self, **kwargs):
         """
