@@ -31,12 +31,15 @@ def list_max_show_all(changelist):
 
 
 class SearchChangeList(ChangeList):
+    def get_sqs(self, query):
+        return SearchQuerySet().models(self.model).auto_query(query)
+
     def get_results(self, request):
         if not SEARCH_VAR in request.GET:
             return super(SearchChangeList, self).get_results(request)
 
         # Note that pagination is 0-based, not 1-based.
-        sqs = SearchQuerySet().models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
+        sqs = self.get_sqs(request.GET[SEARCH_VAR]).load_all()
 
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
