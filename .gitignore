@@ -13,3 +13,5 @@ env3
 
 # Because I'm ghetto like that.
 tests/pyelasticsearch.py
+/*.project
+/*.pydevproject

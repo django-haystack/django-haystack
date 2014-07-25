@@ -35,12 +35,14 @@ class SearchView(object):
         if template:
             self.template = template
 
-    def __call__(self, request):
+    def __call__(self, request, *url_args, **url_kwargs):
         """
         Generates the actual response to the search.
 
         Relies on internal, overridable methods to construct the response.
         """
+        self.args = url_args
+        self.kwargs = url_kwargs
         self.request = request
 
         self.form = self.build_form()
@@ -145,8 +147,8 @@ class SearchView(object):
 
 
 def search_view_factory(view_class=SearchView, *args, **kwargs):
-    def search_view(request):
-        return view_class(*args, **kwargs)(request)
+    def search_view(request, *url_args, **url_kwargs):
+        return view_class(*args, **kwargs)(request, *url_args, **url_kwargs)
     return search_view
 
 
