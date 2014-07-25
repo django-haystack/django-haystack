@@ -9,11 +9,13 @@ HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
         'URL': 'http://localhost:8983/solr',
+        'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BazIndex'],
     },
     'whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
         'PATH': mkdtemp(prefix='haystack-multipleindex-whoosh-tests-'),
-        'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BarIndex'],
+        'EXCLUDED_INDEXES': ['multipleindex.search_indexes.BarIndex',
+            'multipleindex.search_indexes.BazIndex'],
     },
     'filtered_whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
@@ -24,3 +26,4 @@ HAYSTACK_CONNECTIONS = {
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
+HAYSTACK_ROUTERS = ['multipleindex.routers.BazRouter', 'haystack.routers.DefaultRouter']

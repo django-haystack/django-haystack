@@ -1,5 +1,5 @@
 from haystack import indexes
-from multipleindex.models import Foo, Bar
+from multipleindex.models import Foo, Bar, Baz
 
 
 # To test additional ignores...
@@ -30,3 +30,16 @@ class BarIndex(SearchIndex, Indexable):
 
     def prepare_text(self, obj):
         return u"%s\n%s" % (obj.author, obj.content)
+
+
+class BazIndex(SearchIndex, Indexable):
+    text = indexes.CharField(document=True, model_attr='body')
+
+    def get_model(self):
+        return Baz
+
+    def index_queryset(self, using=None):
+        qs = super(BazIndex, self).index_queryset(using=using)
+        if using == "filtered_whoosh":
+            qs = qs.filter(body="live")
+        return qs

@@ -12,7 +12,7 @@ from haystack.signals import BaseSignalProcessor, RealtimeSignalProcessor
 from haystack.utils.loading import UnifiedIndex
 
 from multipleindex.search_indexes import FooIndex
-from multipleindex.models import Foo, Bar
+from multipleindex.models import Foo, Bar, Baz
 
 def tearDownModule():
     # Because Whoosh doesn't clean up its mess.
@@ -307,6 +307,29 @@ class SignalProcessorTestCase(TestCase):
 
         self.assertEqual(sqs.using('default').models(Foo).order_by('django_id')[0].text, 'A different body')
         self.assertEqual(sqs.using('whoosh').models(Foo).order_by('django_id')[0].text, 'foo 1')
+
+    longMessage = True
+
+    def test_object_not_included_in_queryset_is_not_indexed(self):
+        zi = connections['filtered_whoosh'].get_unified_index().get_index(Baz)
+        zi.clear()
+
+        new_sqs = lambda: SearchQuerySet().using('filtered_whoosh').models(Baz)
+
+        live = Baz.objects.create(body='live')
+        sqs = new_sqs()
+        self.assertEqual([live], [r.object for r in sqs])
+
+        dead = Baz.objects.create(body='dead')
+        sqs = new_sqs()
+        self.assertEqual([live], [r.object for r in sqs], msg="Objects not "
+            "included in the index_queryset should not be indexed!")
+
+        live.body = 'zombie'
+        live.save()
+        sqs = new_sqs()
+        self.assertEqual([], [r.object for r in sqs], msg="Objects no longer "
+            "included in the index_queryset should be removed!")
 
     def test_handle_delete(self):
         # Because the code here is pretty leaky (abstraction-wise), we'll test
