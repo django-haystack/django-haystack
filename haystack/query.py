@@ -672,8 +672,11 @@ class RelatedSearchQuerySet(SearchQuerySet):
     far less efficient but needs to fill the cache before it to maintain
     consistency.
     """
-    _load_all_querysets = {}
-    _result_cache = []
+
+    def __init__(self, *args, **kwargs):
+        super(RelatedSearchQuerySet, self).__init__(*args, **kwargs)
+        self._load_all_querysets = {}
+        self._result_cache = []
 
     def _cache_is_full(self):
         return len(self._result_cache) >= len(self)
