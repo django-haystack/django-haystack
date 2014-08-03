@@ -10,6 +10,8 @@ MANIFEST
 .tox
 env
 env3
+*.egg
+.coverage
 
-# Because I'm ghetto like that.
-tests/pyelasticsearch.py
+test_haystack/solr_tests/server/solr-4.6.0.tgz
+test_haystack/solr_tests/server/solr4/
