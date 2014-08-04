@@ -30,7 +30,7 @@ Example::
     
     # Highlight summary but wrap highlighted words with a div and the
     # following CSS class.
-    {% highlight result.summary with query html_tag "div" class "highlight_me_please" %}
+    {% highlight result.summary with query html_tag "div" css_class "highlight_me_please" %}
     
     # Highlight summary but only show 40 words.
     {% highlight result.summary with query max_length 40 %}
