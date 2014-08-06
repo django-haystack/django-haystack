@@ -94,3 +94,10 @@ An example of this might be increasing the significance of a ``title``::
 
         def get_model(self):
             return Note
+
+.. note::
+
+  Field boosting only has an effect when the SearchQuerySet filters on the
+  field which has been boosted. If you are using a default search view or
+  form you will need override the search method or other include the field
+  in your search query.
