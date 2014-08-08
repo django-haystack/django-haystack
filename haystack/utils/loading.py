@@ -246,7 +246,7 @@ class UnifiedIndex(object):
                 # safely ignore this. The exception is ``MultiValueField``,
                 # in which case we'll use it instead, copying over the
                 # values.
-                if field_object.is_multivalued is True:
+                if field_object.is_multivalued:
                     old_field = self.fields[field_object.index_fieldname]
                     self.fields[field_object.index_fieldname] = field_object
                     self.fields[field_object.index_fieldname] = copy.copy(field_object)
@@ -280,6 +280,7 @@ class UnifiedIndex(object):
         return self._indexes
 
     def get_indexed_models(self):
+        # Ensuring a list here since Python3 will give us an iterator
         return list(self.get_indexes().keys())
 
     def get_index_fieldname(self, field):
