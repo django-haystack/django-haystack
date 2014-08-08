@@ -157,7 +157,7 @@ class UnifiedIndex(object):
 
     @property
     def indexes(self):
-        warnings.warn("'UnifiedIndex.indexes' was deprecated in Haystack v2.1.1. Please use UnifiedIndex.get_indexes().")
+        warnings.warn("'UnifiedIndex.indexes' was deprecated in Haystack v2.3.0. Please use UnifiedIndex.get_indexes().")
         return self._indexes
 
     def collect_indexes(self):
