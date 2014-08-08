@@ -194,13 +194,11 @@ class SearchQuerySet(object):
 
         # Check if we wish to load all objects.
         if self._load_all:
-            original_results = []
             models_pks = {}
             loaded_objects = {}
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.
@@ -211,7 +209,7 @@ class SearchQuerySet(object):
                     objects = index.read_queryset(using=self.query._using)
                     loaded_objects[model] = objects.in_bulk(models_pks[model])
                 except NotHandled:
-                    self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
+                    self.log.warning("Model '%s' not handled by the routers", model)
                     # Revert to old behaviour
                     loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
 
@@ -456,10 +454,11 @@ class SearchQuerySet(object):
         for field_name, query in kwargs.items():
             for word in query.split(' '):
                 bit = clone.query.clean(word.strip())
-                kwargs = {
-                    field_name: bit,
-                }
-                query_bits.append(SQ(**kwargs))
+                if bit:
+                    kwargs = {
+                        field_name: bit,
+                    }
+                    query_bits.append(SQ(**kwargs))
 
         return clone.filter(six.moves.reduce(operator.__and__, query_bits))
 
@@ -673,8 +672,11 @@ class RelatedSearchQuerySet(SearchQuerySet):
     far less efficient but needs to fill the cache before it to maintain
     consistency.
     """
-    _load_all_querysets = {}
-    _result_cache = []
+
+    def __init__(self, *args, **kwargs):
+        super(RelatedSearchQuerySet, self).__init__(*args, **kwargs)
+        self._load_all_querysets = {}
+        self._result_cache = []
 
     def _cache_is_full(self):
         return len(self._result_cache) >= len(self)
@@ -721,13 +723,11 @@ class RelatedSearchQuerySet(SearchQuerySet):
 
         # Check if we wish to load all objects.
         if self._load_all:
-            original_results = []
             models_pks = {}
             loaded_objects = {}
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.

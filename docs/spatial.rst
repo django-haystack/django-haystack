@@ -218,9 +218,7 @@ finding results within an area.
 
 ``within`` is a bounding box comparison. A bounding box is a rectangular area
 within which to search. It's composed of a bottom-left point & a top-right
-point, though provided you give two opposing corners in either order, Haystack
-will determine the right coordinates. It is faster but slighty sloppier than
-its counterpart.
+point. It is faster but slighty sloppier than its counterpart.
 
 Examples::
 
@@ -319,7 +317,7 @@ Examples::
     sqs = SearchQuerySet().within('location', downtown_bottom_left, downtown_top_right).distance('location', ninth_and_mass)
 
     # ...Or on a radius query.
-    sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi2)).distance('location', ninth_and_mass)
+    sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi=2)).distance('location', ninth_and_mass)
 
 You can even apply a different field, for instance if you calculate results of
 key, well-cached hotspots in town but want distances from the user's current
@@ -331,7 +329,7 @@ position::
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     user_loc = Point(-95.23455619812012, 38.97240128290697)
 
-    sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi2)).distance('location', user_loc)
+    sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi=2)).distance('location', user_loc)
 
 .. note::
 
@@ -380,7 +378,7 @@ Examples::
     # Geo ordering, closest to farthest.
     sqs = SearchQuerySet().within('location', downtown_bottom_left, downtown_top_right).distance('location', ninth_and_mass).order_by('distance')
     # Geo ordering, farthest to closest.
-    sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi2)).distance('location', ninth_and_mass).order_by('-distance')
+    sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi=2)).distance('location', ninth_and_mass).order_by('-distance')
 
 .. note::
 
@@ -393,7 +391,7 @@ Examples::
     is a field in the index & tries to sort on it. Example::
 
         # May blow up!
-        sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi2)).distance('location', ninth_and_mass).order_by('distance', 'title')
+        sqs = SearchQuerySet().dwithin('location', ninth_and_mass, D(mi=2)).distance('location', ninth_and_mass).order_by('distance', 'title')
 
     This is a limitation in the engine's implementation.
 
