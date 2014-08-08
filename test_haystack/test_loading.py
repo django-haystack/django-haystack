@@ -232,6 +232,17 @@ class UnifiedIndexTestCase(TestCase):
         self.assertEqual(len(indexed_models), 1)
         self.assertTrue(MockModel in indexed_models)
 
+    def test_get_indexes(self):
+        self.assertEqual(self.ui.get_indexes(), {})
+
+        index = ValidSearchIndex()
+        self.ui.build(indexes=[index])
+        
+        results = self.ui.get_indexes()
+        self.assertEqual(len(results), 1)
+        self.assertTrue(MockModel in results)
+        self.assertEqual(results[MockModel], index)
+
     def test_all_searchfields(self):
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
         fields = self.ui.all_searchfields()
