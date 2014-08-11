@@ -21,6 +21,10 @@ env:
   - TOX_ENV=py27-django1.6
   - TOX_ENV=py33-django1.5
   - TOX_ENV=py33-django1.6
+  - TOX_ENV=py34-django1.5
+  - TOX_ENV=py34-django1.6
+  - TOX_ENV=pypy-django1.5
+  - TOX_ENV=pypy-django1.6
 
 services:
   - elasticsearch
