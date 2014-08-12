@@ -35,11 +35,13 @@ class AutomaticDiscoveryTestCase(TestCase):
 
         # Test exclusions.
         ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex']
+        ui.reset()
         ui.build()
 
         self.assertEqual(len(ui.get_indexed_models()), 4)
 
         ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex', 'test_haystack.discovery.search_indexes.FooIndex']
+        ui.reset()
         ui.build()
 
         self.assertEqual(len(ui.get_indexed_models()), 3)
