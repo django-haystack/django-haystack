@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import copy
 import inspect
+import threading
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.datastructures import SortedDict
@@ -147,6 +148,7 @@ class UnifiedIndex(object):
     def __init__(self, excluded_indexes=None):
         self.indexes = {}
         self.fields = SortedDict()
+        self._build_lock = threading.RLock()
         self._built = False
         self.excluded_indexes = excluded_indexes or []
         self.excluded_indexes_ids = {}
@@ -189,6 +191,13 @@ class UnifiedIndex(object):
         self._facet_fieldnames = {}
 
     def build(self, indexes=None):
+
+        with self._build_lock:
+            if not self._built or indexes is not None:
+                self._build(indexes=indexes)
+
+    def _build(self, indexes=None):
+        
         self.reset()
 
         if indexes is None:
