@@ -14,7 +14,7 @@ than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 3.5+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple::
 
-    curl -O http://apache.mirrors.tds.net/lucene/solr/3.5.0/apache-solr-3.5.0.tgz
+    curl -O https://archive.apache.org/dist/lucene/solr/3.5.0/apache-solr-3.5.0.tgz
     tar xvzf apache-solr-3.5.0.tgz
     cd apache-solr-3.5.0
     cd example
@@ -152,17 +152,23 @@ locally. Modifications should be done in a YAML file, the stock one being
       logs: /usr/local/var/log
       data: /usr/local/var/data
 
-You'll also need an Elasticsearch binding: pyelasticsearch_ (**NOT**
-``pyes``). Place ``pyelasticsearch`` somewhere on your ``PYTHONPATH``
-(usually ``python setup.py install`` or ``pip install pyelasticsearch``).
+You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
+``pyes``). Place ``elasticsearch`` somewhere on your ``PYTHONPATH``
+(usually ``python setup.py install`` or ``pip install elasticsearch``).
 
-.. _pyelasticsearch: http://pypi.python.org/pypi/pyelasticsearch/
+.. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
+
+.. note::
+ 
+  Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
+  you have the proper version of `elasticsearch-py` installed - releases with
+  major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4
+  releases are meant to work with Elasticsearch 0.90.X.
 
 .. note::
 
-    ``pyelasticsearch`` has its own dependencies that aren't covered by
-    Haystack. You'll also need ``requests`` & ``simplejson`` for speedier
-    JSON construction/parsing.
+    ``elasticsearch`` has its own dependencies that aren't covered by
+    Haystack. You'll also need ``urllib3``.
 
 
 Whoosh

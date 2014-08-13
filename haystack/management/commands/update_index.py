@@ -96,7 +96,7 @@ def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1):
     # Fetch a list of results.
     # Can't do pk range, because id's are strings (thanks comments
     # & UUIDs!).
-    stuff_in_the_index = SearchQuerySet().models(model)[start:upper_bound]
+    stuff_in_the_index = SearchQuerySet(using=backend.connection_alias).models(model)[start:upper_bound]
 
     # Iterate over those results.
     for result in stuff_in_the_index:
@@ -254,7 +254,6 @@ class Command(LabelCommand):
             if self.verbosity >= 1:
                 print(u"Indexing %d %s" % (total, force_text(model._meta.verbose_name_plural)))
 
-            pks_seen = set([smart_bytes(pk) for pk in qs.values_list('pk', flat=True)])
             batch_size = self.batchsize or backend.batch_size
 
             if self.workers > 0:
@@ -278,8 +277,11 @@ class Command(LabelCommand):
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
-                    pks_seen = set([smart_bytes(pk) for pk in qs])
+                    pks_seen = set(smart_bytes(pk) for pk in qs)
+
                     total = len(pks_seen)
+                else:
+                    pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
 
                 if self.workers > 0:
                     ghetto_queue = []

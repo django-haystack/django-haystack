@@ -103,6 +103,8 @@ The following options are optional:
 * ``EXCLUDED_INDEXES`` - A list of strings (as Python import paths) to indexes
   you do **NOT** want included. Useful for omitting third-party things you
   don't want indexed or for when you want to replace an index.
+* ``KWARGS`` - (Solr and ElasticSearch) Any additional keyword arguments that
+  should be passed on to the underlying client library.
 
 
 ``HAYSTACK_ROUTERS``

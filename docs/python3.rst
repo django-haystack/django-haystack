@@ -25,7 +25,7 @@ The following backends are fully supported under Python 3. However, you may
 need to update these dependencies if you have a pre-existing setup.
 
 * Solr (pysolr>=3.1.0)
-* Elasticsearch (pyelasticsearch>=0.5)
+* Elasticsearch
 
 
 Partially Supported Backends

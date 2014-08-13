@@ -6,7 +6,7 @@ Primary Authors:
     * David Sauve (notanumber) for the Xapian backend, the simple backend and various patches.
     * Jannis Leidel (jezdez)
     * Chris Adams (acdha)
-    * Justin Caratzas (acdha)
+    * Justin Caratzas (bigjust)
     * Andrew Schoen (andrewschoen)
     * Dan Watson (dcwatson)
     * Matt Woodward (mpwoodward)
@@ -81,6 +81,12 @@ Thanks to
     * Stefan Wehrmeyer (stefanw) for a simple search filter fix
     * Dan Watson (dcwatson) for various patches.
     * Andrew Schoen (andrewschoen) for the addition of ``HAYSTACK_IDENTIFIER_METHOD``
-    * Pablo SEMINARIO (pabluk) for a docs fix.
+    * Pablo SEMINARIO (pabluk) for a docs fix, and a fix in the ElasticSearch backend.
     * Eric Thurgood (ethurgood) for a import fix in the Elasticssearch backend.
     * Revolution Systems & The Python Software Foundation for funding a significant portion of the port to Python 3!
+    * Artem Kostiuk (postatum) for patch allowing to search for slash character in ElasticSearch since Lucene 4.0.
+    * Luis Barrueco (luisbarrueco) for a simple fix regarding updating indexes using multiple backends.
+    * Szymon Teżewski (jasisz) for an update to the bounding-box calculation for spatial queries
+    * Chris Wilson (qris) and Orlando Fiol (overflow) for an update allowing the use of multiple order_by()
+      fields with Whoosh as long as they share a consistent sort direction
+    * Steven Skoczen (@skoczen) for an ElasticSearch bug fix
