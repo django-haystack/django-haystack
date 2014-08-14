@@ -194,13 +194,11 @@ class SearchQuerySet(object):
 
         # Check if we wish to load all objects.
         if self._load_all:
-            original_results = []
             models_pks = {}
             loaded_objects = {}
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.
@@ -678,8 +676,11 @@ class RelatedSearchQuerySet(SearchQuerySet):
     far less efficient but needs to fill the cache before it to maintain
     consistency.
     """
-    _load_all_querysets = {}
-    _result_cache = []
+
+    def __init__(self, *args, **kwargs):
+        super(RelatedSearchQuerySet, self).__init__(*args, **kwargs)
+        self._load_all_querysets = {}
+        self._result_cache = []
 
     def _cache_is_full(self):
         return len(self._result_cache) >= len(self)
@@ -726,13 +727,11 @@ class RelatedSearchQuerySet(SearchQuerySet):
 
         # Check if we wish to load all objects.
         if self._load_all:
-            original_results = []
             models_pks = {}
             loaded_objects = {}
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.
