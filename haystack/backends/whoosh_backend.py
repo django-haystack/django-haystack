@@ -44,6 +44,7 @@ from whoosh.qparser import QueryParser
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
+from whoosh.highlight import HtmlFormatter, highlight as whoosh_highlight, ContextFragmenter
 
 # Handle minimum requirement.
 if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
@@ -53,6 +54,15 @@ if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
 LOCALS = threading.local()
 LOCALS.RAM_STORE = None
+
+
+class WhooshHtmlFormatter(HtmlFormatter):
+    """
+    This is a HtmlFormatter simpler than the whoosh.HtmlFormatter.
+    We use it to have consistent results across backends. Specifically,
+    Solr, Xapian and Elasticsearch are using this formatting.
+    """
+    template = '<%(tag)s>%(t)s</%(tag)s>'
 
 
 class WhooshSearchBackend(BaseSearchBackend):
@@ -613,13 +623,19 @@ class WhooshSearchBackend(BaseSearchBackend):
                 del(additional_fields[DJANGO_ID])
 
                 if highlight:
-                    from whoosh import analysis
-                    from whoosh.highlight import highlight, ContextFragmenter, UppercaseFormatter
-                    sa = analysis.StemmingAnalyzer()
-                    terms = [term.replace('*', '') for term in query_string.split()]
+                    sa = StemmingAnalyzer()
+                    formatter = WhooshHtmlFormatter('em')
+                    terms = [token.text for token in sa(query_string)]
 
+                    whoosh_result = whoosh_highlight(
+                        additional_fields.get(self.content_field_name),
+                        terms,
+                        sa,
+                        ContextFragmenter(),
+                        formatter
+                    )
                     additional_fields['highlighted'] = {
-                        self.content_field_name: [highlight(additional_fields.get(self.content_field_name), terms, sa, ContextFragmenter(terms), UppercaseFormatter())],
+                        self.content_field_name: [whoosh_result],
                     }
 
                 result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)

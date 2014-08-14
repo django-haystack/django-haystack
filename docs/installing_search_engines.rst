@@ -196,19 +196,22 @@ Official Download Location: http://xapian.org/download
 Xapian is written in C++ so it requires compilation (unless your OS has a
 package for it). Installation looks like::
 
-    curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-core-1.0.11.tar.gz
-    curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-bindings-1.0.11.tar.gz
+    curl -O http://oligarchy.co.uk/xapian/1.2.18/xapian-core-1.2.18.tar.xz
+    curl -O http://oligarchy.co.uk/xapian/1.2.18/xapian-bindings-1.2.18.tar.xz
 
-    tar xvzf xapian-core-1.0.11.tar.gz
-    tar xvzf xapian-bindings-1.0.11.tar.gz
+    unxz xapian-core-1.2.18.tar.xz
+    unxz xapian-bindings-1.2.18.tar.xz
 
-    cd xapian-core-1.0.11
+    tar xvf xapian-core-1.2.18.tar
+    tar xvf xapian-bindings-1.2.18.tar
+
+    cd xapian-core-1.2.18
     ./configure
     make
     sudo make install
 
     cd ..
-    cd xapian-bindings-1.0.11
+    cd xapian-bindings-1.2.18
     ./configure
     make
     sudo make install

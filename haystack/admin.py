@@ -31,17 +31,21 @@ def list_max_show_all(changelist):
 
 
 class SearchChangeList(ChangeList):
+    def __init__(self, **kwargs):
+        self.haystack_connection = kwargs.pop('haystack_connection', 'default')
+        super(SearchChangeList, self).__init__(**kwargs)
+
     def get_results(self, request):
         if not SEARCH_VAR in request.GET:
             return super(SearchChangeList, self).get_results(request)
 
         # Note that pagination is 0-based, not 1-based.
-        sqs = SearchQuerySet().models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
+        sqs = SearchQuerySet(self.haystack_connection).models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
 
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
         result_count = paginator.count
-        full_result_count = SearchQuerySet().models(self.model).all().count()
+        full_result_count = SearchQuerySet(self.haystack_connection).models(self.model).all().count()
 
         can_show_all = result_count <= list_max_show_all(self)
         multi_page = result_count > self.list_per_page
@@ -64,6 +68,9 @@ class SearchChangeList(ChangeList):
 
 
 class SearchModelAdmin(ModelAdmin):
+    # haystack connection to use for searching
+    haystack_connection = 'default'
+
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
         if not self.has_change_permission(request, None):
@@ -75,7 +82,7 @@ class SearchModelAdmin(ModelAdmin):
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
-        if not self.model in connections['default'].get_unified_index().get_indexed_models():
+        if not self.model in connections[self.haystack_connection].get_unified_index().get_indexed_models():
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
             return super(SearchModelAdmin, self).changelist_view(request, extra_context)
@@ -85,6 +92,7 @@ class SearchModelAdmin(ModelAdmin):
         list_display = list(self.list_display)
 
         kwargs = {
+            'haystack_connection': self.haystack_connection,
             'request': request,
             'model': self.model,
             'list_display': list_display,
