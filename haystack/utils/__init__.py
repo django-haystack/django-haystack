@@ -28,9 +28,15 @@ def default_get_identifier(obj_or_string):
 
         return obj_or_string
 
+    try:
+        model_name = obj_or_string._meta.model_name
+    except AttributeError:
+        # Django < 1.6
+        model_name = obj_or_string._meta.module_name
+
     return u"%s.%s.%s" % (
         obj_or_string._meta.app_label,
-        obj_or_string._meta.module_name,
+        model_name,
         obj_or_string._get_pk_val()
     )
 
