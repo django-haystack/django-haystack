@@ -183,9 +183,15 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         """
         Fetches and adds/alters data before indexing.
         """
+        try:
+            model_name = obj._meta.model_name
+        except AttributeError:
+            # Django < 1.6
+            model_name = obj._meta.module_name
+
         self.prepared_data = {
             ID: get_identifier(obj),
-            DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
+            DJANGO_CT: "%s.%s" % (obj._meta.app_label, model_name),
             DJANGO_ID: force_text(obj.pk),
         }
 
