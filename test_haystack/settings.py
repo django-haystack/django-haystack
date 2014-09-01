@@ -56,7 +56,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'solr': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:8983/solr/',
+        'URL': 'http://localhost:9001/solr/',
         'INCLUDE_SPELLING': True,
     },
 }
