@@ -37,7 +37,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-        'PATH': os.path.join('tmp', 'test_whoosh_query'),
+        'PATH': mkdtemp(prefix='test_whoosh_query'),
         'INCLUDE_SPELLING': True,
     },
     'filtered_whoosh': {
