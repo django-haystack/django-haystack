@@ -14,7 +14,7 @@ except ImportError:
 
 
 def model_choices(using=DEFAULT_ALIAS):
-    choices = [("%s.%s" % (m._meta.app_label, m._meta.module_name), capfirst(smart_text(m._meta.verbose_name_plural))) for m in connections[using].get_unified_index().get_indexed_models()]
+    choices = [("%s.%s" % (m._meta.app_label, m._meta.model_name), capfirst(smart_text(m._meta.verbose_name_plural))) for m in connections[using].get_unified_index().get_indexed_models()]
     return sorted(choices, key=lambda x: x[1])
 
 

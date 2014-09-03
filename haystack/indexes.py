@@ -185,7 +185,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         """
         self.prepared_data = {
             ID: get_identifier(obj),
-            DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
+            DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.model_name),
             DJANGO_ID: force_text(obj.pk),
         }
 

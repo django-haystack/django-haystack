@@ -192,7 +192,7 @@ class BaseSearchBackend(object):
         models = []
 
         for model in connections[self.connection_alias].get_unified_index().get_indexed_models():
-            models.append(u"%s.%s" % (model._meta.app_label, model._meta.module_name))
+            models.append(u"%s.%s" % (model._meta.app_label, model._meta.model_name))
 
         return models
 
