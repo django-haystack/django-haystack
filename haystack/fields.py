@@ -4,6 +4,7 @@ from django.utils import datetime_safe
 from django.utils import six
 from django.template import loader, Context
 from haystack.exceptions import SearchFieldError
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class NOT_PROVIDED:
@@ -80,9 +81,13 @@ class SearchField(object):
 
             for attr in attrs:
                 if not hasattr(current_object, attr):
-                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(obj), attr))
-
-                current_object = getattr(current_object, attr, None)
+                    if attr not in dir(current_object):
+                        raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(obj), attr))
+                
+                try:
+                    current_object = getattr(current_object, attr, None)
+                except ObjectDoesNotExist:
+                    current_object = None
 
                 if current_object is None:
                     if self.has_default():
