@@ -1419,12 +1419,12 @@ class ElasticsearchBoostTestCase(TestCase):
         clear_elasticsearch_index()
 
         # Stow.
-        self.old_ui = connections['default'].get_unified_index()
+        self.old_ui = connections['elasticsearch'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = ElasticsearchBoostIndex()
         self.ui.build(indexes=[self.smmi])
-        connections['default']._index = self.ui
-        self.sb = connections['default'].get_backend()
+        connections['elasticsearch']._index = self.ui
+        self.sb = connections['elasticsearch'].get_backend()
 
         # Force the backend to rebuild the mapping each time.
         self.sb.existing_mapping = {}
@@ -1433,7 +1433,7 @@ class ElasticsearchBoostTestCase(TestCase):
         self.sample_objs = []
 
     def tearDown(self):
-        connections['default']._index = self.old_ui
+        connections['elasticsearch']._index = self.old_ui
         super(ElasticsearchBoostTestCase, self).tearDown()
 
     def gen_mock(self, author, editor, id):
