@@ -413,6 +413,14 @@ class SearchQuerySet(object):
         clone.query.add_query_facet(field, query)
         return clone
 
+    def range_facet(self, field, **options):
+        """Adds ranged faceting to a query for the provided field. Only for Solr.
+        Options: start, end, gap, hardend, other, include, as described at
+        http://wiki.apache.org/solr/SimpleFacetParameters#Facet_by_Range"""
+        clone = self._clone()
+        clone.query.add_range_facet(field, **options)
+        return clone
+
     def narrow(self, query):
         """Pushes existing facet choices into the search."""
         clone = self._clone()

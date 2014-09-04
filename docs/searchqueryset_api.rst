@@ -342,6 +342,28 @@ Example::
     # Count document hits for authors that start with 'jo' within the index.
     SearchQuerySet().filter(content='foo').query_facet('author', 'jo*')
 
+``range_facet``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.range_facet(self, field, **options)
+
+Adds ranged faceting to a query for the provided field. This is supported on
+**Solr only**. You provide field name (from one of the ``SearchIndex`` classes)
+you like to facet on and some options ``start``, ``end``, ``gap``, ``hardend``,
+``other``, ``include``. The options syntax is entirely dependent on the backend,
+see `Solr wiki <http://wiki.apache.org/solr/SimpleFacetParameters#Facet_by_Range>`_
+for more information on facet range options.
+No validation/cleansing is performed (except boolean ``hardend`` and it is up to
+the developer to ensure the options' syntax is correct.
+
+In the search results you get back, facet counts will be populated in the
+``SearchResult`` object. You can access them via the ``facet_counts`` method.
+
+Example::
+
+    # Count document hits for authors that start with 'jo' within the index.
+    SearchQuerySet().filter(content='bacon').range_facet('price', start=0.0, end=100.0, gap=20.0)
+
 ``within``
 ~~~~~~~~~~
 

@@ -453,6 +453,7 @@ class BaseSearchQuery(object):
         self.facets = {}
         self.date_facets = {}
         self.query_facets = []
+        self.range_facets = {}
         self.narrow_queries = set()
         #: If defined, fields should be a list of field names - no other values
         #: will be retrieved so the caller must be careful to include django_ct
@@ -901,6 +902,10 @@ class BaseSearchQuery(object):
             'point': ensure_point(point),
         }
 
+    def _get_facet_fieldname(self, field):
+        from haystack import connections
+        return connections[self._using].get_unified_index().get_facet_fieldname(field)
+
     def add_field_facet(self, field, **options):
         """Adds a regular facet on a field."""
         from haystack import connections
@@ -925,6 +930,9 @@ class BaseSearchQuery(object):
         """Adds a query facet on a field."""
         from haystack import connections
         self.query_facets.append((connections[self._using].get_unified_index().get_facet_fieldname(field), query))
+
+    def add_range_facet(self, field, **options):
+        self.range_facets[self._get_facet_fieldname(field)] = options
 
     def add_narrow_query(self, query):
         """
@@ -1005,6 +1013,7 @@ class BaseSearchQuery(object):
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()
         clone.query_facets = self.query_facets[:]
+        clone.range_facets = self.range_facets.copy()
         clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset
         clone.end_offset = self.end_offset

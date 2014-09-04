@@ -694,6 +694,23 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs3, SearchQuerySet))
         self.assertEqual(len(sqs3.query.query_facets), 3)
 
+    def test_range_facets(self):
+        range_options = dict(start=0.0, end=100.0, gap=20.0)
+        sqs = self.msqs.range_facet('foo', **range_options)
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.range_facets), 1)
+
+        sqs2 = self.msqs.range_facet('foo', **range_options).range_facet('bar', **range_options)
+        self.assertTrue(isinstance(sqs2, SearchQuerySet))
+        self.assertEqual(len(sqs2.query.range_facets), 2)
+
+        # Test multiple query facets on a single field
+        other_options = dict(test=1)
+        sqs3 = self.msqs.range_facet('foo', **range_options).range_facet('foo', **other_options)
+        self.assertTrue(isinstance(sqs3, SearchQuerySet))
+        self.assertEqual(len(sqs3.query.range_facets), 1)
+        self.assertEqual(sqs3.query.range_facets.values()[0], other_options)
+
     def test_stats(self):
         sqs = self.msqs.stats_facet('foo','bar')
         self.assertTrue(isinstance(sqs, SearchQuerySet))

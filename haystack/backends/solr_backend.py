@@ -134,7 +134,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
-                            date_facets=None, query_facets=None,
+                            date_facets=None, query_facets=None, range_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
@@ -210,6 +210,16 @@ class SolrSearchBackend(BaseSearchBackend):
         if query_facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets]
+
+        if range_facets is not None:
+            kwargs['facet'] = 'on'
+            for field, options in range_facets.items():
+                kwargs['facet.range'] = field
+                for key, value in options.items():
+                    if key in ['start', 'end', 'gap', 'hardend', 'other', 'include'] or 1:
+                        if key == 'hardend':
+                            value = 'true' if value else ''
+                        kwargs['f.%s.facet.range.%s' % (field, key)] = value
 
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
@@ -349,6 +359,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 'fields': raw_results.facets.get('facet_fields', {}),
                 'dates': raw_results.facets.get('facet_dates', {}),
                 'queries': raw_results.facets.get('facet_queries', {}),
+                'ranges': raw_results.facets.get('facet_ranges', {}),
             }
 
             for key in ['fields']:
@@ -673,6 +684,9 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.query_facets:
             search_kwargs['query_facets'] = self.query_facets
+
+        if self.range_facets:
+            search_kwargs['range_facets'] = self.range_facets
 
         if self.within:
             search_kwargs['within'] = self.within
