@@ -16,7 +16,7 @@ a small window passed over the string). Because this alters the way your
 data needs to be stored, the best approach is to add a new field to your
 ``SearchIndex`` that contains the text you want to autocomplete on.
 
-You have two choices: ``NgramField`` & ``EdgeNgramField``. Though very similar,
+You have two choices: ``NgramField`` and ``EdgeNgramField``. Though very similar,
 the choice of field is somewhat important.
 
 * If you're working with standard text, ``EdgeNgramField`` tokenizes on
@@ -54,14 +54,14 @@ Step 2. Performing The Query
 ============================
 
 Haystack ships with a convenience method to perform most autocomplete searches.
-You simply provide a field & the query you wish to search on to the
+You simply provide a field and the query you wish to search on to the
 ``SearchQuerySet.autocomplete`` method. Given the previous example, an example
 search would look like::
 
     from haystack.query import SearchQuerySet
 
     SearchQuerySet().autocomplete(content_auto='old')
-    # Result match things like 'goldfish', 'cuckold' & 'older'.
+    # Result match things like 'goldfish', 'cuckold' and 'older'.
 
 The results from the ``SearchQuerySet.autocomplete`` method are full search
 results, just like any regular filter.
@@ -82,14 +82,14 @@ Example Implementation
 
 The above is the low-level backend portion of how you implement autocomplete.
 To make it work in browser, you need both a view to run the autocomplete
-& some Javascript to fetch the results.
+and some Javascript to fetch the results.
 
 Since it comes up often, here is an example implementation of those things.
 
 .. warning::
 
     This code comes with no warranty. Don't ask for support on it. If you
-    copy-paste it & it burns down your server room, I'm not liable for any
+    copy-paste it and it burns down your server room, I'm not liable for any
     of it.
 
     It worked this one time on my machine in a simulated environment.
@@ -133,7 +133,7 @@ The template might look like::
       <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
       <script type="text/javascript">
         // In a perfect world, this would be its own library file that got included
-        // on the page & only the ``$(document).ready(...)`` below would be present.
+        // on the page and only the ``$(document).ready(...)`` below would be present.
         // But this is an example.
         var Autocomplete = function(options) {
           this.form_selector = options.form_selector

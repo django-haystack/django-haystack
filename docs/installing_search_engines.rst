@@ -159,6 +159,13 @@ You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
 .. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
+ 
+  Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
+  you have the proper version of `elasticsearch-py` installed - releases with
+  major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4
+  releases are meant to work with Elasticsearch 0.90.X.
+
+.. note::
 
     ``elasticsearch`` has its own dependencies that aren't covered by
     Haystack. You'll also need ``urllib3``.
@@ -189,19 +196,22 @@ Official Download Location: http://xapian.org/download
 Xapian is written in C++ so it requires compilation (unless your OS has a
 package for it). Installation looks like::
 
-    curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-core-1.0.11.tar.gz
-    curl -O http://oligarchy.co.uk/xapian/1.0.11/xapian-bindings-1.0.11.tar.gz
+    curl -O http://oligarchy.co.uk/xapian/1.2.18/xapian-core-1.2.18.tar.xz
+    curl -O http://oligarchy.co.uk/xapian/1.2.18/xapian-bindings-1.2.18.tar.xz
 
-    tar xvzf xapian-core-1.0.11.tar.gz
-    tar xvzf xapian-bindings-1.0.11.tar.gz
+    unxz xapian-core-1.2.18.tar.xz
+    unxz xapian-bindings-1.2.18.tar.xz
 
-    cd xapian-core-1.0.11
+    tar xvf xapian-core-1.2.18.tar
+    tar xvf xapian-bindings-1.2.18.tar
+
+    cd xapian-core-1.2.18
     ./configure
     make
     sudo make install
 
     cd ..
-    cd xapian-bindings-1.0.11
+    cd xapian-bindings-1.2.18
     ./configure
     make
     sudo make install

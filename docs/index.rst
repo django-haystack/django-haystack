@@ -113,5 +113,8 @@ Haystack has a relatively easily-met set of requirements.
 * Python 2.6+ or Python 3.3+
 * Django 1.5+
 
+ .. warning::
+     Django 1.7 is currently unsupported until the release of v2.3. See https://github.com/toastdriven/django-haystack/issues/1067
+
 Additionally, each backend has its own requirements. You should refer to
 :doc:`installing_search_engines` for more details.

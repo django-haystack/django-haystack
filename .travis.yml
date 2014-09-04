@@ -2,25 +2,43 @@ language: python
 python:
   - "2.7"
 
+cache:
+  directories:
+    - test_haystack/solr_tests/server/
+    - pip_download_cache
+
 before_install:
+  - mkdir -p $PIP_DOWNLOAD_CACHE
   - sudo apt-get update
-  - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libxapian22 python-xapian default-jdk
-  - curl https://raw.github.com/moliware/travis-solr/master/travis-solr.sh | SOLR_CONFS="tests/schema.xml tests/solrconfig.xml" SOLR_VERSION=4.4.0 bash
+  - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libgdal1h libxapian22 python-xapian default-jdk
 
 install:
-  - pip install tox
+  - pip install tox requests
   - pip install -e .
+
+before_script:
+  - BACKGROUND_SOLR=true test_haystack/solr_tests/server/start-solr-test-server.sh
 
 script:
   - tox -e $TOX_ENV
 
 env:
-  - TOX_ENV=py26-django1.5
-  - TOX_ENV=py26-django1.6
-  - TOX_ENV=py27-django1.5
-  - TOX_ENV=py27-django1.6
-  - TOX_ENV=py33-django1.5
-  - TOX_ENV=py33-django1.6
+  global:
+      - PIP_DOWNLOAD_CACHE="pip_download_cache"
+  matrix:
+      - TOX_ENV=py26-django1.5
+      - TOX_ENV=py26-django1.6
+      - TOX_ENV=py27-django1.5
+      - TOX_ENV=py27-django1.6
+      - TOX_ENV=py27-django1.7
+      - TOX_ENV=py33-django1.5
+      - TOX_ENV=py33-django1.6
+      - TOX_ENV=py33-django1.7
+      - TOX_ENV=py34-django1.5
+      - TOX_ENV=py34-django1.6
+      - TOX_ENV=pypy-django1.5
+      - TOX_ENV=pypy-django1.6
+      - TOX_ENV=pypy-django1.7
 
 services:
   - elasticsearch

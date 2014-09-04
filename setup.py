@@ -7,10 +7,27 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
+install_requires = [
+    'Django<1.7',
+]
+
+tests_require = [
+    'elasticsearch==0.4.5',
+    'pysolr>=3.2.0',
+    'whoosh==2.5.4',
+    'lxml==3.2.3',
+    'python-dateutil',
+    'geopy==0.95.1',
+    'httplib2==0.8',
+
+    'nose',
+    'mock',
+    'coverage',
+]
 
 setup(
     name='django-haystack',
-    version='2.1.1-dev',
+    version='2.2.1',
     description='Pluggable search for Django.',
     author='Daniel Lindsley',
     author_email='daniel@toastdriven.com',
@@ -43,4 +60,7 @@ setup(
         'Topic :: Utilities',
     ],
     zip_safe=False,
+    install_requires=install_requires,
+    tests_require=tests_require,
+    test_suite="test_haystack.run_tests.run_all",
 )
