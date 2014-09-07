@@ -323,6 +323,11 @@ class SearchQuerySet(object):
         clone.query.add_order_by_distance(**kwargs)
         return clone
 
+    def query_operator(self, op):
+        clone = self._clone()
+        clone.query.set_query_operator(op)
+        return clone
+
     def highlight(self):
         """Adds highlighting to the results."""
         clone = self._clone()

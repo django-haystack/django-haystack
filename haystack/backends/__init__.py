@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import six
 from django.utils import tree
-from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
+from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS, DEFAULT_OPERATOR
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
@@ -126,7 +126,7 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+    def build_search_kwargs(self, query_string, sort_by=None, query_operator=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
@@ -445,6 +445,7 @@ class BaseSearchQuery(object):
     def __init__(self, using=DEFAULT_ALIAS):
         self.query_filter = SearchNode()
         self.order_by = []
+        self.query_operator = DEFAULT_OPERATOR
         self.models = set()
         self.boost = {}
         self.start_offset = 0
@@ -506,6 +507,9 @@ class BaseSearchQuery(object):
 
         if self.order_by:
             kwargs['sort_by'] = self.order_by
+
+        if self.query_operator:
+            kwargs['query_operator'] = self.query_operator
 
         if self.end_offset is not None:
             kwargs['end_offset'] = self.end_offset
@@ -815,6 +819,12 @@ class BaseSearchQuery(object):
         """
         self.order_by_distance = []
 
+    def set_query_operator(self, op):
+        self.query_operator = op if op in ['OR', 'AND'] else DEFAULT_OPERATOR
+
+    def restore_default_operator(self):
+        self.query_operator = DEFAULT_OPERATOR
+
     def add_model(self, model):
         """
         Restricts the query requiring matches in the given model.
@@ -998,6 +1008,7 @@ class BaseSearchQuery(object):
         clone = klass(using=using)
         clone.query_filter = deepcopy(self.query_filter)
         clone.order_by = self.order_by[:]
+        clone.query_operator = self.query_operator
         clone.models = self.models.copy()
         clone.boost = self.boost.copy()
         clone.highlight = self.highlight

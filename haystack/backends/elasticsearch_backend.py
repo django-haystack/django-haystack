@@ -240,7 +240,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             else:
                 self.log.error("Failed to clear Elasticsearch index: %s", e)
 
-    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
+    def build_search_kwargs(self, query_string, sort_by=None, query_operator=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
@@ -249,6 +249,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                             result_class=None):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
+
+        if query_operator is not None:
+            if query_operator != DEFAULT_OPERATOR:
+                kwargs['q.op'] = query_operator
 
         if query_string == '*:*':
             kwargs = {
@@ -261,7 +265,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 'query': {
                     'query_string': {
                         'default_field': content_field,
-                        'default_operator': DEFAULT_OPERATOR,
+                        'default_operator': query_operator if query_operator is not None else DEFAULT_OPERATOR,
                         'query': query_string,
                         'analyze_wildcard': True,
                         'auto_generate_phrase_queries': True,
