@@ -90,3 +90,4 @@ Thanks to
     * Chris Wilson (qris) and Orlando Fiol (overflow) for an update allowing the use of multiple order_by()
       fields with Whoosh as long as they share a consistent sort direction
     * Steven Skoczen (@skoczen) for an ElasticSearch bug fix
+    * Andrei Fokau (andreif) for adding support for ``SQ`` in ``SearchQuerySet.narrow()``
