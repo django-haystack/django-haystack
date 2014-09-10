@@ -11,6 +11,7 @@ class NOT_PROVIDED:
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|\s+)(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}).*?$')
+DATE_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})')
 
 
 # All the SearchFields variants.
@@ -302,7 +303,7 @@ class DateField(SearchField):
             return None
 
         if isinstance(value, six.string_types):
-            match = DATETIME_REGEX.search(value)
+            match = DATE_REGEX.search(value)
 
             if match:
                 data = match.groupdict()
