@@ -12,7 +12,7 @@ install_requires = [
 ]
 
 tests_require = [
-    'elasticsearch==0.4.5',
+    'elasticsearch',
     'pysolr>=3.2.0',
     'whoosh==2.5.4',
     'lxml==3.2.3',

@@ -37,7 +37,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-        'PATH': os.path.join('tmp', 'test_whoosh_query'),
+        'PATH': mkdtemp(prefix='test_whoosh_query'),
         'INCLUDE_SPELLING': True,
     },
     'filtered_whoosh': {
@@ -62,3 +62,9 @@ HAYSTACK_CONNECTIONS = {
 }
 
 SITE_ID = 1
+
+MIDDLEWARE_CLASSES = ('django.middleware.common.CommonMiddleware',
+                      'django.contrib.sessions.middleware.SessionMiddleware',
+                      'django.middleware.csrf.CsrfViewMiddleware',
+                      'django.contrib.auth.middleware.AuthenticationMiddleware',
+                      'django.contrib.messages.middleware.MessageMiddleware')

@@ -1,14 +1,17 @@
 from __future__ import unicode_literals
+
 import copy
 import threading
 import warnings
+
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.six import with_metaclass
-from haystack import connections, connection_router
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID, Indexable, DEFAULT_ALIAS
+
+from haystack import connection_router, connections
+from haystack.constants import DEFAULT_ALIAS, DJANGO_CT, DJANGO_ID, ID, Indexable
 from haystack.fields import *
 from haystack.manager import SearchIndexManager
-from haystack.utils import get_identifier, get_facet_field_name
+from haystack.utils import get_facet_field_name, get_identifier, get_model_ct
 
 try:
     from django.utils.encoding import force_text
@@ -185,7 +188,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         """
         self.prepared_data = {
             ID: get_identifier(obj),
-            DJANGO_CT: "%s.%s" % (obj._meta.app_label, obj._meta.module_name),
+            DJANGO_CT: get_model_ct(obj),
             DJANGO_ID: force_text(obj.pk),
         }
 

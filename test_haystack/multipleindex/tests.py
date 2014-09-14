@@ -1,32 +1,23 @@
-import os
-import shutil
+# encoding: utf-8
 
-from django.conf import settings
+from __future__ import absolute_import, print_function, unicode_literals
+
 from django.db import models
-from django.test import TestCase
 
-from haystack import connections, connection_router
+from haystack import connections
 from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
-from haystack.signals import BaseSignalProcessor, RealtimeSignalProcessor
-from haystack.utils.loading import UnifiedIndex
+from haystack.signals import BaseSignalProcessor
 
-from .search_indexes import FooIndex, BarIndex
-from .models import Foo, Bar
-
-def tearDownModule():
-    # Because Whoosh doesn't clean up its mess.
-    for name, opts in settings.HAYSTACK_CONNECTIONS.items():
-        if "WhooshEngine" not in opts['ENGINE']:
-            continue
-        p = opts['PATH']
-        if os.path.exists(p):
-            shutil.rmtree(p)
+from ..whoosh_tests.testcases import WhooshTestCase
+from .models import Bar, Foo
+from .search_indexes import BarIndex, FooIndex
 
 
-class MultipleIndexTestCase(TestCase):
+class MultipleIndexTestCase(WhooshTestCase):
     def setUp(self):
         super(MultipleIndexTestCase, self).setUp()
+
         self.ui = connections['solr'].get_unified_index()
         self.fi = self.ui.get_index(Foo)
         self.bi = self.ui.get_index(Bar)
@@ -34,26 +25,16 @@ class MultipleIndexTestCase(TestCase):
         self.whoosh_backend = connections['whoosh'].get_backend()
         self.filtered_whoosh_backend = connections['filtered_whoosh'].get_backend()
 
-        foo_1 = Foo.objects.create(
-            title='Haystack test',
-            body='foo 1',
-        )
-        foo_2 = Foo.objects.create(
-            title='Another Haystack test',
-            body='foo 2',
-        )
-        bar_1 = Bar.objects.create(
-            author='Haystack test',
-            content='bar 1',
-        )
-        bar_2 = Bar.objects.create(
-            author='Another Haystack test',
-            content='bar 2',
-        )
-        bar_3 = Bar.objects.create(
-            author='Yet another Haystack test',
-            content='bar 3',
-        )
+        Foo.objects.bulk_create([
+            Foo(title='Haystack test', body='foo 1'),
+            Foo(title='Another Haystack test', body='foo 2')
+        ])
+
+        Bar.objects.bulk_create([
+            Bar(author='Haystack test', content='bar 1'),
+            Bar(author='Another Haystack test', content='bar 2'),
+            Bar(author='Yet another Haystack test', content='bar 3'),
+        ])
 
         self.fi.reindex(using='solr')
         self.fi.reindex(using='whoosh')
@@ -211,7 +192,7 @@ class TestSignalProcessor(BaseSignalProcessor):
         super(TestSignalProcessor, self).teardown()
 
 
-class SignalProcessorTestCase(TestCase):
+class SignalProcessorTestCase(WhooshTestCase):
     def setUp(self):
         super(SignalProcessorTestCase, self).setUp()
 
