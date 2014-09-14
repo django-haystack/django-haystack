@@ -90,3 +90,4 @@ Thanks to
     * Chris Wilson (qris) and Orlando Fiol (overflow) for an update allowing the use of multiple order_by()
       fields with Whoosh as long as they share a consistent sort direction
     * Steven Skoczen (@skoczen) for an ElasticSearch bug fix
+    * @Xaroth for updating the app loader to be compatible with Django 1.7
