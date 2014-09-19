@@ -38,7 +38,7 @@ try:
             return app.get_models()
         else:
             app_label, model_name = label.split('.')
-            return apps.get_app_config(app_label).get_model(model_name)
+            return [apps.get_app_config(app_label).get_model(model_name)]
 
 except ImportError:
     def load_apps():
