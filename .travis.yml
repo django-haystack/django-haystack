@@ -44,5 +44,5 @@ services:
   - elasticsearch
 
 notifications:
-  #irc: "irc.freenode.org#haystack"
+  irc: "irc.freenode.org#haystack"
   email: false
