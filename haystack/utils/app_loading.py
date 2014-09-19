@@ -30,7 +30,12 @@ try:
 
     def get_models(label):
         if is_app_or_model(label) == APP:
-            return apps.get_app_config(label).get_models()
+            try:
+                app = apps.get_app_config(label)
+            except LookupError as exc:
+                raise ImproperlyConfigured(u'get_models() called for unregistered app %s: %s' % (label, exc))
+
+            return app.get_models()
         else:
             app_label, model_name = label.split('.')
             return apps.get_app_config(app_label).get_model(model_name)
