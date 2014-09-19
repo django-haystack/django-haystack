@@ -42,14 +42,10 @@ except ImportError:
         items = []
 
         for app in settings.INSTALLED_APPS:
-            try:
-                app_label = app.split('.')[-1]
-                loaded_app = get_app(app_label)
-                items.append(app_label)
-            except:
-                raise NotImplementedError
-                # No models, no problem.
-                pass
+            app_label = app.split('.')[-1]
+            loaded_app = get_app(app_label)
+            items.append(app_label)
+
         return items
 
     def get_models(label):
