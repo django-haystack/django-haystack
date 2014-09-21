@@ -2,7 +2,10 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from types import GeneratorType
+
+from django.core.urlresolvers import reverse
 from django.test import TestCase
+
 from haystack.utils import app_loading
 
 
@@ -21,3 +24,12 @@ class AppLoadingTests(TestCase):
         models = app_loading.get_models('core.MockModel')
         self.assertIsInstance(models, (list, GeneratorType))
         self.assertListEqual(models, [MockModel])
+
+
+class AppWithoutModelsTests(TestCase):
+    # Confirm that everything works if an app is enabled
+
+    def test_simple_view(self):
+        url = reverse('app-without-models:simple-view')
+        resp = self.client.get(url)
+        self.assertEqual(resp.content.decode('utf-8'), 'OK')

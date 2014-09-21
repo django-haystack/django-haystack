@@ -48,7 +48,12 @@ except ImportError:
 
         for app in settings.INSTALLED_APPS:
             app_label = app.split('.')[-1]
-            loaded_app = get_app(app_label)
+
+            try:
+                get_app(app_label)
+            except ImproperlyConfigured:
+                continue  # Intentionally allow e.g. apps without models.py
+
             items.append(app_label)
 
         return items

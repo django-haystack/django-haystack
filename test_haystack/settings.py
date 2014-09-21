@@ -24,6 +24,11 @@ INSTALLED_APPS = [
     'test_haystack.core',
     'test_haystack.spatial',
     'test_haystack.multipleindex',
+
+    # This app exists to confirm that nothing breaks when INSTALLED_APPS has an app without models.py
+    # which is common in some cases for things like admin extensions, reporting, etc.
+    'test_haystack.test_app_without_models',
+
 ]
 
 SITE_ID = 1
