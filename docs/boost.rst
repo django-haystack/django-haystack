@@ -100,4 +100,26 @@ An example of this might be increasing the significance of a ``title``::
   Field boosting only has an effect when the SearchQuerySet filters on the
   field which has been boosted. If you are using a default search view or
   form you will need override the search method or other include the field
-  in your search query.
+  in your search query. This example CustomSearchForm searches the automatic 
+  content field and the title field which has been boosted::
+  
+    from haystack.forms import SearchForm
+    
+    class CustomSearchForm(SearchForm):
+
+        def search(self):
+            if not self.is_valid():
+                return self.no_query_found()
+    
+            if not self.cleaned_data.get('q'):
+                return self.no_query_found()
+    
+            q = self.cleaned_data['q']
+            sqs = self.searchqueryset.filter(SQ(content=AutoQuery(q)) | SQ(title=AutoQuery(q)))
+    
+            if self.load_all:
+                sqs = sqs.load_all()
+    
+            return sqs.highlight()
+  
+  
