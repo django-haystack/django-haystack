@@ -1,4 +1,5 @@
 recursive-include docs *
-recursive-include haystack/templates/search_configuration *.xml
+recursive-include haystack/templates *.xml *.html
 include AUTHORS
 include LICENSE
+include README.rst

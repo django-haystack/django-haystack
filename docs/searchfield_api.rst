@@ -6,7 +6,7 @@
 
 .. class:: SearchField
 
-The ``SearchField`` and it's subclasses provides a way to declare what data
+The ``SearchField`` and its subclasses provides a way to declare what data
 you're interested in indexing. They are used with ``SearchIndexes``, much like
 ``forms.*Field`` are used within forms or ``models.*Field`` within models.
 
@@ -28,9 +28,30 @@ Included with Haystack are the following field types:
 * ``CharField``
 * ``DateField``
 * ``DateTimeField``
+* ``DecimalField``
+* ``EdgeNgramField``
 * ``FloatField``
 * ``IntegerField``
+* ``LocationField``
 * ``MultiValueField``
+* ``NgramField``
+
+And equivalent faceted versions:
+
+* ``FacetBooleanField``
+* ``FacetCharField``
+* ``FacetDateField``
+* ``FacetDateTimeField``
+* ``FacetDecimalField``
+* ``FacetFloatField``
+* ``FacetIntegerField``
+* ``FacetMultiValueField``
+
+.. note::
+
+  There is no faceted variant of the n-gram fields. Because of how the engine
+  generates n-grams, faceting on these field types (``NgramField`` &
+  ``EdgeNgram``) would make very little sense.
 
 
 Usage
@@ -41,13 +62,17 @@ within a ``SearchIndex``. You use them in a declarative manner, just like
 fields in ``django.forms.Form`` or ``django.db.models.Model`` objects. For
 example::
 
-    from haystack.indexes import *
-    
-    
-    class NoteIndex(SearchIndex):
-        text = CharField(document=True, use_template=True)
-        author = CharField(model_attr='user')
-        pub_date = DateTimeField(model_attr='pub_date')
+    from haystack import indexes
+    from myapp.models import Note
+
+
+    class NoteIndex(indexes.SearchIndex, indexes.Indexable):
+        text = indexes.CharField(document=True, use_template=True)
+        author = indexes.CharField(model_attr='user')
+        pub_date = indexes.DateTimeField(model_attr='pub_date')
+
+        def get_model(self):
+            return Note
 
 This will hook up those fields with the index and, when updating a ``Model``
 object, pull the relevant data out and prepare it for storage in the index.
@@ -83,7 +108,7 @@ to be the primary field for searching within. Default is ``False``.
 
 .. attribute:: SearchField.indexed
 
-A boolean flag for indicating whether or not the the data from this field will
+A boolean flag for indicating whether or not the data from this field will
 be searchable within the index. Default is ``True``.
 
 The companion of this option is ``stored``.
@@ -137,7 +162,7 @@ not to contain any data. Default is ``False``.
 
     Unlike Django's database layer, which injects a ``NULL`` into the database
     when a field is marked nullable, ``null=True`` will actually exclude that
-    field from being included with the document. This more efficient for the
+    field from being included with the document. This is more efficient for the
     search engine to deal with.
 
 ``stored``
@@ -167,6 +192,14 @@ Example::
 
     bio = CharField(use_template=True, template_name='myapp/data/bio.txt')
 
+You can also provide a list of templates, as ``loader.select_template`` is used
+under the hood.
+
+Example::
+
+    bio = CharField(use_template=True, template_name=['myapp/data/bio.txt', 'myapp/bio.txt', 'bio.txt'])
+
+
 ``use_template``
 ----------------
 
@@ -187,7 +220,7 @@ Method Reference
 ``__init__``
 ------------
 
-.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, default=NOT_PROVIDED, null=False)
+.. method:: SearchField.__init__(self, model_attr=None, use_template=False, template_name=None, document=False, indexed=True, stored=True, faceted=False, default=NOT_PROVIDED, null=False, index_fieldname=None, facet_class=None, boost=1.0, weight=None)
 
 Instantiates a fresh ``SearchField`` instance.
 

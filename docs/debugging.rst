@@ -38,11 +38,11 @@ Several issues can cause no results to be found. Most commonly it is either
 not running a ``rebuild_index`` to populate your index or having a blank
 ``document=True`` field, resulting in no content for the engine to search on.
 
-* Do you have a ``search_sites.py`` that runs ``haystack.autodiscover``?
-* Have you registered your models with the main ``haystack.site`` (usually
-  within your ``search_indexes.py``)?
+* Do you have a ``search_indexes.py`` located within an installed app?
 * Do you have data in your database?
 * Have you run a ``./manage.py rebuild_index`` to index all of your content?
+* Try running ``./manage.py rebuild_index -v2`` for more verbose output to
+  ensure data is being processed/inserted.
 * Start a Django shell (``./manage.py shell``) and try::
 
   >>> from haystack.query import SearchQuerySet
@@ -71,25 +71,14 @@ not running a ``rebuild_index`` to populate your index or having a blank
 
 This is a Whoosh-specific traceback. It occurs when the Whoosh engine in one
 process/thread is locks the index files for writing while another process/thread
-tries to access them. This is a common error when using ``RealTimeSearchIndex``
+tries to access them. This is a common error when using ``RealtimeSignalProcessor``
 with Whoosh under any kind of load, which is why it's only recommended for
 small sites or development.
 
-A way to solve this is to subclass ``SearchIndex`` instead::
-
-    from haystack.indexes import *
-    
-    # Change from:
-    # 
-    #   class MySearchIndex(RealTimeSearchIndex):
-    # 
-    # to:
-    class MySearchIndex(SearchIndex):
-        ...
-
-The final step is to set up a cron job that runs
+The only real solution is to set up a cron job that runs
 ``./manage.py rebuild_index`` (optionally with ``--age=24``) that runs nightly
-(or however often you need) to refresh the search indexes.
+(or however often you need) to refresh the search indexes. Then disable the
+use of the ``RealtimeSignalProcessor`` within your settings.
 
 The downside to this is that you lose real-time search. For many people, this
 isn't an issue and this will allow you to scale Whoosh up to a much higher
@@ -97,50 +86,22 @@ traffic. If this is not acceptable, you should investigate either the Solr or
 Xapian backends.
 
 
-"Import errors on start-up mentioning 'handle_registrations'"
-=============================================================
-
-When initializing, Haystack attempts to import and register all of the
-``SearchIndex`` classes you've setup. As a by-product of this, especially in
-conjunction with third-party apps that attempt to do similar types of imports,
-it's possible (though rare) to get a traceback very early in the start-up
-process, usually mentioning ``handle_registrations``.
-
-There are typically three possible causes for this error:
-
-    * A syntax/import error in a file included by the ``search_indexes.py`` file
-    * A circular import
-    * Another app causing models to load early
-
-The first two causes can be debugged by dropping an
-``import pdb; pdb.set_trace()`` at the top of the ``search_indexes.py`` where
-the error is occurring and stepping through to see the real error.
-
-If neither of those is the case, Haystack provides an advanced setting
-(``HAYSTACK_ENABLE_REGISTRATIONS`` - :doc:`settings`) to disable this importing
-behavior and allow your applications to function.
-
-As a note of caution, setting ``HAYSTACK_ENABLE_REGISTRATIONS = False`` in your
-settings causes Haystack to be left in an uninitialized state. This means that
-none of your ``SearchIndex`` classes will be registered and all attempts to use
-``SearchQuerySet`` will yield no results. To continue using Haystack, you'll
-need to manually import your ``search_indexes.py`` files, either in your
-``models.py`` or ``views.py`` files (or something similar). Additionally, any
-use at the console/management commands may also require similar imports.
-
-Finally, should this occur to you, it would be appreciated if you could report
-the issue and the app(s) you're using that are causing the issue in conjunction
-with Haystack on either the mailing list or on the GitHub issue tracker.
-
-
 "Failed to add documents to Solr: [Reason: None]"
 =================================================
 
 This is a Solr-specific traceback. It generally occurs when there is an error
-with your ``HAYSTACK_SOLR_URL``. Since Solr acts as a webservice, you should
+with your ``HAYSTACK_CONNECTIONS[<alias>]['URL']``. Since Solr acts as a webservice, you should
 test the URL in your web browser. If you receive an error, you may need to
 change your URL.
 
 This can also be caused when using old versions of pysolr (2.0.9 and before),
-using httplib2 and including a trailing slash in your ``HAYSTACK_SOLR_URL``.
-Please upgrade your version of pysolr.
+using httplib2 and including a trailing slash in your ``HAYSTACK_CONNECTIONS[<alias>]['URL']``.
+Please upgrade your version of pysolr (2.0.13+).
+
+
+"Got an unexpected keyword argument 'boost'"
+============================================
+
+This is a Solr-specific traceback. This can also be caused when using old
+versions of pysolr (2.0.12 and before). Please upgrade your version of
+pysolr (2.0.13+).

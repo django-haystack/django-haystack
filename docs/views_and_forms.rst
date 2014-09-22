@@ -87,24 +87,27 @@ associated with it. You might create a form that looked as follows::
 
     from django import forms
     from haystack.forms import SearchForm
-    
-    
+
+
     class DateRangeSearchForm(SearchForm):
         start_date = forms.DateField(required=False)
         end_date = forms.DateField(required=False)
-        
+
         def search(self):
             # First, store the SearchQuerySet received from other processing.
             sqs = super(DateRangeSearchForm, self).search()
-            
+
+            if not self.is_valid():
+                return self.no_query_found()
+
             # Check to see if a start_date was chosen.
             if self.cleaned_data['start_date']:
                 sqs = sqs.filter(pub_date__gte=self.cleaned_data['start_date'])
-            
+
             # Check to see if an end_date was chosen.
             if self.cleaned_data['end_date']:
                 sqs = sqs.filter(pub_date__lte=self.cleaned_data['end_date'])
-            
+
             return sqs
 
 This form adds two new fields for (optionally) choosing the start and end dates.
@@ -129,7 +132,7 @@ The functional view provides an example of how Haystack can be used in more
 traditional settings or as an example of how to write a more complex custom
 view. It is also thread-safe.
 
-``SearchView(template=None, load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
+``SearchView(template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
 --------------------------------------------------------------------------------------------------------------------------------------------------
 
 The ``SearchView`` is designed to be easy/flexible enough to override common
@@ -150,21 +153,21 @@ URLconf should look something like::
     from haystack.forms import ModelSearchForm
     from haystack.query import SearchQuerySet
     from haystack.views import SearchView
-    
+
     sqs = SearchQuerySet().filter(author='john')
-    
+
     # Without threading...
     urlpatterns = patterns('haystack.views',
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
-            form_class=ModelSearchForm
+            form_class=SearchForm
         ), name='haystack_search'),
     )
-    
+
     # With threading...
     from haystack.views import SearchView, search_view_factory
-    
+
     urlpatterns = patterns('haystack.views',
         url(r'^$', search_view_factory(
             view_class=SearchView,
@@ -180,6 +183,9 @@ URLconf should look something like::
     ``search_view_factory`` function, which returns thread-safe instances of
     ``SearchView``.
 
+By default, if you don't specify a ``form_class``, the view will use the
+``haystack.forms.ModelSearchForm`` form.
+
 Beyond this customizations, you can create your own ``SearchView`` and
 extend/override the following methods to change the functionality.
 
@@ -192,10 +198,13 @@ Relies on internal, overridable methods to construct the response. You generally
 should avoid altering this method unless you need to change the flow of the
 methods or to add a new method into the processing.
 
-``build_form(self)``
-~~~~~~~~~~~~~~~~~~~~
+``build_form(self, form_kwargs=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Instantiates the form the class should use to process the search query.
+
+Optionally accepts a dictionary of parameters that are passed on to the
+form's ``__init__``. You can use this to lightly customize the form.
 
 You should override this if you write a custom form that needs special
 parameters for instantiation.
@@ -261,17 +270,14 @@ As with the forms, inheritance is likely your best bet. In this case, the
 ``SearchView``. The complete code for the ``FacetedSearchView`` looks like::
 
     class FacetedSearchView(SearchView):
-        def __name__(self):
-            return "FacetedSearchView"
-            
         def extra_context(self):
             extra = super(FacetedSearchView, self).extra_context()
-            
+
             if self.results == []:
                 extra['facets'] = self.form.search().facet_counts()
             else:
                 extra['facets'] = self.results.facet_counts()
-            
+
             return extra
 
 It updates the name of the class (generally for documentation purposes) and

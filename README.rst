@@ -3,19 +3,20 @@ Haystack
 ========
 
 :author: Daniel Lindsley
-:date: 2010/03/20
+:date: 2013/07/28
 
 Haystack provides modular search for Django. It features a unified, familiar
 API that allows you to plug in different search backends (such as Solr_,
-Whoosh_, Xapian_, etc.) without having to modify your code.
+Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Whoosh: http://whoosh.ca/
+.. _Elasticsearch: http://elasticsearch.org/
+.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 Haystack is BSD licensed, plays nicely with third-party app without needing to
 modify the source and supports advanced features like faceting, More Like This,
-highlighting and spelling suggestions.
+highlighting, spatial search and spelling suggestions.
 
 You can find more information at http://haystacksearch.org/.
 
@@ -31,18 +32,28 @@ irc.freenode.net).
 Documentation
 =============
 
-* Development version: http://docs.haystacksearch.org/dev/
-* v1.0: http://docs.haystacksearch.org/1.0/
+* Development version: http://docs.haystacksearch.org/
+* v2.3.X: http://django-haystack.readthedocs.org/en/v2.3.0/
+* v2.2.X: http://django-haystack.readthedocs.org/en/v2.2.0/
+* v2.1.X: http://django-haystack.readthedocs.org/en/v2.1.0/
+* v2.0.X: http://django-haystack.readthedocs.org/en/v2.0.0/
+* v1.2.X: http://django-haystack.readthedocs.org/en/v1.2.7/
+* v1.1.X: http://django-haystack.readthedocs.org/en/v1.1/
 
+Build Status
+============
+
+.. image:: https://travis-ci.org/toastdriven/django-haystack.svg?branch=master
+   :target: https://travis-ci.org/toastdriven/django-haystack
 
 Requirements
 ============
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.4+ (may work on 2.3 but untested)
-* Django 1.0+
+* Python 2.6+ or Python 3.3+
+* Django 1.5+
 
 Additionally, each backend has its own requirements. You should refer to
-http://docs.haystacksearch.org/dev/installing_search_engines.html for more
+http://django-haystack.readthedocs.org/en/latest/installing_search_engines.html for more
 details.

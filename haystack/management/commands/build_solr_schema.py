@@ -1,31 +1,67 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from optparse import make_option
 import sys
-from django.core.management.base import NoArgsCommand
+
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.base import BaseCommand
 from django.template import loader, Context
-from haystack.constants import DEFAULT_OPERATOR
+from haystack.backends.solr_backend import SolrSearchBackend
+from haystack import constants
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
-    
-    def handle_noargs(self, **options):
+    base_options = (
+        make_option("-f", "--filename", action="store", type="string", dest="filename",
+                    help='If provided, directs output to a file instead of stdout.'),
+        make_option("-u", "--using", action="store", type="string", dest="using", default=constants.DEFAULT_ALIAS,
+                    help='If provided, chooses a connection to work with.'),
+    )
+    option_list = BaseCommand.option_list + base_options
+
+    def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
-        # Cause the default site to load.
-        from django.conf import settings
-        from haystack import backend, site
-        
-        content_field_name, fields = backend.SearchBackend().build_schema(site.all_searchfields())
-        
-        t = loader.get_template('search_configuration/solr.xml')
-        c = Context({
+        using = options.get('using')
+        schema_xml = self.build_template(using=using)
+
+        if options.get('filename'):
+            self.write_file(options.get('filename'), schema_xml)
+        else:
+            self.print_stdout(schema_xml)
+
+    def build_context(self, using):
+        from haystack import connections, connection_router
+        backend = connections[using].get_backend()
+
+        if not isinstance(backend, SolrSearchBackend):
+            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % backend.connection_alias)
+
+        content_field_name, fields = backend.build_schema(connections[using].get_unified_index().all_searchfields())
+        return Context({
             'content_field_name': content_field_name,
             'fields': fields,
-            'default_operator': DEFAULT_OPERATOR,
+            'default_operator': constants.DEFAULT_OPERATOR,
+            'ID': constants.ID,
+            'DJANGO_CT': constants.DJANGO_CT,
+            'DJANGO_ID': constants.DJANGO_ID,
         })
-        schema_xml = t.render(c)
+
+    def build_template(self, using):
+        t = loader.get_template('search_configuration/solr.xml')
+        c = self.build_context(using=using)
+        return t.render(c)
+
+    def print_stdout(self, schema_xml):
         sys.stderr.write("\n")
         sys.stderr.write("\n")
         sys.stderr.write("\n")
         sys.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.\n")
         sys.stderr.write("--------------------------------------------------------------------------------------------\n")
         sys.stderr.write("\n")
-        print schema_xml
+        print(schema_xml)
+
+    def write_file(self, filename, schema_xml):
+        schema_file = open(filename, 'w')
+        schema_file.write(schema_xml)
+        schema_file.close()

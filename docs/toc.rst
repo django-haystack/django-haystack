@@ -3,7 +3,7 @@ Table Of Contents
 
 .. toctree::
    :maxdepth: 2
-   
+
    index
    tutorial
    glossary
@@ -18,20 +18,29 @@ Table Of Contents
    who_uses
    other_apps
    debugging
-   
+
+   migration_from_1_to_2
+   python3
+   contributing
+
    best_practices
    highlighting
    faceting
-   do_not_try_this_at_home
-   
+   autocomplete
+   boost
+   signal_processors
+   multiple_index
+   rich_content_extraction
+   spatial
+
    searchqueryset_api
    searchindex_api
+   inputtypes
    searchfield_api
    searchresult_api
-   searchsite_api
    searchquery_api
    searchbackend_api
-   
+
    running_tests
    creating_new_backends
    utils

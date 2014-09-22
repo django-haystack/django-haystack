@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class HaystackError(Exception):
     """A generic exception for all others to extend."""
     pass
@@ -14,12 +17,8 @@ class MissingDependency(HaystackError):
     """Raised when a library a backend depends on can not be found."""
     pass
 
-class AlreadyRegistered(HaystackError):
-    """Raised when a model is already registered with a site."""
-    pass
-
-class NotRegistered(HaystackError):
-    """Raised when a model is not registered with a site."""
+class NotHandled(HaystackError):
+    """Raised when a model is not handled by the router setup."""
     pass
 
 class MoreLikeThisError(HaystackError):
@@ -28,4 +27,12 @@ class MoreLikeThisError(HaystackError):
 
 class FacetingError(HaystackError):
     """Raised when incorrect arguments have been provided for faceting."""
+    pass
+
+class SpatialError(HaystackError):
+    """Raised when incorrect arguments have been provided for spatial."""
+    pass
+
+class StatsError(HaystackError):
+    "Raised when incorrect arguments have been provided for stats"
     pass

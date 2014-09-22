@@ -4,7 +4,7 @@
 ``SearchQuerySet`` API
 ======================
 
-.. class:: SearchQuerySet(site=None, query=None)
+.. class:: SearchQuerySet(using=None, query=None)
 
 The ``SearchQuerySet`` class is designed to make performing a search and
 iterating over its results easy and consistent. For those familiar with Django's
@@ -37,6 +37,16 @@ For the impatient::
     unfriendly_results = SearchQuerySet().exclude(content='hello').filter(content='world')
     recent_results = SearchQuerySet().order_by('-pub_date')[:5]
 
+    # Using the new input types...
+    from haystack.inputs import AutoQuery, Exact, Clean
+    sqs = SearchQuerySet().filter(content=AutoQuery(request.GET['q']), product_type=Exact('ancient book'))
+
+    if request.GET['product_url']:
+        sqs = sqs.filter(product_url=Clean(request.GET['product_url']))
+
+For more on the ``AutoQuery``, ``Exact``, ``Clean`` classes & friends, see the
+:ref:`ref-inputtypes` documentation.
+
 
 ``SearchQuerySet``
 ==================
@@ -66,7 +76,7 @@ search the main documents.
 For example::
 
     from haystack.query import SearchQuerySet
-    
+
     # This searches whatever fields were marked ``document=True``.
     results = SearchQuerySet().exclude(content='hello')
 
@@ -118,28 +128,38 @@ The lookup parameters (``**kwargs``) should follow the `Field lookups`_ below.
 If you specify more than one pair, they will be joined in the query according to
 the ``HAYSTACK_DEFAULT_OPERATOR`` setting (defaults to ``AND``).
 
-If a string with one or more spaces in it is specified as the value, an exact
-match will be performed on that phrase.
+You can pass it either strings or a variety of :ref:`ref-inputtypes` if you
+need more advanced query behavior.
 
 .. warning::
 
-    Any data you pass to ``filter`` is passed along **unescaped**. If
-    you don't trust the data you're passing along, you should either use
-    ``auto_query`` or use the ``clean`` method on your ``SearchQuery`` to
-    sanitize the data.
+    Any data you pass to ``filter`` gets auto-escaped. If you need to send
+    non-escaped data, use the ``Raw`` input type (:ref:`ref-inputtypes`).
 
-Example::
+    Also, if a string with one or more spaces in it is specified as the value, the
+    string will get passed along **AS IS**. This will mean that it will **NOT**
+    be treated as a phrase (like Haystack 1.X's behavior).
 
-    SearchQuerySet().filter(content='foo')
-    
-    SearchQuerySet().filter(content='foo', pub_date__lte=datetime.date(2008, 1, 1))
-    
+    If you want to match a phrase, you should use either the ``__exact`` filter
+    type or the ``Exact`` input type (:ref:`ref-inputtypes`).
+
+Examples::
+
+    sqs = SearchQuerySet().filter(content='foo')
+
+    sqs = SearchQuerySet().filter(content='foo', pub_date__lte=datetime.date(2008, 1, 1))
+
     # Identical to the previous example.
-    SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
-    
-    # To escape user data:
-    sqs = SearchQuerySet()
-    sqs = sqs.filter(title=sqs.query.clean(user_query))
+    sqs = SearchQuerySet().filter(content='foo').filter(pub_date__lte=datetime.date(2008, 1, 1))
+
+    # To send unescaped data:
+    from haystack.inputs import Raw
+    sqs = SearchQuerySet().filter(title=Raw(trusted_query))
+
+    # To use auto-query behavior on a non-``document=True`` field.
+    from haystack.inputs import AutoQuery
+    sqs = SearchQuerySet().filter(title=AutoQuery(user_query))
+
 
 ``exclude``
 ~~~~~~~~~~~
@@ -150,14 +170,13 @@ Narrows the search by ensuring certain attributes are not included.
 
 .. warning::
 
-    Any data you pass to ``exclude`` is passed along **unescaped**. If
-    you don't trust the data you're passing along, you should either use
-    ``auto_query`` or use the ``clean`` method on your ``SearchQuery`` to
-    sanitize the data.
+    Any data you pass to ``exclude`` gets auto-escaped. If you need to send
+    non-escaped data, use the ``Raw`` input type (:ref:`ref-inputtypes`).
 
 Example::
 
-    SearchQuerySet().exclude(content='foo')
+    sqs = SearchQuerySet().exclude(content='foo')
+
 
 ``filter_and``
 ~~~~~~~~~~~~~~
@@ -199,18 +218,10 @@ string with a ``-``::
     reconcile differences between characters from different languages. This
     means that accented characters will sort closely with the same character
     and **NOT** necessarily close to the unaccented form of the character.
-    
+
     If you want this kind of behavior, you should override the ``prepare_FOO``
     methods on your ``SearchIndex`` objects to transliterate the characters
     as you see fit.
-
-.. warning::
-
-    **Whoosh only** If you're planning on ordering by an ``IntegerField`` using
-    Whoosh, you'll need to adequately zero-pad your numbers in the
-    ``prepare_FOO`` method. This is because Whoosh uses UTF-8 string for
-    everything, and from the schema, there is no way to know how a field should
-    be treated.
 
 ``highlight``
 ~~~~~~~~~~~~~
@@ -236,6 +247,20 @@ Example::
 
     SearchQuerySet().filter(content='foo').models(BlogEntry, Comment)
 
+``result_class``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.result_class(self, klass)
+
+Allows specifying a different class to use for results.
+
+Overrides any previous usages. If ``None`` is provided, Haystack will
+revert back to the default ``SearchResult`` object.
+
+Example::
+
+    SearchQuerySet().result_class(CustomResult)
+
 ``boost``
 ~~~~~~~~~
 
@@ -252,10 +277,18 @@ Example::
 ``facet``
 ~~~~~~~~~
 
-.. method:: SearchQuerySet.facet(self, field)
+.. method:: SearchQuerySet.facet(self, field, **options)
 
 Adds faceting to a query for the provided field. You provide the field (from one
-of the ``SearchIndex`` classes) you like to facet on.
+of the ``SearchIndex`` classes) you like to facet on. Any keyword options you
+provide will be passed along to the backend for that facet.
+
+Example::
+
+    # For SOLR (setting f.author.facet.*; see http://wiki.apache.org/solr/SimpleFacetParameters#Parameters)
+    SearchQuerySet().facet('author', mincount=1, limit=10)
+    # For ElasticSearch (see http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html)
+    SearchQuerySet().facet('author', size=10, order='term')
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.
@@ -278,7 +311,7 @@ amount of time between gaps as ``gap_by`` (one of ``'year'``, ``'month'``,
 
 You can also optionally provide a ``gap_amount`` to specify a different
 increment than ``1``. For example, specifying gaps by week (every seven days)
-would would be ``gap_by='day', gap_amount=7``).
+would be ``gap_by='day', gap_amount=7``).
 
 In the search results you get back, facet counts will be populated in the
 ``SearchResult`` object. You can access them via the ``facet_counts`` method.
@@ -309,6 +342,65 @@ Example::
     # Count document hits for authors that start with 'jo' within the index.
     SearchQuerySet().filter(content='foo').query_facet('author', 'jo*')
 
+``within``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.within(self, field, point_1, point_2):
+
+Spatial: Adds a bounding box search to the query.
+
+See the :ref:`ref-spatial` docs for more information.
+
+``dwithin``
+~~~~~~~~~~~
+
+.. method:: SearchQuerySet.dwithin(self, field, point, distance):
+
+Spatial: Adds a distance-based search to the query.
+
+See the :ref:`ref-spatial` docs for more information.
+
+``stats``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.stats(self, field):
+
+Adds stats to a query for the provided field. This is supported on
+Solr only. You provide the field (from one of the ``SearchIndex``
+classes) you would like stats on.
+
+In the search results you get back, stats will be populated in the
+``SearchResult`` object. You can access them via the `` stats_results`` method.
+
+Example::
+
+    # Get stats on the author field.
+    SearchQuerySet().filter(content='foo').stats('author')
+
+``stats_facet``
+~~~~~~~~~~~~~~~
+.. method:: SearchQuerySet.stats_facet(self, field,
+.. facet_fields=None):
+
+Adds stats facet for the given field and facet_fields represents the
+faceted fields. This is supported on Solr only.
+
+Example::
+
+    # Get stats on the author field, and stats on the author field
+    faceted by bookstore.
+    SearchQuerySet().filter(content='foo').stats_facet('author','bookstore')
+
+
+``distance``
+~~~~~~~~~~~~
+.. method:: SearchQuerySet.distance(self, field, point):
+
+Spatial: Denotes results must have distance measurements from the
+provided point.
+
+See the :ref:`ref-spatial` docs for more information.
+
 ``narrow``
 ~~~~~~~~~~
 
@@ -321,7 +413,7 @@ Example::
 
     # Search, from recipes containing 'blend', for recipes containing 'banana'.
     SearchQuerySet().narrow('blend').filter(content='banana')
-    
+
     # Using a fielded search where the recipe's title contains 'smoothie', find all recipes published before 2009.
     SearchQuerySet().narrow('title:smoothie').filter(pub_date__lte=datetime.datetime(2009, 1, 1))
 
@@ -349,16 +441,22 @@ searched. Generally speaking, if you're in doubt of whether to use
 Passes a raw query directly to the backend. This is for advanced usage, where
 the desired query can not be expressed via ``SearchQuerySet``.
 
+This method is still supported, however it now uses the much more flexible
+``Raw`` input type (:ref:`ref-inputtypes`).
+
 .. warning::
 
-    Unlike many of the other methods on ``SearchQuerySet``, this method does
-    not chain by default (depends on the backend). Any other attributes on the
-    ``SearchQuerySet`` are ignored and only the provided query is run.
+    Different from Haystack 1.X, this method no longer causes immediate
+    evaluation & now chains appropriately.
 
 Example::
 
     # In the case of Solr... (this example could be expressed with SearchQuerySet)
     SearchQuerySet().raw_search('django_ct:blog.blogentry "However, it is"')
+
+    # Equivalent.
+    from haystack.inputs import Raw
+    sqs = SearchQuerySet().filter(content=Raw('django_ct:blog.blogentry "However, it is"'))
 
 Please note that this is **NOT** portable between backends. The syntax is entirely
 dependent on the backend. No validation/cleansing is performed and it is up to
@@ -385,25 +483,16 @@ Example::
 
     SearchQuerySet().filter(content='foo').load_all()
 
-``load_all_queryset``
-~~~~~~~~~~~~~~~~~~~~~
-
-.. method:: SearchQuerySet.load_all_queryset(self, model_class, queryset)
-
-Deprecated for removal before Haystack 1.0-final.
-
-Please see the docs on ``RelatedSearchQuerySet``.
-
 ``auto_query``
 ~~~~~~~~~~~~~~
 
-.. method:: SearchQuerySet.auto_query(self, query_string)
+.. method:: SearchQuerySet.auto_query(self, query_string, fieldname=None)
 
 Performs a best guess constructing the search query.
 
-This method is intended for common use directly with a user's query. It is a
-shortcut to the other API methods that follows generally established search
-syntax without requiring each developer to implement their own parser.
+This method is intended for common use directly with a user's query. This
+method is still supported, however it now uses the much more flexible
+``AutoQuery`` input type (:ref:`ref-inputtypes`).
 
 It handles exact matches (specified with single or double quotes), negation (
 using a ``-`` immediately before the term) and joining remaining terms with the
@@ -411,12 +500,27 @@ operator specified in ``HAYSTACK_DEFAULT_OPERATOR``.
 
 Example::
 
-    SearchQuerySet().auto_query('goldfish "old one eye" -tank')
-    
-    # ... is identical to...
-    SearchQuerySet().filter(content='old one eye').filter(content='goldfish').exclude(content='tank')
+    sqs = SearchQuerySet().auto_query('goldfish "old one eye" -tank')
 
-This method is somewhat naive but works well enough for simple, common cases.
+    # Equivalent.
+    from haystack.inputs import AutoQuery
+    sqs = SearchQuerySet().filter(content=AutoQuery('goldfish "old one eye" -tank'))
+
+    # Against a different field.
+    sqs = SearchQuerySet().filter(title=AutoQuery('goldfish "old one eye" -tank'))
+
+
+``autocomplete``
+~~~~~~~~~~~~~~~~
+
+A shortcut method to perform an autocomplete search.
+
+Must be run against fields that are either ``NgramField`` or
+``EdgeNgramField``.
+
+Example::
+
+    SearchQuerySet().autocomplete(title_autocomplete='gol')
 
 ``more_like_this``
 ~~~~~~~~~~~~~~~~~~
@@ -431,7 +535,7 @@ for similar results. The instance you pass in should be an indexed object.
 Previously called methods will have an effect on the provided results.
 
 It will evaluate its own backend-specific query and populate the
-`SearchQuerySet`` in the same manner as other methods.
+``SearchQuerySet`` in the same manner as other methods.
 
 Example::
 
@@ -439,11 +543,26 @@ Example::
     mlt = SearchQuerySet().more_like_this(entry)
     mlt.count() # 5
     mlt[0].object.title # "Haystack Beta 1 Released"
-    
+
     # ...or...
     mlt = SearchQuerySet().filter(public=True).exclude(pub_date__lte=datetime.date(2009, 7, 21)).more_like_this(entry)
     mlt.count() # 2
     mlt[0].object.title # "Haystack Beta 1 Released"
+
+``using``
+~~~~~~~~~
+
+.. method:: SearchQuerySet.using(self, connection_name)
+
+Allows switching which connection the ``SearchQuerySet`` uses to search in.
+
+Example::
+
+    # Let the routers decide which connection to use.
+    sqs = SearchQuerySet().all()
+
+    # Specify the 'default'.
+    sqs = SearchQuerySet().all().using('default')
 
 
 Methods That Do Not Return A ``SearchQuerySet``
@@ -475,7 +594,7 @@ a ``SearchResult`` object that is the best match the search backend found::
 
     foo = SearchQuerySet().filter(content='foo').best_match()
     foo.id # Something like 5.
-    
+
     # Identical to:
     foo = SearchQuerySet().filter(content='foo')[0]
 
@@ -492,7 +611,7 @@ found::
 
     foo = SearchQuerySet().filter(content='foo').latest('pub_date')
     foo.id # Something like 3.
-    
+
     # Identical to:
     foo = SearchQuerySet().filter(content='foo').order_by('-pub_date')[0]
 
@@ -519,7 +638,7 @@ Example::
 
     # Count document hits for each author.
     sqs = SearchQuerySet().filter(content='foo').facet('author')
-    
+
     sqs.facet_counts()
     # Gives the following response:
     # {
@@ -535,6 +654,52 @@ Example::
     #     'queries': {}
     # }
 
+``stats_results``
+~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.stats_results(self):
+
+Returns the stats results found by the query.
+
+This will cause the query to execute and should generally be used when
+presenting the data (template-level).
+
+You receive back a dictionary with three keys: ``fields``, ``dates`` and
+``queries``. Each contains the facet counts for whatever facets you specified
+within your ``SearchQuerySet``.
+
+.. note::
+
+    The resulting dictionary may change before 1.0 release. It's fairly
+    backend-specific at the time of writing. Standardizing is waiting on
+    implementing other backends that support faceting and ensuring that the
+    results presented will meet their needs as well.
+
+Example::
+
+    # Count document hits for each author.
+    sqs = SearchQuerySet().filter(content='foo').stats('price')
+
+    sqs.stats_results()
+
+    # Gives the following response
+    # {
+    #    'stats_fields':{
+    #       'author:{
+    #            'min': 0.0, 
+    #            'max': 2199.0,  
+    #            'sum': 5251.2699999999995,
+    #            'count': 15,
+    #            'missing': 11,
+    #            'sumOfSquares': 6038619.160300001,
+    #            'mean': 350.08466666666664,
+    #            'stddev': 547.737557906113
+    #        }
+    #    }
+    #    
+    # }
+
+
 ``spelling_suggestion``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -542,8 +707,9 @@ Example::
 
 Returns the spelling suggestion found by the query.
 
-To work, you must set ``settings.HAYSTACK_INCLUDE_SPELLING`` (see
-:doc:`settings`) to ``True``. Otherwise, ``None`` will be returned.
+To work, you must set ``INCLUDE_SPELLING`` within your connection's
+settings dictionary to ``True``, and you must rebuild your index afterwards. 
+Otherwise, ``None`` will be returned.
 
 This method causes the query to evaluate and run the search if it hasn't already
 run. Search results will be populated as normal but with an additional spelling
@@ -559,10 +725,54 @@ Example::
 
     sqs = SearchQuerySet().auto_query('mor exmples')
     sqs.spelling_suggestion() # u'more examples'
-    
+
     # ...or...
     suggestion = SearchQuerySet().spelling_suggestion('moar exmples')
     suggestion # u'more examples'
+
+``values``
+~~~~~~~~~~
+
+.. method:: SearchQuerySet.values(self, *fields)
+
+Returns a list of dictionaries, each containing the key/value pairs for the
+result, exactly like Django's ``ValuesQuerySet``.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run.
+
+You must provide a list of one or more fields as arguments. These fields will
+be the ones included in the individual results.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('banana').values('title', 'description')
+
+
+``values_list``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.values_list(self, *fields, **kwargs)
+
+Returns a list of field values as tuples, exactly like Django's
+``ValuesListQuerySet``.
+
+This method causes the query to evaluate and run the search if it hasn't already
+run.
+
+You must provide a list of one or more fields as arguments. These fields will
+be the ones included in the individual results.
+
+You may optionally also provide a ``flat=True`` kwarg, which in the case of a
+single field being provided, will return a flat list of that field rather than
+a list of tuples.
+
+Example::
+
+    sqs = SearchQuerySet().auto_query('banana').values_list('title', 'description')
+
+    # ...or just the titles as a flat list...
+    sqs = SearchQuerySet().auto_query('banana').values_list('title', flat=True)
 
 
 .. _field-lookups:
@@ -572,6 +782,7 @@ Field Lookups
 
 The following lookup types are supported:
 
+* contains
 * exact
 * gt
 * gte
@@ -579,6 +790,7 @@ The following lookup types are supported:
 * lte
 * in
 * startswith
+* range
 
 These options are similar in function to the way Django's lookup types work.
 The actual behavior of these lookups is backend-specific.
@@ -589,20 +801,36 @@ The actual behavior of these lookups is backend-specific.
     parses data, especially in regards to stemming (see :doc:`glossary`). This
     can mean that if the query ends in a vowel or a plural form, it may get
     stemmed before being evaluated.
-    
+
     This is both backend-specific and yet fairly consistent between engines,
     and may be the cause of sometimes unexpected results.
+
+.. warning::
+
+    The ``contains`` filter became the new default filter as of Haystack v2.X
+    (the default in Haystack v1.X was ``exact``). This changed because ``exact``
+    caused problems and was unintuitive for new people trying to use Haystack.
+    ``contains`` is a much more natural usage.
+
+    If you had an app built on Haystack v1.X & are upgrading, you'll need to
+    sanity-check & possibly change any code that was relying on the default.
+    The solution is just to add ``__exact`` to any "bare" field in a
+    ``.filter(...)`` clause.
 
 Example::
 
     SearchQuerySet().filter(content='foo')
-    
+
     # Identical to:
-    SearchQuerySet().filter(content__exact='foo')
-    
+    SearchQuerySet().filter(content__contains='foo')
+
+    # Phrase matching.
+    SearchQuerySet().filter(content__exact='hello world')
+
     # Other usages look like:
     SearchQuerySet().filter(pub_date__gte=datetime.date(2008, 1, 1), pub_date__lt=datetime.date(2009, 1, 1))
     SearchQuerySet().filter(author__in=['daniel', 'john', 'jane'])
+    SearchQuerySet().filter(view_count__range=[3, 5])
 
 
 ``EmptySearchQuerySet``
@@ -629,7 +857,7 @@ calling ``load_all_queryset``.
     entire cache that appears before the offset you request must be filled in
     order to produce consistent results. On large result sets and at higher
     slices, this can take time.
-    
+
     This is the old behavior of ``SearchQuerySet``, so performance is no worse
     than the early days of Haystack.
 

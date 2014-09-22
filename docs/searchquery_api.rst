@@ -4,11 +4,11 @@
 ``SearchQuery`` API
 ===================
 
-.. class:: SearchQuery(backend=None)
+.. class:: SearchQuery(using=DEFAULT_ALIAS)
 
 The ``SearchQuery`` class acts as an intermediary between ``SearchQuerySet``'s
 abstraction and ``SearchBackend``'s actual search. Given the metadata provided
-by ``SearchQuerySet``, ``SearchQuery`` build the actual query and interacts
+by ``SearchQuerySet``, ``SearchQuery`` builds the actual query and interacts
 with the ``SearchBackend`` on ``SearchQuerySet``'s behalf.
 
 This class must be at least partially implemented on a per-backend basis, as portions
@@ -21,8 +21,8 @@ interface to work with.
 
 Should you need advanced/custom behavior, you can supply your version of
 ``SearchQuery`` that overrides/extends the class in the manner you see fit.
-``SearchQuerySet`` objects take a kwarg parameter ``query`` where you can pass
-in your class.
+You can either hook it up in a ``BaseEngine`` subclass or ``SearchQuerySet``
+objects take a kwarg parameter ``query`` where you can pass in your class.
 
 
 ``SQ`` Objects
@@ -43,10 +43,10 @@ different combinations, you should use ``SQ`` objects. Like
 Example::
 
     from haystack.query import SQ
-    
+
     # We want "title: Foo AND (tags:bar OR tags:moof)"
     sqs = SearchQuerySet().filter(title='Foo').filter(SQ(tags='bar') | SQ(tags='moof'))
-    
+
     # To clean user-provided data:
     sqs = SearchQuerySet()
     clean_query = sqs.query.clean(user_query)
@@ -109,16 +109,18 @@ A basic (override-able) implementation is provided.
 ``run``
 ~~~~~~~
 
-.. method:: SearchQuery.run(self, spelling_query=None)
+.. method:: SearchQuery.run(self, spelling_query=None, **kwargs)
 
 Builds and executes the query. Returns a list of search results.
 
 Optionally passes along an alternate query for spelling suggestions.
 
+Optionally passes along more kwargs for controlling the search query.
+
 ``run_mlt``
 ~~~~~~~~~~~
 
-.. method:: SearchQuery.run_mlt(self)
+.. method:: SearchQuery.run_mlt(self, **kwargs)
 
 Executes the More Like This. Returns a list of search results similar
 to the provided document (and optionally query).
@@ -126,7 +128,7 @@ to the provided document (and optionally query).
 ``run_raw``
 ~~~~~~~~~~~
 
-.. method:: SearchQuery.run_raw(self)
+.. method:: SearchQuery.run_raw(self, **kwargs)
 
 Executes a raw query. Returns a list of search results.
 
@@ -143,7 +145,7 @@ the results.
 ``get_results``
 ~~~~~~~~~~~~~~~
 
-.. method:: SearchQuery.get_results(self)
+.. method:: SearchQuery.get_results(self, **kwargs)
 
 Returns the results received from the backend.
 
@@ -234,8 +236,8 @@ Adds a boosted term and the amount to boost it to the query.
 
 Runs a raw query (no parsing) against the backend.
 
-This method causes the SearchQuery to ignore the standard query
-generating facilities, running only what was provided instead.
+This method causes the ``SearchQuery`` to ignore the standard query-generating 
+facilities, running only what was provided instead.
 
 Note that any kwargs passed along will override anything provided
 to the rest of the ``SearchQuerySet``.
@@ -248,6 +250,12 @@ to the rest of the ``SearchQuerySet``.
 Allows backends with support for "More Like This" to return results
 similar to the provided instance.
 
+``add_stats_query``
+~~~~~~~~~~~~~~~~~~~
+.. method:: SearchQuery.add_stats_query(self,stats_field,stats_facets)
+
+Adds stats and stats_facets queries for the Solr backend.
+
 ``add_highlight``
 ~~~~~~~~~~~~~~~~~
 
@@ -255,10 +263,32 @@ similar to the provided instance.
 
 Adds highlighting to the search results.
 
+``add_within``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_within(self, field, point_1, point_2):
+
+Adds bounding box parameters to search query.
+
+``add_dwithin``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_dwithin(self, field, point, distance):
+
+Adds radius-based parameters to search query.
+
+``add_distance``
+~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_distance(self, field, point):
+
+Denotes that results should include distance measurements from the
+point passed in.
+
 ``add_field_facet``
 ~~~~~~~~~~~~~~~~~~~
 
-.. method:: SearchQuery.add_field_facet(self, field)
+.. method:: SearchQuery.add_field_facet(self, field, **options)
 
 Adds a regular facet on a field.
 
@@ -284,3 +314,23 @@ Adds a query facet on a field.
 Narrows a search to a subset of all documents per the query.
 
 Generally used in conjunction with faceting.
+
+``set_result_class``
+~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.set_result_class(self, klass)
+
+Sets the result class to use for results.
+
+Overrides any previous usages. If ``None`` is provided, Haystack will
+revert back to the default ``SearchResult`` object.
+
+``using``
+~~~~~~~~~
+
+.. method:: SearchQuery.using(self, using=None)
+
+Allows for overriding which connection should be used. This
+disables the use of routers when performing the query.
+
+If ``None`` is provided, it has no effect on what backend is used.

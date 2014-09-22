@@ -8,7 +8,7 @@ What Is Faceting?
 -----------------
 
 Faceting is a way to provide users with feedback about the number of documents
-which match terms they may be interested in. At it's simplest, it gives
+which match terms they may be interested in. At its simplest, it gives
 document counts based on words in the corpus, date ranges, numeric ranges or
 even advanced queries.
 
@@ -50,7 +50,7 @@ searchable in the standard ways.
 To inform Haystack of this, you simply pass along a ``faceted=True`` parameter
 on the field(s) you wish to facet on. So to modify our existing example::
 
-    class NoteIndex(SearchIndex):
+    class NoteIndex(SearchIndex, indexes.Indexable):
         text = CharField(document=True, use_template=True)
         author = CharField(model_attr='user', faceted=True)
         pub_date = DateTimeField(model_attr='pub_date')
@@ -168,7 +168,7 @@ might look like this::
                     <dt>Author</dt>
                     {# Provide only the top 5 authors #}
                     {% for author in facets.fields.author|slice:":5" %}
-                        <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
+                        <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author_exact:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
                     {% endfor %}
                 {% else %}
                     <p>No author facets.</p>
@@ -178,7 +178,7 @@ might look like this::
         <!-- End faceting -->
     
         <!-- Display results... -->
-        {% for result in results %}
+        {% for result in page.object_list %}
             <div class="search_result">
                 <h3><a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a></h3>
             
@@ -190,8 +190,8 @@ might look like this::
     {% endif %}
 
 Displaying the facets is a matter of looping through the facets you want and
-providing the UI to suit. The ``author_exact.0`` is the facet text from the backend
-and the ``author_exact.1`` is the facet count.
+providing the UI to suit. The ``author.0`` is the facet text from the backend
+and the ``author.1`` is the facet count.
 
 4. Narrowing The Search
 -----------------------

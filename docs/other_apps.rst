@@ -1,3 +1,5 @@
+.. _ref-other_apps:
+
 =============================
 Haystack-Related Applications
 =============================
@@ -11,21 +13,54 @@ Useful for essentially extending what Haystack can do.
 queued_search
 -------------
 
-http://github.com/toastdriven/queued_search
+http://github.com/toastdriven/queued_search (2.X compatible)
 
-Provides a queue-based setup as an alternative to ``RealTimeSearchIndex`` or
+Provides a queue-based setup as an alternative to ``RealtimeSignalProcessor`` or
 constantly running the ``update_index`` command. Useful for high-load, short
 update time situations.
+
+celery-haystack
+---------------
+
+https://github.com/jezdez/celery-haystack (1.X and 2.X compatible)
+
+Also provides a queue-based setup, this time centered around Celery. Useful
+for keeping the index fresh per model instance or with the included task
+to call the ``update_index`` management command instead.
+
+haystack-rqueue
+---------------
+
+https://github.com/mandx/haystack-rqueue (2.X compatible)
+
+Also provides a queue-based setup, this time centered around RQ. Useful
+for keeping the index fresh using ``./manage.py rqworker``.
+
+django-celery-haystack
+----------------------
+
+https://github.com/mixcloud/django-celery-haystack-SearchIndex
+
+Another queue-based setup, also around Celery. Useful
+for keeping the index fresh.
 
 saved_searches
 --------------
 
-http://github.com/toastdriven/saved_searches
+http://github.com/toastdriven/saved_searches (2.X compatible)
 
 Adds personalization to search. Retains a history of queries run by the various
 users on the site (including anonymous users). This can be used to present the
 user with their search history and provide most popular/most recent queries
 on the site.
+
+saved-search
+------------
+
+https://github.com/DirectEmployers/saved-search
+
+An alternate take on persisting user searches, this has a stronger focus
+on locale-based searches as well as further integration.
 
 haystack-static-pages
 ---------------------
