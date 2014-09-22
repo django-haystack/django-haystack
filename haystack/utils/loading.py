@@ -158,7 +158,10 @@ class UnifiedIndex(object):
         indexes = []
 
         for app in settings.INSTALLED_APPS:
-            mod = importlib.import_module(app)
+            try:
+                mod = importlib.import_module(app)
+            except ImportError:
+                continue  # simply ignore, when assumption that each INSTALLED_APP is module is faulty
 
             try:
                 search_index_module = importlib.import_module("%s.search_indexes" % app)
