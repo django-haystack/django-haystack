@@ -73,3 +73,6 @@ MIDDLEWARE_CLASSES = ('django.middleware.common.CommonMiddleware',
                       'django.middleware.csrf.CsrfViewMiddleware',
                       'django.contrib.auth.middleware.AuthenticationMiddleware',
                       'django.contrib.messages.middleware.MessageMiddleware')
+
+GEOS_LIBRARY_PATH = os.environ.get('GEOS_LIBRARY_PATH', '')
+GDAL_LIBRARY_PATH = os.environ.get('GDAL_LIBRARY_PATH', '')

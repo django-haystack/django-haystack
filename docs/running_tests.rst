@@ -61,3 +61,11 @@ server is found all elasticsearch tests will be skipped. Note that the tests
 are destructive - during the teardown phase they will wipe the cluster clean so
 make sure you don't run them against an instance with data you wish to keep.
 
+If you want to run the geo-django tests you'll probably need some additional
+settings, just run those commands with your own lib paths::
+
+	cd django-haystack/tests
+	export PYTHONPATH=`pwd`/..:`pwd`
+	export GEOS_LIBRARY_PATH=/opt/boxen/homebrew/lib/libgeos_c.dylib
+	export GDAL_LIBRARY_PATH=/opt/boxen/homebrew/lib/libgdal.dylib
+	./run_tests.py elasticsearch_tests
