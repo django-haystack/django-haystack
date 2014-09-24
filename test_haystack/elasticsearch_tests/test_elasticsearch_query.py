@@ -162,7 +162,7 @@ class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
             'point': Point(1.2345678, 2.3456789),
             'distance': D(m=500)
         })
-        self.assertEqual(search_kwargs['query']['filtered']['filter']['geo_distance'], {'distance': 0.5, 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})
+        self.assertEqual(search_kwargs['query']['filtered']['filter']['bool']['must'][1]['geo_distance'], {'distance': 0.5, 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})
 
 
 
@@ -185,4 +185,4 @@ class ElasticsearchSearchQuerySpatialAfterReleaseTestCase(TestCase):
             'point': Point(1.2345678, 2.3456789),
             'distance': D(m=500)
         })
-        self.assertEqual(search_kwargs['query']['filtered']['filter']['geo_distance'], {'distance': "0.500000km", 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})
+        self.assertEqual(search_kwargs['query']['filtered']['filter']['bool']['must'][1]['geo_distance'], {'distance': "0.500000km", 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})
