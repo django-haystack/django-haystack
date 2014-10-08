@@ -645,7 +645,7 @@ class SolrSearchQuery(BaseSearchQuery):
                 else:
                     order_by_list.append('%s asc' % order_by)
 
-            search_kwargs['sort_by'] = ", ".join(order_by_list)
+            search_kwargs['sort_by'] = ",".join(order_by_list)
 
         if self.date_facets:
             search_kwargs['date_facets'] = self.date_facets
