@@ -69,7 +69,7 @@ class SearchChangeList(ChangeList):
         self.paginator = paginator
 
 
-class SearchModelAdmin(ModelAdmin):
+class SearchModelAdminMixin(object):
     # haystack connection to use for searching
     haystack_connection = 'default'
 
@@ -80,14 +80,14 @@ class SearchModelAdmin(ModelAdmin):
 
         if not SEARCH_VAR in request.GET:
             # Do the usual song and dance.
-            return super(SearchModelAdmin, self).changelist_view(request, extra_context)
+            return super(SearchModelAdminMixin, self).changelist_view(request, extra_context)
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
         if not self.model in connections[self.haystack_connection].get_unified_index().get_indexed_models():
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
-            return super(SearchModelAdmin, self).changelist_view(request, extra_context)
+            return super(SearchModelAdminMixin, self).changelist_view(request, extra_context)
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
@@ -155,3 +155,7 @@ class SearchModelAdmin(ModelAdmin):
             'admin/%s/change_list.html' % app_name,
             'admin/change_list.html'
         ], context, context_instance=context_instance)
+
+
+class SearchModelAdmin(SearchModelAdminMixin, ModelAdmin):
+    pass
