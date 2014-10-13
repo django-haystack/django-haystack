@@ -65,6 +65,7 @@ you may want to include in your application.
    multiple_index
    rich_content_extraction
    spatial
+   admin
 
 
 Reference
