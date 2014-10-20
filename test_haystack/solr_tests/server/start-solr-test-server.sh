@@ -10,8 +10,10 @@ export TEST_ROOT=$(pwd)
 
 export SOLR_ARCHIVE=solr-${SOLR_VERSION}.tgz
 
-# If the tarball doesn't extract cleanly, remove it so it'll download again:
-tar -tf ${SOLR_ARCHIVE} > /dev/null || rm ${SOLR_ARCHIVE}
+if [ -f ${SOLR_ARCHIVE} ]; then
+    # If the tarball doesn't extract cleanly, remove it so it'll download again:
+    tar -tf ${SOLR_ARCHIVE} > /dev/null || rm ${SOLR_ARCHIVE}
+fi
 
 if [ ! -f ${SOLR_ARCHIVE} ]; then
     python get-solr-download-url.py $SOLR_VERSION | xargs curl -O
