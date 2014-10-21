@@ -187,7 +187,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         self.index = self.index.refresh()
         writer = AsyncWriter(self.index)
 
-        for obj in iterable:
+        for len_iterable, obj in enumerate(iterable, start=1):
             doc = index.full_prepare(obj)
 
             # Really make sure it's unicode, because Whoosh won't have it any
@@ -215,7 +215,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     }
                 })
 
-        if len(iterable) > 0:
+        if iterable and len_iterable > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
             writer.commit()
 
