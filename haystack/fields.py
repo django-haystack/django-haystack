@@ -162,7 +162,7 @@ class CharField(SearchField):
         if value is None:
             return None
 
-        return six.text_type(value.decode('utf-8'))
+        return six.text_type(value)
 
 
 class LocationField(SearchField):
