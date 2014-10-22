@@ -664,6 +664,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         elif isinstance(value, six.binary_type):
             # TODO: Be stricter.
             return six.text_type(value, errors='replace')
+        elif isinstance(value, bool):
+            return str(value).lower()
         elif isinstance(value, set):
             return list(value)
         return value
