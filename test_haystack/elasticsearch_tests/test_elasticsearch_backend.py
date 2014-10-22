@@ -1150,16 +1150,6 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
         connections['elasticsearch']._index = self.old_ui
         super(LiveElasticsearchRoundTripTestCase, self).tearDown()
 
-    def test_boolean_is_converted_correctly(self):
-        """Ensure Python boolean values are correctly converted to ES string values."""
-        check = self.sqs.filter(is_active=True)
-        self.assertEqual(check.query.build_query(), u'is_active:(true)')
-
-    def test_string_booleans_still_work(self):
-        """Make sure the old way of converting to string first still works."""
-        check = self.sqs.filter(is_active='true')
-        self.assertEqual(check.query.build_query(), u'is_active:(true)')
-
     def test_round_trip(self):
         results = self.sqs.filter(id='core.mockmodel.1')
 
