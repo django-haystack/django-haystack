@@ -1152,13 +1152,13 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
 
     def test_boolean_is_converted_correctly(self):
         """Ensure Python boolean values are correctly converted to ES string values."""
-        results = self.sqs.filter(is_active=True)
-        self.assertEqual(sqs.query.build_query(), u'is_active:(true)')
+        check = self.sqs.filter(is_active=True)
+        self.assertEqual(check.query.build_query(), u'is_active:(true)')
 
     def test_string_booleans_still_work(self):
         """Make sure the old way of converting to string first still works."""
-        results = self.sqs.filter(is_active='true')
-        self.assertEqual(sqs.query.build_query(), u'is_active:(true)')
+        check = self.sqs.filter(is_active='true')
+        self.assertEqual(check.query.build_query(), u'is_active:(true)')
 
     def test_round_trip(self):
         results = self.sqs.filter(id='core.mockmodel.1')
