@@ -29,8 +29,25 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.assertEqual(self.sq.build_query(), '(hello)')
 
     def test_build_query_boolean(self):
-        self.sq.add_filter(SQ(content=True))
-        self.assertEqual(self.sq.build_query(), '(True)')
+        sq = self.sq._clone()
+        sq.add_filter(SQ(content=True))
+        self.assertEqual(sq.build_query(), '(true)')
+
+        sq = self.sq._clone()
+        sq.add_filter(SQ(content=False))
+        self.assertEqual(sq.build_query(), '(false)')
+
+    def test_build_query_using_string_booleans(self):
+        """Avoid breaking code which relied on the old boolean-as-string ES behaviour"""
+        # See https://github.com/toastdriven/django-haystack/pull/1093
+
+        sq = self.sq._clone()
+        sq.add_filter(SQ(content='true'))
+        self.assertEqual(sq.build_query(), '(true)')
+
+        sq = self.sq._clone()
+        sq.add_filter(SQ(content='false'))
+        self.assertEqual(sq.build_query(), '(false)')
 
     def test_regression_slash_search(self):
         self.sq.add_filter(SQ(content='hello/'))
