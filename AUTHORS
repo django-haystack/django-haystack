@@ -93,3 +93,5 @@ Thanks to
     * @Xaroth for updating the app loader to be compatible with Django 1.7
     * Jaroslav Gorjatsev (jarig) for a bugfix with index_fieldname
     * Dirk Eschler (@deschler) for app loader Django 1.7 compatibility fixes
+    * Wictor (wicol) for a patch improving the error message given when model_attr references a non-existent
+      field
