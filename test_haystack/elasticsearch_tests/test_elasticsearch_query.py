@@ -26,7 +26,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
     def test_string_booleans_still_work(self):
         """Make sure the old way of converting to string first still works."""
         self.sq.add_filter(SQ(content='true'))
-        self.assertEqual(check.query.build_query(), '(true)')
+        self.assertEqual(self.sq.build_query(), '(true)')
 
     def test_regression_slash_search(self):
         self.sq.add_filter(SQ(content='hello/'))
