@@ -1,11 +1,14 @@
 from __future__ import unicode_literals
+
 from django import forms
 from django.db import models
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
+
 from haystack import connections
 from haystack.constants import DEFAULT_ALIAS
-from haystack.query import SearchQuerySet, EmptySearchQuerySet
+from haystack.query import EmptySearchQuerySet, SearchQuerySet
+from haystack.utils import get_model_ct
 
 try:
     from django.utils.encoding import smart_text
@@ -14,7 +17,8 @@ except ImportError:
 
 
 def model_choices(using=DEFAULT_ALIAS):
-    choices = [("%s.%s" % (m._meta.app_label, m._meta.module_name), capfirst(smart_text(m._meta.verbose_name_plural))) for m in connections[using].get_unified_index().get_indexed_models()]
+    choices = [(get_model_ct(m), capfirst(smart_text(m._meta.verbose_name_plural)))
+               for m in connections[using].get_unified_index().get_indexed_models()]
     return sorted(choices, key=lambda x: x[1])
 
 

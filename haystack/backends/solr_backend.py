@@ -1,16 +1,19 @@
 from __future__ import unicode_literals
+
 import warnings
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils import six
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
+
+from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError
-from haystack.inputs import PythonData, Clean, Exact, Raw
+from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
-from haystack.utils import get_identifier
 from haystack.utils import log as logging
+from haystack.utils import get_identifier, get_model_ct
 
 try:
     from pysolr import Solr, SolrError
@@ -96,7 +99,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 models_to_delete = []
 
                 for model in models:
-                    models_to_delete.append("%s:%s.%s" % (DJANGO_CT, model._meta.app_label, model._meta.module_name))
+                    models_to_delete.append("%s:%s" % (DJANGO_CT, get_model_ct(model)))
 
                 self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
 
@@ -215,7 +218,7 @@ class SolrSearchBackend(BaseSearchBackend):
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
         if models and len(models):
-            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+            model_choices = sorted(get_model_ct(model) for model in models)
         elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.
@@ -297,7 +300,7 @@ class SolrSearchBackend(BaseSearchBackend):
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
 
         if models and len(models):
-            model_choices = sorted(['%s.%s' % (model._meta.app_label, model._meta.module_name) for model in models])
+            model_choices = sorted(get_model_ct(model) for model in models)
         elif limit_to_registered_models:
             # Using narrow queries, limit the results to only models handled
             # with the current routers.

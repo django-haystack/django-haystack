@@ -1,6 +1,6 @@
 from django.test import TestCase
-from haystack import connections
-from haystack import inputs
+
+from haystack import connections, inputs
 
 
 class WhooshInputTestCase(TestCase):
