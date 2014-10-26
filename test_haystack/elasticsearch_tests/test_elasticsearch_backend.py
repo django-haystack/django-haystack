@@ -1450,7 +1450,7 @@ class ElasticsearchBoostTestCase(TestCase):
         third = self.gen_mock("Perry White", "Daniel Lindsley", 3)
         self.sample_objs.extend([first, second, third])
         self.sb.update(self.smmi, self.sample_objs)
-        counts = SearchQuerySet().filter(content="daniel")
+        counts = SearchQuerySet('elasticsearch').filter(content="daniel")
         results = list(counts)
         self.assertEqual(len(results), 3)
         self.assertEqual(int(results[0].pk), 1)
