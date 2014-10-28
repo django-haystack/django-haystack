@@ -609,15 +609,21 @@ class WhooshSearchBackend(BaseSearchBackend):
                     index = unified_index.get_index(model)
                     string_key = str(key)
 
-                    if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
+                    # respect field.index_fieldname
+                    if string_key in unified_index.fields:
+                        instance_name = unified_index.fields[string_key].instance_name
+                    else:
+                        instance_name = string_key
+
+                    if instance_name in index.fields and hasattr(index.fields[instance_name], 'convert'):
                         # Special-cased due to the nature of KEYWORD fields.
-                        if index.fields[string_key].is_multivalued:
+                        if index.fields[instance_name].is_multivalued:
                             if value is None or len(value) is 0:
                                 additional_fields[string_key] = []
                             else:
                                 additional_fields[string_key] = value.split(',')
                         else:
-                            additional_fields[string_key] = index.fields[string_key].convert(value)
+                            additional_fields[string_key] = index.fields[instance_name].convert(value)
                     else:
                         additional_fields[string_key] = self._to_python(value)
 
