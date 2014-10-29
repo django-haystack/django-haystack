@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models.loading import get_model
 
 __all__ = ['get_models', 'load_apps']
 
@@ -17,6 +18,10 @@ def is_app_or_model(label):
     if len(label_bits) == 1:
         return APP
     elif len(label_bits) == 2:
+        try:
+            get_model(*label_bits)
+        except LookupError:
+            return APP
         return MODEL
     else:
         raise ImproperlyConfigured("'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
