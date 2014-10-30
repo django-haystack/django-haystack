@@ -3,9 +3,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_model
 
-__all__ = ['get_models', 'load_apps']
+__all__ = ['get_model', 'get_models', 'load_apps']
 
 
 APP = 'app'
@@ -45,6 +44,9 @@ try:
             app_label, model_name = label.split('.')
             return [apps.get_app_config(app_label).get_model(model_name)]
 
+    def get_model(app_label, model_name):
+        return apps.get_app_config(app_label).get_model(model_name)
+
 except ImportError:
     def load_apps():
         from django.db.models import get_app
@@ -73,3 +75,7 @@ except ImportError:
         else:
             app_label, model_name = label.split('.')
             return [get_model(app_label, model_name)]
+
+    def get_model(app_label, model_name):
+        from django.db.models.loading import get_model
+        return get_model(app_label, model_name)
