@@ -23,7 +23,7 @@ Solr 1.4 with a little effort. Installation is relatively simple::
 You'll need to revise your schema. You can generate this from your application
 (once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
-it in ``solr-4.10.2/example/solr/collection1/conf``. Then restart Solr.
+it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart Solr.
 
 .. note::
     ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
