@@ -102,6 +102,85 @@ unique authors.
     similar methods. The only method that has any effect on facets is the
     ``narrow`` method (which is how you provide drill-down).
 
+
+You can configure the behaviour of your facets by passing options 
+for each facet in your SearchQuerySet.
+These options can be backend specific.
+
+**limit**
+*tested on Solr*
+
+The ``limit`` parameter limits the results for each query. Default is set
+to 100. Any negative number removes the limit.
+
+    >>> from haystack.query import SearchQuerySet
+    >>> sqs = SearchQuerySet().facet('author', limit=-1, )
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('abraham', 1),
+                ('benny', 2),
+                ('cindy', 1),
+                ('diana', 5),
+            ],
+        },
+        'queries': {}
+    }
+
+    >>> sqs = SearchQuerySet().facet('author', limit=2, )
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('abraham', 1),
+                ('benny', 2),
+            ],
+        },
+        'queries': {}
+    }
+
+**sort**
+*tested on Solr*
+
+The ``sort`` parameter will sort the results for each query. Default is set
+to ``index``, which will sort the facets alphabetically. Changing the
+parameter to ``count`` will sort the facets according to facet count.
+
+    >>> from haystack.query import SearchQuerySet
+    >>> sqs = SearchQuerySet().facet('author', sort='index', )
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('abraham', 1),
+                ('benny', 2),
+                ('cindy', 1),
+                ('diana', 5),
+            ],
+        },
+        'queries': {}
+    }
+
+    >>> sqs = SearchQuerySet().facet('author', sort='count', )
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('diana', 5),
+                ('benny', 2),
+                ('abraham', 1),
+                ('cindy', 1),
+            ],
+        },
+        'queries': {}
+    }
+
+
 Now that we have the facet we want, it's time to implement it.
 
 2. Switch to the ``FacetedSearchView`` and ``FacetedSearchForm``
