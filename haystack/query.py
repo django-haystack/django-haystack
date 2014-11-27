@@ -9,7 +9,6 @@ from haystack.exceptions import NotHandled
 from haystack.inputs import Raw, Clean, AutoQuery
 from haystack.utils import log as logging
 
-
 class SearchQuerySet(object):
     """
     Provides a way to specify search parameters and lazily load results.
@@ -215,13 +214,24 @@ class SearchQuerySet(object):
 
         for result in results:
             if self._load_all:
-                # We have to deal with integer keys being cast from strings
                 model_objects = loaded_objects.get(result.model, {})
+
+                # Convert object based model keys that were returned
+                # into their string representation
+                # Useful for those who use django-uuid as pk
+                for key in model_objects:
+                    if not isinstance(key, six.string_types):
+                        new_pk = str(model_objects[key].pk)
+                        model_objects[new_pk] = model_objects.pop(key)
+
+                # We have to deal with integer keys being cast from strings
                 if not result.pk in model_objects:
                     try:
                         result.pk = int(result.pk)
                     except ValueError:
                         pass
+
+
                 try:
                     result._object = model_objects[result.pk]
                 except KeyError:
