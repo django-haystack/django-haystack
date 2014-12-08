@@ -160,7 +160,8 @@ class Command(LabelCommand):
         end_date = options.get('end_date')
 
         if age is not None:
-            self.start_date = now() - timedelta(hours=int(age))
+            # age is in hours, but accepts float (ie, age=0.25 --> 15 minutes)
+            self.start_date = now() - timedelta(microseconds=int(float(age)*3600*1000000))
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
