@@ -14,7 +14,7 @@ than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 3.5+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple::
 
-    curl http://apache.spinellicreations.com/lucene/solr/4.10.2/solr-4.10.2.tgz
+    curl -LO https://archive.apache.org/dist/lucene/solr/4.10.2/solr-4.10.2.tgz
     tar xvzf solr-4.10.2.tgz
     cd solr-4.10.2
     cd example
