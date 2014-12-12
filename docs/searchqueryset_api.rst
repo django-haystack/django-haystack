@@ -212,6 +212,13 @@ string with a ``-``::
 
     SearchQuerySet().filter(content='foo').order_by('-pub_date')
 
+Random ordering is achieved by passing a '?' argument to order_by. Optionally,
+an integer can be appended to the '?' to be used as the seed for the random
+number generator. (ElasticSearch backend only.)::
+
+    SearchQuerySet().filter(content='foo').order_by('?')
+    SearchQuerySet().filter(content='foo').order_by('?123456789')
+
 .. note::
 
     In general, ordering is locale-specific. Haystack makes no effort to try to
