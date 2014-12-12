@@ -9,6 +9,7 @@ from optparse import make_option
 from django import db
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
+from django.utils import translation
 
 from haystack import connections as haystack_connections
 from haystack.query import SearchQuerySet
@@ -140,6 +141,9 @@ class Command(LabelCommand):
             default=0, type='int',
             help='Allows for the use multiple workers to parallelize indexing. Requires multiprocessing.'
         ),
+        make_option('--locale', '-l', default=None, dest='locale',
+            help='Activates given locale before indexing  (e.g. pt_BR).'),
+
     )
     option_list = LabelCommand.option_list + base_options
 
@@ -150,6 +154,10 @@ class Command(LabelCommand):
         self.end_date = None
         self.remove = options.get('remove', False)
         self.workers = int(options.get('workers', 0))
+        self.locale = options.get('locale')
+
+        if self.locale:
+            translation.activate(self.locale)
 
         self.backends = options.get('using')
         if not self.backends:
@@ -181,6 +189,8 @@ class Command(LabelCommand):
         if not items:
             items = load_apps()
 
+        if self.locale:
+            translation.deactivate()
         return super(Command, self).handle(*items, **options)
 
     def handle_label(self, label, **options):
