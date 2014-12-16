@@ -70,5 +70,19 @@
       "author": "sam2",
       "deleted": true
     }
+  },
+  {
+    "pk": "44454c4c-4400-1044-8056-c4c04f59344a",
+    "model": "core.uuidmockmodel",
+    "fields": {
+        "comment": "aardvark"
+    }
+  },
+  {
+    "pk": "b2f0da40ec2c11e00000242d50cf1fbf",
+    "model": "core.uuidmockmodel",
+    "fields": {
+        "comment": "antelope"
+    }
   }
 ]
