@@ -201,7 +201,11 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class TestSettings(TestCase):
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
-        backend = ElasticsearchSearchBackend('alias', **{'URL': {}, 'INDEX_NAME': 'testing', 'KWARGS': {'max_retries': 42}})
+        backend = ElasticsearchSearchBackend('alias', **{
+            'URL': settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'],
+            'INDEX_NAME': 'testing',
+            'KWARGS': {'max_retries': 42}
+        })
 
         self.assertEqual(backend.conn.transport.max_retries, 42)
 
@@ -444,7 +448,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         (content_field_name, mapping) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(mapping), 4+2) # +2 management fields
+        self.assertEqual(len(mapping), 4 + 2)  # +2 management fields
         self.assertEqual(mapping, {
             'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
@@ -458,7 +462,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(mapping), 15+2) # +2 management fields
+        self.assertEqual(len(mapping), 15 + 2)  # +2 management fields
         self.assertEqual(mapping, {
             'django_id': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
             'django_ct': {'index': 'not_analyzed', 'type': 'string', 'include_in_all': False},
