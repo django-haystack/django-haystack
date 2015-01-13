@@ -52,7 +52,7 @@ class GenericSearchViewsTestCase(TestCase):
         v.request = self.request
 
         form = v.get_form(v.get_form_class())
-        response = v.form_valid(form)
+        response = v.form_invalid(form)
         context = response.context_data
 
         self.assertTrue('query' not in context)
