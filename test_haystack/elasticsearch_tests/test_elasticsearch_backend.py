@@ -198,16 +198,24 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ASixthMockModel
 
+
 class TestSettings(TestCase):
+
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
-        backend = ElasticsearchSearchBackend('alias', **{
-            'URL': settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'],
-            'INDEX_NAME': 'testing',
-            'KWARGS': {'max_retries': 42}
-        })
 
+        elasticsearch_settings = settings.HAYSTACK_CONNECTIONS.get('elasticsearch', {}).copy()
+        URL = elasticsearch_settings.pop('URL', {})
+        INDEX_NAME = elasticsearch_settings.pop('INDEX_NAME', 'test_default')
+        elasticsearch_settings.update({'max_retries': 42})
+
+        backend = ElasticsearchSearchBackend('alias', **{
+            'URL': URL,
+            'INDEX_NAME': INDEX_NAME,
+            'KWARGS': elasticsearch_settings}
+        )
         self.assertEqual(backend.conn.transport.max_retries, 42)
+
 
 class ElasticsearchSearchBackendTestCase(TestCase):
     def setUp(self):
@@ -1289,6 +1297,8 @@ class RecreateIndexTestCase(TestCase):
         clear_elasticsearch_index()
 
         sb = connections['elasticsearch'].get_backend()
+        # reset the backend
+        sb.existing_mapping = {}
         sb.silently_fail = True
         sb.setup()
 
