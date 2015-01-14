@@ -97,7 +97,7 @@ class SearchResult(object):
         if self._model is None:
             try:
                 self._model = models.get_model(self.app_label, self.model_name)
-            except LookupError:
+            except (LookupError, AssertionError):
                 # this changed in change 1.7 to throw an error instead of
                 # returning None when the model isn't found. So catch the
                 # lookup error and keep self._model == None.
