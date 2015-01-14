@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = "Completely rebuilds the search index by removing the old data and then updating."
     option_list = list(BaseCommand.option_list) + \
                   [option for option in UpdateCommand.base_options if option.get_opt_string() != '--verbosity'] + \
-                  [option for option in ClearCommand.base_options if not option.get_opt_string() in ['--using', '--verbosity']]
+                  [option for option in ClearCommand.base_options if not option.get_opt_string() in ['--using', '--verbosity', '--nocommit']]
 
     def handle(self, **options):
         call_command('clear_index', **options)
