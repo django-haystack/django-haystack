@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django import template
@@ -27,7 +28,14 @@ class HighlightNode(template.Node):
             self.max_length = template.Variable(max_length)
 
     def render(self, context):
-        text_block = self.text_block.resolve(context)
+        try:
+            text_block = self.text_block.resolve(context)
+        except template.VariableDoesNotExist:
+            # FIXME: this will change in Django 1.8 / 2 and should be moved to a helper function anyway
+            #        see https://github.com/django/django/blob/master/docs/ref/templates/upgrading.txt#L83-L86
+            invalid_str = settings.TEMPLATE_STRING_IF_INVALID
+            return invalid_str % self.text_block.var if '%' in invalid_str else invalid_str
+
         query = self.query.resolve(context)
         kwargs = {}
 
