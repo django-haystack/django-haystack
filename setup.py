@@ -19,6 +19,7 @@ tests_require = [
     'python-dateutil',
     'geopy==0.95.1',
     'httplib2==0.8',
+    'django-uuidfield==0.5.0',
 
     'nose',
     'mock',

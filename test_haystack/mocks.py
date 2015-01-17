@@ -97,6 +97,13 @@ class CharPKMockSearchBackend(MockSearchBackend):
     mock_search_results = [MockSearchResult('core', 'CharPKMockModel', 'sometext', 0.5),
                            MockSearchResult('core', 'CharPKMockModel', '1234', 0.3)]
 
+class UuidPKMockSearchBackend(MockSearchBackend):
+    model_name = 'uuidmockmodel'
+    mock_search_results = [MockSearchResult('core', 'UUIDMockModel'
+                                ,  '44454c4c-4400-1044-8056-c4c04f59344a', 0.5),
+                           MockSearchResult('core', 'UUIDMockModel'
+                                , 'b2f0da40ec2c11e00000242d50cf1fbf', 0.3)]
+
 class ReadQuerySetMockSearchBackend(MockSearchBackend):
     model_name = 'afifthmockmodel'
     mock_search_results = [MockSearchResult('core', 'afifthmockmodel', 1, 2),

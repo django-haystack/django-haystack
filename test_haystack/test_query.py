@@ -19,12 +19,13 @@ from test_haystack.core.models import (AFifthMockModel, AnotherMockModel,
 
 from .mocks import (CharPKMockSearchBackend, MixedMockSearchBackend,
                     MOCK_SEARCH_RESULTS, MockSearchBackend, MockSearchQuery,
-                    ReadQuerySetMockSearchBackend)
+                    ReadQuerySetMockSearchBackend, UuidPKMockSearchBackend)
 from .test_indexes import (GhettoAFifthMockModelSearchIndex,
                            ReadQuerySetTestSearchIndex,
                            TextReadQuerySetTestSearchIndex)
 from .test_views import (BasicAnotherMockModelSearchIndex,
-                         BasicMockModelSearchIndex)
+                         BasicMockModelSearchIndex,
+                         UUIDMockModelSearchIndex)
 
 test_pickling = True
 
@@ -601,6 +602,26 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len([result for result in results._result_cache if result is not None]), 2)
 
         # Restore.
+        connections['default']._index = old_ui
+
+    def test_load_all_uuid_pk(self):
+        #Stow
+        old_ui = connections['default']._index
+        ui = UnifiedIndex()
+        uuidpkmmsi = UUIDMockModelSearchIndex()
+        ui.build(indexes=[uuidpkmmsi])
+        connections['default']._index = ui
+        uuidpkmmsi.update()
+
+        sqs = SearchQuerySet()
+        results = sqs.load_all().all()
+        results.query.backend = UuidPKMockSearchBackend('default')
+        results._fill_cache(0,2)
+
+        # verify every result has a string pk
+        self.assertEqual(len([result for result in results._result_cache if result.pk is not None]), 2)
+        
+        # restore
         connections['default']._index = old_ui
 
     def test_auto_query(self):

@@ -13,7 +13,7 @@ from haystack import indexes
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 from haystack.views import SearchView, FacetedSearchView, search_view_factory
-from test_haystack.core.models import MockModel, AnotherMockModel
+from test_haystack.core.models import MockModel, AnotherMockModel, UUIDMockModel
 
 
 class InitialedSearchForm(SearchForm):
@@ -29,6 +29,9 @@ class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexab
     def get_model(self):
         return AnotherMockModel
 
+class UUIDMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexable):
+    def get_model(self):
+        return UUIDMockModel
 
 class SearchViewTestCase(TestCase):
     def setUp(self):

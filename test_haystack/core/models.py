@@ -1,7 +1,7 @@
 # A couple models for Haystack to test with.
 import datetime
 from django.db import models
-
+from uuidfield import UUIDField
 
 class MockTag(models.Model):
     name = models.CharField(max_length=32)
@@ -74,3 +74,7 @@ class ScoreMockModel(models.Model):
 
     def __unicode__(self):
         return self.score
+
+class UUIDMockModel(models.Model):
+    key = UUIDField(auto=True, primary_key=True)
+    comment = models.CharField(max_length=255)
