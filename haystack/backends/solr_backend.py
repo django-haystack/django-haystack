@@ -377,9 +377,13 @@ class SolrSearchBackend(BaseSearchBackend):
             model = get_model(app_label, model_name)
 
             if model and model in indexed_models:
+                index = unified_index.get_index(model)
+                index_field_map = index.field_map
                 for key, value in raw_result.items():
-                    index = unified_index.get_index(model)
                     string_key = str(key)
+                    # re-map key if alternate name used
+                    if string_key in index_field_map:
+                        string_key = index_field_map[key]
 
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         additional_fields[string_key] = index.fields[string_key].convert(value)
