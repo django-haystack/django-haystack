@@ -798,23 +798,12 @@ class BaseSearchQuery(object):
         """Orders the search result by a field."""
         self.order_by.append(field)
 
-    def add_order_by_distance(self, **kwargs):
-        """Orders the search result by distance from point."""
-        raise NotImplementedError("Subclasses must provide a way to add order by distance in the 'add_order_by_distance' method.")
-
     def clear_order_by(self):
         """
         Clears out all ordering that has been already added, reverting the
         query to relevancy.
         """
         self.order_by = []
-
-    def clear_order_by_distance(self):
-        """
-        Clears out all distance ordering that has been already added, reverting the
-        query to relevancy.
-        """
-        self.order_by_distance = []
 
     def add_model(self, model):
         """
