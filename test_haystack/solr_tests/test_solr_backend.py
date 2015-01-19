@@ -16,6 +16,7 @@ from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
 from haystack.utils.loading import UnifiedIndex
+from haystack.utils.geo import Point
 from mock import patch
 
 from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
@@ -381,6 +382,17 @@ class SolrSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_spatial_search_parameters(self):
+        p1 = Point(1.23, 4.56)
+        kwargs = self.sb.build_search_kwargs('*:*', distance_point={'field': 'location', 'point': p1},
+                                             sort_by='distance asc')
+
+        # Points in Solr are lat, lon pairs but Django GIS Point() uses lon, lat so we'll check for the flip
+        # See http://django-haystack.readthedocs.org/en/latest/spatial.html#points
+        self.assertEqual(kwargs.get('pt'), '4.56,1.23')
+        self.assertEqual(kwargs.get('sfield'), 'location')
+        self.assertEqual(kwargs.get('sort'), 'geodist() asc')
 
     def test_altparser_query(self):
         self.sb.update(self.smmi, self.sample_objs)

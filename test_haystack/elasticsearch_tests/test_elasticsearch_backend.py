@@ -15,6 +15,7 @@ from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
 from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
+from haystack.utils.geo import Point
 
 from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
                            MockModel)
@@ -435,6 +436,21 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_spatial_search_parameters(self):
+        p1 = Point(1.23, 4.56)
+        kwargs = self.sb.build_search_kwargs('*:*', distance_point={'field': 'location', 'point': p1},
+                                             sort_by=(('distance', 'desc'), ))
+
+        self.assertIn('sort', kwargs)
+        self.assertEqual(1, len(kwargs['sort']))
+        geo_d = kwargs['sort'][0]['_geo_distance']
+
+        # ElasticSearch supports the GeoJSON-style lng, lat pairs so unlike Solr the values should be
+        # in the same order as we used to create the Point():
+        # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-distance-filter.html#_lat_lon_as_array_4
+
+        self.assertDictEqual(geo_d, {'location': [1.23, 4.56], 'unit': 'km', 'order': 'desc'})
 
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
