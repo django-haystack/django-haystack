@@ -730,16 +730,6 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
     def matching_all_fragment(self):
         return '*:*'
 
-    def add_spatial(self, lat, lon, sfield, distance, filter='bbox'):
-        """Adds spatial query parameters to search query"""
-        kwargs = {
-            'lat': lat,
-            'long': long,
-            'sfield': sfield,
-            'distance': distance,
-        }
-        self.spatial_query.update(kwargs)
-
     def add_order_by_distance(self, lat, long, sfield):
         """Orders the search result by distance from point."""
         kwargs = {
