@@ -360,7 +360,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 interval = value.get('gap_by').lower()
 
                 # Need to detect on amount (can't be applied on months or years).
-                if value.get('gap_amount', 1) != 1 and not interval in ('month', 'year'):
+                if value.get('gap_amount', 1) != 1 and interval not in ('month', 'year'):
                     # Just the first character is valid for use.
                     interval = "%s%s" % (value['gap_amount'], interval[:1])
 
@@ -500,9 +500,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             raw_results = {}
 
         return self._process_results(raw_results,
-            highlight=kwargs.get('highlight'),
-            result_class=kwargs.get('result_class', SearchResult),
-            distance_point=kwargs.get('distance_point'), geo_sort=geo_sort)
+                                     highlight=kwargs.get('highlight'),
+                                     result_class=kwargs.get('result_class', SearchResult),
+                                     distance_point=kwargs.get('distance_point'),
+                                     geo_sort=geo_sort)
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
