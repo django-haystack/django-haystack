@@ -50,6 +50,19 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
+class SolrMockOverriddenFieldNameSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, use_template=True)
+    name = indexes.CharField(model_attr='author', faceted=True, index_fieldname='name_s')
+    pub_date = indexes.DateField(model_attr='pub_date', index_fieldname='pub_date_dt')
+    today = indexes.IntegerField(index_fieldname='today_i')
+
+    def prepare_today(self, obj):
+        return datetime.datetime.now().day
+
+    def get_model(self):
+        return MockModel
+
+
 class SolrMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
@@ -188,6 +201,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
         self.smtmmi = SolrMaintainTypeMockSearchIndex()
+        self.smofnmi = SolrMockOverriddenFieldNameSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
         self.sb = connections['solr'].get_backend()
@@ -322,6 +336,25 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_solr.search('*:*').hits, 0)
+
+    def test_alternate_index_fieldname(self):
+        self.ui.build(indexes=[self.smofnmi])
+        connections['solr']._index = self.ui
+        self.sb.update(self.smofnmi, self.sample_objs)
+        search = self.sb.search('*')
+        self.assertEqual(search['hits'], 3)
+        results = search['results']
+        today = datetime.datetime.now().day
+        self.assertEqual([result.today for result in results], [today, today, today])
+        self.assertEqual([result.name for result in results], ['daniel1', 'daniel2', 'daniel3'])
+        self.assertEqual([result.pub_date for result in results],
+                         [datetime.date(2009, 2, 25) - datetime.timedelta(days=1),
+                          datetime.date(2009, 2, 25) - datetime.timedelta(days=2),
+                          datetime.date(2009, 2, 25) - datetime.timedelta(days=3)])
+        # revert it back
+        self.ui.build(indexes=[self.smmi])
+        connections['solr']._index = self.ui
+
 
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
