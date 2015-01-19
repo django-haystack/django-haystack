@@ -198,6 +198,7 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ASixthMockModel
 
+
 class TestSettings(TestCase):
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
@@ -208,6 +209,7 @@ class TestSettings(TestCase):
         })
 
         self.assertEqual(backend.conn.transport.max_retries, 42)
+
 
 class ElasticsearchSearchBackendTestCase(TestCase):
     def setUp(self):
@@ -390,7 +392,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight=True)['results']]),
-            [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
+                         [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
@@ -591,7 +593,6 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
         super(LiveElasticsearchSearchQueryTestCase, self).tearDown()
 
     def test_log_query(self):
-        from django.conf import settings
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
 
@@ -1005,7 +1006,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         self.smmi.update(using='elasticsearch')
         self.sammi.update(using='elasticsearch')
 
-
     def tearDown(self):
         # Restore.
         connections['elasticsearch']._index = self.old_ui
@@ -1039,7 +1039,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=1))[0], MockSearchResult))
-
 
 
 class LiveElasticsearchAutocompleteTestCase(TestCase):
@@ -1301,8 +1300,9 @@ class RecreateIndexTestCase(TestCase):
             updated_mapping = self.raw_es.indices.get_mapping(sb.index_name)
         except elasticsearch.NotFoundError:
             self.fail("There is no mapping after recreating the index")
+
         self.assertEqual(original_mapping, updated_mapping,
-            "Mapping after recreating the index differs from the original one")
+                         "Mapping after recreating the index differs from the original one")
 
 
 class ElasticsearchFacetingTestCase(TestCase):
