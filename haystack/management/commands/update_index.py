@@ -56,9 +56,9 @@ def worker(bits):
                 pass
 
     if bits[0] == 'do_update':
-        func, model, start, end, total, using, start_date, end_date, verbosity = bits
+        func, model, start, end, total, using, start_date, end_date, verbosity, commit = bits
     elif bits[0] == 'do_remove':
-        func, model, pks_seen, start, upper_bound, using, verbosity = bits
+        func, model, pks_seen, start, upper_bound, using, verbosity, commit = bits
     else:
         return
 
@@ -68,12 +68,12 @@ def worker(bits):
 
     if func == 'do_update':
         qs = index.build_queryset(start_date=start_date, end_date=end_date)
-        do_update(backend, index, qs, start, end, total, verbosity=verbosity)
+        do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit)
     elif bits[0] == 'do_remove':
-        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity)
+        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity, commit=commit)
 
 
-def do_update(backend, index, qs, start, end, total, verbosity=1):
+def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
     small_cache_qs = qs.all()
@@ -86,13 +86,13 @@ def do_update(backend, index, qs, start, end, total, verbosity=1):
             print("  indexed %s - %d of %d (by %s)." % (start + 1, end, total, os.getpid()))
 
     # FIXME: Get the right backend.
-    backend.update(index, current_qs)
+    backend.update(index, current_qs, commit=commit)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
 
 
-def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1):
+def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1, commit=True):
     # Fetch a list of results.
     # Can't do pk range, because id's are strings (thanks comments
     # & UUIDs!).
@@ -106,7 +106,7 @@ def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1):
             if verbosity >= 2:
                 print("  removing %s." % result.pk)
 
-            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]))
+            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]), commit=commit)
 
 
 class Command(LabelCommand):
@@ -140,6 +140,9 @@ class Command(LabelCommand):
             default=0, type='int',
             help='Allows for the use multiple workers to parallelize indexing. Requires multiprocessing.'
         ),
+        make_option('--nocommit', action='store_false', dest='commit',
+            default=True, help='Will pass commit=False to the backend.'
+        ),
     )
     option_list = LabelCommand.option_list + base_options
 
@@ -150,6 +153,7 @@ class Command(LabelCommand):
         self.end_date = None
         self.remove = options.get('remove', False)
         self.workers = int(options.get('workers', 0))
+        self.commit = options.get('commit', True)
 
         self.backends = options.get('using')
         if not self.backends:
@@ -231,9 +235,9 @@ class Command(LabelCommand):
                 end = min(start + batch_size, total)
 
                 if self.workers == 0:
-                    do_update(backend, index, qs, start, end, total, self.verbosity)
+                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit)
                 else:
-                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity))
+                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit))
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
@@ -258,9 +262,9 @@ class Command(LabelCommand):
                     upper_bound = start + batch_size
 
                     if self.workers == 0:
-                        do_remove(backend, index, model, pks_seen, start, upper_bound)
+                        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=self.verbosity,  commit=self.commit)
                     else:
-                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using, self.verbosity))
+                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using, self.verbosity, self.commit))
 
                 if self.workers > 0:
                     pool = multiprocessing.Pool(self.workers)

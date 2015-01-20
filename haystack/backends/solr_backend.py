@@ -103,8 +103,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
                 self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
 
-            # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
-            self.conn.optimize()
+            if commit:
+                # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
+                self.conn.optimize()
         except (IOError, SolrError) as e:
             if not self.silently_fail:
                 raise
@@ -509,25 +510,6 @@ class SolrSearchBackend(BaseSearchBackend):
 class SolrSearchQuery(BaseSearchQuery):
     def matching_all_fragment(self):
         return '*:*'
-
-    def add_spatial(self, lat, lon, sfield, distance, filter='bbox'):
-        """Adds spatial query parameters to search query"""
-        kwargs = {
-            'lat': lat,
-            'long': long,
-            'sfield': sfield,
-            'distance': distance,
-        }
-        self.spatial_query.update(kwargs)
-
-    def add_order_by_distance(self, lat, long, sfield):
-        """Orders the search result by distance from point."""
-        kwargs = {
-            'lat': lat,
-            'long': long,
-            'sfield': sfield,
-        }
-        self.order_by_distance.update(kwargs)
 
     def build_query_fragment(self, field, filter_type, value):
         from haystack import connections

@@ -14,16 +14,16 @@ than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 3.5+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple::
 
-    curl -O https://archive.apache.org/dist/lucene/solr/3.5.0/apache-solr-3.5.0.tgz
-    tar xvzf apache-solr-3.5.0.tgz
-    cd apache-solr-3.5.0
+    curl -LO https://archive.apache.org/dist/lucene/solr/4.10.2/solr-4.10.2.tgz
+    tar xvzf solr-4.10.2.tgz
+    cd solr-4.10.2
     cd example
     java -jar start.jar
 
 You'll need to revise your schema. You can generate this from your application
 (once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
-it in ``apache-solr-3.5.0/example/solr/conf/schema.xml``. Then restart Solr.
+it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart Solr.
 
 .. note::
     ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
@@ -42,11 +42,8 @@ somewhere on your ``PYTHONPATH``.
 
 .. note::
 
-    ``pysolr`` has its own dependencies that aren't covered by Haystack. For
-    best results, you should have an ElementTree variant install (preferably the
-    ``lxml`` variant), ``httplib2`` for timeouts (though it will fall back to
-    ``httplib``) and either the ``json`` module that comes with Python 2.5+ or
-    ``simplejson``.
+    ``pysolr`` has its own dependencies that aren't covered by Haystack. See
+    https://pypi.python.org/pypi/pysolr for the latest documentation.
 
 More Like This
 --------------
@@ -159,7 +156,7 @@ You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
 .. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
- 
+
   Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
   you have the proper version of `elasticsearch-py` installed - releases with
   major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4

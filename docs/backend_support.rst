@@ -51,7 +51,7 @@ Elasticsearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: elasticsearch-py 0.4.3+ & Elasticsearch 0.17.7+
+* Requires: elasticsearch-py > 1.0 & Elasticsearch 1.0+
 
 Whoosh
 ------
