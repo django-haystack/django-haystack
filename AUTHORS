@@ -95,3 +95,4 @@ Thanks to
     * Dirk Eschler (@deschler) for app loader Django 1.7 compatibility fixes
     * Wictor (wicol) for a patch improving the error message given when model_attr references a non-existent
       field
+    * Pierre Dulac (dulaccc) for a patch updating distance filters for ElasticSearch 1.x
