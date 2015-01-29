@@ -59,13 +59,22 @@ class ManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
+        call_command('update_index', verbosity=0, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
         call_command('update_index', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('rebuild_index', interactive=False, verbosity=0)
+        call_command('rebuild_index', interactive=False, verbosity=0, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('rebuild_index', interactive=False, verbosity=0, commit=True)
+        self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        call_command('clear_index', interactive=False, verbosity=0, commit=False)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
     def test_remove(self):
@@ -81,6 +90,12 @@ class ManagementCommandTestCase(TestCase):
 
         # Plain ``update_index`` doesn't fix it.
         call_command('update_index', verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        call_command('update_index', remove=True, verbosity=0, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        call_command('update_index', remove=True, verbosity=0, workers=2, commit=False)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         # With the remove flag, it's gone.
@@ -145,13 +160,20 @@ class ManagementCommandTestCase(TestCase):
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', verbosity=2, workers=2, batchsize=5, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
     def test_build_schema_wrong_backend(self):
 
         settings.HAYSTACK_CONNECTIONS['whoosh'] = {'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-                                                   'PATH': mkdtemp(prefix='dummy-path-'),}
+                                                   'PATH': mkdtemp(prefix='dummy-path-'), }
 
         connections['whoosh']._index = self.ui
-        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema',using='whoosh', interactive=False)
+        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema', using='whoosh', interactive=False)
+
 
 class AppModelManagementCommandTestCase(TestCase):
     fixtures = ['bulk_data.json']

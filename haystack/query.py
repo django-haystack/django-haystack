@@ -317,12 +317,6 @@ class SearchQuerySet(object):
 
         return clone
 
-    def order_by_distance(self, **kwargs):
-        """Alters the order in which the results should appear."""
-        clone = self._clone()
-        clone.query.add_order_by_distance(**kwargs)
-        return clone
-
     def highlight(self):
         """Adds highlighting to the results."""
         clone = self._clone()

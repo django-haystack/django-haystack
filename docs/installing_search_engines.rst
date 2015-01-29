@@ -42,11 +42,8 @@ somewhere on your ``PYTHONPATH``.
 
 .. note::
 
-    ``pysolr`` has its own dependencies that aren't covered by Haystack. For
-    best results, you should have an ElementTree variant install (preferably the
-    ``lxml`` variant), ``httplib2`` for timeouts (though it will fall back to
-    ``httplib``) and either the ``json`` module that comes with Python 2.5+ or
-    ``simplejson``.
+    ``pysolr`` has its own dependencies that aren't covered by Haystack. See
+    https://pypi.python.org/pypi/pysolr for the latest documentation.
 
 More Like This
 --------------
@@ -159,7 +156,7 @@ You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
 .. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
- 
+
   Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
   you have the proper version of `elasticsearch-py` installed - releases with
   major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4

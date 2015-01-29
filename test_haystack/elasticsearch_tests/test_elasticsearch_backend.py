@@ -15,6 +15,7 @@ from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
 from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
+from haystack.utils.geo import Point
 
 from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
                            MockModel)
@@ -198,6 +199,7 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ASixthMockModel
 
+
 class TestSettings(TestCase):
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
@@ -208,6 +210,7 @@ class TestSettings(TestCase):
         })
 
         self.assertEqual(backend.conn.transport.max_retries, 42)
+
 
 class ElasticsearchSearchBackendTestCase(TestCase):
     def setUp(self):
@@ -390,7 +393,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight=True)['results']]),
-            [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
+                         [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
@@ -433,6 +436,21 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_spatial_search_parameters(self):
+        p1 = Point(1.23, 4.56)
+        kwargs = self.sb.build_search_kwargs('*:*', distance_point={'field': 'location', 'point': p1},
+                                             sort_by=(('distance', 'desc'), ))
+
+        self.assertIn('sort', kwargs)
+        self.assertEqual(1, len(kwargs['sort']))
+        geo_d = kwargs['sort'][0]['_geo_distance']
+
+        # ElasticSearch supports the GeoJSON-style lng, lat pairs so unlike Solr the values should be
+        # in the same order as we used to create the Point():
+        # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-distance-filter.html#_lat_lon_as_array_4
+
+        self.assertDictEqual(geo_d, {'location': [1.23, 4.56], 'unit': 'km', 'order': 'desc'})
 
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -591,7 +609,6 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
         super(LiveElasticsearchSearchQueryTestCase, self).tearDown()
 
     def test_log_query(self):
-        from django.conf import settings
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
 
@@ -1005,7 +1022,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         self.smmi.update(using='elasticsearch')
         self.sammi.update(using='elasticsearch')
 
-
     def tearDown(self):
         # Restore.
         connections['elasticsearch']._index = self.old_ui
@@ -1039,7 +1055,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=1))[0], MockSearchResult))
-
 
 
 class LiveElasticsearchAutocompleteTestCase(TestCase):
@@ -1301,8 +1316,9 @@ class RecreateIndexTestCase(TestCase):
             updated_mapping = self.raw_es.indices.get_mapping(sb.index_name)
         except elasticsearch.NotFoundError:
             self.fail("There is no mapping after recreating the index")
+
         self.assertEqual(original_mapping, updated_mapping,
-            "Mapping after recreating the index differs from the original one")
+                         "Mapping after recreating the index differs from the original one")
 
 
 class ElasticsearchFacetingTestCase(TestCase):
