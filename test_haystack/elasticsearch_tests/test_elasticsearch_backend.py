@@ -166,7 +166,7 @@ class ElasticsearchRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
         prepped.update({
             'text': 'This is some example text.',
             'name': 'Mister Pants',
-            'is_active': True,
+            'is_active': getattr(obj, 'is_active', True),
             'post_count': 25,
             'average_rating': 3.6,
             'price': Decimal('24.99'),
@@ -1218,9 +1218,12 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
         self.sqs = SearchQuerySet('elasticsearch')
 
         # Fake indexing.
-        mock = MockModel()
-        mock.id = 1
-        self.sb.update(self.srtsi, [mock])
+        m1 = MockModel()
+        m1.id = 1
+        m2 = MockModel()
+        m2.id = 2
+        m2.is_active = False
+        self.sb.update(self.srtsi, [m1, m2])
 
     def tearDown(self):
         # Restore.
@@ -1228,10 +1231,10 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
         super(LiveElasticsearchRoundTripTestCase, self).tearDown()
 
     def test_round_trip(self):
-        results = self.sqs.filter(id='core.mockmodel.1')
+        results = self.sqs.filter(django_ct='core.mockmodel').order_by('id')
 
         # Sanity check.
-        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.count(), 2)
 
         # Check the individual fields.
         result = results[0]
@@ -1246,6 +1249,10 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
         self.assertEqual(result.created, datetime.datetime(2009, 11, 21, 21, 31, 00))
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
         self.assertEqual(result.sites, [3, 5, 1])
+
+        result = results[1]
+        self.assertEqual(result.id, 'core.mockmodel.2')
+        self.assertEqual(result.is_active, False)
 
 
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
