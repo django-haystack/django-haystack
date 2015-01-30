@@ -1254,6 +1254,31 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
         self.assertEqual(result.id, 'core.mockmodel.2')
         self.assertEqual(result.is_active, False)
 
+    def test_full_boolean_filtering(self):
+        """Confirm that boolean values are processed as consistently in both filters and retrieved values"""
+
+        sqs = self.sqs.filter(django_ct='core.mockmodel')
+
+        test_sqs = sqs.filter(is_active=True)
+        self.assertEqual(test_sqs.count(), 1)
+        self.assertEqual(test_sqs[0].id, 'core.mockmodel.1')
+        self.assertEqual(test_sqs[0].is_active, True)
+
+        test_sqs = sqs.filter(is_active='true')
+        self.assertEqual(test_sqs.count(), 1)
+        self.assertEqual(test_sqs[0].id, 'core.mockmodel.1')
+        self.assertEqual(test_sqs[0].is_active, True)
+
+        test_sqs = sqs.filter(is_active=False)
+        self.assertEqual(test_sqs.count(), 1)
+        self.assertEqual(test_sqs[0].id, 'core.mockmodel.2')
+        self.assertEqual(test_sqs[0].is_active, False)
+
+        test_sqs = sqs.filter(is_active='false')
+        self.assertEqual(test_sqs.count(), 1)
+        self.assertEqual(test_sqs[0].id, 'core.mockmodel.2')
+        self.assertEqual(test_sqs[0].is_active, False)
+
 
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 class LiveElasticsearchPickleTestCase(TestCase):
