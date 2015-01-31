@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 import copy
 import inspect
 import threading
+import warnings
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.datastructures import SortedDict
@@ -160,7 +162,11 @@ class UnifiedIndex(object):
         indexes = []
 
         for app in settings.INSTALLED_APPS:
-            mod = importlib.import_module(app)
+            try:
+                mod = importlib.import_module(app)
+            except ImportError:
+                warnings.warn('Installed app %s is not an importable Python module and will be ignored' % app)
+                continue
 
             try:
                 search_index_module = importlib.import_module("%s.search_indexes" % app)
@@ -293,7 +299,7 @@ class UnifiedIndex(object):
             self.build()
 
         if model_klass not in self.indexes:
-            raise NotHandled('The model %s is not registered' % model_klass.__class__)
+            raise NotHandled('The model %s is not registered' % model_klass)
 
         return self.indexes[model_klass]
 

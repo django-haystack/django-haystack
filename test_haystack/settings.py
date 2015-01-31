@@ -24,6 +24,11 @@ INSTALLED_APPS = [
     'test_haystack.core',
     'test_haystack.spatial',
     'test_haystack.multipleindex',
+
+    # This app exists to confirm that nothing breaks when INSTALLED_APPS has an app without models.py
+    # which is common in some cases for things like admin extensions, reporting, etc.
+    'test_haystack.test_app_without_models',
+
 ]
 
 SITE_ID = 1
@@ -37,7 +42,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'whoosh': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-        'PATH': os.path.join('tmp', 'test_whoosh_query'),
+        'PATH': mkdtemp(prefix='test_whoosh_query'),
         'INCLUDE_SPELLING': True,
     },
     'filtered_whoosh': {
@@ -56,9 +61,15 @@ HAYSTACK_CONNECTIONS = {
     },
     'solr': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:8983/solr/',
+        'URL': 'http://localhost:9001/solr/',
         'INCLUDE_SPELLING': True,
     },
 }
 
 SITE_ID = 1
+
+MIDDLEWARE_CLASSES = ('django.middleware.common.CommonMiddleware',
+                      'django.contrib.sessions.middleware.SessionMiddleware',
+                      'django.middleware.csrf.CsrfViewMiddleware',
+                      'django.contrib.auth.middleware.AuthenticationMiddleware',
+                      'django.contrib.messages.middleware.MessageMiddleware')
