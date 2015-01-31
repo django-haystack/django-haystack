@@ -95,7 +95,13 @@ class SearchResult(object):
 
     def _get_model(self):
         if self._model is None:
-            self._model = models.get_model(self.app_label, self.model_name)
+            try:
+                self._model = models.get_model(self.app_label, self.model_name)
+            except LookupError:
+                # this changed in change 1.7 to throw an error instead of
+                # returning None when the model isn't found. So catch the
+                # lookup error and keep self._model == None.
+                pass
 
         return self._model
 
@@ -127,7 +133,7 @@ class SearchResult(object):
             if location_field is None:
                 return None
 
-            lf_lng, lf_lat  = location_field.get_coords()
+            lf_lng, lf_lat = location_field.get_coords()
             self._distance = Distance(km=geopy_distance.distance((po_lat, po_lng), (lf_lat, lf_lng)).km)
 
         # We've either already calculated it or the backend returned it, so

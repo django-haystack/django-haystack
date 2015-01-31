@@ -1,32 +1,19 @@
 import datetime
-import os
-import shutil
-from django.conf import settings
-from django.test import TestCase
+
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
 from haystack.query import SQ
-from ..core.models import MockModel, AnotherMockModel
+
+from ..core.models import AnotherMockModel, MockModel
+from .testcases import WhooshTestCase
 
 
-class WhooshSearchQueryTestCase(TestCase):
+class WhooshSearchQueryTestCase(WhooshTestCase):
     def setUp(self):
         super(WhooshSearchQueryTestCase, self).setUp()
 
-        # Stow.
-        temp_path = os.path.join('tmp', 'test_whoosh_query')
-        self.old_whoosh_path = settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']
-        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = temp_path
-
         self.sq = connections['whoosh'].get_query()
-
-    def tearDown(self):
-        if os.path.exists(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH']):
-            shutil.rmtree(settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'])
-
-        settings.HAYSTACK_CONNECTIONS['whoosh']['PATH'] = self.old_whoosh_path
-        super(WhooshSearchQueryTestCase, self).tearDown()
 
     def test_build_query_all(self):
         self.assertEqual(self.sq.build_query(), '*')

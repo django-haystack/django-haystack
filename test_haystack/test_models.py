@@ -1,6 +1,8 @@
 import logging as std_logging
 import pickle
+import django
 from django.test import TestCase
+from django.utils import unittest
 from haystack import connections
 from haystack.models import SearchResult
 from haystack.utils import log as logging

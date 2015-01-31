@@ -2,17 +2,28 @@
 
 set -e
 
-export TEST_ROOT=$(realpath $( dirname $0 ) )
+SOLR_VERSION=4.7.2
 
-if [ ! -f solr-4.6.0.tgz ]; then
-    curl -O http://archive.apache.org/dist/lucene/solr/4.6.0/solr-4.6.0.tgz
+cd $(dirname $0)
+
+export TEST_ROOT=$(pwd)
+
+export SOLR_ARCHIVE=solr-${SOLR_VERSION}.tgz
+
+if [ -f ${SOLR_ARCHIVE} ]; then
+    # If the tarball doesn't extract cleanly, remove it so it'll download again:
+    tar -tf ${SOLR_ARCHIVE} > /dev/null || rm ${SOLR_ARCHIVE}
 fi
 
-echo "Extracting Solr 4.6.0 to `pwd`/solr4/"
+if [ ! -f ${SOLR_ARCHIVE} ]; then
+    python get-solr-download-url.py $SOLR_VERSION | xargs curl -O
+fi
+
+echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr4/"
 rm -rf solr4
 mkdir solr4
-tar -C solr4 -xf solr-4.6.0.tgz --strip-components 2 solr-4.6.0/example
-tar -C solr4 -xf solr-4.6.0.tgz --strip-components 1 solr-4.6.0/dist solr-4.6.0/contrib
+tar -C solr4 -xf ${SOLR_ARCHIVE} --strip-components 2 solr-${SOLR_VERSION}/example
+tar -C solr4 -xf ${SOLR_ARCHIVE} --strip-components 1 solr-${SOLR_VERSION}/dist solr-${SOLR_VERSION}/contrib
 
 echo "Changing into solr4"
 
@@ -33,4 +44,10 @@ perl -p -i -e 's|<!-- A Robust Example|<!-- More like this request handler -->\n
 echo 'Starting server'
 # We use exec to allow process monitors to correctly kill the
 # actual Java process rather than this launcher script:
-exec java -D9001 -Djava.awt.headless=true -Dapple.awt.UIElement=true -jar start.jar
+export CMD="java -Djetty.port=9001 -Djava.awt.headless=true -Dapple.awt.UIElement=true -jar start.jar"
+
+if [ -z "${BACKGROUND_SOLR}" ]; then
+    exec $CMD
+else
+    exec $CMD >/dev/null &
+fi

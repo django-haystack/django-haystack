@@ -12,13 +12,12 @@ install_requires = [
 ]
 
 tests_require = [
-    'elasticsearch==0.4.5',
+    'elasticsearch>=1.0.0,<2.0.0',
     'pysolr>=3.2.0',
     'whoosh==2.5.4',
     'lxml==3.2.3',
     'python-dateutil',
     'geopy==0.95.1',
-    'httplib2==0.8',
 
     'nose',
     'mock',
@@ -27,7 +26,7 @@ tests_require = [
 
 setup(
     name='django-haystack',
-    version='2.2.0',
+    version='2.4.0-dev',
     description='Pluggable search for Django.',
     author='Daniel Lindsley',
     author_email='daniel@toastdriven.com',
