@@ -12,6 +12,7 @@ from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
+from haystack.utils import get_model_ct
 
 try:
     from django.utils.encoding import force_text
@@ -192,7 +193,7 @@ class BaseSearchBackend(object):
         models = []
 
         for model in connections[self.connection_alias].get_unified_index().get_indexed_models():
-            models.append(u"%s.%s" % (model._meta.app_label, model._meta.module_name))
+            models.append(get_model_ct(model))
 
         return models
 
@@ -797,23 +798,12 @@ class BaseSearchQuery(object):
         """Orders the search result by a field."""
         self.order_by.append(field)
 
-    def add_order_by_distance(self, **kwargs):
-        """Orders the search result by distance from point."""
-        raise NotImplementedError("Subclasses must provide a way to add order by distance in the 'add_order_by_distance' method.")
-
     def clear_order_by(self):
         """
         Clears out all ordering that has been already added, reverting the
         query to relevancy.
         """
         self.order_by = []
-
-    def clear_order_by_distance(self):
-        """
-        Clears out all distance ordering that has been already added, reverting the
-        query to relevancy.
-        """
-        self.order_by_distance = []
 
     def add_model(self, model):
         """

@@ -178,7 +178,7 @@ might look like this::
         <!-- End faceting -->
     
         <!-- Display results... -->
-        {% for result in results %}
+        {% for result in page.object_list %}
             <div class="search_result">
                 <h3><a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a></h3>
             

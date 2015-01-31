@@ -23,9 +23,17 @@ following arguments::
     ``--using``:
         If provided, determines which connection should be used. Default is
         ``default``.
+    ``--nocommit``:
+        If provided, it will pass commit=False to the backend.  This means that the
+        update will not become immediately visible and will depend on another explicit commit
+        or the backend's commit strategy to complete the update.
 
 By default, this is an **INTERACTIVE** command and assumes that you do **NOT**
 wish to delete the entire index.
+
+.. note::
+
+    The ``--nocommit`` argument is only supported by the Solr backend.
 
 .. warning::
 
@@ -80,6 +88,14 @@ arguments::
     ``--using``:
         If provided, determines which connection should be used. Default is
         ``default``.
+    ``--nocommit``:
+        If provided, it will pass commit=False to the backend.  This means that the
+        updates will not become immediately visible and will depend on another explicit commit
+        or the backend's commit strategy to complete the update.
+
+.. note::
+
+    The ``--nocommit`` argument is only supported by the Solr and Elasticsearch backends.
 
 Examples::
 
@@ -147,6 +163,10 @@ of the arguments of the following arguments::
     ``--using``:
         If provided, determines which connection should be used. Default is
         ``default``.
+    ``--nocommit``:
+        If provided, it will pass commit=False to the backend.  This means that the
+        update will not become immediately visible and will depend on another explicit commit
+        or the backend's commit strategy to complete the update.
 
 For when you really, really want a completely rebuilt index.
 

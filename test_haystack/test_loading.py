@@ -220,6 +220,10 @@ class UnifiedIndexTestCase(TestCase):
 
     def test_get_index(self):
         self.assertRaises(NotHandled, self.ui.get_index, MockModel)
+        try:
+            self.ui.get_index(MockModel)
+        except NotHandled as e:
+            self.assertTrue(MockModel.__name__ in str(e))
 
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
         self.assertTrue(isinstance(self.ui.get_index(MockModel), indexes.BasicSearchIndex))

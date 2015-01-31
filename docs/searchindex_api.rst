@@ -174,6 +174,8 @@ A third option is to develop a custom ``QueuedSignalProcessor`` that, much like
 updates/deletes. Then writing a management command to consume these messages
 in batches, yielding a nice compromise between the previous two options.
 
+For more information see :doc:`signal_processors`.
+
 .. note::
 
     Haystack doesn't ship with a ``QueuedSignalProcessor`` largely because there is

@@ -1,14 +1,16 @@
 from __future__ import unicode_literals
-from django.contrib.admin.options import ModelAdmin
-from django.contrib.admin.options import csrf_protect_m
+
+from django import template
+from django.contrib.admin.options import csrf_protect_m, ModelAdmin
 from django.contrib.admin.views.main import ChangeList, SEARCH_VAR
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator, InvalidPage
+from django.core.paginator import InvalidPage, Paginator
 from django.shortcuts import render_to_response
-from django import template
 from django.utils.translation import ungettext
+
 from haystack import connections
 from haystack.query import SearchQuerySet
+from haystack.utils import get_model_ct_tuple
 
 try:
     from django.utils.encoding import force_text
@@ -52,7 +54,7 @@ class SearchChangeList(ChangeList):
 
         # Get the list of objects to display on this page.
         try:
-            result_list = paginator.page(self.page_num+1).object_list
+            result_list = paginator.page(self.page_num + 1).object_list
             # Grab just the Django models, since that's what everything else is
             # expecting.
             result_list = [result.object for result in result_list]
@@ -67,7 +69,7 @@ class SearchChangeList(ChangeList):
         self.paginator = paginator
 
 
-class SearchModelAdmin(ModelAdmin):
+class SearchModelAdminMixin(object):
     # haystack connection to use for searching
     haystack_connection = 'default'
 
@@ -78,14 +80,14 @@ class SearchModelAdmin(ModelAdmin):
 
         if not SEARCH_VAR in request.GET:
             # Do the usual song and dance.
-            return super(SearchModelAdmin, self).changelist_view(request, extra_context)
+            return super(SearchModelAdminMixin, self).changelist_view(request, extra_context)
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
         if not self.model in connections[self.haystack_connection].get_unified_index().get_indexed_models():
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
-            return super(SearchModelAdmin, self).changelist_view(request, extra_context)
+            return super(SearchModelAdminMixin, self).changelist_view(request, extra_context)
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
@@ -147,9 +149,13 @@ class SearchModelAdmin(ModelAdmin):
         }
         context.update(extra_context or {})
         context_instance = template.RequestContext(request, current_app=self.admin_site.name)
+        app_name, model_name = get_model_ct_tuple(self.model)
         return render_to_response(self.change_list_template or [
-            'admin/%s/%s/change_list.html' % (self.model._meta.app_label, self.model._meta.object_name.lower()),
-            'admin/%s/change_list.html' % self.model._meta.app_label,
+            'admin/%s/%s/change_list.html' % (app_name, model_name),
+            'admin/%s/change_list.html' % app_name,
             'admin/change_list.html'
         ], context, context_instance=context_instance)
 
+
+class SearchModelAdmin(SearchModelAdminMixin, ModelAdmin):
+    pass

@@ -37,9 +37,6 @@ class SearchIndexManager(object):
     def order_by(self, *args):
         return self.get_search_queryset().order_by(*args)
 
-    def order_by_distance(self, **kwargs):
-        return self.get_search_queryset().order_by_distance(**kwargs)
-
     def highlight(self):
         return self.get_search_queryset().highlight()
 

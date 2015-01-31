@@ -1,8 +1,8 @@
-import httplib2
-import warnings
-from django.conf import settings
+# encoding: utf-8
+
 from django.contrib.gis.geos import GEOSGeometry
 from django.test import TestCase
+
 from haystack import connections
 from haystack.exceptions import SpatialError
 from haystack.query import SearchQuerySet
@@ -64,12 +64,12 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(east, -95.23362278938293)
 
 
-class SpatialSolrNoDistanceTestCase(TestCase):
+class SpatialSolrTestCase(TestCase):
     fixtures = ['sample_spatial_data.json']
     using = 'solr'
 
     def setUp(self):
-        super(SpatialSolrNoDistanceTestCase, self).setUp()
+        super(SpatialSolrTestCase, self).setUp()
         self.ui = connections[self.using].get_unified_index()
         self.checkindex = self.ui.get_index(Checkin)
         self.checkindex.reindex(using=self.using)
@@ -83,7 +83,7 @@ class SpatialSolrNoDistanceTestCase(TestCase):
 
     def tearDown(self):
         self.checkindex.clear(using=self.using)
-        super(SpatialSolrNoDistanceTestCase, self).setUp()
+        super(SpatialSolrTestCase, self).setUp()
 
     def test_indexing(self):
         # Make sure the indexed data looks correct.
@@ -164,7 +164,7 @@ class SpatialSolrNoDistanceTestCase(TestCase):
     def test_complex(self):
         sqs = self.sqs.auto_query('coffee').within('location', self.downtown_bottom_left, self.downtown_top_right).distance('location', self.downtown_pnt).order_by('distance')
         self.assertEqual(sqs.count(), 5)
-        self.assertEqual([result.pk for result in sqs],['8', '6', '3', '1', '2'])
+        self.assertEqual([result.pk for result in sqs], ['8', '6', '3', '1', '2'])
         self.assertEqual(["%0.04f" % result.distance.mi for result in sqs], ['0.0199', '0.0454', '0.0483', '0.0483', '0.2510'])
 
         sqs = self.sqs.auto_query('coffee').dwithin('location', self.downtown_pnt, D(mi=0.1)).distance('location', self.downtown_pnt).order_by('distance')
@@ -184,23 +184,3 @@ class SpatialSolrNoDistanceTestCase(TestCase):
         sqs = self.sqs.auto_query('coffee').dwithin('location', self.downtown_pnt, D(mi=0.1)).distance('location', self.downtown_pnt).order_by('-created')
         self.assertEqual(sqs.count(), 4)
         self.assertEqual([result.pk for result in sqs], ['8', '6', '3', '1'])
-
-
-def check_running(using):
-    http = httplib2.Http(timeout=1)
-    url = settings.HAYSTACK_CONNECTIONS[using]['URL']
-
-    try:
-        resp, content = http.request(url)
-    except Exception as e:
-        warnings.warn("It appears like '%s' is unavailable. Skipping..." % url)
-        raise
-
-
-try:
-    check_running('solr_native_distance')
-except:
-    pass
-else:
-    class SpatialSolrNativeDistanceTestCase(SpatialSolrNoDistanceTestCase):
-        using = 'solr_native_distance'
