@@ -3,6 +3,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
 import os
+import sys
+import warnings
 from datetime import timedelta
 from optparse import make_option
 
@@ -154,6 +156,11 @@ class Command(LabelCommand):
         self.remove = options.get('remove', False)
         self.workers = int(options.get('workers', 0))
         self.commit = options.get('commit', True)
+
+        if sys.version_info < (2, 7):
+            warnings.warn('multiprocessing is disabled on Python 2.6 and earlier. '
+                          'See https://github.com/toastdriven/django-haystack/issues/1001')
+            self.workers = 0
 
         self.backends = options.get('using')
         if not self.backends:
