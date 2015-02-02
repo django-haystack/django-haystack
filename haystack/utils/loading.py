@@ -4,8 +4,14 @@ import inspect
 import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.datastructures import SortedDict
-from django.utils import importlib
+try:
+    from django.utils.datastructures import SortedDict
+except ImportError:  # Django > 1.8
+    from collections import OrderedDict as SortedDict
+try:
+    from django.utils import importlib
+except ImportError:  # Django > 1.8
+    import importlib
 from django.utils.module_loading import module_has_submodule
 from haystack.constants import Indexable, DEFAULT_ALIAS
 from haystack.exceptions import NotHandled, SearchFieldError

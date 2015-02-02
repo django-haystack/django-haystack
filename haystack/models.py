@@ -2,7 +2,11 @@
 from __future__ import unicode_literals
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+try:
+    from django.db.models.loading import get_model
+except ImportError:  # Django > 1.8
+    from django.apps import apps
+    get_model = apps.get_model
 from django.utils import six
 from django.utils.text import capfirst
 from haystack.exceptions import NotHandled, SpatialError
@@ -96,7 +100,7 @@ class SearchResult(object):
     def _get_model(self):
         if self._model is None:
             try:
-                self._model = models.get_model(self.app_label, self.model_name)
+                self._model = get_model(self.app_label, self.model_name)
             except LookupError:
                 # this changed in change 1.7 to throw an error instead of
                 # returning None when the model isn't found. So catch the

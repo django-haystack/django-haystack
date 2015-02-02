@@ -1,7 +1,11 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.db import models
+try:
+    from django.db.models.loading import get_model
+except ImportError:  # Django > 1.8
+    from django.apps import apps
+    get_model = apps.get_model
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
 
@@ -105,7 +109,7 @@ class ModelSearchForm(SearchForm):
 
         if self.is_valid():
             for model in self.cleaned_data['models']:
-                search_models.append(models.get_model(*model.split('.')))
+                search_models.append(get_model(*model.split('.')))
 
         return search_models
 
