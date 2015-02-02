@@ -4,8 +4,13 @@
 Views & Forms
 =============
 
-Haystack comes with some default, simple views & forms to help you get started
-and to cover the common cases. Included is a way to provide:
+.. note::
+
+    As of version 2.4, the old ``haystack.views.SearchView`` will be deprecated in favor of the new generic, django-style search views at ``haystack.generic_views.SearchView``.
+
+Haystack comes with some default, simple views & forms as well as some 
+django-style views to help you get started and to cover the common cases. 
+Included is a way to provide:
 
   * Basic, query-only search.
   * Search by models.
@@ -119,6 +124,47 @@ Views
 =====
 
 .. currentmodule:: haystack.views
+
+.. note::
+
+    As of version 2.4, the old ``haystack.views.SearchView`` will be deprecated in favor of the new generic, django-style search views at ``haystack.generic_views.SearchView``.
+
+New Django-Style Class Based Views
+----------------------------------
+
+Version 2.4 introduced familiar django-style class base views which extend from 
+django's ``FormView``.  The new views are located at 
+``haystack.generic_views.SearchView``.  The generic search view follows the 
+common view patterns laid out by django and can be extended like any other 
+view::
+    
+    # views.py
+    from datetime import date
+    
+    from haystack.generic_views import SearchView
+    
+    class MySearchView(SearchView):
+        """My custom search view."""
+        
+        def get_queryset(self):
+            queryset = super(MySearchView, self).get_queryset()
+            # further filter queryset based on some set of criteria
+            return queryset.filter(pub_date__gte=date(2015, 1, 1))
+        
+        def get_context_data(self, *args, **kwargs):
+            context = super(MySearchView, self).get_context_data(*args, **kwargs)
+            # do something
+            return context
+    
+    # urls.py
+    
+    urlpatterns = patterns('',
+        url(r'^/search/?$', MySearchView.as_view(), name='search_view'),
+    )
+
+
+Old Style Views
+---------------
 
 Haystack comes bundled with three views, the class-based views (``SearchView`` &
 ``FacetedSearchView``) and a traditional functional view (``basic_search``).
