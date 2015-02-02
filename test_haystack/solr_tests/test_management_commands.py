@@ -156,7 +156,7 @@ class ManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        # Watch the output, make sure there are multiple pids.
+        # TODO: Watch the output, make sure there are multiple pids.
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 

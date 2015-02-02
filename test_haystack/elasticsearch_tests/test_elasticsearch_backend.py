@@ -41,6 +41,10 @@ def clear_elasticsearch_index():
     except elasticsearch.TransportError:
         pass
 
+    # Since we've just completely deleted the index, we'll reset setup_complete so the next access will
+    # correctly define the mappings:
+    connections['elasticsearch'].get_backend().setup_complete = False
+
 
 class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
@@ -791,7 +795,6 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 
     # Regressions
 
-    @unittest.expectedFailure
     def test_regression_proper_start_offsets(self):
         sqs = self.sqs.filter(text='index')
         self.assertNotEqual(sqs.count(), 0)
@@ -1027,7 +1030,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         connections['elasticsearch']._index = self.old_ui
         super(LiveElasticsearchMoreLikeThisTestCase, self).tearDown()
 
-    @unittest.expectedFailure
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
         self.assertEqual(mlt.count(), 4)
