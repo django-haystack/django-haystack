@@ -163,50 +163,6 @@ view::
     )
 
 
-Upgrading
-~~~~~~~~~
-
-Upgrading from Old Style Views to New Style Views is usually as simple as:
-
-#. Create new views under ``views.py`` subclassing ``haystack.generic_views.SearchView`` or ``haystack.generic_views.FacetedSearchView``;
-#. Move all parameters of your Old Style Views from your ``urls.py`` as atributes of New Style Views renaming ``searchqueryset`` to ``queryset`` and ``template`` to ``template_name``;
-#. Review your templates and rename ``page`` to ``page_object``
-
-Here's an example::
-
-    ### Old Style Views...
-    # urls.py
-
-    sqs = SearchQuerySet().filter(author='john')
-    
-    urlpatterns = patterns('haystack.views',
-        url(r'^$', SearchView(
-            template='my/special/path/john_search.html',
-            searchqueryset=sqs,
-            form_class=SearchForm
-        ), name='haystack_search'),
-    )
-    
-    ### New Style Views...
-    # views.py
-    
-    class JohnSearchView(SearchView):
-        template_name = 'my/special/path/john_search.html'
-        queryset = SearchQuerySet().filter(author='john')
-        form_class = SearchForm
-        
-    # urls.py
-    from myapp.views import JohnSearchView
-    
-    urlpatterns = patterns('',
-        url(r'^$', JohnSearchView.as_view(), name='haystack_search'),
-    )
-    
-
-If you have views overriding methods of Old Style SearchView, you should refactor
-your code to use method names found in Django's generic views, like ``get``, ``get_context_data`` or ``form_valid``.
-
-
 Old Style Views
 ---------------
 
