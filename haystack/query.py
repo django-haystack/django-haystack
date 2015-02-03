@@ -409,6 +409,13 @@ class SearchQuerySet(object):
 
     def narrow(self, query):
         """Pushes existing facet choices into the search."""
+
+        if isinstance(query, SQ):
+            # produce query string using empty query of the same class
+            empty_query = self.query._clone()
+            empty_query._reset()
+            query = query.as_query_string(empty_query.build_query_fragment)
+
         clone = self._clone()
         clone.query.add_narrow_query(query)
         return clone

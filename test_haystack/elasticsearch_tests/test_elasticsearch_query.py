@@ -1,12 +1,15 @@
 import datetime
+
 import elasticsearch
 from django.test import TestCase
+
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ
-from haystack.utils.geo import Point, D
-from ..core.models import MockModel, AnotherMockModel
+from haystack.query import SQ, SearchQuerySet
+from haystack.utils.geo import D, Point
+
+from ..core.models import AnotherMockModel, MockModel
 
 
 class ElasticsearchSearchQueryTestCase(TestCase):
@@ -141,6 +144,12 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:("1" OR "2" OR "3"))')
+
+    def test_narrow_sq(self):
+        sqs = SearchQuerySet(using='elasticsearch').narrow(SQ(foo='moof'))
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
+        self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
 
 
 class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):

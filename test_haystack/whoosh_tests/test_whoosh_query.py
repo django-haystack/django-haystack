@@ -3,7 +3,7 @@ import datetime
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ
+from haystack.query import SQ, SearchQuerySet
 
 from ..core.models import AnotherMockModel, MockModel
 from .testcases import WhooshTestCase
@@ -135,3 +135,9 @@ class WhooshSearchQueryTestCase(WhooshTestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:(1 OR 2 OR 3))')
+
+    def test_narrow_sq(self):
+        sqs = SearchQuerySet(using='whoosh').narrow(SQ(foo='moof'))
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
+        self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')

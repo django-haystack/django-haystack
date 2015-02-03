@@ -96,3 +96,4 @@ Thanks to
     * Wictor (wicol) for a patch improving the error message given when model_attr references a non-existent
       field
     * Pierre Dulac (dulaccc) for a patch updating distance filters for ElasticSearch 1.x
+    * Andrei Fokau (andreif) for adding support for ``SQ`` in ``SearchQuerySet.narrow()``
