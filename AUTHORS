@@ -97,3 +97,4 @@ Thanks to
       field
     * Pierre Dulac (dulaccc) for a patch updating distance filters for ElasticSearch 1.x
     * Andrei Fokau (andreif) for adding support for ``SQ`` in ``SearchQuerySet.narrow()``
+    * Phill Tornroth (phill-tornroth) for several patches improving UnifiedIndex and ElasticSearch support

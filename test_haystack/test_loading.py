@@ -1,11 +1,12 @@
+import unittest
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
-from haystack.exceptions import SearchFieldError, NotHandled
-from haystack import indexes
-from haystack.utils import loading
-from test_haystack.core.models import MockModel, AnotherMockModel
 
-import unittest
+from haystack import indexes
+from haystack.exceptions import NotHandled, SearchFieldError
+from haystack.utils import loading
+from test_haystack.core.models import AnotherMockModel, MockModel
 
 if not hasattr(unittest, "skipIf"):
     # We're dealing with Python < 2.7 and we need unittest2, which might be available from Django:
@@ -235,6 +236,17 @@ class UnifiedIndexTestCase(TestCase):
         indexed_models = self.ui.get_indexed_models()
         self.assertEqual(len(indexed_models), 1)
         self.assertTrue(MockModel in indexed_models)
+
+    def test_get_indexes(self):
+        self.assertEqual(self.ui.get_indexes(), {})
+
+        index = ValidSearchIndex()
+        self.ui.build(indexes=[index])
+
+        results = self.ui.get_indexes()
+        self.assertEqual(len(results), 1)
+        self.assertTrue(MockModel in results)
+        self.assertEqual(results[MockModel], index)
 
     def test_all_searchfields(self):
         self.ui.build(indexes=[BasicMockModelSearchIndex()])

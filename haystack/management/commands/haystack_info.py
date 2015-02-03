@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
+
 from django.core.management.base import NoArgsCommand
 
 
@@ -16,4 +16,4 @@ class Command(NoArgsCommand):
         print("Number of handled %s index(es)." % index_count)
 
         for index in indexed:
-            print("  - Model: %s by Index: %s" % (index.__name__, unified_index.indexes[index]))
+            print("  - Model: %s by Index: %s" % (index.__name__, unified_index.get_indexes()[index]))
