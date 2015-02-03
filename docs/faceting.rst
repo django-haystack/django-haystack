@@ -102,6 +102,96 @@ unique authors.
     similar methods. The only method that has any effect on facets is the
     ``narrow`` method (which is how you provide drill-down).
 
+Configuring facet behaviour
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can configure the behaviour of your facets by passing options
+for each facet in your SearchQuerySet. These options can be backend specific.
+
+**limit**
+*tested on Solr*
+
+The ``limit`` parameter limits the results for each query. On Solr, the default `facet.limit`_ is 100 and a
+negative number removes the limit.
+
+.. _facet.limit: https://wiki.apache.org/solr/SimpleFacetParameters#facet.limit
+
+Example usage::
+
+    >>> from haystack.query import SearchQuerySet
+    >>> sqs = SearchQuerySet().facet('author', limit=-1)
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('abraham', 1),
+                ('benny', 2),
+                ('cindy', 1),
+                ('diana', 5),
+            ],
+        },
+        'queries': {}
+    }
+
+    >>> sqs = SearchQuerySet().facet('author', limit=2)
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('abraham', 1),
+                ('benny', 2),
+            ],
+        },
+        'queries': {}
+    }
+
+**sort**
+*tested on Solr*
+
+The ``sort`` parameter will sort the results for each query. Solr's default
+`facet.sort`_ is ``index``, which will sort the facets alphabetically. Changing
+the parameter to ``count`` will sort the facets by the number of results for
+each facet value.
+
+.. _facet.sort: https://wiki.apache.org/solr/SimpleFacetParameters#facet.sort
+
+
+Example usage::
+
+    >>> from haystack.query import SearchQuerySet
+    >>> sqs = SearchQuerySet().facet('author', sort='index', )
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('abraham', 1),
+                ('benny', 2),
+                ('cindy', 1),
+                ('diana', 5),
+            ],
+        },
+        'queries': {}
+    }
+
+    >>> sqs = SearchQuerySet().facet('author', sort='count', )
+    >>> sqs.facet_counts()
+    {
+        'dates': {},
+        'fields': {
+            'author': [
+                ('diana', 5),
+                ('benny', 2),
+                ('abraham', 1),
+                ('cindy', 1),
+            ],
+        },
+        'queries': {}
+    }
+
+
 Now that we have the facet we want, it's time to implement it.
 
 2. Switch to the ``FacetedSearchView`` and ``FacetedSearchForm``
