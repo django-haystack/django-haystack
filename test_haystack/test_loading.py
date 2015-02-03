@@ -1,3 +1,7 @@
+
+import time
+import threading
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from haystack.exceptions import SearchFieldError, NotHandled
@@ -337,3 +341,46 @@ class UnifiedIndexTestCase(TestCase):
         self.assertEqual(self.ui._facet_fieldnames, {'bare_facet': 'bare_facet', 'title': 'title_facet', 'author': 'author_exact'})
         self.assertEqual(self.ui.get_facet_fieldname('title'), 'title_facet')
         self.assertEqual(self.ui.get_facet_fieldname('bare_facet'), 'bare_facet')
+
+    def test_thread_safe_build(self):
+        # Proves https://github.com/toastdriven/django-haystack/issues/603
+        
+        class SlowUnifiedIndex(loading.UnifiedIndex):
+            # subclass of UnifiedIndex that adds a sleep after the guts of reset().
+            # This way we can ensure the race condition of two threads doing the work
+            # in build() at the same time
+            
+            def reset(self):
+                loading.UnifiedIndex.reset(self)
+                time.sleep(2)  # two second sleep ought to be enough for us to sync up
+
+            def collect_indexes(self):
+                return [ValidSearchIndex()]
+        
+        ui = SlowUnifiedIndex()
+
+        errors = []
+
+        class IndexBuildingThreads(threading.Thread):
+            # Represents the two threads attempting to use the 
+            # unbuilt UnifiedIndex at the same time
+            # The way the bug manifests is that one of the 
+            # threads will stumble over the other one's partially built
+            # indexes and throw an ImproperlyConfigured error
+
+            def run(self, *args, **kwargs):
+                try:
+                    ui.build()
+                except Exception as e:
+                    errors.append(e)
+
+        thread1, thread2 = IndexBuildingThreads(), IndexBuildingThreads()
+        
+        thread1.start()
+        thread2.start()
+
+        thread1.join()
+        thread2.join()
+        
+        self.assertEqual(len(errors), 0, errors)
+        self.assertEqual(len(ui.get_indexed_models()), 1)
