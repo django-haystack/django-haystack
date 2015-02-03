@@ -1143,6 +1143,16 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         self.assertEqual(set([result.pk for result in autocomplete_3]), set(['12', '1', '22', '14']))
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
+        # Test numbers in phrases
+        autocomplete_4 = self.sqs.autocomplete(text_auto='Jen 867')
+        self.assertEqual(autocomplete_4.count(), 1)
+        self.assertEqual(set([result.pk for result in autocomplete_4]), set(['20']))
+
+        # Test numbers alone
+        autocomplete_4 = self.sqs.autocomplete(text_auto='867')
+        self.assertEqual(autocomplete_4.count(), 1)
+        self.assertEqual(set([result.pk for result in autocomplete_4]), set(['20']))
+
 
 class LiveElasticsearchRoundTripTestCase(TestCase):
     def setUp(self):
