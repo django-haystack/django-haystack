@@ -65,7 +65,7 @@ def _lookup_identifier_method():
 get_identifier = _lookup_identifier_method()
 
 
-if django.VERSION >= (1, 7):
+if django.VERSION >= (1, 6):
     def get_model_ct_tuple(model):
         return (model._meta.app_label, model._meta.model_name)
 else:
