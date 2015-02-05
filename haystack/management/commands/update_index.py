@@ -228,7 +228,7 @@ class Command(LabelCommand):
             qs = index.build_queryset(using=using, start_date=self.start_date,
                                       end_date=self.end_date)
 
-            total = qs.count()
+            total = SearchQuerySet(using=backend.connection_alias).models(model).count()
 
             if self.verbosity >= 1:
                 print(u"Indexing %d %s" % (total, force_text(model._meta.verbose_name_plural)))
@@ -258,10 +258,10 @@ class Command(LabelCommand):
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
                     pks_seen = set(smart_bytes(pk) for pk in qs)
-
-                    total = len(pks_seen)
                 else:
                     pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
+
+                total = SearchQuerySet(using=backend.connection_alias).models(model).count()
 
                 if self.workers > 0:
                     ghetto_queue = []
