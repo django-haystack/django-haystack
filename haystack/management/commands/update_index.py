@@ -217,7 +217,7 @@ class Command(LabelCommand):
             qs = index.build_queryset(using=using, start_date=self.start_date,
                                       end_date=self.end_date)
 
-            total = SearchQuerySet(using=backend.connection_alias).models(model).count()
+            total = qs.count()
 
             if self.verbosity >= 1:
                 print(u"Indexing %d %s" % (total, force_text(model._meta.verbose_name_plural)))
