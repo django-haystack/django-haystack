@@ -195,11 +195,13 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         for field_name, field in self.fields.items():
             # Use the possibly overridden name, which will default to the
             # variable name of the field.
-            self.prepared_data[field.index_fieldname] = field.prepare(obj)
+            prepare_field = getattr(self, "prepare_%s" % field_name, None)
+            if prepare_field:
+                value = prepare_field(obj)
+            else:
+                value = field.prepare(obj)
 
-            if hasattr(self, "prepare_%s" % field_name):
-                value = getattr(self, "prepare_%s" % field_name)(obj)
-                self.prepared_data[field.index_fieldname] = value
+            self.prepared_data[field.index_fieldname] = value
 
         return self.prepared_data
 
@@ -208,7 +210,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
 
         for field_name, field in self.fields.items():
             # Duplicate data for faceted fields.
-            if getattr(field, 'facet_for', None):
+            if hasattr(field, 'facet_for'):
                 source_field_name = self.fields[field.facet_for].index_fieldname
 
                 # If there's data there, leave it alone. Otherwise, populate it
