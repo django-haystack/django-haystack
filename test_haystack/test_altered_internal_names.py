@@ -63,27 +63,27 @@ class AlteredInternalNamesTestCase(TestCase):
         self.assertEqual(context_data['default_operator'], 'AND')
         self.assertEqual(context_data['ID'], 'my_id')
         self.assertEqual(len(context_data['fields']), 3)
-        self.assertEqual(sorted(context_data['fields'], key=lambda x: x['field_name']), [
+        self.assertEqual(sorted(context_data['fields'], key=lambda x: x['name']), [
             {
                 'indexed': 'true',
                 'type': 'text_en',
                 'stored': 'true',
-                'field_name': 'name',
-                'multi_valued': 'false'
+                'name': 'name',
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'date',
                 'stored': 'true',
-                'field_name': 'pub_date',
-                'multi_valued': 'false'
+                'name': 'pub_date',
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'text_en',
                 'stored': 'true',
-                'field_name': 'text',
-                'multi_valued': 'false'
+                'name': 'text',
+                'multiValued': 'false'
             },
         ])
 

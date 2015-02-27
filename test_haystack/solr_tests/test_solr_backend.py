@@ -529,149 +529,149 @@ class SolrSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections['solr'].get_unified_index()
 
-        (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
-        self.assertEqual(content_field_name, 'text')
+        (content_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
+        self.assertEqual(content_name, 'text')
         self.assertEqual(len(fields), 4)
-        self.assertEqual(sorted(fields, key=lambda x: x['field_name']), [
+        self.assertEqual(sorted(fields, key=lambda x: x['name']), [
             {
                 'indexed': 'true',
                 'type': 'text_en',
                 'stored': 'true',
-                'field_name': 'name',
-                'multi_valued': 'false'
+                'name': 'name',
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
-                'field_name': 'name_exact',
+                'name': 'name_exact',
                 'stored': 'true',
                 'type': 'string',
-                'multi_valued': 'false'
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'date',
                 'stored': 'true',
-                'field_name': 'pub_date',
-                'multi_valued': 'false'
+                'name': 'pub_date',
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'text_en',
                 'stored': 'true',
-                'field_name': 'text',
-                'multi_valued': 'false'
+                'name': 'text',
+                'multiValued': 'false'
             },
         ])
 
         ui = UnifiedIndex()
         ui.build(indexes=[SolrComplexFacetsMockSearchIndex()])
-        (content_field_name, fields) = self.sb.build_schema(ui.all_searchfields())
-        self.assertEqual(content_field_name, 'text')
+        (content_name, fields) = self.sb.build_schema(ui.all_searchfields())
+        self.assertEqual(content_name, 'text')
         self.assertEqual(len(fields), 15)
-        fields = sorted(fields, key=lambda field: field['field_name'])
+        fields = sorted(fields, key=lambda field: field['name'])
         self.assertEqual(fields, [
             {
-                'field_name': 'average_rating',
+                'name': 'average_rating',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'float'
             },
             {
-                'field_name': 'average_rating_exact',
+                'name': 'average_rating_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'float'
             },
             {
-                'field_name': 'created',
+                'name': 'created',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'created_exact',
+                'name': 'created_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'is_active',
+                'name': 'is_active',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'boolean'
             },
             {
-                'field_name': 'is_active_exact',
+                'name': 'is_active_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'boolean'
             },
             {
-                'field_name': 'name',
+                'name': 'name',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'text_en'
             },
             {
-                'field_name': 'name_exact',
+                'name': 'name_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'string'
             },
             {
-                'field_name': 'post_count',
+                'name': 'post_count',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'long'
             },
             {
-                'field_name': 'post_count_i',
+                'name': 'post_count_i',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'long'
             },
             {
-                'field_name': 'pub_date',
+                'name': 'pub_date',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'pub_date_exact',
+                'name': 'pub_date_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'sites',
+                'name': 'sites',
                 'indexed': 'true',
-                'multi_valued': 'true',
+                'multiValued': 'true',
                 'stored': 'true',
                 'type': 'text_en'
             },
             {
-                'field_name': 'sites_exact',
+                'name': 'sites_exact',
                 'indexed': 'true',
-                'multi_valued': 'true',
+                'multiValued': 'true',
                 'stored': 'true',
                 'type': 'string'
             },
             {
-                'field_name': 'text',
+                'name': 'text',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'text_en'
             }
