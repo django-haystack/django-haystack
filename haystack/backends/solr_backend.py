@@ -3,6 +3,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import warnings
+import json
+
+# Try to import urljoin from the Python 3 reorganized stdlib first:
+try:
+    from urllib.parse import urljoin
+except ImportError:
+    from urlparse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -47,6 +54,14 @@ class SolrSearchBackend(BaseSearchBackend):
 
         self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
+
+    def get_schema_admin(self):
+        '''
+        SolrSchemaAdmin singleton
+        '''
+        if not hasattr(self, '_schema_admin'):
+            self._schema_admin = SolrSchemaAdmin(self.conn.url, self.conn.session)
+        return self._schema_admin
 
     def update(self, index, iterable, commit=True):
         docs = []
@@ -429,11 +444,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
         for field_name, field_class in fields.items():
             field_data = {
-                'field_name': field_class.index_fieldname,
+                'name': field_class.index_fieldname,
                 'type': 'text_en',
                 'indexed': 'true',
                 'stored': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
             }
 
             if field_class.document is True:
@@ -458,7 +473,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'location'
 
             if field_class.is_multivalued:
-                field_data['multi_valued'] = 'true'
+                field_data['multiValued'] = 'true'
 
             if field_class.stored is False:
                 field_data['stored'] = 'false'
@@ -716,3 +731,27 @@ class SolrSearchQuery(BaseSearchQuery):
 class SolrEngine(BaseEngine):
     backend = SolrSearchBackend
     query = SolrSearchQuery
+
+
+class SolrSchemaAdmin(object):
+    """
+    Handles Schema API operations: see https://wiki.apache.org/solr/SchemaRESTAPI
+    """
+    def __init__(self, url, session):
+        super(SolrSchemaAdmin, self).__init__()
+        self.url = url
+        self.session = session
+
+    def _post(self, url, data={}, headers={}):
+        """
+        Post json encoded data body to a Schema endpoint
+        """
+        import requests
+        headers['content-type'] = 'application/json'
+        resp = self.session.post(url, data=json.dumps(data), headers=headers)
+        return resp
+
+    def add_field(self, fields):
+        if not isinstance(fields, list):
+            fields = [fields]
+        return self._post(urljoin(self.url, 'schema'), {'add-field' : fields})
