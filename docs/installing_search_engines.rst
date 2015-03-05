@@ -45,6 +45,86 @@ somewhere on your ``PYTHONPATH``.
     ``pysolr`` has its own dependencies that aren't covered by Haystack. See
     https://pypi.python.org/pypi/pysolr for the latest documentation.
 
+Authentication
+--------------
+
+By default, Solr is not secured through authentication. This means if you
+install Solr in the standard way, your port is open for anyone to query and
+your admin interface does not require authentication to access.
+
+It is highly advised to add authentication to your Solr instalation. As an
+example, you can do the following:
+
+Based on the guide on http://muddyazian.blogspot.fi/2013/11/how-to-require-password-authentication.html
+
+Edit **/opt/solr/etc/jetty.xml** and add the following:
+
+    <Configure>
+
+        <Call name="addBean">
+          <Arg>
+            <New class="org.eclipse.jetty.security.HashLoginService">
+              <Set name="name">Admin Realm</Set>
+              <Set name="config"><SystemProperty name="jetty.home" default="."/>/etc/realm.properties</Set>
+              <Set name="refreshInterval">0</Set>
+            </New>
+          </Arg>
+        </Call>
+
+    ...
+
+    </Configure>
+
+Edit  **/opt/solr/solr-webapp/webapp/WEB-INF/web.xml** and add the following:
+
+    <web-app>
+    ...
+      <security-constraint>
+        <web-resource-collection>
+          <web-resource-name>Solr authenticated application</web-resource-name>
+          <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+          <role-name>admin-role</role-name>
+        </auth-constraint>
+      </security-constraint>
+
+      <login-config>
+        <auth-method>BASIC</auth-method>
+        <realm-name>Admin Realm</realm-name>
+
+      </login-config>
+
+    ...
+    </web-app>
+
+Create a file in **/opt/solr/etc/realm.properties** and put the following in it:
+
+    admin: *yourPasswordHere*,admin-role
+
+You can change "admin" to whatever username you want.
+
+For the password, you can either use the literal password,
+or use an OBF/MD5/CRYPT hash.
+
+After you've changed everything, restart the solr server.
+
+Then open up your web browser to http://localhost:8983/solr/
+and the web browser should ask you for a password.
+Enter admin for the user name and yourPasswordHere for the password.
+
+In order to use this authentication with Haystack, you need to
+include username and password in the url of your
+``HAYSTACK_CONNECTIONS`` setting
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+            'URL': 'http://admin:yourPasswordHere@127.0.0.1:8983/solr/collection1',
+        },
+    }
+
+
 More Like This
 --------------
 
