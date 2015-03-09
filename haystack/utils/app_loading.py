@@ -31,7 +31,7 @@ if DJANGO_VERSION >= (1, 7):
         if '.' not in label:
             raise ImproperlyConfigured("No installed application has the label %s" % label)
 
-        app_label, model_name = label.split('.')
+        app_label, model_name = label.rsplit('.', 1)
         return [get_model(app_label, model_name)]
 
 else:
@@ -72,5 +72,5 @@ else:
             app_mod = get_app(label)
             return get_models(app_mod)
         else:
-            app_label, model_name = label.split('.')
+            app_label, model_name = label.rsplit('.', 1)
             return [get_model(app_label, model_name)]
