@@ -11,17 +11,17 @@ from haystack.utils import app_loading
 
 class AppLoadingTests(TestCase):
     def test_load_apps(self):
-        apps = app_loading.load_apps()
+        apps = app_loading.haystack_load_apps()
         self.assertIsInstance(apps, (list, GeneratorType))
 
     def test_get_models_all(self):
-        models = app_loading.get_models('core')
+        models = app_loading.haystack_get_models('core')
         self.assertIsInstance(models, (list, GeneratorType))
 
     def test_get_models_specific(self):
         from test_haystack.core.models import MockModel
 
-        models = app_loading.get_models('core.MockModel')
+        models = app_loading.haystack_get_models('core.MockModel')
         self.assertIsInstance(models, (list, GeneratorType))
         self.assertListEqual(models, [MockModel])
 
