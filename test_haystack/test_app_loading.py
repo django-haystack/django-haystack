@@ -14,6 +14,11 @@ class AppLoadingTests(TestCase):
         apps = app_loading.haystack_load_apps()
         self.assertIsInstance(apps, (list, GeneratorType))
 
+        self.assertIn('hierarchal_app_django', apps)
+
+        self.assertNotIn('test_app_without_models', apps,
+                         msg='haystack_load_apps should exclude apps without defined models')
+
     def test_get_models_all(self):
         models = app_loading.haystack_get_models('core')
         self.assertIsInstance(models, (list, GeneratorType))
@@ -24,6 +29,19 @@ class AppLoadingTests(TestCase):
         models = app_loading.haystack_get_models('core.MockModel')
         self.assertIsInstance(models, (list, GeneratorType))
         self.assertListEqual(models, [MockModel])
+
+    def test_hierarchal_app_get_models(self):
+        models = app_loading.haystack_get_models('hierarchal_app_django')
+        self.assertIsInstance(models, (list, GeneratorType))
+        self.assertSetEqual(set(str(i._meta) for i in models),
+                            set(('hierarchal_app_django.hierarchalappsecondmodel',
+                                 'hierarchal_app_django.hierarchalappmodel')))
+
+    def test_hierarchal_app_specific_model(self):
+        models = app_loading.haystack_get_models('hierarchal_app_django.HierarchalAppModel')
+        self.assertIsInstance(models, (list, GeneratorType))
+        self.assertSetEqual(set(str(i._meta) for i in models),
+                            set(('hierarchal_app_django.hierarchalappmodel', )))
 
 
 class AppWithoutModelsTests(TestCase):
