@@ -13,6 +13,7 @@ from django.utils.datetime_safe import datetime
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
 from haystack.exceptions import MissingDependency, SearchBackendError
+from haystack.fields import BooleanField
 from haystack.inputs import PythonData, Clean, Exact, Raw
 from haystack.models import SearchResult
 from haystack.utils import get_identifier
@@ -609,7 +610,11 @@ class WhooshSearchBackend(BaseSearchBackend):
                     index = unified_index.get_index(model)
                     string_key = str(key)
 
-                    if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
+                    # Patch this up to exclude BooleanField because it's broken
+                    # https://github.com/toastdriven/django-haystack/issues/382
+                    if (string_key in index.fields and 
+                        callable(getattr(index.fields[string_key], 'convert', None)) and
+                        not isinstance(index.fields[string_key], BooleanField)):
                         # Special-cased due to the nature of KEYWORD fields.
                         if index.fields[string_key].is_multivalued:
                             if value is None or len(value) is 0:
