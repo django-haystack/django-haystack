@@ -1,18 +1,20 @@
-import datetime
+# encoding: utf-8
 
-from mock import patch
-import pysolr
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import datetime
 from tempfile import mkdtemp
 
+import pysolr
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import unittest
+from mock import patch
 
-from haystack import connections
-from haystack import indexes
+from haystack import connections, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag

@@ -1,4 +1,7 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 import re
 import shutil
@@ -10,14 +13,14 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils import six
 from django.utils.datetime_safe import datetime
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
+
+from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID
 from haystack.exceptions import MissingDependency, SearchBackendError
-from haystack.inputs import PythonData, Clean, Exact, Raw
+from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
-from haystack.utils import get_identifier
 from haystack.utils import log as logging
-from haystack.utils import get_model_ct
+from haystack.utils import get_identifier, get_model_ct
 
 try:
     import json
@@ -37,20 +40,21 @@ try:
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
+# Handle minimum requirement.
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
+    raise MissingDependency("The 'whoosh' backend requires version 2.5.0 or greater.")
+
 # Bubble up the correct error.
 from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
 from whoosh.fields import ID as WHOOSH_ID
-from whoosh.fields import Schema, IDLIST, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME, NGRAM, NGRAMWORDS
+from whoosh.fields import BOOLEAN, DATETIME, IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, Schema, TEXT
 from whoosh.filedb.filestore import FileStorage, RamStorage
+from whoosh.highlight import highlight as whoosh_highlight
+from whoosh.highlight import ContextFragmenter, HtmlFormatter
 from whoosh.qparser import QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
-from whoosh.highlight import HtmlFormatter, highlight as whoosh_highlight, ContextFragmenter
-
-# Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
-    raise MissingDependency("The 'whoosh' backend requires version 2.5.0 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')

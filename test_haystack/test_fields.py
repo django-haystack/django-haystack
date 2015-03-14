@@ -1,9 +1,15 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 from decimal import Decimal
+
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from haystack.fields import *
 from test_haystack.core.models import MockModel, MockTag
+
+from haystack.fields import *
 
 
 class CharFieldTestCase(TestCase):

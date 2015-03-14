@@ -1,12 +1,16 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.conf import settings
 from django.test import TestCase
-from haystack import connections, connection_router
-from haystack import indexes, constants
+from test_haystack.core.models import AnotherMockModel, MockModel
+from test_haystack.utils import check_solr
+
+from haystack import connection_router, connections, constants, indexes
 from haystack.management.commands.build_solr_schema import Command
 from haystack.query import SQ
 from haystack.utils.loading import UnifiedIndex
-from test_haystack.core.models import MockModel, AnotherMockModel
-from test_haystack.utils import check_solr
 
 
 class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):

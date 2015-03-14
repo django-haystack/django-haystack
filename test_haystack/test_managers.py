@@ -1,17 +1,17 @@
 # encoding: utf-8
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 
 from django.test import TestCase
+from test_haystack.core.models import MockModel
 
 from haystack import connections
 from haystack.manager import SearchIndexManager
 from haystack.models import SearchResult
 from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
 from haystack.utils.geo import D, Point
-from test_haystack.core.models import MockModel
 
 from .mocks import CharPKMockSearchBackend
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex

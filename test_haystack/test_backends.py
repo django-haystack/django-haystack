@@ -1,6 +1,12 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import warnings
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
+
 from haystack.utils import loading
 
 

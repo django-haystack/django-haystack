@@ -1,9 +1,13 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ, SearchQuerySet
+from haystack.query import SearchQuerySet, SQ
 
 from ..core.models import AnotherMockModel, MockModel
 from .testcases import WhooshTestCase

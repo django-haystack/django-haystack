@@ -1,5 +1,10 @@
+# encoding: utf-8
+
 # A couple models for Haystack to test with.
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
+
 from django.db import models
 
 

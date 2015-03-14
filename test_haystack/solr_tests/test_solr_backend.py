@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 import logging as std_logging
@@ -11,16 +11,16 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.unittest import skipIf, skipUnless
+from mock import patch
+
 from haystack import connections, indexes, reset_search_queries
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
-from haystack.utils.loading import UnifiedIndex
 from haystack.utils.geo import Point
-from mock import patch
+from haystack.utils.loading import UnifiedIndex
 
-from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
-                           MockModel)
+from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
 
 test_pickling = True

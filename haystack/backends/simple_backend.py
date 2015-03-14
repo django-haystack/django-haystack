@@ -1,7 +1,9 @@
+# encoding: utf-8
 """
 A very basic, ORM-based backend for simple search during tests.
 """
-from __future__ import unicode_literals
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from warnings import warn
 

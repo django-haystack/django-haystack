@@ -1,3 +1,7 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 
 import elasticsearch
@@ -6,7 +10,7 @@ from django.test import TestCase
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ, SearchQuerySet
+from haystack.query import SearchQuerySet, SQ
 from haystack.utils.geo import D, Point
 
 from ..core.models import AnotherMockModel, MockModel

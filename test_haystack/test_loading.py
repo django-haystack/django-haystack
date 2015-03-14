@@ -1,12 +1,16 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import unittest
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
+from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import indexes
 from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import loading
-from test_haystack.core.models import AnotherMockModel, MockModel
 
 if not hasattr(unittest, "skipIf"):
     # We're dealing with Python < 2.7 and we need unittest2, which might be available from Django:

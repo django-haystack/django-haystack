@@ -1,13 +1,18 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
-from threading import Thread
 import time
+from threading import Thread
+
 from django.test import TestCase
 from django.utils.six.moves import queue
-from haystack import connections, connection_router
+from test_haystack.core.models import AFifthMockModel, AThirdMockModel, MockModel
+
+from haystack import connection_router, connections, indexes
 from haystack.exceptions import SearchFieldError
-from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
-from test_haystack.core.models import MockModel, AThirdMockModel, AFifthMockModel
 
 
 class BadSearchIndex1(indexes.SearchIndex, indexes.Indexable):

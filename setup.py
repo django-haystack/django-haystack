@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# encoding: utf-8
+
+# n.b. we can't have unicode_literals here due to http://bugs.python.org/setuptools/issue152
+from __future__ import absolute_import, division, print_function
+
 try:
     from setuptools import setup
 except ImportError:

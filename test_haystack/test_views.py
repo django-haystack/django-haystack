@@ -1,19 +1,22 @@
-from __future__ import print_function
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from threading import Thread
-from django.core.urlresolvers import reverse
-from django.conf import settings
+
 from django import forms
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase
 from django.utils.six.moves import queue
-from haystack import connections, connection_router
-from haystack.forms import model_choices, SearchForm, ModelSearchForm, FacetedSearchForm
-from haystack import indexes
+from test_haystack.core.models import AnotherMockModel, MockModel
+
+from haystack import connection_router, connections, indexes
+from haystack.forms import FacetedSearchForm, model_choices, ModelSearchForm, SearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from haystack.views import SearchView, FacetedSearchView, search_view_factory
-from test_haystack.core.models import MockModel, AnotherMockModel
+from haystack.views import FacetedSearchView, search_view_factory, SearchView
 
 
 class InitialedSearchForm(SearchForm):

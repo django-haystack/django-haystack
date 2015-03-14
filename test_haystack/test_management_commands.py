@@ -1,8 +1,11 @@
-from mock import patch, call
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
+from mock import call, patch
 
 __all__ = ['CoreManagementCommandsTestCase']
 

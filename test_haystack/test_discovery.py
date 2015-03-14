@@ -1,12 +1,15 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.conf import settings
 from django.test import TestCase
+from test_haystack.discovery.models import Foo
+from test_haystack.discovery.search_indexes import BarIndex, FooIndex
 
-from haystack import connections, connection_router
+from haystack import connection_router, connections
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-
-from test_haystack.discovery.models import Foo
-from test_haystack.discovery.search_indexes import FooIndex, BarIndex
 
 
 class ManualDiscoveryTestCase(TestCase):

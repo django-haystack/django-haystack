@@ -1,13 +1,20 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging as std_logging
 import pickle
+
 import django
 from django.test import TestCase
 from django.utils import unittest
+from test_haystack.core.models import AFifthMockModel, MockModel
+
 from haystack import connections
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
-from test_haystack.core.models import MockModel, AFifthMockModel
+
 from .mocks import MockSearchResult
 from .test_indexes import ReadQuerySetTestSearchIndex
 
@@ -35,9 +42,12 @@ class SearchResultTestCase(TestCase):
             'stored': 'I am stored data. How fun.',
         }
 
-        self.no_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 2)
-        self.extra_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 3, **self.extra_data)
-        self.no_overwrite_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 4, **self.no_overwrite_data)
+        # The str(1) bit might seem unnecessary but it avoids test_unicode needing to handle
+        # the differences between repr() output on Python 2 and 3 for a unicode literal:
+        self.no_data_sr = MockSearchResult('haystack', 'mockmodel', str(1), 2)
+        self.extra_data_sr = MockSearchResult('haystack', 'mockmodel', str(1), 3, **self.extra_data)
+        self.no_overwrite_data_sr = MockSearchResult('haystack', 'mockmodel', str(1), 4,
+                                                     **self.no_overwrite_data)
 
     def test_init(self):
         self.assertEqual(self.no_data_sr.app_label, 'haystack')
