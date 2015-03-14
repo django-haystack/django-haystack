@@ -12,8 +12,8 @@ from django.utils import importlib
 from django.utils.datastructures import SortedDict
 from django.utils.module_loading import module_has_submodule
 
-from haystack.constants import DEFAULT_ALIAS, Indexable
 from haystack.exceptions import NotHandled, SearchFieldError
+from haystack.utils.app_loading import haystack_get_app_modules
 
 
 def import_class(path):
@@ -168,17 +168,11 @@ class UnifiedIndex(object):
     def collect_indexes(self):
         indexes = []
 
-        for app in settings.INSTALLED_APPS:
+        for app_mod in haystack_get_app_modules():
             try:
-                mod = importlib.import_module(app)
+                search_index_module = importlib.import_module("%s.search_indexes" % app_mod.__name__)
             except ImportError:
-                warnings.warn('Installed app %s is not an importable Python module and will be ignored' % app)
-                continue
-
-            try:
-                search_index_module = importlib.import_module("%s.search_indexes" % app)
-            except ImportError:
-                if module_has_submodule(mod, 'search_indexes'):
+                if module_has_submodule(app_mod, 'search_indexes'):
                     raise
 
                 continue
@@ -186,7 +180,7 @@ class UnifiedIndex(object):
             for item_name, item in inspect.getmembers(search_index_module, inspect.isclass):
                 if getattr(item, 'haystack_use_for_indexing', False) and getattr(item, 'get_model', None):
                     # We've got an index. Check if we should be ignoring it.
-                    class_path = "%s.search_indexes.%s" % (app, item_name)
+                    class_path = "%s.search_indexes.%s" % (app_mod.__name__, item_name)
 
                     if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(item_name) == id(item):
                         self.excluded_indexes_ids[str(item_name)] = id(item)
@@ -247,7 +241,7 @@ class UnifiedIndex(object):
                     self._facet_fieldnames[field_object.instance_name] = fieldname
 
             # Copy the field in so we've got a unified schema.
-            if not field_object.index_fieldname in self.fields:
+            if field_object.index_fieldname not in self.fields:
                 self.fields[field_object.index_fieldname] = field_object
                 self.fields[field_object.index_fieldname] = copy.copy(field_object)
             else:

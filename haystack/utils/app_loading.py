@@ -5,6 +5,7 @@ from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_app, get_model, get_models
+from django.utils.importlib import import_module
 
 __all__ = ['haystack_get_models', 'haystack_load_apps']
 
@@ -15,6 +16,10 @@ MODEL = 'model'
 
 if DJANGO_VERSION >= (1, 7):
     from django.apps import apps
+
+    def haystack_get_app_modules():
+        """Return the Python module for each installed app"""
+        return [i.module for i in apps.get_app_configs()]
 
     def haystack_load_apps():
         """Return a list of app labels for all installed applications which have models"""
@@ -48,6 +53,10 @@ else:
             return MODEL
         else:
             raise ImproperlyConfigured("'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
+
+    def haystack_get_app_modules():
+        """Return the Python module for each installed app"""
+        return [import_module(i) for i in settings.INSTALLED_APPS]
 
     def haystack_load_apps():
         # Do all, in an INSTALLED_APPS sorted order.

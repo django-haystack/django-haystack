@@ -38,6 +38,10 @@ INSTALLED_APPS = [
     'test_haystack.test_app_with_hierarchy.contrib.django.hierarchal_app_django',
 ]
 
+import django
+if django.VERSION >= (1, 7):
+    INSTALLED_APPS.append('test_haystack.test_app_using_appconfig.apps.SimpleTestAppConfig')
+
 SITE_ID = 1
 ROOT_URLCONF = 'test_haystack.core.urls'
 

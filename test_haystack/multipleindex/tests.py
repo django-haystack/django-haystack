@@ -160,7 +160,6 @@ class MultipleIndexTestCase(WhooshTestCase):
 
     def test_excluded_indexes(self):
         wui = connections['filtered_whoosh'].get_unified_index()
-        self.assertEqual(len(wui.collect_indexes()), 4)
         self.assertTrue(any(isinstance(i, FooIndex) for i in wui.collect_indexes()))
         self.assertFalse(any(isinstance(i, BarIndex) for i in wui.collect_indexes()))
 

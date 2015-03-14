@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from types import GeneratorType
+from types import GeneratorType, ModuleType
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -18,6 +18,13 @@ class AppLoadingTests(TestCase):
 
         self.assertNotIn('test_app_without_models', apps,
                          msg='haystack_load_apps should exclude apps without defined models')
+
+    def test_get_app_modules(self):
+        app_modules = app_loading.haystack_get_app_modules()
+        self.assertIsInstance(app_modules, (list, GeneratorType))
+
+        for i in app_modules:
+            self.assertIsInstance(i, ModuleType)
 
     def test_get_models_all(self):
         models = app_loading.haystack_get_models('core')
