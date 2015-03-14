@@ -14,7 +14,7 @@ from django.db import reset_queries
 
 from haystack import connections as haystack_connections
 from haystack.query import SearchQuerySet
-from haystack.utils.app_loading import get_models, load_apps
+from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
 
 try:
     from django.utils.encoding import force_text
@@ -190,7 +190,7 @@ class Command(LabelCommand):
                 pass
 
         if not items:
-            items = load_apps()
+            items = haystack_load_apps()
 
         return super(Command, self).handle(*items, **options)
 
@@ -211,7 +211,7 @@ class Command(LabelCommand):
         if self.workers > 0:
             import multiprocessing
 
-        for model in get_models(label):
+        for model in haystack_get_models(label):
             try:
                 index = unified_index.get_index(model)
             except NotHandled:

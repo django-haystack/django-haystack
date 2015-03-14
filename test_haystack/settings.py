@@ -33,7 +33,14 @@ INSTALLED_APPS = [
     # which is common in some cases for things like admin extensions, reporting, etc.
     'test_haystack.test_app_without_models',
 
+    # Confirm that everything works with app labels which have more than one level of hierarchy
+    # as reported in https://github.com/django-haystack/django-haystack/issues/1152
+    'test_haystack.test_app_with_hierarchy.contrib.django.hierarchal_app_django',
 ]
+
+import django
+if django.VERSION >= (1, 7):
+    INSTALLED_APPS.append('test_haystack.test_app_using_appconfig.apps.SimpleTestAppConfig')
 
 SITE_ID = 1
 ROOT_URLCONF = 'test_haystack.core.urls'
