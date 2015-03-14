@@ -3,12 +3,12 @@ python:
   - "2.7"
 
 cache:
+  pip: true
   directories:
-    - test_haystack/solr_tests/server/
-    - pip_download_cache
+    - $HOME/download-cache
 
 before_install:
-  - mkdir -p $PIP_DOWNLOAD_CACHE
+  - mkdir $HOME/download-cache
   - sudo apt-get update
   - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libgdal1h libxapian22 python-xapian default-jdk
 
@@ -24,8 +24,6 @@ script:
   - tox -e $TOX_ENV
 
 env:
-  global:
-    - PIP_DOWNLOAD_CACHE="pip_download_cache"
   matrix:
     - TOX_ENV=py26-django1.5
     - TOX_ENV=py26-django1.6
