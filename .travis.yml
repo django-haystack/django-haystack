@@ -1,3 +1,4 @@
+sudo: false
 language: python
 python:
   - "2.7"
@@ -8,10 +9,20 @@ cache:
   directories:
     - $HOME/download-cache
 
+addons:
+  apt_packages:
+    - binutils
+    - default-jdk
+    - gdal-bin
+    - libgdal1h
+    - libgeos-c1
+    - libproj-dev
+    - libxapian22
+    - python-xapian
+    - wajig
+
 before_install:
-  - mkdir $HOME/download-cache
-  - sudo apt-get update
-  - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libgdal1h libxapian22 python-xapian default-jdk
+  - mkdir -p $HOME/download-cache
 
 install:
   - pip install tox requests
