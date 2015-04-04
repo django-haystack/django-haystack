@@ -8,11 +8,11 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import importlib
 from django.utils.datastructures import SortedDict
 from django.utils.module_loading import module_has_submodule
 
 from haystack.exceptions import NotHandled, SearchFieldError
+from haystack.utils import importlib
 from haystack.utils.app_loading import haystack_get_app_modules
 
 

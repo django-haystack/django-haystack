@@ -5,7 +5,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import importlib, six
+from django.utils import six
+
+from haystack.utils import importlib
+
 
 register = template.Library()
 

@@ -5,7 +5,9 @@ from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_app, get_model, get_models
-from django.utils.importlib import import_module
+
+from haystack.utils import importlib
+
 
 __all__ = ['haystack_get_models', 'haystack_load_apps']
 
@@ -56,7 +58,7 @@ else:
 
     def haystack_get_app_modules():
         """Return the Python module for each installed app"""
-        return [import_module(i) for i in settings.INSTALLED_APPS]
+        return [importlib.import_module(i) for i in settings.INSTALLED_APPS]
 
     def haystack_load_apps():
         # Do all, in an INSTALLED_APPS sorted order.
