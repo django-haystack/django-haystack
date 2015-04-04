@@ -3,7 +3,8 @@
 import warnings
 
 from django.conf import settings
-from django.utils.unittest import SkipTest
+
+from ..utils.unittest import SkipTest
 
 warnings.simplefilter('ignore', Warning)
 
