@@ -6,8 +6,8 @@ import datetime
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils.unittest import skipUnless
 from test_haystack.core.models import AFifthMockModel, AnotherMockModel, CharPKMockModel, MockModel
+from test_haystack.utils.unittest import skipUnless
 
 from haystack import connection_router, connections, indexes, reset_search_queries
 from haystack.backends import BaseSearchQuery, SQ

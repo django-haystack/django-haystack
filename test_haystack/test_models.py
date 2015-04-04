@@ -7,7 +7,6 @@ import pickle
 
 import django
 from django.test import TestCase
-from django.utils import unittest
 from test_haystack.core.models import AFifthMockModel, MockModel
 
 from haystack import connections
@@ -17,6 +16,7 @@ from haystack.utils.loading import UnifiedIndex
 
 from .mocks import MockSearchResult
 from .test_indexes import ReadQuerySetTestSearchIndex
+from ..utils import unittest
 
 
 class CaptureHandler(std_logging.Handler):
