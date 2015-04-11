@@ -27,7 +27,7 @@ class WhooshTestCase(TestCase):
             from haystack import connections
             connections[name].get_backend().setup()
 
-        super(TestCase, cls).setUpClass()
+        super(WhooshTestCase, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
