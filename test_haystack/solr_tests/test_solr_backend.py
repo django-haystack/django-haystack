@@ -21,7 +21,7 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
-from ..utils.unittest import skipIf, skipUnless
+from ..utils import unittest
 
 test_pickling = True
 
@@ -1275,7 +1275,7 @@ class LiveSolrRoundTripTestCase(TestCase):
         self.assertEqual(result.sites, [3, 5, 1])
 
 
-@skipUnless(test_pickling, 'Skipping pickling tests')
+@unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 class LiveSolrPickleTestCase(TestCase):
     fixtures = ['bulk_data.json']
 
@@ -1366,7 +1366,7 @@ class SolrBoostBackendTestCase(TestCase):
         ])
 
 
-@skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
+@unittest.skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
 class LiveSolrContentExtractionTestCase(TestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
