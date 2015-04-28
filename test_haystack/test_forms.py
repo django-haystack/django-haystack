@@ -81,18 +81,18 @@ class ModelSearchFormTestCase(TestCase):
         sqs_with_models = msf.search()
         self.assertEqual(len(sqs_with_models.query.models), 2)
 
-    def test_model_default_choices(self):
+    def test_model_choices(self):
         self.assertEqual(len(model_choices()), 2)
         self.assertEqual([option[1] for option in model_choices()], [u'Another mock models', u'Mock models'])
 
-    def test_model_default_choices_unicode(self):
+    def test_model_choices_unicode(self):
         stowed_verbose_name_plural = MockModel._meta.verbose_name_plural
         MockModel._meta.verbose_name_plural = u'☃'
         self.assertEqual(len(model_choices()), 2)
         self.assertEqual([option[1] for option in model_choices()], [u'Another mock models', u'☃'])
         MockModel._meta.verbose_name_plural = stowed_verbose_name_plural
 
-    def test_model_choices(self):
+    def test_model_search_form_choices(self):
         msf = ModelSearchForm(choices=(('core.anothermockmodel', u'Custom Label'),))
         self.assertEqual(msf.fields['models'].choices, [('core.anothermockmodel', u'Custom Label'),])
 
