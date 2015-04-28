@@ -66,9 +66,21 @@ to the end of the ``SearchQuerySet`` to enable highlighted results.
 ``ModelSearchForm``
 -------------------
 
-This form adds new fields to form. It iterates through all registered models for
-the current ``SearchSite`` and provides a checkbox for each one. If no models
-are selected, all types will show up in the results.
+This form adds new fields to the search form. By default, it iterates through
+all registered models for the current ``SearchSite`` and provides a checkbox
+for each one. Alternatively, you can provide a `ChoiceField choices`_ iterable
+through the ``choices`` keyword to use instead.
+
+.. code-block:: python
+
+    ModelSearchForm(choices=[
+        (<app_label.model>, 'A Model Label'),
+        (<app_label.model>, 'Another Model Label'),
+        ])
+
+If no models are selected, all types will show up in the results.
+
+.. _ChoiceField choices: https://docs.djangoproject.com/en/1.7/ref/forms/fields/#django.forms.ChoiceField.choices
 
 ``HighlightedModelSearchForm``
 ------------------------------
