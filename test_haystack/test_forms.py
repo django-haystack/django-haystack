@@ -92,6 +92,9 @@ class ModelSearchFormTestCase(TestCase):
         self.assertEqual([option[1] for option in model_choices()], [u'Another mock models', u'☃'])
         MockModel._meta.verbose_name_plural = stowed_verbose_name_plural
 
+    def test_model_search_form_choices(self):
+        msf = ModelSearchForm(choices=(('core.anothermockmodel', u'Custom Label'),))
+        self.assertEqual(msf.fields['models'].choices, [('core.anothermockmodel', u'Custom Label'),])
 
 class FacetedSearchFormTestCase(TestCase):
     def setUp(self):
