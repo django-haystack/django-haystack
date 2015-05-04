@@ -13,8 +13,8 @@ try:
 except ImportError:
     from django.db import close_connection as close_old_connections
 
-    warnings.warn('close_connection has been removed from Django 1.8+ '
-                  'See https://docs.djangoproject.com/fr/1.8/releases/1.8/#features-removed-in-1-8')
+    warnings.warn('close_connection has been removed from Django 1.8+',
+                  DeprecationWarning)
 
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
