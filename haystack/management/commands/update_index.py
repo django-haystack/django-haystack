@@ -108,7 +108,7 @@ def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1, 
             if verbosity >= 2:
                 print("  removing %s." % result.pk)
 
-            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]), commit=commit)
+            backend.remove(result.id, commit=commit)
 
 
 class Command(LabelCommand):
