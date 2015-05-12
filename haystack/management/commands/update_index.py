@@ -95,20 +95,23 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
 
 
 def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1, commit=True):
-    # Fetch a list of results.
-    # Can't do pk range, because id's are strings (thanks comments
-    # & UUIDs!).
-    stuff_in_the_index = SearchQuerySet(using=backend.connection_alias).models(model)[start:upper_bound]
+    # Retrieve PKs from the index. Note that this cannot be a range query because keys can be non-numeric
+    # UUIDs or other custom values.
+    # To reduce load on the search engine, we only retrieve the pk field, which will be checked against the
+    # full list obtained from the database, and the id field, which will be used to delete the record should
+    # it be found to be stale.
+    index_pks = SearchQuerySet(using=backend.connection_alias).models(model).values_list('pk', 'id')
 
-    # Iterate over those results.
-    for result in stuff_in_the_index:
-        # Be careful not to hit the DB.
-        if not smart_bytes(result.pk) in pks_seen:
-            # The id is NOT in the small_cache_qs, issue a delete.
-            if verbosity >= 2:
-                print("  removing %s." % result.pk)
+    # Compare the pks from the index to the list obtained from the database:
+    for pk, rec_id in index_pks[start:upper_bound]:
+        if smart_bytes(pk) in pks_seen:
+            continue
 
-            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]), commit=commit)
+        # Since the PK was not in the database list, we'll delete the record from the search index:
+        if verbosity >= 2:
+            print("  removing %s." % rec_id)
+
+        backend.remove(rec_id, commit=commit)
 
 
 class Command(LabelCommand):
@@ -266,13 +269,20 @@ class Command(LabelCommand):
                 if self.workers > 0:
                     ghetto_queue = []
 
-                for start in range(0, total, batch_size):
+                # Since records may still be in the search index but not the local database
+                # we'll use that to create batches for processing.
+                # See https://github.com/django-haystack/django-haystack/issues/1186
+                index_total = SearchQuerySet(using=backend.connection_alias).models(model).count()
+
+                for start in range(0, index_total, batch_size):
                     upper_bound = start + batch_size
 
                     if self.workers == 0:
-                        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=self.verbosity,  commit=self.commit)
+                        do_remove(backend, index, model, pks_seen, start, upper_bound,
+                                  verbosity=self.verbosity, commit=self.commit)
                     else:
-                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using, self.verbosity, self.commit))
+                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using,
+                                             self.verbosity, self.commit))
 
                 if self.workers > 0:
                     pool = multiprocessing.Pool(self.workers)
