@@ -8,7 +8,12 @@ import warnings
 from datetime import timedelta
 from optparse import make_option
 
-from django import db
+try:
+    from django.db import close_old_connections
+except ImportError:
+    # This can be removed when we drop support for Django 1.7 and earlier:
+    from django.db import close_connection as close_old_connections
+
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
 
@@ -49,7 +54,7 @@ def worker(bits):
         # out connections (via ``... = {}``) destroys in-memory DBs.
         if 'sqlite3' not in info['ENGINE']:
             try:
-                db.close_connection()
+                close_old_connections()
                 if isinstance(connections._connections, dict):
                     del(connections._connections[alias])
                 else:
@@ -206,7 +211,7 @@ class Command(LabelCommand):
                 # workers resetting connections leads to references to models / connections getting
                 # stale and having their connection disconnected from under them. Resetting before
                 # the loop continues and it accesses the ORM makes it better.
-                db.close_connection()
+                close_old_connections()
 
             qs = index.build_queryset(using=using, start_date=self.start_date,
                                       end_date=self.end_date)
