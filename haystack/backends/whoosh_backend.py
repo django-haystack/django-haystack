@@ -16,7 +16,7 @@ from django.utils.datetime_safe import datetime
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, SearchBackendError
+from haystack.exceptions import DoNotIndex, MissingDependency, SearchBackendError
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
@@ -192,32 +192,35 @@ class WhooshSearchBackend(BaseSearchBackend):
         writer = AsyncWriter(self.index)
 
         for obj in iterable:
-            doc = index.full_prepare(obj)
-
-            # Really make sure it's unicode, because Whoosh won't have it any
-            # other way.
-            for key in doc:
-                doc[key] = self._from_python(doc[key])
-
-            # Document boosts aren't supported in Whoosh 2.5.0+.
-            if 'boost' in doc:
-                del doc['boost']
-
             try:
-                writer.update_document(**doc)
-            except Exception as e:
-                if not self.silently_fail:
-                    raise
+                doc = index.full_prepare(obj)
+            except DoNotIndex:
+                self.log.warn(u"Indexing for object `%s` skipped" % obj)
+            else:
+                # Really make sure it's unicode, because Whoosh won't have it any
+                # other way.
+                for key in doc:
+                    doc[key] = self._from_python(doc[key])
 
-                # We'll log the object identifier but won't include the actual object
-                # to avoid the possibility of that generating encoding errors while
-                # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
-                    "data": {
-                        "index": index,
-                        "object": get_identifier(obj)
-                    }
-                })
+                # Document boosts aren't supported in Whoosh 2.5.0+.
+                if 'boost' in doc:
+                    del doc['boost']
+
+                try:
+                    writer.update_document(**doc)
+                except Exception as e:
+                    if not self.silently_fail:
+                        raise
+
+                    # We'll log the object identifier but won't include the actual object
+                    # to avoid the possibility of that generating encoding errors while
+                    # processing the log message:
+                    self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
+                        "data": {
+                            "index": index,
+                            "object": get_identifier(obj)
+                        }
+                    })
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.

@@ -14,6 +14,7 @@ from django.utils.unittest import skipIf, skipUnless
 from mock import patch
 
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import DoNotIndex
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
@@ -48,6 +49,14 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class SolrMockSearchIndexWithDoNotIndex(SolrMockSearchIndex):
+
+        def prepare_text(self, obj):
+            if obj.author == 'daniel3':
+                raise DoNotIndex
+            return u"Indexed!\n%s" % obj.id
 
 
 class SolrMockOverriddenFieldNameSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -200,6 +209,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
+        self.smmidni = SolrMockSearchIndexWithDoNotIndex()
         self.smtmmi = SolrMaintainTypeMockSearchIndex()
         self.smofnmi = SolrMockOverriddenFieldNameSearchIndex()
         self.ui.build(indexes=[self.smmi])
@@ -282,6 +292,35 @@ class SolrSearchBackendTestCase(TestCase):
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00Z',
                 'id': 'core.mockmodel.3'
+            }
+        ])
+
+    def test_update_with_donotindex_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        results = self.raw_solr.search('*:*')
+        for result in results:
+            del result['_version_']
+        # Check what Solr thinks is there.
+        self.assertEqual(results.hits, 2)
+        self.assertEqual(results.docs, [
+            {
+                'django_id': '1',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel1',
+                'name_exact': 'daniel1',
+                'text': 'Indexed!\n1',
+                'pub_date': '2009-02-24T00:00:00Z',
+                'id': 'core.mockmodel.1'
+            },
+            {
+                'django_id': '2',
+                'django_ct': 'core.mockmodel',
+                'name': 'daniel2',
+                'name_exact': 'daniel2',
+                'text': 'Indexed!\n2',
+                'pub_date': '2009-02-23T00:00:00Z',
+                'id': 'core.mockmodel.2'
             }
         ])
 

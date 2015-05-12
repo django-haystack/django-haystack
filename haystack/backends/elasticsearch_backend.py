@@ -14,7 +14,7 @@ from django.utils import six
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.exceptions import DoNotIndex, MissingDependency, MoreLikeThisError
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
@@ -172,6 +172,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 final_data['_id'] = final_data[ID]
 
                 prepped_docs.append(final_data)
+            except DoNotIndex:
+                self.log.warn(u"Indexing for object `%s` skipped" % obj)
             except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise
