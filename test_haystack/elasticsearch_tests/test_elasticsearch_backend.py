@@ -350,27 +350,12 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.sb.update(self.smmidni, self.sample_objs)
 
         # Check what Elasticsearch thinks is there.
-        self.assertEqual(self.raw_search('*:*')['hits']['total'], 2)
-        self.assertEqual(sorted([res['_source'] for res in self.raw_search('*:*')['hits']['hits']], key=lambda x: x['id']), [
-            {
-                'django_id': '1',
-                'django_ct': 'core.mockmodel',
-                'name': 'daniel1',
-                'name_exact': 'daniel1',
-                'text': 'Indexed!\n1',
-                'pub_date': '2009-02-24T00:00:00',
-                'id': 'core.mockmodel.1'
-            },
-            {
-                'django_id': '2',
-                'django_ct': 'core.mockmodel',
-                'name': 'daniel2',
-                'name_exact': 'daniel2',
-                'text': 'Indexed!\n2',
-                'pub_date': '2009-02-23T00:00:00',
-                'id': 'core.mockmodel.2'
-            }
-        ])
+        res = self.raw_search('*:*')['hits']
+        self.assertEqual(res['total'], 2)
+        self.assertListEqual(
+            sorted([x['_source']['id'] for x in res['hits']]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
 
 
     def test_remove(self):

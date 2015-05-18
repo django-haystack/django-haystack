@@ -55,7 +55,7 @@ class SolrSearchBackend(BaseSearchBackend):
             try:
                 docs.append(index.full_prepare(obj))
             except DoNotIndex:
-                self.log.warn(u"Indexing for object `%s` skipped" % obj)
+                self.log.debug(u"Indexing for object `%s` skipped" % obj)
             except UnicodeDecodeError:
                 if not self.silently_fail:
                     raise

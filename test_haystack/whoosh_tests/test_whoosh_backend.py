@@ -185,9 +185,13 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.sb.update(self.wmmidni, self.sample_objs)
 
         # Check what Whoosh thinks is there.
-        self.assertEqual(len(self.whoosh_search(u'*')), 14)
+        res = self.whoosh_search(u'*')
+        self.assertEqual(len(res), 14)
         ids = [1, 2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 18, 20, 21]
-        self.assertEqual([doc.fields()['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.%s' % i for i in ids])
+        self.assertListEqual(
+            [doc.fields()['id'] for doc in res],
+            [u'core.mockmodel.%s' % i for i in ids]
+        )
 
     def test_remove(self):
         self.sb.update(self.wmmi, self.sample_objs)

@@ -195,7 +195,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             try:
                 doc = index.full_prepare(obj)
             except DoNotIndex:
-                self.log.warn(u"Indexing for object `%s` skipped" % obj)
+                self.log.debug(u"Indexing for object `%s` skipped" % obj)
             else:
                 # Really make sure it's unicode, because Whoosh won't have it any
                 # other way.

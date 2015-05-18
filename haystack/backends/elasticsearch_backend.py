@@ -173,7 +173,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
                 prepped_docs.append(final_data)
             except DoNotIndex:
-                self.log.warn(u"Indexing for object `%s` skipped" % obj)
+                self.log.debug(u"Indexing for object `%s` skipped" % obj)
             except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise

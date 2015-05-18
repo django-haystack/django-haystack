@@ -298,31 +298,14 @@ class SolrSearchBackendTestCase(TestCase):
     def test_update_with_donotindex_raised(self):
         self.sb.update(self.smmidni, self.sample_objs)
 
-        results = self.raw_solr.search('*:*')
-        for result in results:
-            del result['_version_']
+        res = self.raw_solr.search('*:*')
+
         # Check what Solr thinks is there.
-        self.assertEqual(results.hits, 2)
-        self.assertEqual(results.docs, [
-            {
-                'django_id': '1',
-                'django_ct': 'core.mockmodel',
-                'name': 'daniel1',
-                'name_exact': 'daniel1',
-                'text': 'Indexed!\n1',
-                'pub_date': '2009-02-24T00:00:00Z',
-                'id': 'core.mockmodel.1'
-            },
-            {
-                'django_id': '2',
-                'django_ct': 'core.mockmodel',
-                'name': 'daniel2',
-                'name_exact': 'daniel2',
-                'text': 'Indexed!\n2',
-                'pub_date': '2009-02-23T00:00:00Z',
-                'id': 'core.mockmodel.2'
-            }
-        ])
+        self.assertEqual(res.hits, 2)
+        self.assertListEqual(
+            sorted([x['id'] for x in res.docs]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
 
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
