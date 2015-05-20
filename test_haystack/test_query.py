@@ -758,10 +758,11 @@ class SearchQuerySetTestCase(TestCase):
     def test_and_or(self):
         """
         Combining AND queries with OR should give
-            AND(OR(a, b), OR(c, d))
+            OR(AND(a, b), AND(c, d))
         """
         sqs1 = self.msqs.filter(content='foo').filter(content='oof')
-        sqs2 = self.msqs.filter(content='bar').filter(content='rab')
+        # Slightly more complex to make sure all the combination logic works
+        sqs2 = self.msqs.filter(SQ(content='bar1') | SQ(content='bar2')).filter(content='rab')
         sqs = sqs1 | sqs2
 
         self.assertEqual(sqs.query.query_filter.connector, 'OR')
@@ -771,7 +772,7 @@ class SearchQuerySetTestCase(TestCase):
     def test_or_and(self):
         """
         Combining OR queries with AND should give
-            OR(AND(a, b), AND(c, d))
+            AND(OR(a, b), OR(c, d))
         """
         sqs1 = self.msqs.filter(content='foo').filter_or(content='oof')
         sqs2 = self.msqs.filter(content='bar').filter_or(content='rab')
