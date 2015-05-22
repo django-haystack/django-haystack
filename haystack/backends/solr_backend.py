@@ -374,7 +374,7 @@ class SolrSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
 
         for raw_result in raw_results.docs:
-            app_label, model_name = raw_result[DJANGO_CT].split('.')
+            app_label, model_name = raw_result[DJANGO_CT][0].split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
 
