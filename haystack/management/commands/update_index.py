@@ -261,10 +261,10 @@ class Command(LabelCommand):
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
                     pks_seen = set(smart_bytes(pk) for pk in qs)
-
-                    total = len(pks_seen)
                 else:
                     pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
+
+                total = SearchQuerySet(using=backend.connection_alias).models(model).count()
 
                 if self.workers > 0:
                     ghetto_queue = []
