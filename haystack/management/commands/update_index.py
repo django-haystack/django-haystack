@@ -256,6 +256,10 @@ class Command(LabelCommand):
                 pool.join()
 
             if self.remove:
+                # Close the database connection to avoid a “MySQL has gone away” error
+                # when using workers:
+                db.close_connection()
+
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
