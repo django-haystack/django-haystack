@@ -256,6 +256,11 @@ class Command(LabelCommand):
                 pool.join()
 
             if self.remove:
+                # For some reason, if we don't close them all out, we find out that the connection
+                # has gone away. I assume this is because the remove is happening in the root
+                # process and that the connections are messed up.  This only happens when using 
+                # the -k or --workers flag.
+                db.close_connection()
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
