@@ -86,23 +86,23 @@ class ManagementCommandTestCase(TestCase):
         call_command('update_index', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
-        # Remove a model instance.
+        # Remove several instances, two of which will fit in the same block:
         MockModel.objects.get(pk=1).delete()
+        MockModel.objects.get(pk=2).delete()
+        MockModel.objects.get(pk=8).delete()
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         # Plain ``update_index`` doesn't fix it.
         call_command('update_index', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
-        call_command('update_index', remove=True, verbosity=0, commit=False)
+        # Remove without commit also doesn't affect queries:
+        call_command('update_index', remove=True, verbosity=0, batchsize=2, commit=False)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
-        call_command('update_index', remove=True, verbosity=0, workers=2, commit=False)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
-
-        # With the remove flag, it's gone.
-        call_command('update_index', remove=True, verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 22)
+        # … but remove with commit does:
+        call_command('update_index', remove=True, verbosity=0, batchsize=2)
+        self.assertEqual(self.solr.search('*:*').hits, 20)
 
     def test_age(self):
         call_command('clear_index', interactive=False, verbosity=0)

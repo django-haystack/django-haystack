@@ -240,33 +240,43 @@ class Command(LabelCommand):
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
-                    pks_seen = set(smart_bytes(pk) for pk in qs)
+                    database_pks = set(smart_bytes(pk) for pk in qs)
 
-                    total = len(pks_seen)
+                    total = len(database_pks)
                 else:
-                    pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
+                    database_pks = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
 
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.
                 # See https://github.com/django-haystack/django-haystack/issues/1186
                 index_total = SearchQuerySet(using=backend.connection_alias).models(model).count()
 
+                # Retrieve PKs from the index. Note that this cannot be a numeric range query because although
+                # pks are normally numeric they can be non-numeric UUIDs or other custom values. To reduce
+                # load on the search engine, we only retrieve the pk field, which will be checked against the
+                # full list obtained from the database, and the id field, which will be used to delete the
+                # record should it be found to be stale.
+                index_pks = SearchQuerySet(using=backend.connection_alias).models(model)
+                index_pks = index_pks.values_list('pk', 'id')
+
+                # We'll collect all of the record IDs which are no longer present in the database and delete
+                # them after walking the entire index. This uses more memory than the incremental approach but
+                # avoids needing the pagination logic below to account for both commit modes:
+                stale_records = set()
+
                 for start in range(0, index_total, batch_size):
                     upper_bound = start + batch_size
 
-                    # Retrieve PKs from the index. Note that this cannot be a range query because keys can be
-                    # non-numeric UUIDs or other custom values. To reduce load on the search engine, we only
-                    # retrieve the pk field, which will be checked against the full list obtained from the
-                    # database, and the id field, which will be used to delete the record should it be found
-                    # to be stale.
-                    index_pks = SearchQuerySet(using=backend.connection_alias).models(model).values_list('pk',
-                                                                                                         'id')
-
-                    # Compare the pks from the index to the list obtained from the database:
+                    # If the database pk is no longer present, queue the index key for removal:
                     for pk, rec_id in index_pks[start:upper_bound]:
-                        if smart_bytes(pk) in pks_seen:
-                            continue
+                        if smart_bytes(pk) not in database_pks:
+                            stale_records.add(rec_id)
 
+                if stale_records:
+                    if self.verbosity >= 1:
+                        print("  removing %d stale records." % len(stale_records))
+
+                    for rec_id in stale_records:
                         # Since the PK was not in the database list, we'll delete the record from the search index:
                         if self.verbosity >= 2:
                             print("  removing %s." % rec_id)
