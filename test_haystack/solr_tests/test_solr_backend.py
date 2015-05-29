@@ -14,6 +14,7 @@ from django.utils.unittest import skipIf, skipUnless
 from mock import patch
 
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import DoNotIndex
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
@@ -48,6 +49,14 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class SolrMockSearchIndexWithDoNotIndex(SolrMockSearchIndex):
+
+        def prepare_text(self, obj):
+            if obj.author == 'daniel3':
+                raise DoNotIndex
+            return u"Indexed!\n%s" % obj.id
 
 
 class SolrMockOverriddenFieldNameSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -200,6 +209,7 @@ class SolrSearchBackendTestCase(TestCase):
         self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
+        self.smmidni = SolrMockSearchIndexWithDoNotIndex()
         self.smtmmi = SolrMaintainTypeMockSearchIndex()
         self.smofnmi = SolrMockOverriddenFieldNameSearchIndex()
         self.ui.build(indexes=[self.smmi])
@@ -284,6 +294,18 @@ class SolrSearchBackendTestCase(TestCase):
                 'id': 'core.mockmodel.3'
             }
         ])
+
+    def test_update_with_donotindex_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        res = self.raw_solr.search('*:*')
+
+        # Check what Solr thinks is there.
+        self.assertEqual(res.hits, 2)
+        self.assertListEqual(
+            sorted([x['id'] for x in res.docs]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
 
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)

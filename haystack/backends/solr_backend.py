@@ -11,7 +11,7 @@ from django.utils import six
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.exceptions import DoNotIndex,  MissingDependency, MoreLikeThisError
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
@@ -54,6 +54,8 @@ class SolrSearchBackend(BaseSearchBackend):
         for obj in iterable:
             try:
                 docs.append(index.full_prepare(obj))
+            except DoNotIndex:
+                self.log.debug(u"Indexing for object `%s` skipped" % obj)
             except UnicodeDecodeError:
                 if not self.silently_fail:
                     raise
