@@ -10,6 +10,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import unittest
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
@@ -48,6 +49,14 @@ class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class ElasticsearchMockSearchIndexWithSkipDocument(ElasticsearchMockSearchIndex):
+
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return u"Indexed!\n%s" % obj.id
 
 
 class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
@@ -199,6 +208,7 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return ASixthMockModel
 
 class TestSettings(TestCase):
+
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
         backend = ElasticsearchSearchBackend('alias', **{'URL': {}, 'INDEX_NAME': 'testing', 'KWARGS': {'max_retries': 42}})
@@ -217,6 +227,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.old_ui = connections['elasticsearch'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = ElasticsearchMockSearchIndex()
+        self.smmidni = ElasticsearchMockSearchIndexWithSkipDocument()
         self.smtmmi = ElasticsearchMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections['elasticsearch']._index = self.ui
@@ -321,6 +332,18 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'id': 'core.mockmodel.3'
             }
         ])
+
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        # Check what Elasticsearch thinks is there.
+        res = self.raw_search('*:*')['hits']
+        self.assertEqual(res['total'], 2)
+        self.assertListEqual(
+            sorted([x['_source']['id'] for x in res['hits']]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
+
 
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
