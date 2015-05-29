@@ -15,7 +15,7 @@ from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
 from haystack import connections, indexes, reset_search_queries
-from haystack.exceptions import SearchBackendError
+from haystack.exceptions import SkipDocument, SearchBackendError
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, SQ
@@ -33,6 +33,14 @@ class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class WhooshMockSearchIndexWithSkipDocument(WhooshMockSearchIndex):
+
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return obj.author
 
 
 class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -115,6 +123,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
+        self.wmmidni = WhooshMockSearchIndexWithSkipDocument()
         self.wmtmmi = WhooshMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
         self.sb = connections['whoosh'].get_backend()
@@ -171,6 +180,18 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         # Check what Whoosh thinks is there.
         self.assertEqual(len(self.whoosh_search(u'*')), 23)
         self.assertEqual([doc.fields()['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.%s' % i for i in range(1, 24)])
+
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.wmmidni, self.sample_objs)
+
+        # Check what Whoosh thinks is there.
+        res = self.whoosh_search(u'*')
+        self.assertEqual(len(res), 14)
+        ids = [1, 2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 18, 20, 21]
+        self.assertListEqual(
+            [doc.fields()['id'] for doc in res],
+            [u'core.mockmodel.%s' % i for i in ids]
+        )
 
     def test_remove(self):
         self.sb.update(self.wmmi, self.sample_objs)

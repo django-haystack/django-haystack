@@ -99,3 +99,4 @@ Thanks to
     * Andrei Fokau (andreif) for adding support for ``SQ`` in ``SearchQuerySet.narrow()``
     * Phill Tornroth (phill-tornroth) for several patches improving UnifiedIndex and ElasticSearch support
     * Philippe Luickx (philippeluickx) for documenting how to provide backend-specific facet options
+    * Felipe Prenholato (@chronossc) for a patch making it easy to exclude documents from indexing using custom logic
