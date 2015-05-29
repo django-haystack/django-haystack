@@ -71,8 +71,8 @@ def worker(bits):
     if func == 'do_update':
         qs = index.build_queryset(start_date=start_date, end_date=end_date)
         do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit)
-    elif bits[0] == 'do_remove':
-        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity, commit=commit)
+    else:
+        raise NotImplementedError('Unknown function %s' % func)
 
 
 def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
@@ -92,26 +92,6 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
-
-
-def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1, commit=True):
-    # Retrieve PKs from the index. Note that this cannot be a range query because keys can be non-numeric
-    # UUIDs or other custom values.
-    # To reduce load on the search engine, we only retrieve the pk field, which will be checked against the
-    # full list obtained from the database, and the id field, which will be used to delete the record should
-    # it be found to be stale.
-    index_pks = SearchQuerySet(using=backend.connection_alias).models(model).values_list('pk', 'id')
-
-    # Compare the pks from the index to the list obtained from the database:
-    for pk, rec_id in index_pks[start:upper_bound]:
-        if smart_bytes(pk) in pks_seen:
-            continue
-
-        # Since the PK was not in the database list, we'll delete the record from the search index:
-        if verbosity >= 2:
-            print("  removing %s." % rec_id)
-
-        backend.remove(rec_id, commit=commit)
 
 
 class Command(LabelCommand):
@@ -256,10 +236,6 @@ class Command(LabelCommand):
                 pool.join()
 
             if self.remove:
-                # Close the database connection to avoid a “MySQL has gone away” error
-                # when using workers:
-                db.close_connection()
-
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
@@ -270,9 +246,6 @@ class Command(LabelCommand):
                 else:
                     pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
 
-                if self.workers > 0:
-                    ghetto_queue = []
-
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.
                 # See https://github.com/django-haystack/django-haystack/issues/1186
@@ -281,14 +254,21 @@ class Command(LabelCommand):
                 for start in range(0, index_total, batch_size):
                     upper_bound = start + batch_size
 
-                    if self.workers == 0:
-                        do_remove(backend, index, model, pks_seen, start, upper_bound,
-                                  verbosity=self.verbosity, commit=self.commit)
-                    else:
-                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using,
-                                             self.verbosity, self.commit))
+                    # Retrieve PKs from the index. Note that this cannot be a range query because keys can be
+                    # non-numeric UUIDs or other custom values. To reduce load on the search engine, we only
+                    # retrieve the pk field, which will be checked against the full list obtained from the
+                    # database, and the id field, which will be used to delete the record should it be found
+                    # to be stale.
+                    index_pks = SearchQuerySet(using=backend.connection_alias).models(model).values_list('pk',
+                                                                                                         'id')
 
-                if self.workers > 0:
-                    pool = multiprocessing.Pool(self.workers)
-                    pool.map(worker, ghetto_queue)
-                    pool.terminate()
+                    # Compare the pks from the index to the list obtained from the database:
+                    for pk, rec_id in index_pks[start:upper_bound]:
+                        if smart_bytes(pk) in pks_seen:
+                            continue
+
+                        # Since the PK was not in the database list, we'll delete the record from the search index:
+                        if self.verbosity >= 2:
+                            print("  removing %s." % rec_id)
+
+                        backend.remove(rec_id, commit=self.commit)
