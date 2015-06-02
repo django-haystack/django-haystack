@@ -201,7 +201,7 @@
     "model": "core.mockmodel",
     "fields": {
       "author": "daniel2",
-      "foo": "The other option is to leverage stored fields. By default, all fields in Haystack are both indexed (searchable by the engine) and stored (retained by the engine and presented in the results). By using a stored field, you can store commonly used data in such a way that you don’t need to hit the database when processing the search result to get more information.",
+      "foo": "The other option is to leverage stored fields. By default, all fields in Haystack are both indexed (searchable by the engine) and stored (retained by the engine and presented in the results). By using a stored field, you can store commonly used data in such a way that you don’t need to hit the database when processing the search result to get more information. By the way: Jenny's number is 867-5309",
       "pub_date": "2009-07-17 17:30:00",
       "tag": 1
     }

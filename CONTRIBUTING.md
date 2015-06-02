@@ -41,11 +41,14 @@ should take to help get it added/fixed in Haystack:
         * Haystack
         * Search engine used (as well as bindings)
         * Optionally of the other dependencies involved
-    * Ideally, creating a pull request with a (failing) test case demonstrating
-      what's wrong. This makes it easy for us to reproduce & fix the problem.
+* Ideally, creating a pull request with a (failing) test case demonstrating
+  what's wrong. This makes it easy for us to reproduce & fix the problem.
 
-      Instructions for running the tests are at
-      http://django-haystack.readthedocs.org/en/latest/running_tests.html
+  Github has a great guide for writing an effective pull request:
+  https://github.com/blog/1943-how-to-write-the-perfect-pull-request
+
+  Instructions for running the tests are at
+  http://django-haystack.readthedocs.org/en/latest/running_tests.html
 
 You might also hop into the IRC channel (`#haystack` on `irc.freenode.net`)
 & raise your question there, as there may be someone who can help you with a

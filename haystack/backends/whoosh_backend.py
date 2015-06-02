@@ -1,4 +1,7 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 import re
 import shutil
@@ -10,14 +13,14 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_model
 from django.utils import six
 from django.utils.datetime_safe import datetime
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
-from haystack.exceptions import MissingDependency, SearchBackendError
-from haystack.inputs import PythonData, Clean, Exact, Raw
+
+from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID
+from haystack.exceptions import MissingDependency, SearchBackendError, SkipDocument
+from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
-from haystack.utils import get_identifier
 from haystack.utils import log as logging
-from haystack.utils import get_model_ct
+from haystack.utils import get_identifier, get_model_ct
 
 try:
     import json
@@ -37,20 +40,21 @@ try:
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
+# Handle minimum requirement.
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
+    raise MissingDependency("The 'whoosh' backend requires version 2.5.0 or greater.")
+
 # Bubble up the correct error.
 from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
 from whoosh.fields import ID as WHOOSH_ID
-from whoosh.fields import Schema, IDLIST, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME, NGRAM, NGRAMWORDS
+from whoosh.fields import BOOLEAN, DATETIME, IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, Schema, TEXT
 from whoosh.filedb.filestore import FileStorage, RamStorage
+from whoosh.highlight import highlight as whoosh_highlight
+from whoosh.highlight import ContextFragmenter, HtmlFormatter
 from whoosh.qparser import QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
-from whoosh.highlight import HtmlFormatter, highlight as whoosh_highlight, ContextFragmenter
-
-# Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
-    raise MissingDependency("The 'whoosh' backend requires version 2.5.0 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -188,32 +192,35 @@ class WhooshSearchBackend(BaseSearchBackend):
         writer = AsyncWriter(self.index)
 
         for obj in iterable:
-            doc = index.full_prepare(obj)
-
-            # Really make sure it's unicode, because Whoosh won't have it any
-            # other way.
-            for key in doc:
-                doc[key] = self._from_python(doc[key])
-
-            # Document boosts aren't supported in Whoosh 2.5.0+.
-            if 'boost' in doc:
-                del doc['boost']
-
             try:
-                writer.update_document(**doc)
-            except Exception as e:
-                if not self.silently_fail:
-                    raise
+                doc = index.full_prepare(obj)
+            except SkipDocument:
+                self.log.debug(u"Indexing for object `%s` skipped", obj)
+            else:
+                # Really make sure it's unicode, because Whoosh won't have it any
+                # other way.
+                for key in doc:
+                    doc[key] = self._from_python(doc[key])
 
-                # We'll log the object identifier but won't include the actual object
-                # to avoid the possibility of that generating encoding errors while
-                # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
-                    "data": {
-                        "index": index,
-                        "object": get_identifier(obj)
-                    }
-                })
+                # Document boosts aren't supported in Whoosh 2.5.0+.
+                if 'boost' in doc:
+                    del doc['boost']
+
+                try:
+                    writer.update_document(**doc)
+                except Exception as e:
+                    if not self.silently_fail:
+                        raise
+
+                    # We'll log the object identifier but won't include the actual object
+                    # to avoid the possibility of that generating encoding errors while
+                    # processing the log message:
+                    self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
+                        "data": {
+                            "index": index,
+                            "object": get_identifier(obj)
+                        }
+                    })
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.

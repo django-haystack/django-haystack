@@ -92,3 +92,12 @@ Thanks to
     * Steven Skoczen (@skoczen) for an ElasticSearch bug fix
     * Andrei Coman (@comandrei) field boosting in Elasticsearch backend
     * @Xaroth for updating the app loader to be compatible with Django 1.7
+    * Jaroslav Gorjatsev (jarig) for a bugfix with index_fieldname
+    * Dirk Eschler (@deschler) for app loader Django 1.7 compatibility fixes
+    * Wictor (wicol) for a patch improving the error message given when model_attr references a non-existent
+      field
+    * Pierre Dulac (dulaccc) for a patch updating distance filters for ElasticSearch 1.x
+    * Andrei Fokau (andreif) for adding support for ``SQ`` in ``SearchQuerySet.narrow()``
+    * Phill Tornroth (phill-tornroth) for several patches improving UnifiedIndex and ElasticSearch support
+    * Philippe Luickx (philippeluickx) for documenting how to provide backend-specific facet options
+    * Felipe Prenholato (@chronossc) for a patch making it easy to exclude documents from indexing using custom logic

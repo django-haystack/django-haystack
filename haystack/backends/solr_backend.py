@@ -1,4 +1,6 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import warnings
 
@@ -9,7 +11,7 @@ from django.utils import six
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.exceptions import MissingDependency, MoreLikeThisError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
@@ -52,6 +54,8 @@ class SolrSearchBackend(BaseSearchBackend):
         for obj in iterable:
             try:
                 docs.append(index.full_prepare(obj))
+            except SkipDocument:
+                self.log.debug(u"Indexing for object `%s` skipped", obj)
             except UnicodeDecodeError:
                 if not self.silently_fail:
                     raise
@@ -377,9 +381,13 @@ class SolrSearchBackend(BaseSearchBackend):
             model = get_model(app_label, model_name)
 
             if model and model in indexed_models:
+                index = unified_index.get_index(model)
+                index_field_map = index.field_map
                 for key, value in raw_result.items():
-                    index = unified_index.get_index(model)
                     string_key = str(key)
+                    # re-map key if alternate name used
+                    if string_key in index_field_map:
+                        string_key = index_field_map[key]
 
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
                         additional_fields[string_key] = index.fields[string_key].convert(value)

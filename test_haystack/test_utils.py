@@ -1,8 +1,12 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.test import TestCase
 from django.test.utils import override_settings
-from haystack.utils import log
-from haystack.utils import get_identifier, get_facet_field_name, Highlighter, _lookup_identifier_method
 from test_haystack.core.models import MockModel
+
+from haystack.utils import _lookup_identifier_method, get_facet_field_name, get_identifier, Highlighter, log
 
 
 class GetIdentifierTestCase(TestCase):
@@ -76,36 +80,36 @@ class HighlighterTestCase(TestCase):
         self.assertEqual(highlighter.find_window({'highlight': [203], 'tests': [120]}), (120, 320))
         self.assertEqual(highlighter.find_window({'highlight': [], 'tests': [100]}), (100, 300))
         self.assertEqual(highlighter.find_window({'highlight': [0], 'tests': [80], 'moof': [120]}), (0, 200))
-        
+
         # Simple cases, with an outlier far outside the window.
         self.assertEqual(highlighter.find_window({'highlight': [0], 'tests': [100, 450]}), (0, 200))
         self.assertEqual(highlighter.find_window({'highlight': [100], 'tests': [220, 450]}), (100, 300))
         self.assertEqual(highlighter.find_window({'highlight': [100], 'tests': [350, 450]}), (350, 550))
         self.assertEqual(highlighter.find_window({'highlight': [100], 'tests': [220], 'moof': [450]}), (100, 300))
-        
+
         # Density checks.
         self.assertEqual(highlighter.find_window({'highlight': [0], 'tests': [100, 180, 450]}), (0, 200))
         self.assertEqual(highlighter.find_window({'highlight': [0, 40], 'tests': [100, 200, 220, 450]}), (40, 240))
         self.assertEqual(highlighter.find_window({'highlight': [0, 40], 'tests': [100, 200, 220], 'moof': [450]}), (40, 240))
         self.assertEqual(highlighter.find_window({'highlight': [0, 40], 'tests': [100, 200, 220], 'moof': [294, 299, 450]}), (100, 300))
-    
+
     def test_render_html(self):
         highlighter = Highlighter('this test')
         highlighter.text_block = self.document_1
         self.assertEqual(highlighter.render_html({'this': [0, 53, 79], 'test': [10, 68]}, 0, 200), '<span class="highlighted">This</span> is a <span class="highlighted">test</span> of the highlightable words detection. <span class="highlighted">This</span> is only a <span class="highlighted">test</span>. Were <span class="highlighted">this</span> an actual emergency, your text would have exploded in mid-air.')
-        
+
         highlighter.text_block = self.document_2
         self.assertEqual(highlighter.render_html({'this': [0, 53, 79], 'test': [10, 68]}, 0, 200), 'The content of words in no particular order causes nothing to occur.')
-        
+
         highlighter.text_block = self.document_3
         self.assertEqual(highlighter.render_html({'this': [0, 53, 79], 'test': [10, 68]}, 0, 200), '<span class="highlighted">This</span> is a <span class="highlighted">test</span> of the highlightable words detection. <span class="highlighted">This</span> is only a <span class="highlighted">test</span>. Were <span class="highlighted">this</span> an actual emergency, your text would have exploded in mid-air. The content of words in no particular order causes no...')
-        
+
         highlighter = Highlighter('content detection')
         highlighter.text_block = self.document_3
         self.assertEqual(highlighter.render_html({'content': [151], 'detection': [42]}, 42, 242), '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
-        
+
         self.assertEqual(highlighter.render_html({'content': [151], 'detection': [42]}, 42, 200), '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes no...')
-        
+
         # One term found within another term.
         highlighter = Highlighter('this is')
         highlighter.text_block = self.document_1
@@ -124,32 +128,32 @@ class HighlighterTestCase(TestCase):
         highlighter = Highlighter('i??')
         highlighter.text_block = 'Foo is i?? in most cases.'
         self.assertEqual(highlighter.render_html({'i??': [7]}, 0, 200), 'Foo is <span class="highlighted">i??</span> in most cases.')
-        
+
         # Regression for highlighting already highlighted HTML terms.
         highlighter = Highlighter('span')
         highlighter.text_block = 'A span in spam makes html in a can.'
         self.assertEqual(highlighter.render_html({'span': [2]}, 0, 200), 'A <span class="highlighted">span</span> in spam makes html in a can.')
-        
+
         highlighter = Highlighter('highlight')
         highlighter.text_block = 'A span in spam makes highlighted html in a can.'
         self.assertEqual(highlighter.render_html({'highlight': [21]}, 0, 200), 'A span in spam makes <span class="highlighted">highlight</span>ed html in a can.')
-    
+
     def test_highlight(self):
         highlighter = Highlighter('this test')
         self.assertEqual(highlighter.highlight(self.document_1), u'<span class="highlighted">This</span> is a <span class="highlighted">test</span> of the highlightable words detection. <span class="highlighted">This</span> is only a <span class="highlighted">test</span>. Were <span class="highlighted">this</span> an actual emergency, your text would have exploded in mid-air.')
         self.assertEqual(highlighter.highlight(self.document_2), u'The content of words in no particular order causes nothing to occur.')
         self.assertEqual(highlighter.highlight(self.document_3), u'<span class="highlighted">This</span> is a <span class="highlighted">test</span> of the highlightable words detection. <span class="highlighted">This</span> is only a <span class="highlighted">test</span>. Were <span class="highlighted">this</span> an actual emergency, your text would have exploded in mid-air. The content of words in no particular order causes no...')
-        
+
         highlighter = Highlighter('this test', html_tag='div', css_class=None)
         self.assertEqual(highlighter.highlight(self.document_1), u'<div>This</div> is a <div>test</div> of the highlightable words detection. <div>This</div> is only a <div>test</div>. Were <div>this</div> an actual emergency, your text would have exploded in mid-air.')
         self.assertEqual(highlighter.highlight(self.document_2), u'The content of words in no particular order causes nothing to occur.')
         self.assertEqual(highlighter.highlight(self.document_3), u'<div>This</div> is a <div>test</div> of the highlightable words detection. <div>This</div> is only a <div>test</div>. Were <div>this</div> an actual emergency, your text would have exploded in mid-air. The content of words in no particular order causes no...')
-        
+
         highlighter = Highlighter('content detection')
         self.assertEqual(highlighter.highlight(self.document_1), u'...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air.')
         self.assertEqual(highlighter.highlight(self.document_2), u'...<span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
         self.assertEqual(highlighter.highlight(self.document_3), u'...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
-        
+
         highlighter = Highlighter('content detection', max_length=100)
         self.assertEqual(highlighter.highlight(self.document_1), u'...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-...')
         self.assertEqual(highlighter.highlight(self.document_2), u'...<span class="highlighted">content</span> of words in no particular order causes nothing to occur.')

@@ -1,12 +1,17 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import operator
 import warnings
+
 from django.utils import six
-from haystack import connections, connection_router
+
+from haystack import connection_router, connections
 from haystack.backends import SQ
-from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
+from haystack.constants import DEFAULT_OPERATOR, ITERATOR_LOAD_PER_QUERY, REPR_OUTPUT_SIZE
 from haystack.exceptions import NotHandled
-from haystack.inputs import Raw, Clean, AutoQuery
+from haystack.inputs import AutoQuery, Clean, Raw
 from haystack.utils import log as logging
 
 
@@ -409,6 +414,13 @@ class SearchQuerySet(object):
 
     def narrow(self, query):
         """Pushes existing facet choices into the search."""
+
+        if isinstance(query, SQ):
+            # produce query string using empty query of the same class
+            empty_query = self.query._clone()
+            empty_query._reset()
+            query = query.as_query_string(empty_query.build_query_fragment)
+
         clone = self._clone()
         clone.query.add_narrow_query(query)
         return clone

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 import logging as std_logging
 import operator
@@ -9,16 +11,17 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import unittest
+
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
 from haystack.utils import log as logging
-from haystack.utils.loading import UnifiedIndex
 from haystack.utils.geo import Point
+from haystack.utils.loading import UnifiedIndex
 
-from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
-                           MockModel)
+from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
 
 test_pickling = True
@@ -41,6 +44,10 @@ def clear_elasticsearch_index():
     except elasticsearch.TransportError:
         pass
 
+    # Since we've just completely deleted the index, we'll reset setup_complete so the next access will
+    # correctly define the mappings:
+    connections['elasticsearch'].get_backend().setup_complete = False
+
 
 class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
@@ -49,6 +56,14 @@ class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class ElasticsearchMockSearchIndexWithSkipDocument(ElasticsearchMockSearchIndex):
+
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return u"Indexed!\n%s" % obj.id
 
 
 class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
@@ -216,6 +231,7 @@ class ElasticsearchBoostIndex(indexes.SearchIndex,
 
 
 class TestSettings(TestCase):
+
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
         backend = ElasticsearchSearchBackend('alias', **{
@@ -239,6 +255,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.old_ui = connections['elasticsearch'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = ElasticsearchMockSearchIndex()
+        self.smmidni = ElasticsearchMockSearchIndexWithSkipDocument()
         self.smtmmi = ElasticsearchMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections['elasticsearch']._index = self.ui
@@ -343,6 +360,18 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'id': 'core.mockmodel.3'
             }
         ])
+
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        # Check what Elasticsearch thinks is there.
+        res = self.raw_search('*:*')['hits']
+        self.assertEqual(res['total'], 2)
+        self.assertListEqual(
+            sorted([x['_source']['id'] for x in res['hits']]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
+
 
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -806,7 +835,6 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 
     # Regressions
 
-    @unittest.expectedFailure
     def test_regression_proper_start_offsets(self):
         sqs = self.sqs.filter(text='index')
         self.assertNotEqual(sqs.count(), 0)
@@ -1042,7 +1070,6 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         connections['elasticsearch']._index = self.old_ui
         super(LiveElasticsearchMoreLikeThisTestCase, self).tearDown()
 
-    @unittest.expectedFailure
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
         self.assertEqual(mlt.count(), 4)
@@ -1155,6 +1182,16 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         self.assertEqual(autocomplete_3.count(), 4)
         self.assertEqual(set([result.pk for result in autocomplete_3]), set(['12', '1', '22', '14']))
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
+
+        # Test numbers in phrases
+        autocomplete_4 = self.sqs.autocomplete(text_auto='Jen 867')
+        self.assertEqual(autocomplete_4.count(), 1)
+        self.assertEqual(set([result.pk for result in autocomplete_4]), set(['20']))
+
+        # Test numbers alone
+        autocomplete_4 = self.sqs.autocomplete(text_auto='867')
+        self.assertEqual(autocomplete_4.count(), 1)
+        self.assertEqual(set([result.pk for result in autocomplete_4]), set(['20']))
 
 
 class LiveElasticsearchRoundTripTestCase(TestCase):

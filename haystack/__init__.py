@@ -1,14 +1,19 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+
 from haystack.constants import DEFAULT_ALIAS
 from haystack import signals
 from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 3, 2, 'dev')
+__version__ = (2, 4, 0, 'dev')
 
 
 # Setup default logging.

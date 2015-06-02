@@ -8,7 +8,11 @@ cd $(dirname $0)
 
 export TEST_ROOT=$(pwd)
 
-export SOLR_ARCHIVE=solr-${SOLR_VERSION}.tgz
+export SOLR_ARCHIVE="${SOLR_VERSION}.tgz"
+
+if [ -d "${HOME}/download-cache/" ]; then
+    export SOLR_ARCHIVE="${HOME}/download-cache/${SOLR_ARCHIVE}"
+fi
 
 if [ -f ${SOLR_ARCHIVE} ]; then
     # If the tarball doesn't extract cleanly, remove it so it'll download again:
@@ -16,7 +20,7 @@ if [ -f ${SOLR_ARCHIVE} ]; then
 fi
 
 if [ ! -f ${SOLR_ARCHIVE} ]; then
-    python get-solr-download-url.py $SOLR_VERSION | xargs curl -O
+    python get-solr-download-url.py $SOLR_VERSION | xargs curl -Lo $SOLR_ARCHIVE
 fi
 
 echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr4/"

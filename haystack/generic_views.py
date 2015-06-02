@@ -1,4 +1,6 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.conf import settings
 from django.core.paginator import Paginator
@@ -6,10 +8,8 @@ from django.views.generic import FormView
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import MultipleObjectMixin
 
-from .forms import FacetedSearchForm
-from .forms import ModelSearchForm
+from .forms import FacetedSearchForm, ModelSearchForm
 from .query import SearchQuerySet
-
 
 RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 

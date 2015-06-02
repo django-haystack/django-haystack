@@ -1,8 +1,10 @@
 # encoding: utf-8
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
 import os
+import sys
+import warnings
 from datetime import timedelta
 from optparse import make_option
 
@@ -12,7 +14,7 @@ from django.db import reset_queries
 
 from haystack import connections as haystack_connections
 from haystack.query import SearchQuerySet
-from haystack.utils.app_loading import get_models, load_apps
+from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
 
 try:
     from django.utils.encoding import force_text
@@ -69,8 +71,8 @@ def worker(bits):
     if func == 'do_update':
         qs = index.build_queryset(start_date=start_date, end_date=end_date)
         do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit)
-    elif bits[0] == 'do_remove':
-        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity, commit=commit)
+    else:
+        raise NotImplementedError('Unknown function %s' % func)
 
 
 def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
@@ -90,23 +92,6 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
-
-
-def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1, commit=True):
-    # Fetch a list of results.
-    # Can't do pk range, because id's are strings (thanks comments
-    # & UUIDs!).
-    stuff_in_the_index = SearchQuerySet(using=backend.connection_alias).models(model)[start:upper_bound]
-
-    # Iterate over those results.
-    for result in stuff_in_the_index:
-        # Be careful not to hit the DB.
-        if not smart_bytes(result.pk) in pks_seen:
-            # The id is NOT in the small_cache_qs, issue a delete.
-            if verbosity >= 2:
-                print("  removing %s." % result.pk)
-
-            backend.remove(".".join([result.app_label, result.model_name, str(result.pk)]), commit=commit)
 
 
 class Command(LabelCommand):
@@ -155,6 +140,11 @@ class Command(LabelCommand):
         self.workers = int(options.get('workers', 0))
         self.commit = options.get('commit', True)
 
+        if sys.version_info < (2, 7):
+            warnings.warn('multiprocessing is disabled on Python 2.6 and earlier. '
+                          'See https://github.com/toastdriven/django-haystack/issues/1001')
+            self.workers = 0
+
         self.backends = options.get('using')
         if not self.backends:
             self.backends = haystack_connections.connections_info.keys()
@@ -183,7 +173,7 @@ class Command(LabelCommand):
                 pass
 
         if not items:
-            items = load_apps()
+            items = haystack_load_apps()
 
         return super(Command, self).handle(*items, **options)
 
@@ -204,7 +194,7 @@ class Command(LabelCommand):
         if self.workers > 0:
             import multiprocessing
 
-        for model in get_models(label):
+        for model in haystack_get_models(label):
             try:
                 index = unified_index.get_index(model)
             except NotHandled:
@@ -242,31 +232,53 @@ class Command(LabelCommand):
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
                 pool.map(worker, ghetto_queue)
-                pool.terminate()
+                pool.close()
+                pool.join()
 
             if self.remove:
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
-                    pks_seen = set(smart_bytes(pk) for pk in qs)
+                    database_pks = set(smart_bytes(pk) for pk in qs)
 
-                    total = len(pks_seen)
+                    total = len(database_pks)
                 else:
-                    pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
+                    database_pks = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
 
-                if self.workers > 0:
-                    ghetto_queue = []
+                # Since records may still be in the search index but not the local database
+                # we'll use that to create batches for processing.
+                # See https://github.com/django-haystack/django-haystack/issues/1186
+                index_total = SearchQuerySet(using=backend.connection_alias).models(model).count()
 
-                for start in range(0, total, batch_size):
+                # Retrieve PKs from the index. Note that this cannot be a numeric range query because although
+                # pks are normally numeric they can be non-numeric UUIDs or other custom values. To reduce
+                # load on the search engine, we only retrieve the pk field, which will be checked against the
+                # full list obtained from the database, and the id field, which will be used to delete the
+                # record should it be found to be stale.
+                index_pks = SearchQuerySet(using=backend.connection_alias).models(model)
+                index_pks = index_pks.values_list('pk', 'id')
+
+                # We'll collect all of the record IDs which are no longer present in the database and delete
+                # them after walking the entire index. This uses more memory than the incremental approach but
+                # avoids needing the pagination logic below to account for both commit modes:
+                stale_records = set()
+
+                for start in range(0, index_total, batch_size):
                     upper_bound = start + batch_size
 
-                    if self.workers == 0:
-                        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=self.verbosity,  commit=self.commit)
-                    else:
-                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using, self.verbosity, self.commit))
+                    # If the database pk is no longer present, queue the index key for removal:
+                    for pk, rec_id in index_pks[start:upper_bound]:
+                        if smart_bytes(pk) not in database_pks:
+                            stale_records.add(rec_id)
 
-                if self.workers > 0:
-                    pool = multiprocessing.Pool(self.workers)
-                    pool.map(worker, ghetto_queue)
-                    pool.terminate()
+                if stale_records:
+                    if self.verbosity >= 1:
+                        print("  removing %d stale records." % len(stale_records))
+
+                    for rec_id in stale_records:
+                        # Since the PK was not in the database list, we'll delete the record from the search index:
+                        if self.verbosity >= 2:
+                            print("  removing %s." % rec_id)
+
+                        backend.remove(rec_id, commit=self.commit)

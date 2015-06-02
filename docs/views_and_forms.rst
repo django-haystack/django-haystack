@@ -4,8 +4,18 @@
 Views & Forms
 =============
 
-Haystack comes with some default, simple views & forms to help you get started
-and to cover the common cases. Included is a way to provide:
+.. note::
+
+    As of version 2.4 the views in ``haystack.views.SearchView`` are deprecated in
+    favor of the new generic views in ``haystack.generic_views.SearchView``
+    which use the standard Django `class-based views`_ which are available in
+    every version of Django which is supported by Haystack.
+
+.. _class-based views: https://docs.djangoproject.com/en/1.7/topics/class-based-views/
+
+Haystack comes with some default, simple views & forms as well as some
+django-style views to help you get started and to cover the common cases.
+Included is a way to provide:
 
   * Basic, query-only search.
   * Search by models.
@@ -120,6 +130,118 @@ Views
 
 .. currentmodule:: haystack.views
 
+.. note::
+
+    As of version 2.4 the views in ``haystack.views.SearchView`` are deprecated in
+    favor of the new generic views in ``haystack.generic_views.SearchView``
+    which use the standard Django `class-based views`_ which are available in
+    every version of Django which is supported by Haystack.
+
+.. _class-based views: https://docs.djangoproject.com/en/1.7/topics/class-based-views/
+
+New Django Class Based Views
+----------------------------
+
+ .. versionadded:: 2.4.0
+
+The views in ``haystack.generic_views.SearchView`` inherit from Django’s standard
+`FormView <https://docs.djangoproject.com/en/1.7/ref/class-based-views/generic-editing/#formview>`_.
+The example views can be customized like any other Django class-based view as
+demonstrated in this example which filters the search results in ``get_queryset``::
+
+    # views.py
+    from datetime import date
+
+    from haystack.generic_views import SearchView
+
+    class MySearchView(SearchView):
+        """My custom search view."""
+
+        def get_queryset(self):
+            queryset = super(MySearchView, self).get_queryset()
+            # further filter queryset based on some set of criteria
+            return queryset.filter(pub_date__gte=date(2015, 1, 1))
+
+        def get_context_data(self, *args, **kwargs):
+            context = super(MySearchView, self).get_context_data(*args, **kwargs)
+            # do something
+            return context
+
+    # urls.py
+
+    urlpatterns = patterns('',
+        url(r'^/search/?$', MySearchView.as_view(), name='search_view'),
+    )
+
+
+Upgrading
+~~~~~~~~~
+
+Upgrading from basic usage of the old-style views to new-style views is usually as simple as:
+
+#. Create new views under ``views.py`` subclassing ``haystack.generic_views.SearchView``
+   or ``haystack.generic_views.FacetedSearchView``
+#. Move all parameters of your old-style views from your ``urls.py`` to attributes on
+   your new views. This will require renaming ``searchqueryset`` to ``queryset`` and
+   ``template`` to ``template_name``
+#. Review your templates and replace the ``page`` variable with ``page_object``
+
+Here's an example::
+
+    ### old-style views...
+    # urls.py
+
+    sqs = SearchQuerySet().filter(author='john')
+
+    urlpatterns = patterns('haystack.views',
+        url(r'^$', SearchView(
+            template='my/special/path/john_search.html',
+            searchqueryset=sqs,
+            form_class=SearchForm
+        ), name='haystack_search'),
+    )
+
+    ### new-style views...
+    # views.py
+
+    class JohnSearchView(SearchView):
+        template_name = 'my/special/path/john_search.html'
+        queryset = SearchQuerySet().filter(author='john')
+        form_class = SearchForm
+
+    # urls.py
+    from myapp.views import JohnSearchView
+
+    urlpatterns = patterns('',
+        url(r'^$', JohnSearchView.as_view(), name='haystack_search'),
+    )
+
+
+If your views overrode methods on the old-style SearchView, you will need to
+refactor those methods to the equivalents on Django's generic views. For example,
+if you previously used ``extra_context()`` to add additional template variables or
+preprocess the values returned by Haystack, that code would move to ``get_context_data``
+
++-----------------------+-------------------------------------------+
+| Old Method            | New Method                                |
++=======================+===========================================+
+| ``extra_context()``   | `get_context_data()`_                     |
++-----------------------+-------------------------------------------+
+| ``create_response()`` | `dispatch()`_ or ``get()`` and ``post()`` |
++-----------------------+-------------------------------------------+
+| ``get_query()``       | `get_queryset()`_                         |
++-----------------------+-------------------------------------------+
+
+.. _get_context_data(): https://docs.djangoproject.com/en/1.7/ref/class-based-views/mixins-simple/#django.views.generic.base.ContextMixin.get_context_data
+.. _dispatch(): https://docs.djangoproject.com/en/1.7/ref/class-based-views/base/#django.views.generic.base.View.dispatch
+.. _get_queryset(): https://docs.djangoproject.com/en/1.7/ref/class-based-views/mixins-multiple-object/#django.views.generic.list.MultipleObjectMixin.get_queryset
+
+
+Old-Style Views
+---------------
+
+ .. deprecated:: 2.4.0
+
 Haystack comes bundled with three views, the class-based views (``SearchView`` &
 ``FacetedSearchView``) and a traditional functional view (``basic_search``).
 
@@ -133,7 +255,7 @@ traditional settings or as an example of how to write a more complex custom
 view. It is also thread-safe.
 
 ``SearchView(template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
---------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------
 
 The ``SearchView`` is designed to be easy/flexible enough to override common
 changes as well as being internally abstracted so that only altering a specific

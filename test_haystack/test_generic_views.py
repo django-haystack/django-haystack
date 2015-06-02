@@ -1,5 +1,10 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.test.client import RequestFactory
 from django.test.testcases import TestCase
+
 from haystack.forms import ModelSearchForm
 from haystack.generic_views import SearchView
 

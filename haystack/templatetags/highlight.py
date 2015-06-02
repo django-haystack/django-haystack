@@ -1,10 +1,11 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django import template
-from django.utils import importlib
-from django.utils import six
-
+from django.utils import importlib, six
 
 register = template.Library()
 

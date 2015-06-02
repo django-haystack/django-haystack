@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 import logging as std_logging
@@ -11,16 +11,17 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.unittest import skipIf, skipUnless
+from mock import patch
+
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import SkipDocument
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
-from haystack.utils.loading import UnifiedIndex
 from haystack.utils.geo import Point
-from mock import patch
+from haystack.utils.loading import UnifiedIndex
 
-from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
-                           MockModel)
+from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
 
 test_pickling = True
@@ -45,6 +46,27 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateField(model_attr='pub_date')
+
+    def get_model(self):
+        return MockModel
+
+
+class SolrMockSearchIndexWithSkipDocument(SolrMockSearchIndex):
+
+        def prepare_text(self, obj):
+            if obj.author == 'daniel3':
+                raise SkipDocument
+            return u"Indexed!\n%s" % obj.id
+
+
+class SolrMockOverriddenFieldNameSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, use_template=True)
+    name = indexes.CharField(model_attr='author', faceted=True, index_fieldname='name_s')
+    pub_date = indexes.DateField(model_attr='pub_date', index_fieldname='pub_date_dt')
+    today = indexes.IntegerField(index_fieldname='today_i')
+
+    def prepare_today(self, obj):
+        return datetime.datetime.now().day
 
     def get_model(self):
         return MockModel
@@ -187,7 +209,9 @@ class SolrSearchBackendTestCase(TestCase):
         self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
+        self.smmidni = SolrMockSearchIndexWithSkipDocument()
         self.smtmmi = SolrMaintainTypeMockSearchIndex()
+        self.smofnmi = SolrMockOverriddenFieldNameSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
         self.sb = connections['solr'].get_backend()
@@ -271,6 +295,18 @@ class SolrSearchBackendTestCase(TestCase):
             }
         ])
 
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        res = self.raw_solr.search('*:*')
+
+        # Check what Solr thinks is there.
+        self.assertEqual(res.hits, 2)
+        self.assertListEqual(
+            sorted([x['id'] for x in res.docs]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
+
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
@@ -322,6 +358,25 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_solr.search('*:*').hits, 0)
+
+    def test_alternate_index_fieldname(self):
+        self.ui.build(indexes=[self.smofnmi])
+        connections['solr']._index = self.ui
+        self.sb.update(self.smofnmi, self.sample_objs)
+        search = self.sb.search('*')
+        self.assertEqual(search['hits'], 3)
+        results = search['results']
+        today = datetime.datetime.now().day
+        self.assertEqual([result.today for result in results], [today, today, today])
+        self.assertEqual([result.name for result in results], ['daniel1', 'daniel2', 'daniel3'])
+        self.assertEqual([result.pub_date for result in results],
+                         [datetime.date(2009, 2, 25) - datetime.timedelta(days=1),
+                          datetime.date(2009, 2, 25) - datetime.timedelta(days=2),
+                          datetime.date(2009, 2, 25) - datetime.timedelta(days=3)])
+        # revert it back
+        self.ui.build(indexes=[self.smmi])
+        connections['solr']._index = self.ui
+
 
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)

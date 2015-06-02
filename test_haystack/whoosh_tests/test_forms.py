@@ -1,4 +1,7 @@
-# To ensure spelling suggestions work...
+# encoding: utf-8
+"""Tests for Whoosh spelling suggestions"""
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.conf import settings
 from django.http import HttpRequest
 

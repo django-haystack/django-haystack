@@ -28,18 +28,6 @@ need to update these dependencies if you have a pre-existing setup.
 * Elasticsearch
 
 
-Partially Supported Backends
-============================
-
-Most aspects of Whoosh work fine under Python 3. However, the built-in
-highlighting fails under Python 3.3.2. Using the Haystack-provided template tag
-highlighting is a good stopgap until
-https://bitbucket.org/mchaput/whoosh/324/highlighting-under-python-3-fails is
-resolved.
-
-* Whoosh (whoosh>=2.5.0)
-
-
 Notes
 =====
 

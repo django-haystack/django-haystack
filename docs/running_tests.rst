@@ -41,7 +41,6 @@ list of possible options::
 
 .. _nose: https://nose.readthedocs.org/en/latest/
 
-
 Configuring Solr
 ================
 
@@ -62,3 +61,10 @@ server is found all elasticsearch tests will be skipped. Note that the tests
 are destructive - during the teardown phase they will wipe the cluster clean so
 make sure you don't run them against an instance with data you wish to keep.
 
+If you want to run the geo-django tests you may need to review the
+`GeoDjango GEOS and GDAL settings`_ before running these commands::
+
+	cd test_haystack
+	./run_tests.py elasticsearch_tests
+
+.. _GeoDjango GEOS and GDAL settings: https://docs.djangoproject.com/en/1.7/ref/contrib/gis/install/geolibs/#geos-library-path
