@@ -706,6 +706,29 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         self.assertEqual(int(results[0].pk), 1)
         self.assertEqual(len(connections['whoosh'].queries), 1)
 
+    def test_values_slicing(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+
+        reset_search_queries()
+        self.assertEqual(len(connections['whoosh'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = ['3', '2', '1']
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['whoosh'].queries), 3)
+
     def test_manual_iter(self):
         self.sb.update(self.wmmi, self.sample_objs)
         results = self.sqs.auto_query('Indexed!')

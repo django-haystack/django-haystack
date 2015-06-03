@@ -849,6 +849,27 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(connections['solr'].queries), 1)
 
+    def test_values_list_slice(self):
+        reset_search_queries()
+        self.assertEqual(len(connections['solr'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = [str(i) for i in [3, 2, 4, 5, 6, 7, 8, 9, 10, 11]]
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['solr'].queries), 3)
+
     def test_count(self):
         reset_search_queries()
         self.assertEqual(len(connections['solr'].queries), 0)
