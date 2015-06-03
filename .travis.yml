@@ -55,8 +55,6 @@ matrix:
     - env: TOX_ENV=pypy-django1.6
     - env: TOX_ENV=pypy-django1.7
     - env: TOX_ENV=pypy-django1.8
-    - env: TOX_ENV=py27-django1.8
-    - env: TOX_ENV=py34-django1.8
 
 services:
   - elasticsearch
