@@ -28,6 +28,8 @@ if DJANGO_VERSION >= (1, 7):
             app_mod = apps.get_app_config(label)
             return app_mod.get_models()
         except LookupError:
+            if '.' not in label:
+                raise ImproperlyConfigured('Unknown application label {}'.format(label))
             app_label, model_name = label.rsplit('.', 1)
             return [apps.get_model(app_label, model_name)]
         except ImproperlyConfigured:
