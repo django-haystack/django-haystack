@@ -10,7 +10,6 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_model
 from django.utils import six
 from django.utils.datetime_safe import datetime
 
@@ -21,6 +20,7 @@ from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils import get_identifier, get_model_ct
+from haystack.utils.app_loading import haystack_get_model
 
 try:
     import json
@@ -609,7 +609,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             score = raw_page.score(doc_offset) or 0
             app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
-            model = get_model(app_label, model_name)
+            model = haystack_get_model(app_label, model_name)
 
             if model and model in indexed_models:
                 for key, value in raw_result.items():

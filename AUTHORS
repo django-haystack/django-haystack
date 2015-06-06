@@ -103,3 +103,4 @@ Thanks to
     * Alfredo Armanini (@phingage) for a patch fixing compatibility with database API changes in Django 1.8
     * Ben Spaulding (@benspaulding) for many updates for Django 1.8 support
     * Troy Grosfield (@troygrosfield) for fixing the test runner for Django 1.8
+    * Ilan Steemers (@Koed00) for fixing Django 1.9 deprecation warnings
