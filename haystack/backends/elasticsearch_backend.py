@@ -280,10 +280,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         filters = []
 
         if fields:
-            if isinstance(fields, (list, set)):
-                fields = " ".join(fields)
-
-            kwargs['fields'] = fields
+            kwargs['fields'] = list(fields)
 
         if sort_by is not None:
             order_list = []
@@ -594,8 +591,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         content_field = unified_index.document_field
 
         for raw_result in raw_results.get('hits', {}).get('hits', []):
-            source = raw_result['_source']
-            app_label, model_name = source[DJANGO_CT].split('.')
+            if 'fields' in raw_result:
+                source = raw_result['fields']
+            else:
+                source = raw_result.get('_source', {})
+
+            id = raw_result['_id']
+            app_label, model_name, idnum = id.split('.')
             additional_fields = {}
             model = get_model(app_label, model_name)
 
