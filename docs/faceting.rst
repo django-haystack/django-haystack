@@ -19,7 +19,7 @@ capabilities. The general workflow in this regard is:
   #. The search engine will return the counts it sees for that match.
   #. You display those counts to the user and provide them with a link.
   #. When the user chooses a link, you narrow the search query to only include
-     those conditions and display the rests, potentially with further facets.
+     those conditions and display the results, potentially with further facets.
 
 .. note::
 
