@@ -265,7 +265,7 @@ create a new template inside your template directory called
     {{ object.user.get_full_name }}
     {{ object.body }}
 
-In addition, we added several other fields (``author`` and ``pub_date``). These
+In addition, we added other fields, (``author`` and ``pub_date``). These
 are useful when you want to provide additional filtering options. Haystack comes
 with a variety of ``SearchField`` classes to handle most types of data.
 
