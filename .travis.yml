@@ -29,6 +29,7 @@ before_install:
     - mkdir -p $HOME/download-cache
 
 install:
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
     - pip install requests "Django${DJANGO_VERSION}"
     - python setup.py clean build install
 
@@ -48,6 +49,7 @@ env:
 matrix:
     allow_failures:
         - python: "pypy"
+        - python: 2.6
     exclude:
        - python: 2.6
          env: DJANGO_VERSION=">=1.7,<1.8"
