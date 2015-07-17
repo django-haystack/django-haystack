@@ -820,7 +820,7 @@ class WhooshSearchQuery(BaseSearchQuery):
             index_fieldname = u'%s:' % connections[self._using].get_unified_index().get_index_fieldname(field)
 
         filter_types = {
-            'contains': '%s',
+            'contains': '*%s*',
             'startswith': "%s*",
             'exact': '%s',
             'gt': "{%s to}",
