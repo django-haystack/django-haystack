@@ -39,12 +39,15 @@ class SearchChangeList(ChangeList):
         self.haystack_connection = kwargs.pop('haystack_connection', 'default')
         super(SearchChangeList, self).__init__(**kwargs)
 
+    def get_searchqueryset(self, request):
+        # Note that pagination is 0-based, not 1-based.
+        return SearchQuerySet(self.haystack_connection).models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
+
     def get_results(self, request):
         if not SEARCH_VAR in request.GET:
             return super(SearchChangeList, self).get_results(request)
 
-        # Note that pagination is 0-based, not 1-based.
-        sqs = SearchQuerySet(self.haystack_connection).models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
+        sqs = self.get_searchqueryset(request)
 
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
