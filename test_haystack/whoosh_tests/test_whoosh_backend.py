@@ -9,7 +9,6 @@ from decimal import Decimal
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils import unittest
 from django.utils.datetime_safe import date, datetime
 from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
@@ -23,6 +22,7 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
 from ..mocks import MockSearchResult
+from ..utils import unittest
 from .testcases import WhooshTestCase
 
 
@@ -705,6 +705,29 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         results = self.sqs.auto_query('Indexed!')
         self.assertEqual(int(results[0].pk), 1)
         self.assertEqual(len(connections['whoosh'].queries), 1)
+
+    def test_values_slicing(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+
+        reset_search_queries()
+        self.assertEqual(len(connections['whoosh'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = ['3', '2', '1']
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['whoosh'].queries), 3)
 
     def test_manual_iter(self):
         self.sb.update(self.wmmi, self.sample_objs)

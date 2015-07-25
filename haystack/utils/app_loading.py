@@ -4,15 +4,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_app, get_model, get_models
-from django.utils.importlib import import_module
+
+from haystack.utils import importlib
 
 __all__ = ['haystack_get_models', 'haystack_load_apps']
 
-
 APP = 'app'
 MODEL = 'model'
-
 
 if DJANGO_VERSION >= (1, 7):
     from django.apps import apps
@@ -27,19 +25,22 @@ if DJANGO_VERSION >= (1, 7):
 
     def haystack_get_models(label):
         try:
-            app_mod = get_app(label)
-            if app_mod is not None:
-                return get_models(app_mod=app_mod)
+            app_mod = apps.get_app_config(label)
+            return app_mod.get_models()
+        except LookupError:
+            if '.' not in label:
+                raise ImproperlyConfigured('Unknown application label {}'.format(label))
+            app_label, model_name = label.rsplit('.', 1)
+            return [apps.get_model(app_label, model_name)]
         except ImproperlyConfigured:
             pass
 
-        if '.' not in label:
-            raise ImproperlyConfigured("No installed application has the label %s" % label)
-
-        app_label, model_name = label.rsplit('.', 1)
-        return [get_model(app_label, model_name)]
+    def haystack_get_model(app_label, model_name):
+        return apps.get_model(app_label, model_name)
 
 else:
+    from django.db.models.loading import get_app, get_model, get_models
+
     def is_app_or_model(label):
         label_bits = label.split('.')
 
@@ -52,11 +53,12 @@ else:
                 return APP
             return MODEL
         else:
-            raise ImproperlyConfigured("'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
+            raise ImproperlyConfigured(
+                "'%s' isn't recognized as an app (<app_label>) or model (<app_label>.<model_name>)." % label)
 
     def haystack_get_app_modules():
         """Return the Python module for each installed app"""
-        return [import_module(i) for i in settings.INSTALLED_APPS]
+        return [importlib.import_module(i) for i in settings.INSTALLED_APPS]
 
     def haystack_load_apps():
         # Do all, in an INSTALLED_APPS sorted order.
@@ -83,3 +85,6 @@ else:
         else:
             app_label, model_name = label.rsplit('.', 1)
             return [get_model(app_label, model_name)]
+
+    def haystack_get_model(app_label, model_name):
+        return get_model(app_label, model_name)

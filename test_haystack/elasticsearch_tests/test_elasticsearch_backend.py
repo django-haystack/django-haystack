@@ -10,7 +10,6 @@ import elasticsearch
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils import unittest
 
 from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SkipDocument
@@ -23,6 +22,7 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
+from ..utils import unittest
 
 test_pickling = True
 
@@ -745,6 +745,27 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         results = self.sqs.all().order_by('pub_date')
         self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(connections['elasticsearch'].queries), 1)
+
+    def test_values_slicing(self):
+        reset_search_queries()
+        self.assertEqual(len(connections['elasticsearch'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = [str(i) for i in [3, 2, 4, 5, 6, 7, 8, 9, 10, 11]]
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_count(self):
         reset_search_queries()
