@@ -99,14 +99,22 @@ class SearchModelAdminMixin(object):
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
-        list_display = list(self.list_display)
+        list_display = self.get_list_display(request)
+        list_display_links = self.get_list_display_links(request, list_display)
+
+
+        # Check actions to see if any are available on this changelist
+        actions = self.get_actions(request)
+        if actions:
+            # Add the action checkboxes if there are any actions available.
+            list_display = ['action_checkbox'] + list(list_display)
 
         kwargs = {
             'haystack_connection': self.haystack_connection,
             'request': request,
             'model': self.model,
             'list_display': list_display,
-            'list_display_links': self.list_display_links,
+            'list_display_links': list_display_links,
             'list_filter': self.list_filter,
             'date_hierarchy': self.date_hierarchy,
             'search_fields': self.search_fields,
