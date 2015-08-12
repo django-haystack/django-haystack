@@ -242,9 +242,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if stats:
             kwargs['stats'] = "true"
+            kwargs['stats.field'] = stats.keys()
 
             for k in stats.keys():
-                kwargs['stats.field'] = k
 
                 for facet in stats[k]:
                     kwargs['f.%s.stats.facet' % k] = facet
