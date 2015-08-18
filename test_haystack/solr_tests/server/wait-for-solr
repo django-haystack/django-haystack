@@ -5,13 +5,18 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import sys
 import time
+import os
 
 import requests
 
 max_retries = 100
 retry_count = 0
 retry_delay = 15
-status_url = 'http://localhost:9001/solr/admin/ping'
+
+if int(os.environ.get('SOLR_VERSION', '5')[0]) < 5:
+    status_url = 'http://localhost:9001/solr/admin/ping'
+else:
+    status_url = 'http://localhost:9001/solr'
 
 
 while retry_count < max_retries:

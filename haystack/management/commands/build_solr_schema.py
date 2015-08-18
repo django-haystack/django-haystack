@@ -20,7 +20,7 @@ class Command(BaseCommand):
         make_option("-f", "--filename", action="store", type="string", dest="filename",
                 help='For Solr version before 5.0.0. If provided, directs output to a XML schema.'),
         make_option("-s", "--stdout", action="store_true", dest="stdout",
-            help='For Solr version before 5.0.0, print on stdout the schema.xml', default=False),
+            help='For Solr version before 5.0.0, print the schema.xml to stdout', default=False),
         make_option("-u", "--using", action="store", type="string", dest="using", default=constants.DEFAULT_ALIAS,
                     help='If provided, chooses a connection to work with.'),
     )
