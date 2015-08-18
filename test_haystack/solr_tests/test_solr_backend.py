@@ -11,6 +11,7 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.core.management import call_command
 from mock import patch
 
 from haystack import connections, indexes, reset_search_queries
@@ -197,7 +198,16 @@ class SolrQuotingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return u"""Don't panic but %s has been iñtërnâtiônàlizéð""" % obj.author
 
 
-class SolrSearchBackendTestCase(TestCase):
+class SolrTestCase(TestCase):
+    def setUp(self):
+        super(SolrTestCase, self).setUp()
+        if int(os.environ.get('SOLR_VERSION', '5')[0]) < 5:
+            call_command('build_solr_schema', filename=os.environ.get('SOLR_SCHEMA'), using='solr')
+        else:
+            call_command('build_solr_schema', using='solr')
+
+
+class SolrSearchBackendTestCase(SolrTestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
 
@@ -700,7 +710,7 @@ class CaptureHandler(std_logging.Handler):
 
 @patch("pysolr.Solr._send_request", side_effect=pysolr.SolrError)
 @patch("logging.Logger.log")
-class FailedSolrSearchBackendTestCase(TestCase):
+class FailedSolrSearchBackendTestCase(SolrTestCase):
     def test_all_cases(self, mock_send_request, mock_log):
         self.sample_objs = []
 
@@ -795,7 +805,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
 
 @override_settings(DEBUG=True)
-class LiveSolrSearchQuerySetTestCase(TestCase):
+class LiveSolrSearchQuerySetTestCase(SolrTestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
     fixtures = ['base_data.json', 'bulk_data.json']
 
@@ -1301,7 +1311,7 @@ class LiveSolrAutocompleteTestCase(TestCase):
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
-class LiveSolrRoundTripTestCase(TestCase):
+class LiveSolrRoundTripTestCase(SolrTestCase):
     def setUp(self):
         super(LiveSolrRoundTripTestCase, self).setUp()
 
@@ -1390,7 +1400,7 @@ class LiveSolrPickleTestCase(TestCase):
         self.assertEqual(like_a_cuke[0].id, results[0].id)
 
 
-class SolrBoostBackendTestCase(TestCase):
+class SolrBoostBackendTestCase(SolrTestCase):
     def setUp(self):
         super(SolrBoostBackendTestCase, self).setUp()
 
@@ -1441,7 +1451,7 @@ class SolrBoostBackendTestCase(TestCase):
 
 
 @unittest.skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
-class LiveSolrContentExtractionTestCase(TestCase):
+class LiveSolrContentExtractionTestCase(SolrTestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
 

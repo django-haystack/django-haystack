@@ -36,13 +36,15 @@ before_script:
 
 script:
     - python test_haystack/solr_tests/server/wait-for-solr
-    - python setup.py test
+    - SOLR_SCHEMA="test_haystack/solr_tests/server/solr4/solr/collection1/conf/schema.xml" python setup.py test
 
 env:
     matrix:
         - DJANGO_VERSION=">=1.8,<1.9"
         - DJANGO_VERSION=">=1.9,<1.10"
         - DJANGO_VERSION="==1.10a1"
+        - SOLR_VERSION="4.10.4"
+        - SOLR_VERSION="5.2.1"
 
 matrix:
     allow_failures:
