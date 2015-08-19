@@ -72,7 +72,7 @@ if [ ${SOLR_VERSION} = "5.2.1" ]; then
 
     # We use exec to allow process monitors to correctly kill the
     # actual Java process rather than this launcher script:
-    export CMD="sudo bin/solr start -p 9001"
+    export CMD="bin/solr start -p 9001"
     echo 'Starting server on port 9001'
     exec $CMD
     echo "Configuring Solr 5 Core named ${SOLR_CORENAME}"
