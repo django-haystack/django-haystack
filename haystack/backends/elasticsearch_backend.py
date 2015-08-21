@@ -555,6 +555,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 'dates': {},
                 'queries': {},
             }
+            # ES can return negative timestamps for pre-1970 data. Handle it.
+            def from_timestamp(tm):
+                return datetime.datetime.utcfromtimestamp(tm) if tm >= 0\
+                    else datetime.datetime(1970, 1, 1) + timedelta(seconds=tm)
 
             for facet_fieldname, facet_info in raw_results['facets'].items():
                 if facet_info.get('_type', 'terms') == 'terms':
@@ -562,7 +566,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 elif facet_info.get('_type', 'terms') == 'date_histogram':
                     # Elasticsearch provides UTC timestamps with an extra three
                     # decimals of precision, which datetime barfs on.
-                    facets['dates'][facet_fieldname] = [(datetime.datetime.utcfromtimestamp(individual['time'] / 1000), individual['count']) for individual in facet_info['entries']]
+                    facets['dates'][facet_fieldname] = [(from_timestamp(individual['time'] / 1000), individual['count']) for individual in facet_info['entries']]
                 elif facet_info.get('_type', 'terms') == 'query':
                     facets['queries'][facet_fieldname] = facet_info['count']
 
