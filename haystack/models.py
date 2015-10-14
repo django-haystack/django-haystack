@@ -23,6 +23,13 @@ try:
 except ImportError:
     geopy_distance = None
 
+try:
+    get_model = models.get_model
+except AttributeError:
+    # django 1.9 compat
+    from django.apps import apps
+    get_model = apps.get_model
+
 
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
@@ -101,7 +108,7 @@ class SearchResult(object):
     def _get_model(self):
         if self._model is None:
             try:
-                self._model = models.get_model(self.app_label, self.model_name)
+                self._model = get_model(self.app_label, self.model_name)
             except LookupError:
                 # this changed in change 1.7 to throw an error instead of
                 # returning None when the model isn't found. So catch the
