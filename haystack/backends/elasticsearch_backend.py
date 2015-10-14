@@ -20,7 +20,12 @@ from haystack.utils import get_identifier, get_model_ct
 
 try:
     import elasticsearch
-    from elasticsearch.helpers import bulk_index
+    try:
+        # let's try this, for elasticsearch > 1.7.0
+        from elasticsearch.helpers import bulk
+    except ImportError:
+        # let's try this, for elasticsearch <= 1.7.0
+        from elasticsearch.helpers import bulk_index as bulk
     from elasticsearch.exceptions import NotFoundError
 except ImportError:
     raise MissingDependency("The 'elasticsearch' backend requires the installation of 'elasticsearch'. Please refer to the documentation.")
@@ -186,7 +191,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 })
 
-        bulk_index(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
+        bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
 
         if commit:
             self.conn.indices.refresh(index=self.index_name)
