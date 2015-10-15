@@ -4,12 +4,21 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import datetime
 from decimal import Decimal
+from unittest import skipIf
 
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
+from django.test.utils import override_settings
 from test_haystack.core.models import MockModel, MockTag
 
 from haystack.fields import *
+
+
+try:
+    import jinja2
+    from django.template.backends.jinja2 import Jinja2
+except ImportError:
+    jinja2 = None
 
 
 class CharFieldTestCase(TestCase):
@@ -441,6 +450,28 @@ class CharFieldWithTemplateTestCase(TestCase):
         template5 = CharField(use_template=True, template_name=['foo.txt', 'search/indexes/bar.txt'])
         template5.instance_name = 'template'
         self.assertEqual(template5.prepare(mock), u'BAR!\n')
+
+
+@skipIf(jinja2 is None, "this test requires jinja2")
+@override_settings(TEMPLATES=[{
+    'BACKEND': 'django.template.backends.jinja2.Jinja2',
+    'APP_DIRS': True,
+    'OPTIONS': {'keep_trailing_newline': True},
+    'DIRS': [
+        '/home/html/jinja2',
+    ],
+}, {
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'APP_DIRS': True,
+}])
+class Jinja2TemplateTestCase(TestCase):
+
+    def test_prepare(self):
+        mock = MockModel()
+
+        template = CharField(use_template=True, template_name='search/indexes/foo.txt')
+        template.instance_name = 'template'
+        self.assertEqual(template.prepare(mock), u'FOOJINJA!\n')
 
 
 ##############################################################################

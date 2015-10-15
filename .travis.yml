@@ -29,7 +29,7 @@ before_install:
 
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
-    - pip install requests "Django${DJANGO_VERSION}"
+    - pip install requests Jinja2 "Django${DJANGO_VERSION}"
     - python setup.py clean build install
 
 before_script:
