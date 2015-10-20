@@ -11,7 +11,7 @@ from haystack import connection_router, connections
 from haystack.backends import SQ
 from haystack.constants import DEFAULT_OPERATOR, ITERATOR_LOAD_PER_QUERY, REPR_OUTPUT_SIZE
 from haystack.exceptions import NotHandled
-from haystack.inputs import AutoQuery, Clean, Raw
+from haystack.inputs import AutoQuery, Raw
 from haystack.utils import log as logging
 
 
@@ -170,7 +170,7 @@ class SearchQuerySet(object):
         self.query.set_limits(start, end)
         results = self.query.get_results(**kwargs)
 
-        if results == None or len(results) == 0:
+        if results is None or len(results) == 0:
             return False
 
         # Setup the full cache now that we know how many results there are.
@@ -222,7 +222,7 @@ class SearchQuerySet(object):
             if self._load_all:
                 # We have to deal with integer keys being cast from strings
                 model_objects = loaded_objects.get(result.model, {})
-                if not result.pk in model_objects:
+                if result.pk not in model_objects:
                     try:
                         result.pk = int(result.pk)
                     except ValueError:
@@ -266,7 +266,8 @@ class SearchQuerySet(object):
             bound = k + 1
 
         # We need check to see if we need to populate more of the cache.
-        if len(self._result_cache) <= 0 or (None in self._result_cache[start:bound] and not self._cache_is_full()):
+        if len(self._result_cache) <= 0 or (None in self._result_cache[start:bound]
+                                            and not self._cache_is_full()):
             try:
                 self._fill_cache(start, bound)
             except StopIteration:
@@ -333,7 +334,7 @@ class SearchQuerySet(object):
         clone = self._clone()
 
         for model in models:
-            if not model in connections[self.query._using].get_unified_index().get_indexed_models():
+            if model not in connections[self.query._using].get_unified_index().get_indexed_models():
                 warnings.warn('The model %r is not registered for search.' % (model,))
 
             clone.query.add_model(model)
@@ -385,10 +386,11 @@ class SearchQuerySet(object):
         clone = self._clone()
         stats_facets = []
         try:
-            stats_facets.append(sum(facet_fields,[]))
+            stats_facets.append(sum(facet_fields, []))
         except TypeError:
-            if facet_fields: stats_facets.append(facet_fields)
-        clone.query.add_stats_query(field,stats_facets)
+            if facet_fields:
+                stats_facets.append(facet_fields)
+        clone.query.add_stats_query(field, stats_facets)
         return clone
 
     def distance(self, field, point):
@@ -782,6 +784,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
         """
         if not isinstance(k, (slice, six.integer_types)):
             raise TypeError
+
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
                     and (k.stop is None or k.stop >= 0))), \
