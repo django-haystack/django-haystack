@@ -94,9 +94,12 @@ class SolrSearchBackend(BaseSearchBackend):
 
             self.log.error("Failed to remove document '%s' from Solr: %s", solr_id, e)
 
-    def clear(self, models=[], commit=True):
+    def clear(self, models=None, commit=True):
+        if models is not None:
+            assert isinstance(models, (list, tuple))
+
         try:
-            if not models:
+            if models is None:
                 # *:* matches all docs in Solr
                 self.conn.delete(q='*:*', commit=commit)
             else:
@@ -114,7 +117,7 @@ class SolrSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            if len(models):
+            if models is not None:
                 self.log.error("Failed to clear Solr index of models '%s': %s", ','.join(models_to_delete), e)
             else:
                 self.log.error("Failed to clear Solr index: %s", e)

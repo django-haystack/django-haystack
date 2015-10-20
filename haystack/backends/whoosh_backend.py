@@ -241,14 +241,17 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e)
 
-    def clear(self, models=[], commit=True):
+    def clear(self, models=None, commit=True):
         if not self.setup_complete:
             self.setup()
 
         self.index = self.index.refresh()
 
+        if models is not None:
+            assert isinstance(models, (list, tuple))
+
         try:
-            if not models:
+            if models is None:
                 self.delete_index()
             else:
                 models_to_delete = []

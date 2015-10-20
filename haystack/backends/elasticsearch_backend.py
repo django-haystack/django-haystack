@@ -222,14 +222,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
 
-    def clear(self, models=[], commit=True):
+    def clear(self, models=None, commit=True):
         # We actually don't want to do this here, as mappings could be
         # very different.
         # if not self.setup_complete:
         #     self.setup()
 
+        if models is not None:
+            assert isinstance(models, (list, tuple))
+
         try:
-            if not models:
+            if models is None:
                 self.conn.indices.delete(index=self.index_name, ignore=404)
                 self.setup_complete = False
                 self.existing_mapping = {}
@@ -247,7 +250,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            if len(models):
+            if models is not None:
                 self.log.error("Failed to clear Elasticsearch index of models '%s': %s", ','.join(models_to_delete), e)
             else:
                 self.log.error("Failed to clear Elasticsearch index: %s", e)

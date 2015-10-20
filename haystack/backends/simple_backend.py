@@ -43,7 +43,7 @@ class SimpleSearchBackend(BaseSearchBackend):
     def remove(self, obj, commit=True):
         warn('remove is not implemented in this backend')
 
-    def clear(self, models=[], commit=True):
+    def clear(self, models=None, commit=True):
         warn('clear is not implemented in this backend')
 
     @log_query
