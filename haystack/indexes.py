@@ -353,7 +353,12 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         By default, returns ``all()`` on the model's default manager.
         """
         return self.get_model()._default_manager.all()
-
+    
+	def pre_process_data(self, queryset):
+        """
+        Will allow an "index" to do some preprocessing of the data in its slice
+        before the actual data is indexed
+        """
 
 class BasicSearchIndex(SearchIndex):
     text = CharField(document=True, use_template=True)
