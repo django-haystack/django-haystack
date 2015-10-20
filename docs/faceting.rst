@@ -19,7 +19,7 @@ capabilities. The general workflow in this regard is:
   #. The search engine will return the counts it sees for that match.
   #. You display those counts to the user and provide them with a link.
   #. When the user chooses a link, you narrow the search query to only include
-     those conditions and display the rests, potentially with further facets.
+     those conditions and display the results, potentially with further facets.
 
 .. note::
 
@@ -213,20 +213,16 @@ URLconf should resemble::
 
     from django.conf.urls.defaults import *
     from haystack.forms import FacetedSearchForm
-    from haystack.query import SearchQuerySet
     from haystack.views import FacetedSearchView
     
     
-    sqs = SearchQuerySet().facet('author')
-     
-    
     urlpatterns = patterns('haystack.views',
-        url(r'^$', FacetedSearchView(form_class=FacetedSearchForm, searchqueryset=sqs), name='haystack_search'),
+        url(r'^$', FacetedSearchView(form_class=FacetedSearchForm, facet_fields=['author']), name='haystack_search'),
     )
 
-The ``FacetedSearchView`` will now instantiate the ``FacetedSearchForm`` and use
-the ``SearchQuerySet`` we provided. Now, a ``facets`` variable will be present
-in the context. This is added in an overridden ``extra_context`` method.
+The ``FacetedSearchView`` will now instantiate the ``FacetedSearchForm``.
+The specified ``facet_fields`` will be present in the context variable
+``facets``. This is added in an overridden ``extra_context`` method.
 
 
 3. Display The Facets In The Template

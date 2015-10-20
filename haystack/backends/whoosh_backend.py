@@ -10,17 +10,17 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_model
 from django.utils import six
 from django.utils.datetime_safe import datetime
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, SearchBackendError
+from haystack.exceptions import MissingDependency, SearchBackendError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils import get_identifier, get_model_ct
+from haystack.utils.app_loading import haystack_get_model
 
 try:
     import json
@@ -192,32 +192,35 @@ class WhooshSearchBackend(BaseSearchBackend):
         writer = AsyncWriter(self.index)
 
         for obj in iterable:
-            doc = index.full_prepare(obj)
-
-            # Really make sure it's unicode, because Whoosh won't have it any
-            # other way.
-            for key in doc:
-                doc[key] = self._from_python(doc[key])
-
-            # Document boosts aren't supported in Whoosh 2.5.0+.
-            if 'boost' in doc:
-                del doc['boost']
-
             try:
-                writer.update_document(**doc)
-            except Exception as e:
-                if not self.silently_fail:
-                    raise
+                doc = index.full_prepare(obj)
+            except SkipDocument:
+                self.log.debug(u"Indexing for object `%s` skipped", obj)
+            else:
+                # Really make sure it's unicode, because Whoosh won't have it any
+                # other way.
+                for key in doc:
+                    doc[key] = self._from_python(doc[key])
 
-                # We'll log the object identifier but won't include the actual object
-                # to avoid the possibility of that generating encoding errors while
-                # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
-                    "data": {
-                        "index": index,
-                        "object": get_identifier(obj)
-                    }
-                })
+                # Document boosts aren't supported in Whoosh 2.5.0+.
+                if 'boost' in doc:
+                    del doc['boost']
+
+                try:
+                    writer.update_document(**doc)
+                except Exception as e:
+                    if not self.silently_fail:
+                        raise
+
+                    # We'll log the object identifier but won't include the actual object
+                    # to avoid the possibility of that generating encoding errors while
+                    # processing the log message:
+                    self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
+                        "data": {
+                            "index": index,
+                            "object": get_identifier(obj)
+                        }
+                    })
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
@@ -606,7 +609,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             score = raw_page.score(doc_offset) or 0
             app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
-            model = get_model(app_label, model_name)
+            model = haystack_get_model(app_label, model_name)
 
             if model and model in indexed_models:
                 for key, value in raw_result.items():

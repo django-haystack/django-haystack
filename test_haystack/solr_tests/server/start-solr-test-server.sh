@@ -2,7 +2,7 @@
 
 set -e
 
-SOLR_VERSION=4.7.2
+SOLR_VERSION=4.10.4
 
 cd $(dirname $0)
 
@@ -20,7 +20,8 @@ if [ -f ${SOLR_ARCHIVE} ]; then
 fi
 
 if [ ! -f ${SOLR_ARCHIVE} ]; then
-    python get-solr-download-url.py $SOLR_VERSION | xargs curl -Lo $SOLR_ARCHIVE
+    SOLR_DOWNLOAD_URL=$(python get-solr-download-url.py $SOLR_VERSION)
+    curl -Lo $SOLR_ARCHIVE ${SOLR_DOWNLOAD_URL} || (echo "Unable to download ${SOLR_DOWNLOAD_URL}"; exit 2)
 fi
 
 echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr4/"

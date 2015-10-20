@@ -6,16 +6,16 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_model
 from django.utils import six
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.exceptions import MissingDependency, MoreLikeThisError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils import get_identifier, get_model_ct
+from haystack.utils.app_loading import haystack_get_model
 
 try:
     from pysolr import Solr, SolrError
@@ -54,6 +54,8 @@ class SolrSearchBackend(BaseSearchBackend):
         for obj in iterable:
             try:
                 docs.append(index.full_prepare(obj))
+            except SkipDocument:
+                self.log.debug(u"Indexing for object `%s` skipped", obj)
             except UnicodeDecodeError:
                 if not self.silently_fail:
                     raise
@@ -376,7 +378,7 @@ class SolrSearchBackend(BaseSearchBackend):
         for raw_result in raw_results.docs:
             app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
-            model = get_model(app_label, model_name)
+            model = haystack_get_model(app_label, model_name)
 
             if model and model in indexed_models:
                 index = unified_index.get_index(model)

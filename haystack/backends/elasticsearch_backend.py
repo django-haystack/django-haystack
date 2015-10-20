@@ -8,21 +8,26 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_model
 from django.utils import six
 
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, DJANGO_ID, ID
-from haystack.exceptions import MissingDependency, MoreLikeThisError
+from haystack.exceptions import MissingDependency, MoreLikeThisError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils import get_identifier, get_model_ct
+from haystack.utils.app_loading import haystack_get_model
 
 try:
     import elasticsearch
-    from elasticsearch.helpers import bulk_index
+    try:
+        # let's try this, for elasticsearch > 1.7.0
+        from elasticsearch.helpers import bulk
+    except ImportError:
+        # let's try this, for elasticsearch <= 1.7.0
+        from elasticsearch.helpers import bulk_index as bulk
     from elasticsearch.exceptions import NotFoundError
 except ImportError:
     raise MissingDependency("The 'elasticsearch' backend requires the installation of 'elasticsearch'. Please refer to the documentation.")
@@ -172,6 +177,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 final_data['_id'] = final_data[ID]
 
                 prepped_docs.append(final_data)
+            except SkipDocument:
+                self.log.debug(u"Indexing for object `%s` skipped", obj)
             except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise
@@ -186,7 +193,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     }
                 })
 
-        bulk_index(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
+        bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
 
         if commit:
             self.conn.indices.refresh(index=self.index_name)
@@ -595,7 +602,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             source = raw_result['_source']
             app_label, model_name = source[DJANGO_CT].split('.')
             additional_fields = {}
-            model = get_model(app_label, model_name)
+            model = haystack_get_model(app_label, model_name)
 
             if model and model in indexed_models:
                 for key, value in source.items():

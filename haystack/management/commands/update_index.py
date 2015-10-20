@@ -8,7 +8,12 @@ import warnings
 from datetime import timedelta
 from optparse import make_option
 
-from django import db
+try:
+    from django.db import close_old_connections
+except ImportError:
+    # This can be removed when we drop support for Django 1.7 and earlier:
+    from django.db import close_connection as close_old_connections
+
 from django.core.management.base import LabelCommand
 from django.db import reset_queries
 
@@ -49,7 +54,7 @@ def worker(bits):
         # out connections (via ``... = {}``) destroys in-memory DBs.
         if 'sqlite3' not in info['ENGINE']:
             try:
-                db.close_connection()
+                close_old_connections()
                 if isinstance(connections._connections, dict):
                     del(connections._connections[alias])
                 else:
@@ -71,8 +76,8 @@ def worker(bits):
     if func == 'do_update':
         qs = index.build_queryset(start_date=start_date, end_date=end_date)
         do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit)
-    elif bits[0] == 'do_remove':
-        do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=verbosity, commit=commit)
+    else:
+        raise NotImplementedError('Unknown function %s' % func)
 
 
 def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
@@ -92,26 +97,6 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
-
-
-def do_remove(backend, index, model, pks_seen, start, upper_bound, verbosity=1, commit=True):
-    # Retrieve PKs from the index. Note that this cannot be a range query because keys can be non-numeric
-    # UUIDs or other custom values.
-    # To reduce load on the search engine, we only retrieve the pk field, which will be checked against the
-    # full list obtained from the database, and the id field, which will be used to delete the record should
-    # it be found to be stale.
-    index_pks = SearchQuerySet(using=backend.connection_alias).models(model).values_list('pk', 'id')
-
-    # Compare the pks from the index to the list obtained from the database:
-    for pk, rec_id in index_pks[start:upper_bound]:
-        if smart_bytes(pk) in pks_seen:
-            continue
-
-        # Since the PK was not in the database list, we'll delete the record from the search index:
-        if verbosity >= 2:
-            print("  removing %s." % rec_id)
-
-        backend.remove(rec_id, commit=commit)
 
 
 class Command(LabelCommand):
@@ -226,7 +211,7 @@ class Command(LabelCommand):
                 # workers resetting connections leads to references to models / connections getting
                 # stale and having their connection disconnected from under them. Resetting before
                 # the loop continues and it accesses the ORM makes it better.
-                db.close_connection()
+                close_old_connections()
 
             qs = index.build_queryset(using=using, start_date=self.start_date,
                                       end_date=self.end_date)
@@ -260,31 +245,45 @@ class Command(LabelCommand):
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
-                    pks_seen = set(smart_bytes(pk) for pk in qs)
+                    database_pks = set(smart_bytes(pk) for pk in qs)
 
-                    total = len(pks_seen)
+                    total = len(database_pks)
                 else:
-                    pks_seen = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
-
-                if self.workers > 0:
-                    ghetto_queue = []
+                    database_pks = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
 
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.
                 # See https://github.com/django-haystack/django-haystack/issues/1186
                 index_total = SearchQuerySet(using=backend.connection_alias).models(model).count()
 
+                # Retrieve PKs from the index. Note that this cannot be a numeric range query because although
+                # pks are normally numeric they can be non-numeric UUIDs or other custom values. To reduce
+                # load on the search engine, we only retrieve the pk field, which will be checked against the
+                # full list obtained from the database, and the id field, which will be used to delete the
+                # record should it be found to be stale.
+                index_pks = SearchQuerySet(using=backend.connection_alias).models(model)
+                index_pks = index_pks.values_list('pk', 'id')
+
+                # We'll collect all of the record IDs which are no longer present in the database and delete
+                # them after walking the entire index. This uses more memory than the incremental approach but
+                # avoids needing the pagination logic below to account for both commit modes:
+                stale_records = set()
+
                 for start in range(0, index_total, batch_size):
                     upper_bound = start + batch_size
 
-                    if self.workers == 0:
-                        do_remove(backend, index, model, pks_seen, start, upper_bound,
-                                  verbosity=self.verbosity, commit=self.commit)
-                    else:
-                        ghetto_queue.append(('do_remove', model, pks_seen, start, upper_bound, using,
-                                             self.verbosity, self.commit))
+                    # If the database pk is no longer present, queue the index key for removal:
+                    for pk, rec_id in index_pks[start:upper_bound]:
+                        if smart_bytes(pk) not in database_pks:
+                            stale_records.add(rec_id)
 
-                if self.workers > 0:
-                    pool = multiprocessing.Pool(self.workers)
-                    pool.map(worker, ghetto_queue)
-                    pool.terminate()
+                if stale_records:
+                    if self.verbosity >= 1:
+                        print("  removing %d stale records." % len(stale_records))
+
+                    for rec_id in stale_records:
+                        # Since the PK was not in the database list, we'll delete the record from the search index:
+                        if self.verbosity >= 2:
+                            print("  removing %s." % rec_id)
+
+                        backend.remove(rec_id, commit=self.commit)

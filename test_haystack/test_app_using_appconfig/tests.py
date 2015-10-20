@@ -4,13 +4,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import django
 from django.test import TestCase
-from django.utils.unittest import skipIf
+
 
 from .models import MicroBlogPost
+from ..utils import unittest
 
 
 
-@skipIf(django.VERSION < (1, 7), 'AppConfig tests do not apply to Django versions before 1.7')
+@unittest.skipIf(django.VERSION < (1, 7), 'AppConfig tests do not apply to Django versions before 1.7')
 class AppConfigTests(TestCase):
     def test_index_collection(self):
         from haystack import connections

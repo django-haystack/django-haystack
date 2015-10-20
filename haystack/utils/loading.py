@@ -8,12 +8,20 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import importlib
-from django.utils.datastructures import SortedDict
 from django.utils.module_loading import module_has_submodule
 
 from haystack.exceptions import NotHandled, SearchFieldError
+from haystack.utils import importlib
 from haystack.utils.app_loading import haystack_get_app_modules
+
+
+try:
+    # Introduced in Python 2.7
+    from collections import OrderedDict
+except ImportError:
+    # Deprecated in Django 1.8; removed in Django 1.9 (both of which require
+    # at least Python 2.7)
+    from django.utils.datastructures import SortedDict as OrderedDict
 
 
 def import_class(path):
@@ -152,7 +160,7 @@ class UnifiedIndex(object):
     # Used to collect all the indexes into a cohesive whole.
     def __init__(self, excluded_indexes=None):
         self._indexes = {}
-        self.fields = SortedDict()
+        self.fields = OrderedDict()
         self._built = False
         self.excluded_indexes = excluded_indexes or []
         self.excluded_indexes_ids = {}
@@ -192,7 +200,7 @@ class UnifiedIndex(object):
 
     def reset(self):
         self._indexes = {}
-        self.fields = SortedDict()
+        self.fields = OrderedDict()
         self._built = False
         self._fieldnames = {}
         self._facet_fieldnames = {}

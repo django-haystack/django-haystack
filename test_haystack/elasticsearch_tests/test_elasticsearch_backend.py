@@ -10,9 +10,9 @@ import elasticsearch
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils import unittest
 
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
@@ -22,6 +22,7 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
+from ..utils import unittest
 
 test_pickling = True
 
@@ -55,6 +56,14 @@ class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class ElasticsearchMockSearchIndexWithSkipDocument(ElasticsearchMockSearchIndex):
+
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return u"Indexed!\n%s" % obj.id
 
 
 class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
@@ -207,6 +216,7 @@ class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 
 class TestSettings(TestCase):
+
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
         backend = ElasticsearchSearchBackend('alias', **{
@@ -230,6 +240,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.old_ui = connections['elasticsearch'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = ElasticsearchMockSearchIndex()
+        self.smmidni = ElasticsearchMockSearchIndexWithSkipDocument()
         self.smtmmi = ElasticsearchMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections['elasticsearch']._index = self.ui
@@ -334,6 +345,18 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 'id': 'core.mockmodel.3'
             }
         ])
+
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        # Check what Elasticsearch thinks is there.
+        res = self.raw_search('*:*')['hits']
+        self.assertEqual(res['total'], 2)
+        self.assertListEqual(
+            sorted([x['_source']['id'] for x in res['hits']]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
+
 
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -707,6 +730,27 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         results = self.sqs.all().order_by('pub_date')
         self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(connections['elasticsearch'].queries), 1)
+
+    def test_values_slicing(self):
+        reset_search_queries()
+        self.assertEqual(len(connections['elasticsearch'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = [str(i) for i in [3, 2, 4, 5, 6, 7, 8, 9, 10, 11]]
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_count(self):
         reset_search_queries()
