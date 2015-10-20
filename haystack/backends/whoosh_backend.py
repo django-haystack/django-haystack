@@ -215,12 +215,9 @@ class WhooshSearchBackend(BaseSearchBackend):
                     # We'll log the object identifier but won't include the actual object
                     # to avoid the possibility of that generating encoding errors while
                     # processing the log message:
-                    self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
-                        "data": {
-                            "index": index,
-                            "object": get_identifier(obj)
-                        }
-                    })
+                    self.log.error(u"%s while preparing object for update" % e.__class__.__name__,
+                                   exc_info=True, extra={"data": {"index": index,
+                                                                  "object": get_identifier(obj)}})
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
@@ -239,7 +236,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e)
+            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e, exc_info=True)
 
     def clear(self, models=None, commit=True):
         if not self.setup_complete:
@@ -264,7 +261,11 @@ class WhooshSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to clear documents from Whoosh: %s", e)
+            if models is not None:
+                self.log.error("Failed to clear Whoosh index of models '%s': %s", ','.join(models_to_delete),
+                               e, exc_info=True)
+            else:
+                self.log.error("Failed to clear Whoosh index: %s", e, exc_info=True)
 
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,

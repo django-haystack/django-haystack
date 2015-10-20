@@ -161,7 +161,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to add documents to Elasticsearch: %s", e)
+                self.log.error("Failed to add documents to Elasticsearch: %s", e, exc_info=True)
                 return
 
         prepped_docs = []
@@ -186,12 +186,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
-                    "data": {
-                        "index": index,
-                        "object": get_identifier(obj)
-                    }
-                })
+                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True,
+                               extra={"data": {"index": index,
+                                               "object": get_identifier(obj)}})
 
         bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
 
@@ -208,7 +205,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
+                self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e,
+                               exc_info=True)
                 return
 
         try:
@@ -220,7 +218,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e)
+            self.log.error("Failed to remove document '%s' from Elasticsearch: %s", doc_id, e, exc_info=True)
 
     def clear(self, models=None, commit=True):
         # We actually don't want to do this here, as mappings could be
@@ -251,9 +249,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 raise
 
             if models is not None:
-                self.log.error("Failed to clear Elasticsearch index of models '%s': %s", ','.join(models_to_delete), e)
+                self.log.error("Failed to clear Elasticsearch index of models '%s': %s",
+                               ','.join(models_to_delete), e, exc_info=True)
             else:
-                self.log.error("Failed to clear Elasticsearch index: %s", e)
+                self.log.error("Failed to clear Elasticsearch index: %s", e, exc_info=True)
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
@@ -519,7 +518,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e)
+            self.log.error("Failed to query Elasticsearch using '%s': %s", query_string, e, exc_info=True)
             raw_results = {}
 
         return self._process_results(raw_results,
@@ -558,7 +557,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to fetch More Like This from Elasticsearch for document '%s': %s", doc_id, e)
+            self.log.error("Failed to fetch More Like This from Elasticsearch for document '%s': %s",
+                           doc_id, e, exc_info=True)
             raw_results = {}
 
         return self._process_results(raw_results, result_class=result_class)
