@@ -217,16 +217,19 @@ class SearchQuerySet(object):
                     self.log.warning("Model '%s' not handled by the routers", model)
                     # Revert to old behaviour
                     loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
+                # Convert keys to string so we can also handle UUIDs
+                loaded_objects[model] = {
+                    six.text_type(pk): value
+                    for pk, value
+                    in loaded_objects[model].items()
+                }
 
         for result in results:
             if self._load_all:
-                # We have to deal with integer keys being cast from strings
+                # We have to deal with integer keys
+                # that have to be cast to strings
                 model_objects = loaded_objects.get(result.model, {})
-                if not result.pk in model_objects:
-                    try:
-                        result.pk = int(result.pk)
-                    except ValueError:
-                        pass
+                result.pk = six.text_type(result.pk)
                 try:
                     result._object = model_objects[result.pk]
                 except KeyError:
