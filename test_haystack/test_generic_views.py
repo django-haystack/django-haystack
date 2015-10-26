@@ -37,6 +37,8 @@ class GenericSearchViewsTestCase(TestCase):
         self.assertEqual(context['query'], self.query)
         self.assertEqual(context.get('view').__class__, SearchView)
         self.assertEqual(context.get('form').__class__, ModelSearchForm)
+        self.assertIn('page_obj', context)
+        self.assertNotIn('page', context)
 
     def test_search_view_form_valid(self):
         """Test the generic SearchView form is valid."""

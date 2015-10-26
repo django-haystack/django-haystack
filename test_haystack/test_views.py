@@ -61,6 +61,8 @@ class SearchViewTestCase(TestCase):
     def test_search_query(self):
         response = self.client.get(reverse('haystack_search'), {'q': 'haystack'})
         self.assertEqual(response.status_code, 200)
+        self.assertIn('page', response.context)
+        self.assertNotIn('page_obj', response.context)
         self.assertEqual(len(response.context[-1]['page'].object_list), 3)
         self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), u'core.mockmodel')
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, '1')

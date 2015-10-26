@@ -318,7 +318,7 @@ will likely differ)::
             {% if query %}
                 <h3>Results</h3>
 
-                {% for result in page_obj.object_list %}
+                {% for result in page.object_list %}
                     <p>
                         <a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a>
                     </p>
@@ -326,11 +326,11 @@ will likely differ)::
                     <p>No results found.</p>
                 {% endfor %}
 
-                {% if page_obj.has_previous or page_obj.has_next %}
+                {% if page.has_previous or page.has_next %}
                     <div>
-                        {% if page_obj.has_previous %}<a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
+                        {% if page.has_previous %}<a href="?q={{ query }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
                         |
-                        {% if page_obj.has_next %}<a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
+                        {% if page.has_next %}<a href="?q={{ query }}&amp;page={{ page.next_page_number }}">{% endif %}Next &raquo;{% if page.has_next %}</a>{% endif %}
                     </div>
                 {% endif %}
             {% else %}
@@ -339,7 +339,7 @@ will likely differ)::
         </form>
     {% endblock %}
 
-Note that the ``page_obj.object_list`` is actually a list of ``SearchResult``
+Note that the ``page.object_list`` is actually a list of ``SearchResult``
 objects instead of individual models. These objects have all the data returned
 from that record within the search index as well as score. They can also
 directly access the model for the result via ``{{ result.object }}``. So the
