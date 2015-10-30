@@ -184,7 +184,7 @@ Upgrading from basic usage of the old-style views to new-style views is usually 
 #. Move all parameters of your old-style views from your ``urls.py`` to attributes on
    your new views. This will require renaming ``searchqueryset`` to ``queryset`` and
    ``template`` to ``template_name``
-#. Review your templates and replace the ``page`` variable with ``page_object``
+#. Review your templates and replace the ``page`` variable with ``page_obj``
 
 Here's an example::
 
