@@ -351,7 +351,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 facet_options = {
                     'terms': {
                         'field': facet_fieldname,
-                        'size': 100,
+                        'size': getattr(settings, 'HAYSTACK_ELASTICSEARCH_FACETS_SIZE', 100),
                     },
                 }
                 # Special cases for options applied at the facet level (not the terms level).
