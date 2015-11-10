@@ -178,15 +178,7 @@ class SearchQuerySet(object):
 
             # Load the objects for each model in turn.
             for model in models_pks:
-                try:
-                    ui = connections[self.query._using].get_unified_index()
-                    index = ui.get_index(model)
-                    objects = index.read_queryset(using=self.query._using)
-                    loaded_objects[model] = objects.in_bulk(models_pks[model])
-                except NotHandled:
-                    self.log.warning("Model '%s' not handled by the routers", model)
-                    # Revert to old behaviour
-                    loaded_objects[model] = model._default_manager.in_bulk(models_pks[model])
+                loaded_objects[model] = self._load_model_objects(model, models_pks[model])
 
         for result in results:
             if self._load_all:
@@ -203,6 +195,9 @@ class SearchQuerySet(object):
                     # The object was either deleted since we indexed or should
                     # be ignored; fail silently.
                     self._ignored_result_count += 1
+
+                    # avoid an unfilled None at the end of the result cache
+                    self._result_cache.pop()
                     continue
 
             to_cache.append(result)
@@ -248,44 +243,8 @@ class SearchQuerySet(object):
             fill_end = self.query.get_count()
         cache_start = fill_start
 
-        stop = False
-        while not stop:
-            # Check if we wish to load all objects.
-            if self._load_all:
-                models_pks = {}
-                loaded_objects = {}
-
-                # Remember the search position for each result so we don't have to resort later.
-                for result in results:
-                    models_pks.setdefault(result.model, []).append(result.pk)
-
-                # Load the objects for each model in turn.
-                for model in models_pks:
-                    loaded_objects[model] = self._load_model_objects(model, models_pks[model])
-
-            to_cache = []
-
-            for result in results:
-                if self._load_all:
-                    # We have to deal with integer keys being cast from strings
-                    model_objects = loaded_objects.get(result.model, {})
-                    if result.pk not in model_objects:
-                        try:
-                            result.pk = int(result.pk)
-                        except ValueError:
-                            pass
-                    try:
-                        result._object = model_objects[result.pk]
-                    except KeyError:
-                        # The object was either deleted since we indexed or should
-                        # be ignored; fail silently.
-                        self._ignored_result_count += 1
-
-                        # avoid an unfilled None at the end of the result cache
-                        self._result_cache.pop()
-                        continue
-
-                to_cache.append(result)
+        while True:
+            to_cache = self.post_process_results(results)
 
             # Assign by slice.
             self._result_cache[cache_start:cache_start + len(to_cache)] = to_cache
@@ -301,7 +260,7 @@ class SearchQuerySet(object):
                 results = self.query.get_results()
 
                 if results == None or len(results) == 0:
-                    # trim missing stuff from the result cache
+                    # No more results. Trim missing stuff from the result cache
                     self._result_cache = self._result_cache[:cache_start]
                     break
 
