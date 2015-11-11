@@ -218,11 +218,19 @@ class SearchQuerySet(object):
     def _fill_cache(self, start, end, **kwargs):
         # Tell the query where to start from and how many we'd like.
         self.query._reset()
-        self.query.set_limits(start, end)
-        results = self.query.get_results(**kwargs)
 
         if start is None:
             start = 0
+
+        query_start = start
+        query_start += self._ignored_result_count
+        query_end = end
+        if query_end is not None:
+            query_end += self._ignored_result_count
+
+        self.query.set_limits(query_start, query_end)
+        results = self.query.get_results(**kwargs)
+
 
         if results is None or len(results) == 0:
             # trim missing stuff from the result cache

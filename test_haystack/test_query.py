@@ -413,43 +413,6 @@ class SearchQuerySetTestCase(TestCase):
 
         connections['default']._index = old_ui
 
-    def test_fill_cache(self):
-        reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
-        results = self.msqs.all()
-        self.assertEqual(len(results._result_cache), 0)
-        self.assertEqual(len(connections['default'].queries), 0)
-        results._fill_cache(0, 10)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 10)
-        self.assertEqual(len(connections['default'].queries), 1)
-        results._fill_cache(10, 20)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
-        self.assertEqual(len(connections['default'].queries), 2)
-
-        reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
-
-        # Test to ensure we properly fill the cache, even if we get fewer
-        # results back (not a handled model) than the hit count indicates.
-        sqs = SearchQuerySet().all()
-        sqs.query.backend = MixedMockSearchBackend('default')
-        results = sqs
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 0)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [])
-        self.assertEqual(len(connections['default'].queries), 0)
-        results._fill_cache(0, 10)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 9)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [1, 2, 3, 4, 5, 6, 7, 8, 10])
-        self.assertEqual(len(connections['default'].queries), 2)
-        results._fill_cache(10, 20)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 17)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19, 20])
-        self.assertEqual(len(connections['default'].queries), 4)
-        results._fill_cache(20, 30)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23])
-        self.assertEqual(len(connections['default'].queries), 6)
-
     def test_cache_is_full(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)

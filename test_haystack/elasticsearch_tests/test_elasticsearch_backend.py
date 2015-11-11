@@ -895,26 +895,26 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         sqs = self.rsqs.all()
         results = set([int(result.pk) for result in sqs])
         self.assertEqual(results, set([2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20]))
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_related_slice(self):
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
         self.assertEqual([int(result.pk) for result in results[1:11]], [3, 2, 4, 5, 6, 7, 8, 9, 10, 11])
-        self.assertEqual(len(connections['elasticsearch'].queries), 3)
+        self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
         self.assertEqual(int(results[21].pk), 22)
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
         self.assertEqual(set([int(result.pk) for result in results[20:30]]), set([21, 22, 23]))
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
     def test_related_manual_iter(self):
         results = self.rsqs.all()
@@ -923,7 +923,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = sorted([int(result.pk) for result in results._manual_iter()])
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_related_fill_cache(self):
         reset_search_queries()
@@ -945,7 +945,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         results = self.rsqs.all()
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['elasticsearch'].queries), 5)
+        self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_quotes_regression(self):
         sqs = self.sqs.auto_query(u"44°48'40''N 20°28'32''E")
