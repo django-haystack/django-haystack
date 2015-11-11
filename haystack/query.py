@@ -231,7 +231,6 @@ class SearchQuerySet(object):
         self.query.set_limits(query_start, query_end)
         results = self.query.get_results(**kwargs)
 
-
         if results is None or len(results) == 0:
             # trim missing stuff from the result cache
             self._result_cache = self._result_cache[:start]
@@ -267,11 +266,10 @@ class SearchQuerySet(object):
                 self.query.set_limits(fill_start, fill_end)
                 results = self.query.get_results()
 
-                if results == None or len(results) == 0:
+                if results is None or len(results) == 0:
                     # No more results. Trim missing stuff from the result cache
                     self._result_cache = self._result_cache[:cache_start]
                     break
-
             else:
                 break
 
