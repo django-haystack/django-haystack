@@ -20,8 +20,11 @@ from haystack.utils import get_identifier, get_model_ct
 
 try:
     import elasticsearch
-    from elasticsearch.helpers import bulk_index
     from elasticsearch.exceptions import NotFoundError
+    try:
+        from elasticsearch.helpers import bulk_index
+    except ImportError:
+        from elasticsearch.helpers import bulk as bulk_index
 except ImportError:
     raise MissingDependency("The 'elasticsearch' backend requires the installation of 'elasticsearch'. Please refer to the documentation.")
 
