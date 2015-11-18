@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import copy
 import inspect
+import threading
 import warnings
 
 from django.conf import settings
@@ -167,6 +168,7 @@ class UnifiedIndex(object):
         self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
         self._fieldnames = {}
         self._facet_fieldnames = {}
+        self._build_lock = threading.RLock()
 
     @property
     def indexes(self):
@@ -206,6 +208,22 @@ class UnifiedIndex(object):
         self._facet_fieldnames = {}
 
     def build(self, indexes=None):
+        """
+        Build/rebuild the index data. This class is not thread-safe when
+        indexes are passed into this method, because it will trigger reset()
+        and that clears a bunch of data that other threads might be using.
+
+        Luckily, web requests never call this passing in indexes, so there
+        is no need to lock down access to every piece of data on this class.
+        Only tests and management commands are not thread-safe, and they don't
+        use threads.
+
+        """
+        with self._build_lock:
+            if not self._built or indexes is not None:
+                self._build(indexes=indexes)
+
+    def _build(self, indexes=None):
         self.reset()
 
         if indexes is None:
