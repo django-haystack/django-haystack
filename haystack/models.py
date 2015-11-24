@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.utils import six
 from django.utils.text import capfirst
 
