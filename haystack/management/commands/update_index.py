@@ -5,7 +5,6 @@ import os
 import sys
 import warnings
 from datetime import timedelta
-from optparse import make_option
 
 try:
     from django.db import close_old_connections
