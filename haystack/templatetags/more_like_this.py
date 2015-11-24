@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django import template
-from django.db import models
+from haystack.utils.app_loading import haystack_get_model
 
 from haystack.query import SearchQuerySet
 
@@ -31,7 +31,7 @@ class MoreLikeThisNode(template.Node):
                 search_models = []
 
                 for model in for_types:
-                    model_class = models.get_model(*model.split('.'))
+                    model_class = haystack_get_model(*model.split('.'))
 
                     if model_class:
                         search_models.append(model_class)
