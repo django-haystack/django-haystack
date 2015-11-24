@@ -1,30 +1,30 @@
 # encoding: utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-
 import sys
 from optparse import make_option
-
 from django.core.management.base import BaseCommand
 from django.utils import six
 
 
 class Command(BaseCommand):
     help = "Clears out the search index completely."
-    base_options = (
-        make_option('--noinput', action='store_false', dest='interactive', default=True,
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--noinput', action='store_false', dest='interactive', default=True,
             help='If provided, no prompts will be issued to the user and the data will be wiped out.'
-        ),
-        make_option("-u", "--using", action="append", dest="using",
+        )
+        parser.add_argument(
+            "-u", "--using", action="append", dest="using",
             default=[],
             help='Update only the named backend (can be used multiple times). '
                  'By default all backends will be updated.'
-        ),
-        make_option('--nocommit', action='store_false', dest='commit',
+        )
+        parser.add_argument(
+            '--nocommit', action='store_false', dest='commit',
             default=True, help='Will pass commit=False to the backend.'
-        ),
-    )
-    option_list = BaseCommand.option_list + base_options
+        )
 
     def handle(self, **options):
         """Clears out the search index completely."""
