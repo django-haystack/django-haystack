@@ -1,10 +1,19 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
+
+import elasticsearch
 from django.test import TestCase
+
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ
-from ..core.models import MockModel, AnotherMockModel
+from haystack.query import SearchQuerySet, SQ
+from haystack.utils.geo import D, Point
+
+from ..core.models import AnotherMockModel, MockModel
 
 
 class ElasticsearchSearchQueryTestCase(TestCase):
@@ -139,3 +148,54 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:("1" OR "2" OR "3"))')
+
+    def test_narrow_sq(self):
+        sqs = SearchQuerySet(using='elasticsearch').narrow(SQ(foo='moof'))
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
+        self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
+
+
+class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
+    def setUp(self):
+        super(ElasticsearchSearchQuerySpatialBeforeReleaseTestCase, self).setUp()
+        self.backend = connections['elasticsearch'].get_backend()
+        self._elasticsearch_version = elasticsearch.VERSION
+        elasticsearch.VERSION = (0,9,9)
+
+    def tearDown(self):
+        elasticsearch.VERSION = self._elasticsearch_version
+
+    def test_build_query_with_dwithin_range(self):
+        """
+        Test build_search_kwargs with dwithin range for Elasticsearch versions < 1.0.0
+        """
+        search_kwargs = self.backend.build_search_kwargs('where', dwithin={
+            'field': "location_field",
+            'point': Point(1.2345678, 2.3456789),
+            'distance': D(m=500)
+        })
+        self.assertEqual(search_kwargs['query']['filtered']['filter']['bool']['must'][1]['geo_distance'], {'distance': 0.5, 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})
+
+
+
+class ElasticsearchSearchQuerySpatialAfterReleaseTestCase(TestCase):
+    def setUp(self):
+        super(ElasticsearchSearchQuerySpatialAfterReleaseTestCase, self).setUp()
+        self.backend = connections['elasticsearch'].get_backend()
+        self._elasticsearch_version = elasticsearch.VERSION
+        elasticsearch.VERSION = (1,0,0)
+
+    def tearDown(self):
+        elasticsearch.VERSION = self._elasticsearch_version
+
+    def test_build_query_with_dwithin_range(self):
+        """
+        Test build_search_kwargs with dwithin range for Elasticsearch versions >= 1.0.0
+        """
+        search_kwargs = self.backend.build_search_kwargs('where', dwithin={
+            'field': "location_field",
+            'point': Point(1.2345678, 2.3456789),
+            'distance': D(m=500)
+        })
+        self.assertEqual(search_kwargs['query']['filtered']['filter']['bool']['must'][1]['geo_distance'], {'distance': "0.500000km", 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})

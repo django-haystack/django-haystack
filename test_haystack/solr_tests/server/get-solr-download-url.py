@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import sys
 
@@ -9,7 +9,7 @@ import requests
 
 # Try to import urljoin from the Python 3 reorganized stdlib first:
 try:
-    from urlparse.parse import urljoin
+    from urllib.parse import urljoin
 except ImportError:
     from urlparse import urljoin
 
@@ -28,5 +28,8 @@ mirror_response = requests.get("http://www.apache.org/dyn/mirrors/mirrors.cgi/%s
 if mirror_response.ok:
     mirror_data = mirror_response.json()
     download_url = urljoin(mirror_data['preferred'], mirror_data['path_info'])
+    # The Apache mirror script's response format has recently changed to exclude the actual file paths:
+    if not download_url.endswith(tarball):
+        download_url = urljoin(download_url, dist_path)
 
 print(download_url)

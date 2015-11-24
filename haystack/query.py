@@ -1,12 +1,17 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import operator
 import warnings
+
 from django.utils import six
-from haystack import connections, connection_router
+
+from haystack import connection_router, connections
 from haystack.backends import SQ
-from haystack.constants import REPR_OUTPUT_SIZE, ITERATOR_LOAD_PER_QUERY, DEFAULT_OPERATOR
+from haystack.constants import DEFAULT_OPERATOR, ITERATOR_LOAD_PER_QUERY, REPR_OUTPUT_SIZE
 from haystack.exceptions import NotHandled
-from haystack.inputs import Raw, Clean, AutoQuery
+from haystack.inputs import AutoQuery, Raw
 from haystack.utils import log as logging
 
 
@@ -165,7 +170,7 @@ class SearchQuerySet(object):
         self.query.set_limits(start, end)
         results = self.query.get_results(**kwargs)
 
-        if results == None or len(results) == 0:
+        if results is None or len(results) == 0:
             return False
 
         # Setup the full cache now that we know how many results there are.
@@ -175,7 +180,7 @@ class SearchQuerySet(object):
         # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
         # to be an acceptable loss for consistent and more efficient caching.
         if len(self._result_cache) == 0:
-            self._result_cache = [None for i in range(self.query.get_count())]
+            self._result_cache = [None] * self.query.get_count()
 
         if start is None:
             start = 0
@@ -217,7 +222,7 @@ class SearchQuerySet(object):
             if self._load_all:
                 # We have to deal with integer keys being cast from strings
                 model_objects = loaded_objects.get(result.model, {})
-                if not result.pk in model_objects:
+                if result.pk not in model_objects:
                     try:
                         result.pk = int(result.pk)
                     except ValueError:
@@ -261,7 +266,8 @@ class SearchQuerySet(object):
             bound = k + 1
 
         # We need check to see if we need to populate more of the cache.
-        if len(self._result_cache) <= 0 or (None in self._result_cache[start:bound] and not self._cache_is_full()):
+        if len(self._result_cache) <= 0 or (None in self._result_cache[start:bound]
+                                            and not self._cache_is_full()):
             try:
                 self._fill_cache(start, bound)
             except StopIteration:
@@ -317,12 +323,6 @@ class SearchQuerySet(object):
 
         return clone
 
-    def order_by_distance(self, **kwargs):
-        """Alters the order in which the results should appear."""
-        clone = self._clone()
-        clone.query.add_order_by_distance(**kwargs)
-        return clone
-
     def highlight(self):
         """Adds highlighting to the results."""
         clone = self._clone()
@@ -334,7 +334,7 @@ class SearchQuerySet(object):
         clone = self._clone()
 
         for model in models:
-            if not model in connections[self.query._using].get_unified_index().get_indexed_models():
+            if model not in connections[self.query._using].get_unified_index().get_indexed_models():
                 warnings.warn('The model %r is not registered for search.' % (model,))
 
             clone.query.add_model(model)
@@ -386,10 +386,11 @@ class SearchQuerySet(object):
         clone = self._clone()
         stats_facets = []
         try:
-            stats_facets.append(sum(facet_fields,[]))
+            stats_facets.append(sum(facet_fields, []))
         except TypeError:
-            if facet_fields: stats_facets.append(facet_fields)
-        clone.query.add_stats_query(field,stats_facets)
+            if facet_fields:
+                stats_facets.append(facet_fields)
+        clone.query.add_stats_query(field, stats_facets)
         return clone
 
     def distance(self, field, point):
@@ -415,6 +416,13 @@ class SearchQuerySet(object):
 
     def narrow(self, query):
         """Pushes existing facet choices into the search."""
+
+        if isinstance(query, SQ):
+            # produce query string using empty query of the same class
+            empty_query = self.query._clone()
+            empty_query._reset()
+            query = query.as_query_string(empty_query.build_query_fragment)
+
         clone = self._clone()
         clone.query.add_narrow_query(query)
         return clone
@@ -776,6 +784,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
         """
         if not isinstance(k, (slice, six.integer_types)):
             raise TypeError
+
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
                     and (k.stop is None or k.stop >= 0))), \

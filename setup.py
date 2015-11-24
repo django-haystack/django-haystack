@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# encoding: utf-8
+
+# n.b. we can't have unicode_literals here due to http://bugs.python.org/setuptools/issue152
+from __future__ import absolute_import, division, print_function
+
 try:
     from setuptools import setup
 except ImportError:
@@ -12,13 +16,11 @@ install_requires = [
 ]
 
 tests_require = [
-    'elasticsearch',
-    'pysolr>=3.2.0',
+    'elasticsearch>=1.0.0,<2.0.0',
+    'pysolr>=3.3.2',
     'whoosh==2.5.4',
-    'lxml==3.2.3',
     'python-dateutil',
     'geopy==0.95.1',
-    'httplib2==0.8',
 
     'nose',
     'mock',
@@ -27,7 +29,7 @@ tests_require = [
 
 setup(
     name='django-haystack',
-    version='2.3.1',
+    version='2.4.1',
     description='Pluggable search for Django.',
     author='Daniel Lindsley',
     author_email='daniel@toastdriven.com',

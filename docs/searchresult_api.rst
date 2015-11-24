@@ -24,7 +24,7 @@ The class exposes the following useful attributes/properties:
 * ``model`` - The model class.
 * ``verbose_name`` - A prettier version of the model's class name for display.
 * ``verbose_name_plural`` -  A prettier version of the model's *plural* class name for display.
-* ``search_index`` - Returns the ``SearchIndex`` class associated with this
+* ``searchindex`` - Returns the ``SearchIndex`` class associated with this
   result.
 * ``distance`` - On geo-spatial queries, this returns a ``Distance`` object
   representing the distance the result was from the focused point.

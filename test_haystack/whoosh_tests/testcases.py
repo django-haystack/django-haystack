@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import shutil
@@ -27,7 +27,7 @@ class WhooshTestCase(TestCase):
             from haystack import connections
             connections[name].get_backend().setup()
 
-        super(TestCase, cls).setUpClass()
+        super(WhooshTestCase, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):

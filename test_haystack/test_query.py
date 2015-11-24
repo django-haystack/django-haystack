@@ -1,30 +1,26 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils.unittest import skipUnless
+from test_haystack.core.models import AFifthMockModel, AnotherMockModel, CharPKMockModel, MockModel
+from test_haystack.utils import unittest
 
-from haystack import (connection_router, connections, indexes,
-                      reset_search_queries)
+from haystack import connection_router, connections, indexes, reset_search_queries
 from haystack.backends import BaseSearchQuery, SQ
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
-from haystack.query import (EmptySearchQuerySet, SearchQuerySet,
-                            ValuesListSearchQuerySet, ValuesSearchQuerySet)
+from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from test_haystack.core.models import (AFifthMockModel, AnotherMockModel,
-                                       CharPKMockModel, MockModel)
 
-from .mocks import (CharPKMockSearchBackend, MixedMockSearchBackend,
-                    MOCK_SEARCH_RESULTS, MockSearchBackend, MockSearchQuery,
-                    ReadQuerySetMockSearchBackend)
-from .test_indexes import (GhettoAFifthMockModelSearchIndex,
-                           ReadQuerySetTestSearchIndex,
+from .mocks import (CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS, MockSearchBackend,
+                    MockSearchQuery, ReadQuerySetMockSearchBackend)
+from .test_indexes import (GhettoAFifthMockModelSearchIndex, ReadQuerySetTestSearchIndex,
                            TextReadQuerySetTestSearchIndex)
-from .test_views import (BasicAnotherMockModelSearchIndex,
-                         BasicMockModelSearchIndex)
+from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
 
 test_pickling = True
 
@@ -852,7 +848,7 @@ class EmptySearchQuerySetTestCase(TestCase):
         self.assertRaises(TypeError, lambda: self.esqs['count'])
 
 
-@skipUnless(test_pickling, 'Skipping pickling tests')
+@unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 @override_settings(DEBUG=True)
 class PickleSearchQuerySetTestCase(TestCase):
     def setUp(self):

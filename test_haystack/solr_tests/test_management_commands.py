@@ -1,21 +1,23 @@
-import datetime
+# encoding: utf-8
 
-from mock import patch
-import pysolr
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import datetime
 from tempfile import mkdtemp
 
+import pysolr
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.test import TestCase
-from django.utils import unittest
+from mock import patch
 
-from haystack import connections
-from haystack import indexes
+from haystack import connections, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
+from ..utils import unittest
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -59,13 +61,22 @@ class ManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
+        call_command('update_index', verbosity=0, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
         call_command('update_index', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('rebuild_index', interactive=False, verbosity=0)
+        call_command('rebuild_index', interactive=False, verbosity=0, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('rebuild_index', interactive=False, verbosity=0, commit=True)
+        self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        call_command('clear_index', interactive=False, verbosity=0, commit=False)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
     def test_remove(self):
@@ -75,17 +86,23 @@ class ManagementCommandTestCase(TestCase):
         call_command('update_index', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
-        # Remove a model instance.
+        # Remove several instances, two of which will fit in the same block:
         MockModel.objects.get(pk=1).delete()
+        MockModel.objects.get(pk=2).delete()
+        MockModel.objects.get(pk=8).delete()
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         # Plain ``update_index`` doesn't fix it.
         call_command('update_index', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
-        # With the remove flag, it's gone.
-        call_command('update_index', remove=True, verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 22)
+        # Remove without commit also doesn't affect queries:
+        call_command('update_index', remove=True, verbosity=0, batchsize=2, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        # … but remove with commit does:
+        call_command('update_index', remove=True, verbosity=0, batchsize=2)
+        self.assertEqual(self.solr.search('*:*').hits, 20)
 
     def test_age(self):
         call_command('clear_index', interactive=False, verbosity=0)
@@ -141,17 +158,24 @@ class ManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        # Watch the output, make sure there are multiple pids.
+        # TODO: Watch the output, make sure there are multiple pids.
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
         self.assertEqual(self.solr.search('*:*').hits, 23)
+
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        call_command('update_index', verbosity=2, workers=2, batchsize=5, commit=False)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
 
     def test_build_schema_wrong_backend(self):
 
         settings.HAYSTACK_CONNECTIONS['whoosh'] = {'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-                                                   'PATH': mkdtemp(prefix='dummy-path-'),}
+                                                   'PATH': mkdtemp(prefix='dummy-path-'), }
 
         connections['whoosh']._index = self.ui
-        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema',using='whoosh', interactive=False)
+        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema', using='whoosh', interactive=False)
+
 
 class AppModelManagementCommandTestCase(TestCase):
     fixtures = ['bulk_data.json']

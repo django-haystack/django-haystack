@@ -1,5 +1,10 @@
+# encoding: utf-8
+
 # A couple models for Haystack to test with.
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
+
 from django.db import models
 
 
@@ -46,11 +51,11 @@ class AFourthMockModel(models.Model):
         return self.author
 
 class SoftDeleteManager(models.Manager):
-    def get_query_set(self):
-        return super(SoftDeleteManager, self).get_query_set().filter(deleted=False)
+    def get_queryset(self):
+        return super(SoftDeleteManager, self).get_queryset().filter(deleted=False)
 
     def complete_set(self):
-        return super(SoftDeleteManager, self).get_query_set()
+        return super(SoftDeleteManager, self).get_queryset()
 
 class AFifthMockModel(models.Model):
     author = models.CharField(max_length=255)

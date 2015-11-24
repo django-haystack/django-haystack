@@ -1,9 +1,15 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 from decimal import Decimal
+
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from haystack.fields import *
 from test_haystack.core.models import MockModel, MockTag
+
+from haystack.fields import *
 
 
 class CharFieldTestCase(TestCase):
@@ -21,7 +27,8 @@ class CharFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'daniel')
 
         # Do a lookup through the relation.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_name = CharField(model_attr='tag__name')
@@ -35,7 +42,8 @@ class CharFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'')
 
         # Simulate failed lookups.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_slug = CharField(model_attr='tag__slug')
@@ -78,7 +86,8 @@ class NgramFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'daniel')
 
         # Do a lookup through the relation.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_name = NgramField(model_attr='tag__name')
@@ -92,7 +101,8 @@ class NgramFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'')
 
         # Simulate failed lookups.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_slug = NgramField(model_attr='tag__slug')
@@ -135,7 +145,8 @@ class EdgeNgramFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'daniel')
 
         # Do a lookup through the relation.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_name = EdgeNgramField(model_attr='tag__name')
@@ -149,7 +160,8 @@ class EdgeNgramFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'')
 
         # Simulate failed lookups.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_slug = EdgeNgramField(model_attr='tag__slug')
@@ -190,7 +202,8 @@ class IntegerFieldTestCase(TestCase):
         self.assertEqual(pk.prepare(mock), 1)
 
         # Simulate failed lookups.
-        mock_tag = MockTag(name='primary')
+        mock_tag = MockTag.objects.create(name='primary')
+
         mock = MockModel()
         mock.tag = mock_tag
         tag_count = IntegerField(model_attr='tag__count')

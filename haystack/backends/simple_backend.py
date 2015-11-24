@@ -1,7 +1,9 @@
+# encoding: utf-8
 """
 A very basic, ORM-based backend for simple search during tests.
 """
-from __future__ import unicode_literals
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from warnings import warn
 
@@ -41,7 +43,7 @@ class SimpleSearchBackend(BaseSearchBackend):
     def remove(self, obj, commit=True):
         warn('remove is not implemented in this backend')
 
-    def clear(self, models=[], commit=True):
+    def clear(self, models=None, commit=True):
         warn('clear is not implemented in this backend')
 
     @log_query

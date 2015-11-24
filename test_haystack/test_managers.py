@@ -1,24 +1,34 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
+
 from django.test import TestCase
+from test_haystack.core.models import MockModel
+
 from haystack import connections
-from haystack.models import SearchResult
-from haystack.exceptions import FacetingError
-from haystack.query import SearchQuerySet, EmptySearchQuerySet, ValuesSearchQuerySet, ValuesListSearchQuerySet
-from test_haystack.core.models import MockModel, AnotherMockModel, CharPKMockModel, AFifthMockModel
-from .test_views import BasicMockModelSearchIndex, BasicAnotherMockModelSearchIndex
-from .mocks import CharPKMockSearchBackend
-from haystack.utils.loading import UnifiedIndex
 from haystack.manager import SearchIndexManager
+from haystack.models import SearchResult
+from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
+from haystack.utils.geo import D, Point
+
+from .mocks import CharPKMockSearchBackend
+from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
+
 
 class CustomManager(SearchIndexManager):
     def filter(self, *args, **kwargs):
         return self.get_search_queryset().filter(content='foo1').filter(*args, **kwargs)
 
+
 class CustomMockModelIndexWithObjectsManager(BasicMockModelSearchIndex):
     objects = CustomManager()
 
+
 class CustomMockModelIndexWithAnotherManager(BasicMockModelSearchIndex):
     another = CustomManager()
+
 
 class ManagerTestCase(TestCase):
     fixtures = ['bulk_data.json']
@@ -26,7 +36,7 @@ class ManagerTestCase(TestCase):
     def setUp(self):
         super(ManagerTestCase, self).setUp()
 
-        self.search_index    = BasicMockModelSearchIndex
+        self.search_index = BasicMockModelSearchIndex
         # Update the "index".
         backend = connections['default'].get_backend()
         backend.clear()
@@ -68,8 +78,18 @@ class ManagerTestCase(TestCase):
         self.assertTrue('foo' in sqs.query.order_by)
 
     def test_order_by_distance(self):
-        # Not implemented
-        pass
+        p = Point(1.23, 4.56)
+        sqs = self.search_index.objects.distance('location', p).order_by('distance')
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+
+        params = sqs.query.build_params()
+
+        self.assertIn('distance_point', params)
+        self.assertDictEqual(params['distance_point'], {'field': 'location',
+                                                         'point': p})
+        self.assertTupleEqual(params['distance_point']['point'].get_coords(), (1.23, 4.56))
+
+        self.assertListEqual(params['sort_by'], ['distance'])
 
     def test_highlight(self):
         sqs = self.search_index.objects.highlight()
@@ -86,19 +106,42 @@ class ManagerTestCase(TestCase):
         self.assertEqual(len(sqs.query.facets), 1)
 
     def test_within(self):
-        # Not implemented
-        pass
+        # This is a meaningless query but we're just confirming that the manager updates the parameters here:
+        p1 = Point(-90, -90)
+        p2 = Point(90, 90)
+        sqs = self.search_index.objects.within('location', p1, p2)
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+
+        params = sqs.query.build_params()
+
+        self.assertIn('within', params)
+        self.assertDictEqual(params['within'], {'field': 'location', 'point_1': p1, 'point_2': p2})
 
     def test_dwithin(self):
-        # Not implemented
-        pass
+        p = Point(0, 0)
+        distance = D(mi=500)
+        sqs = self.search_index.objects.dwithin('location', p, distance)
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+
+        params = sqs.query.build_params()
+
+        self.assertIn('dwithin', params)
+        self.assertDictEqual(params['dwithin'], {'field': 'location', 'point': p, 'distance': distance})
 
     def test_distance(self):
-        # Not implemented
-        pass
+        p = Point(0, 0)
+        sqs = self.search_index.objects.distance('location', p)
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+
+        params = sqs.query.build_params()
+        self.assertIn('distance_point', params)
+        self.assertDictEqual(params['distance_point'], {'field': 'location', 'point': p})
 
     def test_date_facets(self):
-        sqs = self.search_index.objects.date_facet('foo', start_date=datetime.date(2008, 2, 25), end_date=datetime.date(2009, 2, 25), gap_by='month')
+        sqs = self.search_index.objects.date_facet('foo',
+                                                   start_date=datetime.date(2008, 2, 25),
+                                                   end_date=datetime.date(2009, 2, 25),
+                                                   gap_by='month')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.date_facets), 1)
 
@@ -169,14 +212,15 @@ class ManagerTestCase(TestCase):
         sqs = self.search_index.objects.auto_query("test").values_list("id")
         self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
 
+
 class CustomManagerTestCase(TestCase):
     fixtures = ['bulk_data.json']
 
     def setUp(self):
         super(CustomManagerTestCase, self).setUp()
 
-        self.search_index_1  = CustomMockModelIndexWithObjectsManager
-        self.search_index_2  = CustomMockModelIndexWithAnotherManager
+        self.search_index_1 = CustomMockModelIndexWithObjectsManager
+        self.search_index_2 = CustomMockModelIndexWithAnotherManager
 
     def test_filter_object_manager(self):
         sqs = self.search_index_1.objects.filter(content='foo')

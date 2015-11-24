@@ -1,4 +1,6 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import copy
 import threading
@@ -105,7 +107,10 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         self.prepared_data = None
         content_fields = []
 
+        self.field_map = dict()
         for field_name, field in self.fields.items():
+            #form field map
+            self.field_map[field.index_fieldname] = field_name
             if field.document is True:
                 content_fields.append(field_name)
 
@@ -119,7 +124,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
 
         This method is required & you must override it to return the correct class.
         """
-        raise NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
+        raise NotImplementedError("You must provide a 'get_model' method for the '%r' index." % self)
 
     def index_queryset(self, using=None):
         """

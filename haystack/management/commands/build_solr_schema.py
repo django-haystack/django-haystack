@@ -1,13 +1,16 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from optparse import make_option
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import sys
+from optparse import make_option
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
-from django.template import loader, Context
-from haystack.backends.solr_backend import SolrSearchBackend
+from django.template import Context, loader
+
 from haystack import constants
+from haystack.backends.solr_backend import SolrSearchBackend
 
 
 class Command(BaseCommand):

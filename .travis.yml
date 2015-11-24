@@ -1,48 +1,64 @@
+sudo: false
 language: python
 python:
-  - "2.7"
+    - 2.6
+    - 2.7
+    - 3.3
+    - 3.4
+    - pypy
 
 cache:
-  directories:
-    - test_haystack/solr_tests/server/
-    - pip_download_cache
+    apt: true
+    pip: true
+    directories:
+        - $HOME/download-cache
+
+addons:
+    apt_packages:
+        - binutils
+        - default-jdk
+        - gdal-bin
+        - libgdal1h
+        - libgeos-c1
+        - libproj-dev
+        - libxapian22
+        - python-xapian
+        - wajig
 
 before_install:
-  - mkdir -p $PIP_DOWNLOAD_CACHE
-  - sudo apt-get update
-  - sudo apt-get install wajig binutils gdal-bin libproj-dev libgeos-c1 libgdal1h libxapian22 python-xapian default-jdk
+    - mkdir -p $HOME/download-cache
 
 install:
-  - pip install tox requests
-  - pip install -e .
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
+    - pip install requests "Django${DJANGO_VERSION}"
+    - python setup.py clean build install
 
 before_script:
-  - BACKGROUND_SOLR=true test_haystack/solr_tests/server/start-solr-test-server.sh
+    - BACKGROUND_SOLR=true test_haystack/solr_tests/server/start-solr-test-server.sh
 
 script:
-  - tox -e $TOX_ENV
+    - python test_haystack/solr_tests/server/wait-for-solr
+    - python setup.py test
 
 env:
-  global:
-      - PIP_DOWNLOAD_CACHE="pip_download_cache"
-  matrix:
-      - TOX_ENV=py26-django1.5
-      - TOX_ENV=py26-django1.6
-      - TOX_ENV=py27-django1.5
-      - TOX_ENV=py27-django1.6
-      - TOX_ENV=py27-django1.7
-      - TOX_ENV=py33-django1.5
-      - TOX_ENV=py33-django1.6
-      - TOX_ENV=py33-django1.7
-      - TOX_ENV=py34-django1.5
-      - TOX_ENV=py34-django1.6
-      - TOX_ENV=pypy-django1.5
-      - TOX_ENV=pypy-django1.6
-      - TOX_ENV=pypy-django1.7
+    matrix:
+        - DJANGO_VERSION=">=1.6,<1.7"
+        - DJANGO_VERSION=">=1.7,<1.8"
+        - DJANGO_VERSION=">=1.8,<1.9"
+
+matrix:
+    allow_failures:
+        - python: "pypy"
+        - python: 2.6
+    exclude:
+       - python: 2.6
+         env: DJANGO_VERSION=">=1.7,<1.8"
+       - python: 2.6
+         env: DJANGO_VERSION=">=1.8,<1.9"
 
 services:
-  - elasticsearch
+    - elasticsearch
 
 notifications:
-  irc: "irc.freenode.org#haystack"
-  email: false
+    irc: "irc.freenode.org#haystack"
+    email: false

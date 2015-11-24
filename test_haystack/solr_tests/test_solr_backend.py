@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 import logging as std_logging
@@ -10,17 +10,19 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils.unittest import skipIf, skipUnless
+from mock import patch
+
 from haystack import connections, indexes, reset_search_queries
+from haystack.exceptions import SkipDocument
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
 from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
+from haystack.utils.geo import Point
 from haystack.utils.loading import UnifiedIndex
-from mock import patch
 
-from ..core.models import (AFourthMockModel, AnotherMockModel, ASixthMockModel,
-                           MockModel)
+from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
+from ..utils import unittest
 
 test_pickling = True
 
@@ -44,6 +46,27 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateField(model_attr='pub_date')
+
+    def get_model(self):
+        return MockModel
+
+
+class SolrMockSearchIndexWithSkipDocument(SolrMockSearchIndex):
+
+        def prepare_text(self, obj):
+            if obj.author == 'daniel3':
+                raise SkipDocument
+            return u"Indexed!\n%s" % obj.id
+
+
+class SolrMockOverriddenFieldNameSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, use_template=True)
+    name = indexes.CharField(model_attr='author', faceted=True, index_fieldname='name_s')
+    pub_date = indexes.DateField(model_attr='pub_date', index_fieldname='pub_date_dt')
+    today = indexes.IntegerField(index_fieldname='today_i')
+
+    def prepare_today(self, obj):
+        return datetime.datetime.now().day
 
     def get_model(self):
         return MockModel
@@ -186,7 +209,9 @@ class SolrSearchBackendTestCase(TestCase):
         self.old_ui = connections['solr'].get_unified_index()
         self.ui = UnifiedIndex()
         self.smmi = SolrMockSearchIndex()
+        self.smmidni = SolrMockSearchIndexWithSkipDocument()
         self.smtmmi = SolrMaintainTypeMockSearchIndex()
+        self.smofnmi = SolrMockOverriddenFieldNameSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
         self.sb = connections['solr'].get_backend()
@@ -270,6 +295,18 @@ class SolrSearchBackendTestCase(TestCase):
             }
         ])
 
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.smmidni, self.sample_objs)
+
+        res = self.raw_solr.search('*:*')
+
+        # Check what Solr thinks is there.
+        self.assertEqual(res.hits, 2)
+        self.assertListEqual(
+            sorted([x['id'] for x in res.docs]),
+            ['core.mockmodel.1', 'core.mockmodel.2']
+        )
+
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
@@ -321,6 +358,25 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_solr.search('*:*').hits, 0)
+
+    def test_alternate_index_fieldname(self):
+        self.ui.build(indexes=[self.smofnmi])
+        connections['solr']._index = self.ui
+        self.sb.update(self.smofnmi, self.sample_objs)
+        search = self.sb.search('*')
+        self.assertEqual(search['hits'], 3)
+        results = search['results']
+        today = datetime.datetime.now().day
+        self.assertEqual([result.today for result in results], [today, today, today])
+        self.assertEqual([result.name for result in results], ['daniel1', 'daniel2', 'daniel3'])
+        self.assertEqual([result.pub_date for result in results],
+                         [datetime.date(2009, 2, 25) - datetime.timedelta(days=1),
+                          datetime.date(2009, 2, 25) - datetime.timedelta(days=2),
+                          datetime.date(2009, 2, 25) - datetime.timedelta(days=3)])
+        # revert it back
+        self.ui.build(indexes=[self.smmi])
+        connections['solr']._index = self.ui
+
 
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -381,6 +437,17 @@ class SolrSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_spatial_search_parameters(self):
+        p1 = Point(1.23, 4.56)
+        kwargs = self.sb.build_search_kwargs('*:*', distance_point={'field': 'location', 'point': p1},
+                                             sort_by='distance asc')
+
+        # Points in Solr are lat, lon pairs but Django GIS Point() uses lon, lat so we'll check for the flip
+        # See http://django-haystack.readthedocs.org/en/latest/spatial.html#points
+        self.assertEqual(kwargs.get('pt'), '4.56,1.23')
+        self.assertEqual(kwargs.get('sfield'), 'location')
+        self.assertEqual(kwargs.get('sort'), 'geodist() asc')
 
     def test_altparser_query(self):
         self.sb.update(self.smmi, self.sample_objs)
@@ -781,6 +848,27 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         results = self.sqs.all()
         self.assertEqual(int(results[21].pk), 22)
         self.assertEqual(len(connections['solr'].queries), 1)
+
+    def test_values_list_slice(self):
+        reset_search_queries()
+        self.assertEqual(len(connections['solr'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = [str(i) for i in [3, 2, 4, 5, 6, 7, 8, 9, 10, 11]]
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test_count(self):
         reset_search_queries()
@@ -1230,7 +1318,7 @@ class LiveSolrRoundTripTestCase(TestCase):
         self.assertEqual(result.sites, [3, 5, 1])
 
 
-@skipUnless(test_pickling, 'Skipping pickling tests')
+@unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 class LiveSolrPickleTestCase(TestCase):
     fixtures = ['bulk_data.json']
 
@@ -1321,7 +1409,7 @@ class SolrBoostBackendTestCase(TestCase):
         ])
 
 
-@skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
+@unittest.skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
 class LiveSolrContentExtractionTestCase(TestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()

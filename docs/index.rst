@@ -110,8 +110,8 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.6+ or Python 3.3+
-* Django 1.5+
+* Python 2.7+ or Python 3.3+
+* Django 1.6+
 
 Additionally, each backend has its own requirements. You should refer to
 :doc:`installing_search_engines` for more details.

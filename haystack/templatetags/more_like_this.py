@@ -1,8 +1,11 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django import template
 from django.db import models
-from haystack.query import SearchQuerySet
 
+from haystack.query import SearchQuerySet
 
 register = template.Library()
 

@@ -1,5 +1,5 @@
 # encoding: utf-8
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
 
@@ -84,7 +84,7 @@ class SearchField(object):
 
             for attr in attrs:
                 if not hasattr(current_object, attr):
-                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(obj), attr))
+                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(current_object), attr))
 
                 current_object = getattr(current_object, attr, None)
 
@@ -92,15 +92,15 @@ class SearchField(object):
                     if self.has_default():
                         current_object = self._default
                         # Fall out of the loop, given any further attempts at
-                        # accesses will fail misreably.
+                        # accesses will fail miserably.
                         break
                     elif self.null:
                         current_object = None
                         # Fall out of the loop, given any further attempts at
-                        # accesses will fail misreably.
+                        # accesses will fail miserably.
                         break
                     else:
-                        raise SearchFieldError("The model '%s' has an empty model_attr '%s' and doesn't allow a default or null value." % (repr(obj), attr))
+                        raise SearchFieldError("The model '%s' combined with model_attr '%s' returned None, but doesn't allow a default or null value." % (repr(obj), self.model_attr))
 
             if callable(current_object):
                 return current_object()

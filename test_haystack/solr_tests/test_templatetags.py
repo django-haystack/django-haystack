@@ -1,12 +1,13 @@
 # encoding: utf-8
-from mock import call, patch
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import django
-from django.template import Template, Context
+from django.template import Context, Template
 from django.test import TestCase
-from django.utils import unittest
+from mock import call, patch
 
 from ..core.models import MockModel
+from ..utils import unittest
 
 
 @patch("haystack.templatetags.more_like_this.SearchQuerySet")
@@ -56,6 +57,6 @@ class MoreLikeThisTagTestCase(TestCase):
                                    call().models().more_like_this().__getitem__(slice(None, 5))],
                                    any_order=True)
 
-    if django.get_version() == '1.7':
+    if django.VERSION >= (1, 7, 0):
         # FIXME: https://github.com/toastdriven/django-haystack/issues/1069
         test_more_like_this_for_model = unittest.expectedFailure(test_more_like_this_for_model)

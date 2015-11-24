@@ -1,3 +1,7 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 from datetime import timedelta
 from decimal import Decimal
@@ -5,13 +9,12 @@ from decimal import Decimal
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils import unittest
 from django.utils.datetime_safe import date, datetime
 from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
 from haystack import connections, indexes, reset_search_queries
-from haystack.exceptions import SearchBackendError
+from haystack.exceptions import SkipDocument, SearchBackendError
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
 from haystack.query import SearchQuerySet, SQ
@@ -19,6 +22,7 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
 from ..mocks import MockSearchResult
+from ..utils import unittest
 from .testcases import WhooshTestCase
 
 
@@ -29,6 +33,14 @@ class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockModel
+
+
+class WhooshMockSearchIndexWithSkipDocument(WhooshMockSearchIndex):
+
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return obj.author
 
 
 class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -111,6 +123,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
+        self.wmmidni = WhooshMockSearchIndexWithSkipDocument()
         self.wmtmmi = WhooshMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
         self.sb = connections['whoosh'].get_backend()
@@ -167,6 +180,18 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         # Check what Whoosh thinks is there.
         self.assertEqual(len(self.whoosh_search(u'*')), 23)
         self.assertEqual([doc.fields()['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.%s' % i for i in range(1, 24)])
+
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.wmmidni, self.sample_objs)
+
+        # Check what Whoosh thinks is there.
+        res = self.whoosh_search(u'*')
+        self.assertEqual(len(res), 14)
+        ids = [1, 2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 18, 20, 21]
+        self.assertListEqual(
+            [doc.fields()['id'] for doc in res],
+            [u'core.mockmodel.%s' % i for i in ids]
+        )
 
     def test_remove(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -680,6 +705,29 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         results = self.sqs.auto_query('Indexed!')
         self.assertEqual(int(results[0].pk), 1)
         self.assertEqual(len(connections['whoosh'].queries), 1)
+
+    def test_values_slicing(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+
+        reset_search_queries()
+        self.assertEqual(len(connections['whoosh'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = ['3', '2', '1']
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['whoosh'].queries), 3)
 
     def test_manual_iter(self):
         self.sb.update(self.wmmi, self.sample_objs)

@@ -91,3 +91,16 @@ Thanks to
       fields with Whoosh as long as they share a consistent sort direction
     * Steven Skoczen (@skoczen) for an ElasticSearch bug fix
     * @Xaroth for updating the app loader to be compatible with Django 1.7
+    * Jaroslav Gorjatsev (jarig) for a bugfix with index_fieldname
+    * Dirk Eschler (@deschler) for app loader Django 1.7 compatibility fixes
+    * Wictor (wicol) for a patch improving the error message given when model_attr references a non-existent
+      field
+    * Pierre Dulac (dulaccc) for a patch updating distance filters for ElasticSearch 1.x
+    * Andrei Fokau (andreif) for adding support for ``SQ`` in ``SearchQuerySet.narrow()``
+    * Phill Tornroth (phill-tornroth) for several patches improving UnifiedIndex and ElasticSearch support
+    * Philippe Luickx (philippeluickx) for documenting how to provide backend-specific facet options
+    * Felipe Prenholato (@chronossc) for a patch making it easy to exclude documents from indexing using custom logic
+    * Alfredo Armanini (@phingage) for a patch fixing compatibility with database API changes in Django 1.8
+    * Ben Spaulding (@benspaulding) for many updates for Django 1.8 support
+    * Troy Grosfield (@troygrosfield) for fixing the test runner for Django 1.8
+    * Ilan Steemers (@Koed00) for fixing Django 1.9 deprecation warnings

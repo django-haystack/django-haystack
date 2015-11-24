@@ -1,21 +1,17 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
-from haystack.exceptions import SearchFieldError, NotHandled
+from test_haystack.core.models import AnotherMockModel, MockModel
+from test_haystack.utils import unittest
+
 from haystack import indexes
+from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import loading
-from test_haystack.core.models import MockModel, AnotherMockModel
 
-import unittest
-
-if not hasattr(unittest, "skipIf"):
-    # We're dealing with Python < 2.7 and we need unittest2, which might be available from Django:
-    try:
-        from django.utils import unittest
-    except ImportError:
-        try:
-            import unittest2 as unittest
-        except ImportError:
-            raise RuntimeError("Tests require unittest2. If you use Django 1.2, install unittest2")
+from .utils import unittest
 
 try:
     import pysolr
@@ -220,6 +216,10 @@ class UnifiedIndexTestCase(TestCase):
 
     def test_get_index(self):
         self.assertRaises(NotHandled, self.ui.get_index, MockModel)
+        try:
+            self.ui.get_index(MockModel)
+        except NotHandled as e:
+            self.assertTrue(MockModel.__name__ in str(e))
 
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
         self.assertTrue(isinstance(self.ui.get_index(MockModel), indexes.BasicSearchIndex))
@@ -231,6 +231,17 @@ class UnifiedIndexTestCase(TestCase):
         indexed_models = self.ui.get_indexed_models()
         self.assertEqual(len(indexed_models), 1)
         self.assertTrue(MockModel in indexed_models)
+
+    def test_get_indexes(self):
+        self.assertEqual(self.ui.get_indexes(), {})
+
+        index = ValidSearchIndex()
+        self.ui.build(indexes=[index])
+
+        results = self.ui.get_indexes()
+        self.assertEqual(len(results), 1)
+        self.assertTrue(MockModel in results)
+        self.assertEqual(results[MockModel], index)
 
     def test_all_searchfields(self):
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
