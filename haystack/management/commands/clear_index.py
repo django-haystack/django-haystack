@@ -32,27 +32,29 @@ class Command(BaseCommand):
         self.commit = options.get('commit', True)
 
         using = options.get('using')
+
         if not using:
             using = connections.connections_info.keys()
 
         if options.get('interactive', True):
-            print()
-            print("WARNING: This will irreparably remove EVERYTHING from your search index in connection '%s'." % "', '".join(using))
-            print("Your choices after this are to restore from backups or rebuild via the `rebuild_index` command.")
+            self.stdout.write("WARNING: This will irreparably remove EVERYTHING "
+                              "from your search index in connection '%s'." % "', '".join(using))
+
+            self.stdout.write("Your choices after this are to restore from "
+                              "backups or rebuild via the `rebuild_index` command.")
 
             yes_or_no = six.moves.input("Are you sure you wish to continue? [y/N] ")
-            print
 
             if not yes_or_no.lower().startswith('y'):
-                print("No action taken.")
+                self.stdout.write("No action taken.")
                 sys.exit()
 
         if self.verbosity >= 1:
-            print("Removing all documents from your index because you said so.")
+            self.stdout.write("Removing all documents from your index because you said so.")
 
         for backend_name in using:
             backend = connections[backend_name].get_backend()
             backend.clear(commit=self.commit)
 
         if self.verbosity >= 1:
-            print("All documents removed.")
+            self.stdout.write("All documents removed.")
