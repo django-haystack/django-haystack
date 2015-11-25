@@ -22,8 +22,10 @@ if DJANGO_VERSION >= (1, 8):
         return context
 else:
     from django.template.context import Context
+
     def make_context(context):
         return Context(context)
+
 
 # All the SearchFields variants.
 
