@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-import sys
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from django.template import Context, loader
@@ -53,13 +52,13 @@ class Command(BaseCommand):
         return t.render(c)
 
     def print_stdout(self, schema_xml):
-        sys.stderr.write("\n")
-        sys.stderr.write("\n")
-        sys.stderr.write("\n")
-        sys.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.\n")
-        sys.stderr.write("--------------------------------------------------------------------------------------------\n")
-        sys.stderr.write("\n")
-        print(schema_xml)
+        self.stderr.write("\n")
+        self.stderr.write("\n")
+        self.stderr.write("\n")
+        self.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.\n")
+        self.stderr.write("--------------------------------------------------------------------------------------------\n")
+        self.stderr.write("\n")
+        self.stdout.write(schema_xml)
 
     def write_file(self, filename, schema_xml):
         schema_file = open(filename, 'w')
