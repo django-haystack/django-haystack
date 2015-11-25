@@ -53,7 +53,7 @@ def worker(bits):
             try:
                 close_old_connections()
                 if isinstance(connections._connections, dict):
-                    del (connections._connections[alias])
+                    del connections._connections[alias]
                 else:
                     delattr(connections._connections, alias)
             except KeyError:
