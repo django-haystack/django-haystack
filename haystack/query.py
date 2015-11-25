@@ -606,13 +606,9 @@ class EmptySearchQuerySet(SearchQuerySet):
         return {}
 
 
-class ValuesListSearchQuerySet(SearchQuerySet):
-    """
-    A ``SearchQuerySet`` which returns a list of field values as tuples, exactly
-    like Django's ``ValuesListQuerySet``.
-    """
+class BaseValuesSearchQueryset(SearchQuerySet):
     def __init__(self, *args, **kwargs):
-        super(ValuesListSearchQuerySet, self).__init__(*args, **kwargs)
+        super(BaseValuesSearchQueryset, self).__init__(*args, **kwargs)
         self._flat = False
         self._fields = []
 
@@ -621,19 +617,26 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         # an immediate priority:
         self._internal_fields = ['id', 'django_ct', 'django_id', 'score']
 
-    def _clone(self, klass=None):
-        clone = super(ValuesListSearchQuerySet, self)._clone(klass=klass)
-        clone._fields = self._fields
-        clone._flat = self._flat
-        return clone
-
-    def _fill_cache(self, start, end):
+    def _fill_cache(self, start, end, **kwargs):
         query_fields = set(self._internal_fields)
         query_fields.update(self._fields)
         kwargs = {
             'fields': query_fields
         }
-        return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
+        return super(BaseValuesSearchQueryset, self)._fill_cache(start, end, **kwargs)
+
+    def _clone(self, klass=None):
+        clone = super(BaseValuesSearchQueryset, self)._clone(klass=klass)
+        clone._fields = self._fields
+        clone._flat = self._flat
+        return clone
+
+
+class ValuesListSearchQuerySet(BaseValuesSearchQueryset):
+    """
+    A ``SearchQuerySet`` which returns a list of field values as tuples, exactly
+    like Django's ``ValuesListQuerySet``.
+    """
 
     def post_process_results(self, results):
         to_cache = []
@@ -649,19 +652,12 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         return to_cache
 
 
-class ValuesSearchQuerySet(ValuesListSearchQuerySet):
+class ValuesSearchQuerySet(BaseValuesSearchQueryset):
     """
     A ``SearchQuerySet`` which returns a list of dictionaries, each containing
     the key/value pairs for the result, exactly like Django's
     ``ValuesQuerySet``.
     """
-    def _fill_cache(self, start, end):
-        query_fields = set(self._internal_fields)
-        query_fields.update(self._fields)
-        kwargs = {
-            'fields': query_fields
-        }
-        return super(ValuesSearchQuerySet, self)._fill_cache(start, end, **kwargs)
 
     def post_process_results(self, results):
         to_cache = []
