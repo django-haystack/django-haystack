@@ -15,7 +15,17 @@ class NOT_PROVIDED:
     pass
 
 
-DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|\s+)(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}).*?$')
+DATETIME_REGEX = re.compile('''
+^
+(?P<year>\d{4})-
+(?P<month>\d{2})-
+(?P<day>\d{2})
+(T|\s+)              # Time flag or an space
+(?P<hour>\d{2}):
+(?P<minute>\d{2}):
+(?P<second>\d{2}).*?
+$
+''', flags=re.VERBOSE)
 
 if DJANGO_VERSION >= (1, 8):
     def make_context(context):
