@@ -84,12 +84,7 @@ class SearchQuerySet(object):
         self.log = logging.getLogger('haystack')
 
     def __repr__(self):
-        data = list(self[:REPR_OUTPUT_SIZE])
-
-        if len(self) > REPR_OUTPUT_SIZE:
-            data[-1] = "...(remaining elements truncated)..."
-
-        return repr(data)
+        return u"<SearchQuerySet: query=%r, using=%r>" % (self.query, self._using)
 
     def __len__(self):
         if not self._result_count:

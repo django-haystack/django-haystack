@@ -360,8 +360,9 @@ class SearchQuerySetTestCase(TestCase):
     def test_repr(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
-        self.assertEqual(repr(self.msqs).replace("u'", "'"), "[<SearchResult: core.mockmodel (pk='1')>, <SearchResult: core.mockmodel (pk='2')>, <SearchResult: core.mockmodel (pk='3')>, <SearchResult: core.mockmodel (pk='4')>, <SearchResult: core.mockmodel (pk='5')>, <SearchResult: core.mockmodel (pk='6')>, <SearchResult: core.mockmodel (pk='7')>, <SearchResult: core.mockmodel (pk='8')>, <SearchResult: core.mockmodel (pk='9')>, <SearchResult: core.mockmodel (pk='10')>, <SearchResult: core.mockmodel (pk='11')>, <SearchResult: core.mockmodel (pk='12')>, <SearchResult: core.mockmodel (pk='13')>, <SearchResult: core.mockmodel (pk='14')>, <SearchResult: core.mockmodel (pk='15')>, <SearchResult: core.mockmodel (pk='16')>, <SearchResult: core.mockmodel (pk='17')>, <SearchResult: core.mockmodel (pk='18')>, <SearchResult: core.mockmodel (pk='19')>, '...(remaining elements truncated)...']")
-        self.assertEqual(len(connections['default'].queries), 1)
+        self.assertRegexpMatches(repr(self.msqs),
+                                r'^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object'
+                                r' at 0x[0-9A-Fa-f]+>, using=None>$')
 
     def test_iter(self):
         reset_search_queries()
