@@ -39,12 +39,15 @@ class SearchChangeList(ChangeList):
         self.haystack_connection = kwargs.pop('haystack_connection', 'default')
         super(SearchChangeList, self).__init__(**kwargs)
 
+    def get_searchqueryset(self, request):
+        # Note that pagination is 0-based, not 1-based.
+        return SearchQuerySet(self.haystack_connection).models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
+
     def get_results(self, request):
         if not SEARCH_VAR in request.GET:
             return super(SearchChangeList, self).get_results(request)
 
-        # Note that pagination is 0-based, not 1-based.
-        sqs = SearchQuerySet(self.haystack_connection).models(self.model).auto_query(request.GET[SEARCH_VAR]).load_all()
+        sqs = self.get_searchqueryset(request)
 
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
@@ -75,6 +78,9 @@ class SearchModelAdminMixin(object):
     # haystack connection to use for searching
     haystack_connection = 'default'
 
+    def get_changelist(self, request, **kwargs):
+        return SearchChangeList
+
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
         if not self.has_change_permission(request, None):
@@ -93,14 +99,22 @@ class SearchModelAdminMixin(object):
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
-        list_display = list(self.list_display)
+        list_display = self.get_list_display(request)
+        list_display_links = self.get_list_display_links(request, list_display)
+
+
+        # Check actions to see if any are available on this changelist
+        actions = self.get_actions(request)
+        if actions:
+            # Add the action checkboxes if there are any actions available.
+            list_display = ['action_checkbox'] + list(list_display)
 
         kwargs = {
             'haystack_connection': self.haystack_connection,
             'request': request,
             'model': self.model,
             'list_display': list_display,
-            'list_display_links': self.list_display_links,
+            'list_display_links': list_display_links,
             'list_filter': self.list_filter,
             'date_hierarchy': self.date_hierarchy,
             'search_fields': self.search_fields,
@@ -114,6 +128,7 @@ class SearchModelAdminMixin(object):
         if hasattr(self, 'list_max_show_all'):
             kwargs['list_max_show_all'] = self.list_max_show_all
 
+        SearchChangeList = self.get_changelist(**kwargs)
         changelist = SearchChangeList(**kwargs)
         formset = changelist.formset = None
         media = self.media
