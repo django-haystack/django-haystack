@@ -558,12 +558,13 @@ class SolrSearchQuery(BaseSearchQuery):
             'gte': u'[%s TO *]',
             'lt': u'{* TO %s}',
             'lte': u'[* TO %s]',
+            'fuzzy': u'%s~',
         }
 
         if value.post_process is False:
             query_frag = prepared_value
         else:
-            if filter_type in ['contains', 'startswith']:
+            if filter_type in ['contains', 'startswith', 'fuzzy']:
                 if value.input_type_name == 'exact':
                     query_frag = prepared_value
                 else:

@@ -44,6 +44,7 @@ class SQTestCase(TestCase):
         self.assertEqual(sq.split_expression('foo__in'), ('foo', 'in'))
         self.assertEqual(sq.split_expression('foo__startswith'), ('foo', 'startswith'))
         self.assertEqual(sq.split_expression('foo__range'), ('foo', 'range'))
+        self.assertEqual(sq.split_expression('foo__fuzzy'), ('foo', 'fuzzy'))
 
         # Unrecognized filter. Fall back to exact.
         self.assertEqual(sq.split_expression('foo__moof'), ('foo', 'contains'))
