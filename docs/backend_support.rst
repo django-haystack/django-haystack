@@ -46,6 +46,7 @@ Elasticsearch
 * Automatic query building
 * "More Like This" functionality
 * Term Boosting
+* Field Boosting
 * Faceting (up to 100 facets)
 * Stored (non-indexed) fields
 * Highlighting
