@@ -10,6 +10,7 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.core.management import call_command
 from mock import patch
 
 from haystack import connections, indexes, reset_search_queries
@@ -197,7 +198,16 @@ class SolrQuotingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return u"""Don't panic but %s has been iñtërnâtiônàlizéð""" % obj.author
 
 
-class SolrSearchBackendTestCase(TestCase):
+class SolrTestCase(TestCase):
+    def setUp(self):
+        super(SolrTestCase, self).setUp()
+        if int(os.environ.get('SOLR_VERSION', '5')[0]) < 5:
+            call_command('build_solr_schema', filename=os.environ.get('SOLR_SCHEMA'), using='solr')
+        else:
+            call_command('build_solr_schema', using='solr')
+
+
+class SolrSearchBackendTestCase(SolrTestCase):
     def setUp(self):
         super(SolrSearchBackendTestCase, self).setUp()
 
@@ -510,149 +520,149 @@ class SolrSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections['solr'].get_unified_index()
 
-        (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
-        self.assertEqual(content_field_name, 'text')
+        (content_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
+        self.assertEqual(content_name, 'text')
         self.assertEqual(len(fields), 4)
-        self.assertEqual(sorted(fields, key=lambda x: x['field_name']), [
+        self.assertEqual(sorted(fields, key=lambda x: x['name']), [
             {
                 'indexed': 'true',
                 'type': 'text_en',
                 'stored': 'true',
-                'field_name': 'name',
-                'multi_valued': 'false'
+                'name': 'name',
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
-                'field_name': 'name_exact',
+                'name': 'name_exact',
                 'stored': 'true',
                 'type': 'string',
-                'multi_valued': 'false'
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'date',
                 'stored': 'true',
-                'field_name': 'pub_date',
-                'multi_valued': 'false'
+                'name': 'pub_date',
+                'multiValued': 'false'
             },
             {
                 'indexed': 'true',
                 'type': 'text_en',
                 'stored': 'true',
-                'field_name': 'text',
-                'multi_valued': 'false'
+                'name': 'text',
+                'multiValued': 'false'
             },
         ])
 
         ui = UnifiedIndex()
         ui.build(indexes=[SolrComplexFacetsMockSearchIndex()])
-        (content_field_name, fields) = self.sb.build_schema(ui.all_searchfields())
-        self.assertEqual(content_field_name, 'text')
+        (content_name, fields) = self.sb.build_schema(ui.all_searchfields())
+        self.assertEqual(content_name, 'text')
         self.assertEqual(len(fields), 15)
-        fields = sorted(fields, key=lambda field: field['field_name'])
+        fields = sorted(fields, key=lambda field: field['name'])
         self.assertEqual(fields, [
             {
-                'field_name': 'average_rating',
+                'name': 'average_rating',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'float'
             },
             {
-                'field_name': 'average_rating_exact',
+                'name': 'average_rating_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'float'
             },
             {
-                'field_name': 'created',
+                'name': 'created',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'created_exact',
+                'name': 'created_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'is_active',
+                'name': 'is_active',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'boolean'
             },
             {
-                'field_name': 'is_active_exact',
+                'name': 'is_active_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'boolean'
             },
             {
-                'field_name': 'name',
+                'name': 'name',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'text_en'
             },
             {
-                'field_name': 'name_exact',
+                'name': 'name_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'string'
             },
             {
-                'field_name': 'post_count',
+                'name': 'post_count',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'long'
             },
             {
-                'field_name': 'post_count_i',
+                'name': 'post_count_i',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'long'
             },
             {
-                'field_name': 'pub_date',
+                'name': 'pub_date',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'pub_date_exact',
+                'name': 'pub_date_exact',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'date'
             },
             {
-                'field_name': 'sites',
+                'name': 'sites',
                 'indexed': 'true',
-                'multi_valued': 'true',
+                'multiValued': 'true',
                 'stored': 'true',
                 'type': 'text_en'
             },
             {
-                'field_name': 'sites_exact',
+                'name': 'sites_exact',
                 'indexed': 'true',
-                'multi_valued': 'true',
+                'multiValued': 'true',
                 'stored': 'true',
                 'type': 'string'
             },
             {
-                'field_name': 'text',
+                'name': 'text',
                 'indexed': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
                 'stored': 'true',
                 'type': 'text_en'
             }
@@ -681,7 +691,7 @@ class CaptureHandler(std_logging.Handler):
 
 @patch("pysolr.Solr._send_request", side_effect=pysolr.SolrError)
 @patch("logging.Logger.log")
-class FailedSolrSearchBackendTestCase(TestCase):
+class FailedSolrSearchBackendTestCase(SolrTestCase):
     def test_all_cases(self, mock_send_request, mock_log):
         self.sample_objs = []
 
@@ -719,7 +729,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
         self.assertEqual(mock_log.call_count, 6)
 
 
-class LiveSolrSearchQueryTestCase(TestCase):
+class LiveSolrSearchQueryTestCase(SolrTestCase):
     fixtures = ['initial_data.json']
 
     def setUp(self):
@@ -776,7 +786,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
 
 @override_settings(DEBUG=True)
-class LiveSolrSearchQuerySetTestCase(TestCase):
+class LiveSolrSearchQuerySetTestCase(SolrTestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
     fixtures = ['bulk_data.json']
 
@@ -1147,7 +1157,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs[0], SearchResult))
 
 
-class LiveSolrMoreLikeThisTestCase(TestCase):
+class LiveSolrMoreLikeThisTestCase(SolrTestCase):
     fixtures = ['bulk_data.json']
 
     def setUp(self):
@@ -1215,7 +1225,7 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         self.assertIsInstance(first_result, MockSearchResult)
 
 
-class LiveSolrAutocompleteTestCase(TestCase):
+class LiveSolrAutocompleteTestCase(SolrTestCase):
     fixtures = ['bulk_data.json']
 
     def setUp(self):
@@ -1270,7 +1280,7 @@ class LiveSolrAutocompleteTestCase(TestCase):
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
-class LiveSolrRoundTripTestCase(TestCase):
+class LiveSolrRoundTripTestCase(SolrTestCase):
     def setUp(self):
         super(LiveSolrRoundTripTestCase, self).setUp()
 
@@ -1319,7 +1329,7 @@ class LiveSolrRoundTripTestCase(TestCase):
 
 
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
-class LiveSolrPickleTestCase(TestCase):
+class LiveSolrPickleTestCase(SolrTestCase):
     fixtures = ['bulk_data.json']
 
     def setUp(self):
@@ -1359,7 +1369,7 @@ class LiveSolrPickleTestCase(TestCase):
         self.assertEqual(like_a_cuke[0].id, results[0].id)
 
 
-class SolrBoostBackendTestCase(TestCase):
+class SolrBoostBackendTestCase(SolrTestCase):
     def setUp(self):
         super(SolrBoostBackendTestCase, self).setUp()
 
@@ -1410,7 +1420,7 @@ class SolrBoostBackendTestCase(TestCase):
 
 
 @unittest.skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
-class LiveSolrContentExtractionTestCase(TestCase):
+class LiveSolrContentExtractionTestCase(SolrTestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
 

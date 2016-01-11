@@ -9,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from django.template import Context, loader
 
+
 from haystack import constants
 from haystack.backends.solr_backend import SolrSearchBackend
 
@@ -17,7 +18,9 @@ class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
     base_options = (
         make_option("-f", "--filename", action="store", type="string", dest="filename",
-                    help='If provided, directs output to a file instead of stdout.'),
+                help='For Solr version before 5.0.0. If provided, directs output to a XML schema.'),
+        make_option("-s", "--stdout", action="store_true", dest="stdout",
+            help='For Solr version before 5.0.0, print the schema.xml to stdout', default=False),
         make_option("-u", "--using", action="store", type="string", dest="using", default=constants.DEFAULT_ALIAS,
                     help='If provided, chooses a connection to work with.'),
     )
@@ -25,13 +28,35 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
-        using = options.get('using')
-        schema_xml = self.build_template(using=using)
+        from haystack import connections, connection_router
 
-        if options.get('filename'):
-            self.write_file(options.get('filename'), schema_xml)
-        else:
-            self.print_stdout(schema_xml)
+        using = options.get('using')
+        backend = connections[using].get_backend()
+
+        if not isinstance(backend, SolrSearchBackend):
+            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % backend.connection_alias)
+
+        if options.get('filename') or options.get('stdout'):
+            schema_xml = self.build_template(using=using)
+            if options.get('filename'):
+                self.write_file(options.get('filename'), schema_xml)
+            else:
+                self.print_schema(schema_xml)
+            return
+
+        content_field_name, fields = backend.build_schema(connections[using].get_unified_index().all_searchfields())
+
+        django_fields = [
+            dict(name=constants.ID, type="string", indexed="true", stored="true", multiValued="false", required="true"),
+            dict(name= constants.DJANGO_CT, type="string", indexed="true", stored="true", multiValued="false"),
+            dict(name= constants.DJANGO_ID, type="string", indexed="true", stored="true", multiValued="false"),
+            dict(name="_version_", type="long", indexed="true", stored ="true"),
+        ]
+
+        admin = backend.get_schema_admin()
+        for field in fields + django_fields:
+            resp = admin.add_field(field)
+            self.log(field, resp, backend)
 
     def build_context(self, using):
         from haystack import connections, connection_router
@@ -55,7 +80,12 @@ class Command(BaseCommand):
         c = self.build_context(using=using)
         return t.render(c)
 
-    def print_stdout(self, schema_xml):
+    def write_file(self, filename, schema_xml):
+        schema_file = open(filename, 'w')
+        schema_file.write(schema_xml)
+        schema_file.close()
+
+    def print_schema(self, schema_xml):
         sys.stderr.write("\n")
         sys.stderr.write("\n")
         sys.stderr.write("\n")
@@ -64,7 +94,15 @@ class Command(BaseCommand):
         sys.stderr.write("\n")
         print(schema_xml)
 
-    def write_file(self, filename, schema_xml):
-        schema_file = open(filename, 'w')
-        schema_file.write(schema_xml)
-        schema_file.close()
+    def log(self, field, response, backend):
+        try:
+            message = response.json()
+        except ValueError:
+            raise Exception('unable to decode Solr API, are sure you started Solr and created the configured Core (%s) ?' % backend.conn.url)
+
+        if 'errors' in message:
+            sys.stdout.write("%s.\n" % [" ".join(err.get('errorMessages')) for err in message['errors']])
+        elif 'responseHeader' in message and 'status' in message['responseHeader']:
+            sys.stdout.write("Successfully created the field %s\n" % field['name'])
+        else:
+            sys.stdout.write("%s.\n" % message)
