@@ -106,3 +106,4 @@ Thanks to
     * Ilan Steemers (@Koed00) for fixing Django 1.9 deprecation warnings
     * Ana Carolina (@anacarolinats) and Steve Bussetti (@sbussetti) for adding the ``fuzzy`` operator to
       SearchQuerySet
+    * Antony Raj (@antonyr) for adding endswith input type and fixing contains input type
