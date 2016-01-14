@@ -1,9 +1,7 @@
 sudo: false
 language: python
 python:
-    - 2.6
     - 2.7
-    - 3.3
     - 3.4
     - 3.5
     - pypy
@@ -43,21 +41,12 @@ script:
 
 env:
     matrix:
-        - DJANGO_VERSION=">=1.6,<1.7"
-        - DJANGO_VERSION=">=1.7,<1.8"
         - DJANGO_VERSION=">=1.8,<1.9"
 
 matrix:
     allow_failures:
         - python: "pypy"
-        - python: 2.6
     exclude:
-       - python: 2.6
-         env: DJANGO_VERSION=">=1.7,<1.8"
-       - python: 2.6
-         env: DJANGO_VERSION=">=1.8,<1.9"
-       - python: 3.5
-         env: DJANGO_VERSION=">=1.6,<1.7"
        - python: 3.5
          env: DJANGO_VERSION=">=1.7,<1.8"
 

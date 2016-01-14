@@ -114,7 +114,11 @@ Official Download Location: http://www.elasticsearch.org/download/
 
 Elasticsearch is Java but comes in a pre-packaged form that requires very
 little other than the JRE. It's also very performant, scales easily and has
-an advanced featureset. Haystack requires at least version 0.90.0+.
+an advanced featureset. Haystack currently only supports ElasticSearch 1.0;
+if you would like to help finish support for 2.x, please see:
+
+https://github.com/django-haystack/django-haystack/issues/1247
+
 Installation is best done using a package manager::
 
     # On Mac OS X...
@@ -154,13 +158,6 @@ You'll also need an Elasticsearch binding: elasticsearch_ (**NOT**
 (usually ``python setup.py install`` or ``pip install elasticsearch``).
 
 .. _elasticsearch: http://pypi.python.org/pypi/elasticsearch/
-
-.. note::
-
-  Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
-  you have the proper version of `elasticsearch` installed - releases with
-  major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4
-  releases are meant to work with Elasticsearch 0.90.X.
 
 .. note::
 
