@@ -2,7 +2,11 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.db.models.loading import get_model
+try:
+    from django.db.models.loading import get_model
+except ImportError:
+     from django.apps import apps
+     get_model = apps.get_model
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.models import SearchResult
