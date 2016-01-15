@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.core.exceptions import ImproperlyConfigured
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from test_haystack.core.models import AnotherMockModel, MockModel
 from test_haystack.utils import unittest
 
@@ -90,15 +90,16 @@ class ConnectionHandlerTestCase(TestCase):
 class ConnectionRouterTestCase(TestCase):
     def test_init(self):
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.routers_list, ['haystack.routers.DefaultRouter'])
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
-        cr = loading.ConnectionRouter(routers_list=['haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.routers_list, ['haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['haystack.routers.DefaultRouter'])
+    def test_router_override1(self):
+        cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.routers_list, ['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    def test_router_override2(self):
+        cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'test_haystack.mocks.MockMasterSlaveRouter'>", "<class 'haystack.routers.DefaultRouter'>"])
 
     def test_for_read(self):
