@@ -98,43 +98,34 @@ class ConnectionRouterTestCase(TestCase):
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
     @override_settings(HAYSTACK_ROUTERS=[])
-    def test_router_override1(self):
+    def test_router_override2(self):
         cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
     @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-    def test_router_override2(self):
+    def test_router_override3(self):
         cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'test_haystack.mocks.MockMasterSlaveRouter'>", "<class 'haystack.routers.DefaultRouter'>"])
 
-    def test_for_read(self):
+    def test_actions1(self):
         cr = loading.ConnectionRouter()
         self.assertEqual(cr.for_read(), ['default'])
-
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
-
-        # Demonstrate pass-through.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
-
-        # Demonstrate that hinting can change routing.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(pass_through=False), ['pass', 'slave', 'default'])
-
-    def test_for_write(self):
-        cr = loading.ConnectionRouter()
         self.assertEqual(cr.for_write(), ['default'])
 
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    def test_actions2(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual(cr.for_read(), ['slave', 'default'])
         self.assertEqual(cr.for_write(), ['master', 'default'])
 
-        # Demonstrate pass-through.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    def test_actions3(self):
+        cr = loading.ConnectionRouter()
+        # Demonstrate pass-through
+        self.assertEqual(cr.for_read(), ['slave', 'default'])
         self.assertEqual(cr.for_write(), ['master', 'default'])
-
         # Demonstrate that hinting can change routing.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+        self.assertEqual(cr.for_read(pass_through=False), ['pass', 'slave', 'default'])
         self.assertEqual(cr.for_write(pass_through=False), ['pass', 'master', 'default'])
 
 
