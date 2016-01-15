@@ -125,16 +125,17 @@ class ConnectionHandler(object):
 
 
 class ConnectionRouter(object):
-    def __init__(self, routers_list=None):
-        self.routers_list = routers_list
-        self.routers = []
+    @property
+    def routers(self):
+        if not hasattr(self, '_routers'):
+            default_routers = ['haystack.routers.DefaultRouter']
+            router_list = getattr(settings, 'HAYSTACK_ROUTERS', default_routers)
 
-        if self.routers_list is None:
-            self.routers_list = ['haystack.routers.DefaultRouter']
-
-        for router_path in self.routers_list:
-            router_class = load_router(router_path)
-            self.routers.append(router_class())
+            self._routers = []
+            for router_path in router_list:
+                router_class = load_router(router_path)
+                self._routers.append(router_class())
+        return self._routers
 
     def for_action(self, action, **hints):
         conns = []
