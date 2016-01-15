@@ -130,6 +130,9 @@ class ConnectionRouter(object):
         if not hasattr(self, '_routers'):
             default_routers = ['haystack.routers.DefaultRouter']
             router_list = getattr(settings, 'HAYSTACK_ROUTERS', default_routers)
+            # in case HAYSTACK_ROUTERS is empty, fallback to default routers
+            if not len(router_list):
+                router_list = default_routers
 
             self._routers = []
             for router_path in router_list:

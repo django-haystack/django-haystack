@@ -97,6 +97,11 @@ class ConnectionRouterTestCase(TestCase):
         cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
+    @override_settings(HAYSTACK_ROUTERS=[])
+    def test_router_override1(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
+
     @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
     def test_router_override2(self):
         cr = loading.ConnectionRouter()
