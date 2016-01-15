@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from test_haystack.core.models import AnotherMockModel, MockModel
@@ -88,7 +89,9 @@ class ConnectionHandlerTestCase(TestCase):
 
 
 class ConnectionRouterTestCase(TestCase):
+    @override_settings()
     def test_init(self):
+        del settings.HAYSTACK_ROUTERS
         cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
@@ -107,7 +110,9 @@ class ConnectionRouterTestCase(TestCase):
         cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'test_haystack.mocks.MockMasterSlaveRouter'>", "<class 'haystack.routers.DefaultRouter'>"])
 
+    @override_settings()
     def test_actions1(self):
+        del settings.HAYSTACK_ROUTERS
         cr = loading.ConnectionRouter()
         self.assertEqual(cr.for_read(), ['default'])
         self.assertEqual(cr.for_write(), ['default'])
