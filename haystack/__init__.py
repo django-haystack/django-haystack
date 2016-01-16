@@ -13,7 +13,7 @@ from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 4, 1)
+__version__ = (2, 5, 'dev0')
 
 
 # Setup default logging.
