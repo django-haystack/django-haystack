@@ -50,7 +50,7 @@ Elasticsearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: elasticsearch-py > 1.0 & Elasticsearch 1.0+
+* Requires: elasticsearch-py > 1.0 & Elasticsearch 1.0+ (Elasticsearch 2.X is not supported yet `#1247 <https://github.com/django-haystack/django-haystack/issues/1247>`_)
 
 Whoosh
 ------
