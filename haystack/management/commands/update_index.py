@@ -1,12 +1,10 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 import os
 import sys
 import warnings
 from datetime import timedelta
-from optparse import make_option
 
 try:
     from django.db import close_old_connections
@@ -14,9 +12,8 @@ except ImportError:
     # This can be removed when we drop support for Django 1.7 and earlier:
     from django.db import close_connection as close_old_connections
 
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.db import reset_queries
-
 from haystack import connections as haystack_connections
 from haystack.query import SearchQuerySet
 from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
@@ -35,8 +32,8 @@ try:
     from django.utils.timezone import now
 except ImportError:
     from datetime import datetime
-    now = datetime.now
 
+    now = datetime.now
 
 DEFAULT_BATCH_SIZE = None
 DEFAULT_AGE = None
@@ -56,7 +53,7 @@ def worker(bits):
             try:
                 close_old_connections()
                 if isinstance(connections._connections, dict):
-                    del(connections._connections[alias])
+                    del connections._connections[alias]
                 else:
                     delattr(connections._connections, alias)
             except KeyError:
@@ -99,44 +96,56 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
     reset_queries()
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Freshens the index for the given app(s)."
-    base_options = (
-        make_option('-a', '--age', action='store', dest='age',
-            default=DEFAULT_AGE, type='int',
+    label = 'items'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-a', '--age', action='store', dest='age',
+            default=DEFAULT_AGE, type=int,
             help='Number of hours back to consider objects new.'
-        ),
-        make_option('-s', '--start', action='store', dest='start_date',
-            default=None, type='string',
+        )
+        parser.add_argument(
+            '-s', '--start', action='store', dest='start_date',
+            default=None,
             help='The start date for indexing within. Can be any dateutil-parsable string, recommended to be YYYY-MM-DDTHH:MM:SS.'
-        ),
-        make_option('-e', '--end', action='store', dest='end_date',
-            default=None, type='string',
+        )
+        parser.add_argument(
+            '-e', '--end', action='store', dest='end_date',
+            default=None,
             help='The end date for indexing within. Can be any dateutil-parsable string, recommended to be YYYY-MM-DDTHH:MM:SS.'
-        ),
-        make_option('-b', '--batch-size', action='store', dest='batchsize',
-            default=None, type='int',
+        )
+        parser.add_argument(
+            '-b', '--batch-size', action='store', dest='batchsize',
+            default=None, type=int,
             help='Number of items to index at once.'
-        ),
-        make_option('-r', '--remove', action='store_true', dest='remove',
-            default=False, help='Remove objects from the index that are no longer present in the database.'
-        ),
-        make_option("-u", "--using", action="append", dest="using",
+        )
+        parser.add_argument(
+            '-r', '--remove', action='store_true', dest='remove',
+            default=False,
+            help='Remove objects from the index that are no longer present in the database.'
+        )
+        parser.add_argument(
+            '-u', '--using', action='append', dest='using',
             default=[],
             help='Update only the named backend (can be used multiple times). '
                  'By default all backends will be updated.'
-        ),
-        make_option('-k', '--workers', action='store', dest='workers',
-            default=0, type='int',
+        )
+        parser.add_argument(
+            '-k', '--workers', action='store', dest='workers',
+            default=0, type=int,
             help='Allows for the use multiple workers to parallelize indexing. Requires multiprocessing.'
-        ),
-        make_option('--nocommit', action='store_false', dest='commit',
+        )
+        parser.add_argument(
+            '--nocommit', action='store_false', dest='commit',
             default=True, help='Will pass commit=False to the backend.'
-        ),
-    )
-    option_list = LabelCommand.option_list + base_options
+        )
+        parser.add_argument(
+            'app_label', nargs='?',
+            help='App label of an application to update the search index.')
 
-    def handle(self, *items, **options):
+    def handle(self, *args, **options):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.start_date = None
@@ -177,10 +186,15 @@ class Command(LabelCommand):
             except ValueError:
                 pass
 
-        if not items:
-            items = haystack_load_apps()
+        if not args:
+            args = haystack_load_apps()
 
-        return super(Command, self).handle(*items, **options)
+        output = []
+        for label in args:
+            label_output = self.handle_label(label, **options)
+            if label_output:
+                output.append(label_output)
+        return '\n'.join(output)
 
     def handle_label(self, label, **options):
         for using in self.backends:
@@ -232,7 +246,8 @@ class Command(LabelCommand):
                 if self.workers == 0:
                     do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit)
                 else:
-                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit))
+                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date,
+                                         self.verbosity, self.commit))
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)

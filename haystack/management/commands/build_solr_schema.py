@@ -1,27 +1,23 @@
 # encoding: utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-
-import sys
-from optparse import make_option
-
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from django.template import Context, loader
-
 from haystack import constants
 from haystack.backends.solr_backend import SolrSearchBackend
 
 
 class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
-    base_options = (
-        make_option("-f", "--filename", action="store", type="string", dest="filename",
-                    help='If provided, directs output to a file instead of stdout.'),
-        make_option("-u", "--using", action="store", type="string", dest="using", default=constants.DEFAULT_ALIAS,
-                    help='If provided, chooses a connection to work with.'),
-    )
-    option_list = BaseCommand.option_list + base_options
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-f", "--filename", action="store", type="string", dest="filename",
+            help='If provided, directs output to a file instead of stdout.')
+        parser.add_argument(
+            "-u", "--using", action="store", type="string", dest="using", default=constants.DEFAULT_ALIAS,
+            help='If provided, chooses a connection to work with.')
 
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
@@ -56,13 +52,13 @@ class Command(BaseCommand):
         return t.render(c)
 
     def print_stdout(self, schema_xml):
-        sys.stderr.write("\n")
-        sys.stderr.write("\n")
-        sys.stderr.write("\n")
-        sys.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.\n")
-        sys.stderr.write("--------------------------------------------------------------------------------------------\n")
-        sys.stderr.write("\n")
-        print(schema_xml)
+        self.stderr.write("\n")
+        self.stderr.write("\n")
+        self.stderr.write("\n")
+        self.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.\n")
+        self.stderr.write("--------------------------------------------------------------------------------------------\n")
+        self.stderr.write("\n")
+        self.stdout.write(schema_xml)
 
     def write_file(self, filename, schema_xml):
         schema_file = open(filename, 'w')
