@@ -93,6 +93,8 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
                             start + 1, end, retries, max_retries, os.getpid()
                     ))
                 print(exc)
+            if retries >= max_retries:
+                raise
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
