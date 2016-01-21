@@ -80,7 +80,7 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
             # FIXME: Get the right backend.
             backend.update(index, current_qs, commit=commit)
             if verbosity >= 2 and retries:
-                print('Succeeded indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries, max_retries))
+                print('Succeeded indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries + 1, max_retries))
             break
         except:
             retries += 1
