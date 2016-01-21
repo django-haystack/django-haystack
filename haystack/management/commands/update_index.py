@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import os
 import sys
+import traceback
 import warnings
 from datetime import timedelta
 from optparse import make_option
@@ -65,14 +66,33 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
     small_cache_qs = qs.all()
     current_qs = small_cache_qs[start:end]
 
+    is_parent_process = hasattr(os, 'getppid') and os.getpid() == os.getppid()
     if verbosity >= 2:
-        if hasattr(os, 'getppid') and os.getpid() == os.getppid():
+        if is_parent_process:
             print("  indexed %s - %d of %d." % (start + 1, end, total))
         else:
             print("  indexed %s - %d of %d (by %s)." % (start + 1, end, total, os.getpid()))
 
-    # FIXME: Get the right backend.
-    backend.update(index, current_qs, commit=commit)
+    max_retries = 5
+    retries = 0
+    while retries < max_retries:
+        try:
+            # FIXME: Get the right backend.
+            backend.update(index, current_qs, commit=commit)
+            if verbosity >= 2 and retries:
+                print('Succeeded indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries, max_retries))
+            break
+        except:
+            retries += 1
+            if verbosity >= 2:
+                exc = traceback.format_exc()
+                if is_parent_process:
+                    print('Failed indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries, max_retries))
+                else:
+                    print('Failed indexing {} - {}, tried {}/{} times (by {})'.format(
+                            start + 1, end, retries, max_retries, os.getpid()
+                    ))
+                print(exc)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
