@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import os
 import sys
+import time
 import warnings
 from datetime import timedelta
 from optparse import make_option
@@ -94,6 +95,8 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
             if retries >= max_retries:
                 # Retries failed so re-raise
                 raise
+            # If going to try again, sleep a bit before
+            time.sleep(2 ** retries)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
