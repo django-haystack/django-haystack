@@ -81,7 +81,10 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
             if verbosity >= 2 and retries:
                 print('Succeeded indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries + 1, max_retries))
             break
-        except:
+        except Exception:
+            # Exception - catch all errors that are non-system-existing, meaning not including
+            # SystemExit and KeyboardInterrupt.
+            # Elasticsearch's exceptions are all based on Exception.
             retries += 1
             if verbosity >= 2:
                 error_msg = 'Failed indexing %s - %s, tried %s/%s times' % (start + 1, end, retries, max_retries)
