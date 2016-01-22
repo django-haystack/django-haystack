@@ -4,7 +4,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import os
 import sys
-import traceback
 import warnings
 from datetime import timedelta
 from optparse import make_option
@@ -85,14 +84,10 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
         except:
             retries += 1
             if verbosity >= 2:
-                exc = traceback.format_exc()
-                if is_parent_process:
-                    print('Failed indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries, max_retries))
-                else:
-                    print('Failed indexing {} - {}, tried {}/{} times (by {})'.format(
-                            start + 1, end, retries, max_retries, os.getpid()
-                    ))
-                print(exc)
+                error_msg = 'Failed indexing %s - %s, tried %s/%s times' % (start + 1, end, retries, max_retries)
+                if not is_parent_process:
+                    error_msg += ' (by %s)' % os.getpid()
+                logging.exception(error_msg)
             if retries >= max_retries:
                 raise
 
