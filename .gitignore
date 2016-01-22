@@ -15,3 +15,5 @@ env3
 
 test_haystack/solr_tests/server/solr-4.6.0.tgz
 test_haystack/solr_tests/server/solr4/
+.eggs/
+.idea/
