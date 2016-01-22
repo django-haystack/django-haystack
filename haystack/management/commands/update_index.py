@@ -92,6 +92,7 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
                     error_msg += ' (by %s)' % os.getpid()
                 logging.exception(error_msg)
             if retries >= max_retries:
+                # Retries failed so re-raise
                 raise
 
     # Clear out the DB connections queries because it bloats up RAM.
