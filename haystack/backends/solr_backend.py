@@ -458,13 +458,16 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'edge_ngram'
             elif field_class.field_type == 'location':
                 field_data['type'] = 'location'
-
+            elif field_class.explicit_field_type:
+                field_data['type'] = field_class.explicit_field_type
+                
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
 
             if field_class.stored is False:
                 field_data['stored'] = 'false'
-
+            elif field_class.explicit_field_type:
+                field_data['type'] = field_class.explicit_field_type
             # Do this last to override `text` fields.
             if field_class.indexed is False:
                 field_data['indexed'] = 'false'
