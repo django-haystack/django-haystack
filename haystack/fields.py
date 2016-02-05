@@ -165,7 +165,11 @@ class CharField(SearchField):
         if value is None:
             return None
 
-        return six.text_type(value)
+        try:
+            return six.text_type(value)
+        except:
+            # This might hide some important errors XXX
+            pass
 
 
 class LocationField(SearchField):
