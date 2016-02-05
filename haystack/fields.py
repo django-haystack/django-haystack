@@ -103,7 +103,10 @@ class SearchField(object):
                         raise SearchFieldError("The model '%s' combined with model_attr '%s' returned None, but doesn't allow a default or null value." % (repr(obj), self.model_attr))
 
             if callable(current_object):
-                return current_object()
+                try:
+                    return current_object()
+                except:
+                    return current_object.all()
 
             return current_object
 
