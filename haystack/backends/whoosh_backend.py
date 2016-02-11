@@ -122,7 +122,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         else:
             global LOCALS
 
-            if LOCALS.RAM_STORE is None:
+            if not hasattr(LOCALS, 'RAM_STORE') or LOCALS.RAM_STORE is None:
                 LOCALS.RAM_STORE = RamStorage()
 
             self.storage = LOCALS.RAM_STORE
