@@ -3,7 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import re
 
-from django.template import Context, loader
+from django import VERSION as DJANGO_VERSION
+from django.template import loader
 from django.utils import datetime_safe, six
 
 from haystack.exceptions import SearchFieldError
@@ -14,7 +15,26 @@ class NOT_PROVIDED:
     pass
 
 
-DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|\s+)(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}).*?$')
+DATETIME_REGEX = re.compile('''
+^
+(?P<year>\d{4})-
+(?P<month>\d{2})-
+(?P<day>\d{2})
+(T|\s+)              # Time flag or an space
+(?P<hour>\d{2}):
+(?P<minute>\d{2}):
+(?P<second>\d{2}).*?
+$
+''', flags=re.VERBOSE)
+
+if DJANGO_VERSION >= (1, 8):
+    def make_context(context):
+        return context
+else:
+    from django.template.context import Context
+
+    def make_context(context):
+        return Context(context)
 
 
 # All the SearchFields variants.
@@ -134,7 +154,7 @@ class SearchField(object):
             template_names = ['search/indexes/%s/%s_%s.txt' % (app_label, model_name, self.instance_name)]
 
         t = loader.select_template(template_names)
-        return t.render(Context({'object': obj}))
+        return t.render(make_context({'object': obj}))
 
     def convert(self, value):
         """
