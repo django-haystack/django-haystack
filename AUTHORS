@@ -107,3 +107,4 @@ Thanks to
     * Ana Carolina (@anacarolinats) and Steve Bussetti (@sbussetti) for adding the ``fuzzy`` operator to
       SearchQuerySet
     * Tadas Dailyda (@skirsdeda) for various patches
+    * Craig de Stigter (@craigds) for a patch fixing concurrency issues when building UnifiedIndex

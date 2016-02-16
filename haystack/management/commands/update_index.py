@@ -55,10 +55,10 @@ def worker(bits):
         if 'sqlite3' not in info['ENGINE']:
             try:
                 close_old_connections()
-                if isinstance(connections._connections, dict):
-                    del(connections._connections[alias])
+                if isinstance(connections.thread_local.connections, dict):
+                    del(connections.thread_local.connections[alias])
                 else:
-                    delattr(connections._connections, alias)
+                    delattr(connections.thread_local.connections, alias)
             except KeyError:
                 pass
 
