@@ -23,7 +23,6 @@ class ConnectionHandlerTestCase(TestCase):
     def test_init(self):
         ch = loading.ConnectionHandler({})
         self.assertEqual(ch.connections_info, {})
-        self.assertEqual(ch._connections, {})
 
         ch = loading.ConnectionHandler({
             'default': {
@@ -37,7 +36,6 @@ class ConnectionHandlerTestCase(TestCase):
                 'URL': 'http://localhost:9001/solr/test_default',
             },
         })
-        self.assertEqual(ch._connections, {})
 
     @unittest.skipIf(pysolr is False, "pysolr required")
     def test_get_item(self):
