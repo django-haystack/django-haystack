@@ -43,14 +43,13 @@ if DEFAULT_ALIAS not in settings.HAYSTACK_CONNECTIONS:
 # Load the connections.
 connections = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)
 
-# Load the router(s).
-connection_router = loading.ConnectionRouter()
-
+# Just check HAYSTACK_ROUTERS setting validity, routers will be loaded lazily
 if hasattr(settings, 'HAYSTACK_ROUTERS'):
     if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
         raise ImproperlyConfigured("The HAYSTACK_ROUTERS setting must be either a list or tuple.")
 
-    connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
+# Load the router(s).
+connection_router = loading.ConnectionRouter()
 
 # Setup the signal processor.
 signal_processor_path = getattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', 'haystack.signals.BaseSignalProcessor')

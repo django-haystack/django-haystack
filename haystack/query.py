@@ -7,7 +7,7 @@ import warnings
 
 from django.utils import six
 
-from haystack import connection_router, connections
+from haystack import connections
 from haystack.backends import SQ
 from haystack.constants import DEFAULT_OPERATOR, ITERATOR_LOAD_PER_QUERY, REPR_OUTPUT_SIZE
 from haystack.exceptions import NotHandled
@@ -41,7 +41,8 @@ class SearchQuerySet(object):
         self.log = logging.getLogger('haystack')
 
     def _determine_backend(self):
-        from haystack import connections
+        from haystack import connection_router, connections
+
         # A backend has been manually selected. Use it instead.
         if self._using is not None:
             self.query = connections[self._using].get_query()
