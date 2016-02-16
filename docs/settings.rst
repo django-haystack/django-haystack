@@ -301,7 +301,7 @@ Default is ``0.5``
 
 
 ``HAYSTACK_FUZZY_MAX_EXPANSIONS``
-==========================
+=================================
 
 **Optional**
 
