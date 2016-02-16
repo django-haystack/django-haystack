@@ -581,10 +581,13 @@ class SolrSearchQuery(BaseSearchQuery):
             elif filter_type == 'in':
                 in_options = []
 
-                for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
+                if not prepared_value:
+                    query_frag = u'(!*:*)'
+                else:
+                    for possible_value in prepared_value:
+                        in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
 
-                query_frag = u"(%s)" % " OR ".join(in_options)
+                    query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
                 start = self.backend.conn._from_python(prepared_value[0])
                 end = self.backend.conn._from_python(prepared_value[1])

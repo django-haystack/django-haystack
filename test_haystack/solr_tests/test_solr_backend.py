@@ -962,6 +962,17 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = sqs.filter(tags__in=['cameras', 'electronics'])
         self.assertEqual(len(sqs), 0)
 
+    def test_query__in(self):
+        self.assertGreater(len(self.sqs), 0)
+        sqs = self.sqs.filter(django_ct='core.mockmodel', django_id__in=[1,2])
+        self.assertEqual(len(sqs), 2)
+
+    def test_query__in_empty_list(self):
+        """Confirm that an empty list avoids a Solr exception"""
+        self.assertGreater(len(self.sqs), 0)
+        sqs = self.sqs.filter(id__in=[])
+        self.assertEqual(len(sqs), 0)
+
     # Regressions
 
     def test_regression_proper_start_offsets(self):
