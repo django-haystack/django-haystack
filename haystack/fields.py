@@ -13,8 +13,10 @@ from haystack.utils import get_model_ct_tuple
 class NOT_PROVIDED:
     pass
 
-
-DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|\s+)(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}).*?$')
+# Note that dates in the full ISO 8601 format will be accepted as long as the hour/minute/second components
+# are zeroed for compatibility with search backends which lack a date time distinct from datetime:
+DATE_REGEX = re.compile(r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(?:|T00:00:00Z?)$')
+DATETIME_REGEX = re.compile(r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})(T|\s+)(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}).*?$')
 
 
 # All the SearchFields variants.
@@ -302,12 +304,15 @@ class DateField(SearchField):
 
         super(DateField, self).__init__(**kwargs)
 
+    def prepare(self, obj):
+        return self.convert(super(DateField, self).prepare(obj))
+
     def convert(self, value):
         if value is None:
             return None
 
         if isinstance(value, six.string_types):
-            match = DATETIME_REGEX.search(value)
+            match = DATE_REGEX.search(value)
 
             if match:
                 data = match.groupdict()
@@ -326,6 +331,9 @@ class DateTimeField(SearchField):
             kwargs['facet_class'] = FacetDateTimeField
 
         super(DateTimeField, self).__init__(**kwargs)
+
+    def prepare(self, obj):
+        return self.convert(super(DateTimeField, self).prepare(obj))
 
     def convert(self, value):
         if value is None:

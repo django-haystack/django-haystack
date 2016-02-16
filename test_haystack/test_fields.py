@@ -311,6 +311,10 @@ class DateFieldTestCase(TestCase):
         except:
             self.fail()
 
+    def test_convert(self):
+        pub_date = DateField()
+        self.assertEqual(pub_date.convert('2016-02-16'), datetime.date(2016, 2, 16))
+
     def test_prepare(self):
         mock = MockModel()
         mock.pub_date = datetime.date(2009, 2, 13)
@@ -324,6 +328,13 @@ class DateFieldTestCase(TestCase):
 
         self.assertEqual(default.prepare(mock), datetime.date(2000, 1, 1))
 
+    def test_prepare_from_string(self):
+        mock = MockModel()
+        mock.pub_date = datetime.date(2016, 2, 16)
+        pub_date = DateField(model_attr='pub_date')
+
+        self.assertEqual(pub_date.prepare(mock), datetime.date(2016, 2, 16))
+
 
 class DateTimeFieldTestCase(TestCase):
     def test_init(self):
@@ -331,6 +342,12 @@ class DateTimeFieldTestCase(TestCase):
             foo = DateTimeField(model_attr='foo')
         except:
             self.fail()
+
+    def test_convert(self):
+        pub_date = DateTimeField()
+
+        self.assertEqual(pub_date.convert('2016-02-16T10:02:03'),
+                         datetime.datetime(2016, 2, 16, 10, 2, 3))
 
     def test_prepare(self):
         mock = MockModel()
@@ -344,6 +361,13 @@ class DateTimeFieldTestCase(TestCase):
         default = DateTimeField(default=datetime.datetime(2000, 1, 1, 0, 0, 0))
 
         self.assertEqual(default.prepare(mock), datetime.datetime(2000, 1, 1, 0, 0, 0))
+
+    def test_prepare_from_string(self):
+        mock = MockModel()
+        mock.pub_date = '2016-02-16T10:01:02Z'
+        pub_date = DateTimeField(model_attr='pub_date')
+
+        self.assertEqual(pub_date.prepare(mock), datetime.datetime(2016, 2, 16, 10, 1, 2))
 
 
 class MultiValueFieldTestCase(TestCase):
