@@ -5,9 +5,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging as std_logging
 import pickle
 
-import django
 from django.test import TestCase
-from test_haystack.core.models import AFifthMockModel, MockModel
+from django.test.utils import override_settings
+from test_haystack.core.models import MockModel
 
 from haystack import connections
 from haystack.models import SearchResult
@@ -16,7 +16,6 @@ from haystack.utils.loading import UnifiedIndex
 
 from .mocks import MockSearchResult
 from .test_indexes import ReadQuerySetTestSearchIndex
-from .utils import unittest
 
 
 class CaptureHandler(std_logging.Handler):
@@ -57,7 +56,6 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(self.no_data_sr.verbose_name_plural, u'Mock models')
         self.assertEqual(self.no_data_sr.pk, '1')
         self.assertEqual(self.no_data_sr.score, 2)
-        self.assertEqual(self.no_data_sr.stored, None)
 
         self.assertEqual(self.extra_data_sr.app_label, 'haystack')
         self.assertEqual(self.extra_data_sr.model_name, 'mockmodel')
@@ -76,6 +74,13 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(self.no_overwrite_data_sr.pk, '1')
         self.assertEqual(self.no_overwrite_data_sr.score, 4)
         self.assertEqual(self.no_overwrite_data_sr.stored, 'I am stored data. How fun.')
+
+    def test_undefined_attribute_handling(self):
+        self.assertRaises(AttributeError, getattr, self.no_data_sr, 'this_field_does_not_exist')
+
+    @override_settings(HAYSTACK_ENABLE_LEGACY_SEARCHRESULT_GETATTR=True)
+    def test_legacy_undefined_attribute_handling(self):
+        self.assertEqual(self.no_data_sr.this_field_does_not_exist, None)
 
     def test_get_additional_fields(self):
         self.assertEqual(self.no_data_sr.get_additional_fields(), {})
@@ -116,7 +121,10 @@ class SearchResultTestCase(TestCase):
         ui.document_field = 'stored'
         ui.build(indexes=[TestSearchIndex()])
 
-        self.assertEqual(self.no_data_sr.get_stored_fields(), {'stored': None})
+        with override_settings(HAYSTACK_ENABLE_LEGACY_SEARCHRESULT_GETATTR=True):
+            self.assertEqual(self.no_data_sr.get_stored_fields(), {'stored': None})
+        self.no_data_sr._stored_fields = None
+        self.assertEqual(self.no_data_sr.get_stored_fields(), {})
         self.assertEqual(self.extra_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
         self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
 
@@ -137,21 +145,19 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.score, 2)
 
         # Failed lookups should fail gracefully.
-        CaptureHandler.logs_seen = []
+        del CaptureHandler.logs_seen[:]
         self.assertEqual(awol1.model, MockModel)
         self.assertEqual(awol1.object, None)
         self.assertEqual(awol1.verbose_name, u'Mock model')
         self.assertEqual(awol1.verbose_name_plural, u'Mock models')
-        self.assertEqual(awol1.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 4)
+        self.assertEqual(len(CaptureHandler.logs_seen), 5)
 
-        CaptureHandler.logs_seen = []
+        del CaptureHandler.logs_seen[:]
         self.assertEqual(awol2.model, None)
         self.assertEqual(awol2.object, None)
         self.assertEqual(awol2.verbose_name, u'')
         self.assertEqual(awol2.verbose_name_plural, u'')
-        self.assertEqual(awol2.stored, None)
-        self.assertEqual(len(CaptureHandler.logs_seen), 12)
+        self.assertEqual(len(CaptureHandler.logs_seen), 15)
 
     def test_read_queryset(self):
         # The model is flagged deleted so not returned by the default manager.

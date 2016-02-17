@@ -10,13 +10,13 @@ from test_haystack.core.models import AFifthMockModel, AnotherMockModel, CharPKM
 from test_haystack.utils import unittest
 
 from haystack import connection_router, connections, indexes, reset_search_queries
-from haystack.backends import BaseSearchQuery, SQ
+from haystack.backends import SQ, BaseSearchQuery
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
 from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
-from .mocks import (CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS, MockSearchBackend,
+from .mocks import (MOCK_SEARCH_RESULTS, CharPKMockSearchBackend, MixedMockSearchBackend, MockSearchBackend,
                     MockSearchQuery, ReadQuerySetMockSearchBackend)
 from .test_indexes import (GhettoAFifthMockModelSearchIndex, ReadQuerySetTestSearchIndex,
                            TextReadQuerySetTestSearchIndex)
@@ -888,4 +888,11 @@ class PickleSearchQuerySetTestCase(TestCase):
         in_a_pickle = pickle.dumps(results)
         like_a_cuke = pickle.loads(in_a_pickle)
         self.assertEqual(len(like_a_cuke), len(results))
-        self.assertEqual(like_a_cuke[0].id, results[0].id)
+
+        # We don't care whether the logger instance changes during pickling but all of the other
+        # properties should have the same value:
+        def filter_obj_dict(obj):
+            return {k:v for k, v in obj.__dict__.items() if k != 'log'}
+
+        self.assertEqual(filter_obj_dict(like_a_cuke[0]),
+                         filter_obj_dict(results[0]))
