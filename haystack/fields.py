@@ -47,7 +47,7 @@ class SearchField(object):
             from haystack.utils import loading
             from haystack.exceptions import MissingDependency
             try:
-22	            loading.load_backend('haystack.backends.solr_backend.SolrEngine')
+                loading.load_backend('haystack.backends.solr_backend.SolrEngine')
             except MissingDependency:
                 raise MissingDependency("""The solr_explicit_field_type attribute 
                                            requires a configured Solr search backend.""")
