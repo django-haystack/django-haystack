@@ -41,6 +41,8 @@ Documentation
 * v1.2.X: http://django-haystack.readthedocs.org/en/v1.2.7/
 * v1.1.X: http://django-haystack.readthedocs.org/en/v1.1/
 
+See the `changelog <docs/changelog.rst>`_
+
 Build Status
 ============
 
