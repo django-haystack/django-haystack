@@ -466,8 +466,6 @@ class SolrSearchBackend(BaseSearchBackend):
 
             if field_class.stored is False:
                 field_data['stored'] = 'false'
-            elif field_class.explicit_field_type:
-                field_data['type'] = field_class.explicit_field_type
             # Do this last to override `text` fields.
             if field_class.indexed is False:
                 field_data['indexed'] = 'false'
