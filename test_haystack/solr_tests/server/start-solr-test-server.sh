@@ -25,7 +25,7 @@ if [ ! -f ${SOLR_ARCHIVE} ]; then
     curl -Lo $SOLR_ARCHIVE ${SOLR_DOWNLOAD_URL} || (echo "Unable to download ${SOLR_DOWNLOAD_URL}"; exit 2)
 fi
 
-if [ ${SOLR_VERSION} = "4.10.4" ]; then
+if [[ ${SOLR_VERSION} == 4.* ]]; then
     echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr4/"
     rm -rf solr4
     mkdir solr4
@@ -58,23 +58,27 @@ if [ ${SOLR_VERSION} = "4.10.4" ]; then
     else
         exec $CMD >/dev/null &
     fi
-fi
 
-if [ ${SOLR_VERSION} = "5.2.1" ]; then
-    if [ -z ${SOLR_CORENAME}  ]; then
-        SOLR_CORENAME="haystacktestcore"
+else
+    if [[ ${SOLR_VERSION} == 5.* ]]; then
+        if [ -z ${SOLR_CORENAME}  ]; then
+            SOLR_CORENAME="haystacktestcore"
+        fi
+
+        echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr-${SOLR_VERSION}/"
+        tar -xf ${SOLR_ARCHIVE}
+        echo "Changing into solr5"
+        cd solr-${SOLR_VERSION}
+
+        # We use exec to allow process monitors to correctly kill the
+        # actual Java process rather than this launcher script:
+        export CMD="bin/solr start -p 9001"
+        echo 'Starting server on port 9001'
+        exec $CMD
+        echo "Configuring Solr 5 Core named ${SOLR_CORENAME}"
+        sudo -u solr bin/solr create -c $SOLR_CORENAME
+    else
+        echo "The env var SOLR_VERSION is not configured well, tests will fail !"
+        exit 1
     fi
-
-    echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr-${SOLR_VERSION}/"
-    tar -xf ${SOLR_ARCHIVE}
-    echo "Changing into solr5"
-    cd solr-${SOLR_VERSION}
-
-    # We use exec to allow process monitors to correctly kill the
-    # actual Java process rather than this launcher script:
-    export CMD="bin/solr start -p 9001"
-    echo 'Starting server on port 9001'
-    exec $CMD
-    echo "Configuring Solr 5 Core named ${SOLR_CORENAME}"
-    sudo -u solr bin/solr create -c $SOLR_CORENAME
 fi
