@@ -12,7 +12,7 @@ from django.template import Context, loader
 
 from haystack import constants
 from haystack.backends.solr_backend import SolrSearchBackend
-
+from haystack.exceptions import SearchBackendError
 
 class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
-        from haystack import connections, connection_router
+        from haystack import connections
 
         using = options.get('using')
         backend = connections[using].get_backend()
@@ -59,7 +59,7 @@ class Command(BaseCommand):
             self.log(field, resp, backend)
 
     def build_context(self, using):
-        from haystack import connections, connection_router
+        from haystack import connections
         backend = connections[using].get_backend()
 
         if not isinstance(backend, SolrSearchBackend):
@@ -86,23 +86,21 @@ class Command(BaseCommand):
         schema_file.close()
 
     def print_schema(self, schema_xml):
-        sys.stderr.write("\n")
-        sys.stderr.write("\n")
-        sys.stderr.write("\n")
-        sys.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.\n")
-        sys.stderr.write("--------------------------------------------------------------------------------------------\n")
-        sys.stderr.write("\n")
-        print(schema_xml)
+        self.stderr.write("--------------------------------------------------------------------------------------------")
+        self.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.")
+        self.stderr.write("--------------------------------------------------------------------------------------------")
+        self.stdout.write(schema_xml)
 
     def log(self, field, response, backend):
         try:
             message = response.json()
-        except ValueError:
-            raise Exception('unable to decode Solr API, are sure you started Solr and created the configured Core (%s) ?' % backend.conn.url)
+        except ValueError as exc:
+            self.stderr.write('Unable to decode response from Solr: %s' % exc)
+            raise SearchBackendError('Unable to decode response from Solr')
 
         if 'errors' in message:
-            sys.stdout.write("%s.\n" % [" ".join(err.get('errorMessages')) for err in message['errors']])
+            self.stdout.write("%s." % [" ".join(err.get('errorMessages')) for err in message['errors']])
         elif 'responseHeader' in message and 'status' in message['responseHeader']:
-            sys.stdout.write("Successfully created the field %s\n" % field['name'])
+            sys.stdout.write("Successfully created the field %s" % field['name'])
         else:
-            sys.stdout.write("%s.\n" % message)
+            sys.stdout.write("%s" % message)
