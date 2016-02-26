@@ -772,11 +772,14 @@ class SolrSchemaAdmin(object):
         self.url = url
         self.session = session
 
-    def _post(self, url, data={}, headers={}):
+    def _post(self, url, data=None, headers=None):
         """
         Post json encoded data body to a Schema endpoint
         """
-        import requests
+        if data is None:
+            data = {}
+        if headers is None:
+            headers = {}
         headers['content-type'] = 'application/json'
         resp = self.session.post(url, data=json.dumps(data), headers=headers)
         return resp

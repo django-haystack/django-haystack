@@ -10,7 +10,7 @@ from django.template import Context, loader
 from haystack import connections, constants
 
 from haystack.backends.solr_backend import SolrSearchBackend
-
+from haystack.exceptions import SearchBackendError
 
 class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
@@ -95,12 +95,13 @@ class Command(BaseCommand):
     def log(self, field, response, backend):
         try:
             message = response.json()
-        except ValueError:
-            raise Exception('unable to decode Solr API, are sure you started Solr and created the configured Core (%s) ?' % backend.conn.url)
+        except ValueError as exc:
+            self.stderr.write('Unable to decode response from Solr: %s' % exc)
+            raise SearchBackendError('Unable to decode response from Solr')
 
         if 'errors' in message:
-            sys.stdout.write("%s.\n" % [" ".join(err.get('errorMessages')) for err in message['errors']])
+            self.stdout.write("%s." % [" ".join(err.get('errorMessages')) for err in message['errors']])
         elif 'responseHeader' in message and 'status' in message['responseHeader']:
-            sys.stdout.write("Successfully created the field %s\n" % field['name'])
+            sys.stdout.write("Successfully created the field %s" % field['name'])
         else:
-            sys.stdout.write("%s.\n" % message)
+            sys.stdout.write("%s" % message)
