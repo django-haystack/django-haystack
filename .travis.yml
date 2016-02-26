@@ -40,11 +40,12 @@ script:
 
 env:
     matrix:
-        - DJANGO_VERSION=">=1.8,<1.9"
-        - DJANGO_VERSION=">=1.9,<1.10"
-        - DJANGO_VERSION="==1.10a1"
-        - SOLR_VERSION="4.10.4"
-        - SOLR_VERSION="5.2.1"
+        - DJANGO_VERSION=">=1.8,<1.9" SOLR_VERSION="4.10.4"
+        - DJANGO_VERSION=">=1.8,<1.9" SOLR_VERSION="5.5.0"
+        - DJANGO_VERSION=">=1.9,<1.10" SOLR_VERSION="4.10.4"
+        - DJANGO_VERSION="==1.10a1" SOLR_VERSION="4.10.4"
+        - DJANGO_VERSION=">=1.9,<1.10" SOLR_VERSION="5.5.0"
+        - DJANGO_VERSION="==1.10a1" SOLR_VERSION="5.5.0"
 
 matrix:
     allow_failures:
