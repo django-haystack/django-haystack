@@ -72,11 +72,10 @@ else
 
         # We use exec to allow process monitors to correctly kill the
         # actual Java process rather than this launcher script:
-        export CMD="bin/solr start -p 9001"
         echo 'Starting server on port 9001'
-        exec $CMD
-        echo "Configuring Solr 5 Core named ${SOLR_CORENAME}"
-        sudo -u solr bin/solr create -c $SOLR_CORENAME
+        bin/solr start -p 9001
+        echo "Configuring a Solr Core named ${SOLR_CORENAME}"
+        bin/solr create -c $SOLR_CORENAME
     else
         echo "The env var SOLR_VERSION is not configured well, tests will fail !"
         exit 1
