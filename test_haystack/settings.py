@@ -72,7 +72,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'solr': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:9001/solr/',
+        'URL': 'http://localhost:9001/solr/collection1/',
         'INCLUDE_SPELLING': True,
     },
 }
