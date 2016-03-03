@@ -51,7 +51,7 @@ class Command(BaseCommand):
             dict(name="_version_", type="long", indexed="true", stored ="true"),
         ]
 
-        admin = backend.get_schema_admin()
+        admin = backend.schema_admin
         for field in fields + django_fields:
             resp = admin.add_field(field)
             self.log(field, resp, backend)
