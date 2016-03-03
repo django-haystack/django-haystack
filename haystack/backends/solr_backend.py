@@ -57,7 +57,7 @@ class SolrSearchBackend(BaseSearchBackend):
         self.log = logging.getLogger('haystack')
 
     @cached_property
-    def get_schema_admin(self):
+    def schema_admin(self):
         '''
         SolrSchemaAdmin singleton
         '''
