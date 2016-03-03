@@ -89,7 +89,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'solr': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': os.environ.get('TEST_SOLR_URL', 'http://localhost:9001/solr/'),
+        'URL': os.environ.get('TEST_SOLR_URL', 'http://localhost:9001/solr/collection1/'),
         'INCLUDE_SPELLING': True,
     },
 }
