@@ -1,3 +1,4 @@
+# encoding: utf-8
 import haystack
 from haystack.signals import RealtimeSignalProcessor
 
@@ -16,4 +17,3 @@ def teardown():
     haystack.signal_processor = _old_sp
     signals.post_save.receivers = []
     signals.post_delete.receivers = []
-    

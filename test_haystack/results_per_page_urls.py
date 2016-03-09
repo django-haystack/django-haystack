@@ -1,3 +1,4 @@
+# encoding: utf-8
 from django.conf.urls import patterns, url
 from haystack.views import SearchView
 

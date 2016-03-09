@@ -1,3 +1,4 @@
+# encoding: utf-8
 import warnings
 
 from django.conf import settings
@@ -16,4 +17,3 @@ def setup():
         es.info()
     except ElasticsearchException as e:
         raise SkipTest("elasticsearch not running on %r" % settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'], e)
-

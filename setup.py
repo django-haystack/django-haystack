@@ -8,12 +8,12 @@ except ImportError:
     from setuptools import setup
 
 install_requires = [
-    'Django',
+    'Django<1.8',
 ]
 
 tests_require = [
-    'elasticsearch',
-    'pysolr>=3.2.0',
+    'elasticsearch>=1.0.0,<2.0.0',
+    'pysolr>=3.3.2',
     'whoosh==2.5.4',
     'lxml==3.2.3',
     'python-dateutil',

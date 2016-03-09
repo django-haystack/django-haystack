@@ -1,3 +1,4 @@
+# encoding: utf-8
 import httplib2
 import warnings
 from django.conf import settings

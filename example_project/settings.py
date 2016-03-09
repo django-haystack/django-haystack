@@ -1,3 +1,4 @@
+# encoding: utf-8
 # All the normal settings apply. What's included here are the bits you'll have
 # to customize.
 

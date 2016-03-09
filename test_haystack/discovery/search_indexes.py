@@ -1,3 +1,4 @@
+# encoding: utf-8
 from haystack import indexes
 from test_haystack.discovery.models import Foo, Bar
 

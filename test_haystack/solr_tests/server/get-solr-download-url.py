@@ -28,5 +28,8 @@ mirror_response = requests.get("http://www.apache.org/dyn/mirrors/mirrors.cgi/%s
 if mirror_response.ok:
     mirror_data = mirror_response.json()
     download_url = urljoin(mirror_data['preferred'], mirror_data['path_info'])
+    # The Apache mirror script's response format has recently changed to exclude the actual file paths:
+    if not download_url.endswith(tarball):
+        download_url = urljoin(download_url, dist_path)
 
 print(download_url)

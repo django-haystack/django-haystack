@@ -1,3 +1,4 @@
+# encoding: utf-8
 # To ensure spelling suggestions work...
 from django.conf import settings
 from django.http import HttpRequest

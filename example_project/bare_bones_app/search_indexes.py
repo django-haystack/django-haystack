@@ -1,3 +1,4 @@
+# encoding: utf-8
 from haystack import indexes
 from bare_bones_app.models import Cat
 

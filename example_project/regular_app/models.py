@@ -1,3 +1,4 @@
+# encoding: utf-8
 import datetime
 from django.db import models
 
@@ -20,24 +21,24 @@ class Dog(models.Model):
     public = models.BooleanField(default=True)
     created = models.DateTimeField(default=datetime.datetime.now)
     updated = models.DateTimeField(default=datetime.datetime.now)
-    
+
     def __unicode__(self):
         return self.full_name()
-    
+
     @models.permalink
     def get_absolute_url(self):
         return ('dog_detail', [], {'id': self.id})
-    
+
     def full_name(self):
         if self.owner_last_name:
             return u"%s %s" % (self.name, self.owner_last_name)
-        
+
         return self.name
 
 
 class Toy(models.Model):
     dog = models.ForeignKey(Dog, related_name='toys')
     name = models.CharField(max_length=60)
-    
+
     def __unicode__(self):
         return u"%s's %s" % (self.dog.name, self.name)
