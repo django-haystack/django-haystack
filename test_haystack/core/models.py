@@ -1,3 +1,4 @@
+# encoding: utf-8
 # A couple models for Haystack to test with.
 import datetime
 from django.db import models

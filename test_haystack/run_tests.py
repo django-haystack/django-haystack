@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# encoding: utf-8
 from __future__ import print_function
 
 import sys
@@ -23,5 +24,3 @@ def run_all(argv=None):
 
 if __name__ == '__main__':
     run_all(sys.argv)
-
-

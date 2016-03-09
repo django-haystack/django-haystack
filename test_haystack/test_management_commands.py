@@ -1,3 +1,4 @@
+# encoding: utf-8
 from mock import patch, call
 
 from django.conf import settings

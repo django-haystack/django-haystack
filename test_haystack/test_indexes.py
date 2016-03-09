@@ -1,3 +1,4 @@
+# encoding: utf-8
 import datetime
 from threading import Thread
 import time

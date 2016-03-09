@@ -1,3 +1,4 @@
+# encoding: utf-8
 import logging as std_logging
 import pickle
 import django
@@ -142,10 +143,6 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
         self.assertEqual(len(CaptureHandler.logs_seen), 12)
-
-    if django.get_version() == '1.7':
-        # FIXME: https://github.com/toastdriven/django-haystack/issues/1069
-        test_missing_object = unittest.expectedFailure(test_missing_object)
 
     def test_read_queryset(self):
         # The model is flagged deleted so not returned by the default manager.

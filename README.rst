@@ -43,8 +43,8 @@ Documentation
 Build Status
 ============
 
-.. image:: https://travis-ci.org/toastdriven/django-haystack.svg?branch=master
-   :target: https://travis-ci.org/toastdriven/django-haystack
+.. image:: https://travis-ci.org/django-haystack/django-haystack.svg?branch=2.3-maintenance
+   :target: https://travis-ci.org/django-haystack/django-haystack
 
 Requirements
 ============

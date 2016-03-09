@@ -1,3 +1,4 @@
+# encoding: utf-8
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from haystack.exceptions import SearchFieldError, NotHandled

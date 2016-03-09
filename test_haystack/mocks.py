@@ -1,3 +1,4 @@
+# encoding: utf-8
 from django.db.models.loading import get_model
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.models import SearchResult

@@ -1,3 +1,4 @@
+# encoding: utf-8
 import datetime
 from decimal import Decimal
 from django.template import TemplateDoesNotExist

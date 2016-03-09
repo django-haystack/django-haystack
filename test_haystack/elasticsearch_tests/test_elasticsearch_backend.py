@@ -211,7 +211,7 @@ class TestSettings(TestCase):
 
     def test_kwargs_are_passed_on(self):
         from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend
-        backend = ElasticsearchSearchBackend('alias', **{'URL': {}, 'INDEX_NAME': 'testing', 'KWARGS': {'max_retries': 42}})
+        backend = ElasticsearchSearchBackend('alias', **{'URL': settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'], 'INDEX_NAME': 'testing', 'KWARGS': {'max_retries': 42}})
 
         self.assertEqual(backend.conn.transport.max_retries, 42)
 
