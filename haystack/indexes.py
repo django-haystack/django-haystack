@@ -15,11 +15,6 @@ from haystack.fields import *
 from haystack.manager import SearchIndexManager
 from haystack.utils import get_facet_field_name, get_identifier, get_model_ct
 
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
-
 
 class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
