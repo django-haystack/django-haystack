@@ -194,7 +194,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         self.prepared_data = {
             ID: get_identifier(obj),
             DJANGO_CT: get_model_ct(obj),
-            DJANGO_ID: force_text(obj.pk),
+            DJANGO_ID: obj.pk,
         }
 
         for field_name, field in self.fields.items():
