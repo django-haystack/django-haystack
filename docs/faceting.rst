@@ -211,14 +211,14 @@ having it in place but know that it's not required.
 In your URLconf, you'll need to switch to the ``FacetedSearchView``. Your
 URLconf should resemble::
 
-    from django.conf.urls.defaults import *
+    from django.conf.urls import url
     from haystack.forms import FacetedSearchForm
     from haystack.views import FacetedSearchView
     
     
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', FacetedSearchView(form_class=FacetedSearchForm, facet_fields=['author']), name='haystack_search'),
-    )
+    ]
 
 The ``FacetedSearchView`` will now instantiate the ``FacetedSearchForm``.
 The specified ``facet_fields`` will be present in the context variable

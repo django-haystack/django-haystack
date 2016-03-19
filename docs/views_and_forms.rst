@@ -169,9 +169,9 @@ demonstrated in this example which filters the search results in ``get_queryset`
 
     # urls.py
 
-    urlpatterns = patterns('',
+    urlpatterns = [
         url(r'^/search/?$', MySearchView.as_view(), name='search_view'),
-    )
+    ]
 
 
 Upgrading
@@ -193,13 +193,13 @@ Here's an example::
 
     sqs = SearchQuerySet().filter(author='john')
 
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=SearchForm
         ), name='haystack_search'),
-    )
+    ]
 
     ### new-style views...
     # views.py
@@ -212,9 +212,9 @@ Here's an example::
     # urls.py
     from myapp.views import JohnSearchView
 
-    urlpatterns = patterns('',
+    urlpatterns = [
         url(r'^$', JohnSearchView.as_view(), name='haystack_search'),
-    )
+    ]
 
 
 If your views overrode methods on the old-style SearchView, you will need to
@@ -271,7 +271,7 @@ custom search limited to the 'John' author, displaying all models to search by
 and specifying a custom template (``my/special/path/john_search.html``), your
 URLconf should look something like::
 
-    from django.conf.urls.defaults import *
+    from django.conf.urls import url
     from haystack.forms import ModelSearchForm
     from haystack.query import SearchQuerySet
     from haystack.views import SearchView
@@ -279,25 +279,25 @@ URLconf should look something like::
     sqs = SearchQuerySet().filter(author='john')
 
     # Without threading...
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=SearchForm
         ), name='haystack_search'),
-    )
+    ]
 
     # With threading...
     from haystack.views import SearchView, search_view_factory
 
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', search_view_factory(
             view_class=SearchView,
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=ModelSearchForm
         ), name='haystack_search'),
-    )
+    ]
 
 .. warning::
 
