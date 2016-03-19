@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import unittest
 from datetime import timedelta
 from decimal import Decimal
 
@@ -22,7 +23,6 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
 from ..mocks import MockSearchResult
-from ..utils import unittest
 from .testcases import WhooshTestCase
 
 

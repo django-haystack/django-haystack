@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 import logging as std_logging
 import os
+import unittest
 from decimal import Decimal
 
 import pysolr
@@ -22,7 +23,6 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
-from ..utils import unittest
 
 test_pickling = True
 
