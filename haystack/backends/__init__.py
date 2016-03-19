@@ -8,17 +8,13 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import six
 from django.utils import tree
+from django.utils.encoding import force_text
+
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
 from haystack.utils import get_model_ct
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
-
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 

@@ -8,16 +8,12 @@ from django.contrib.admin.views.main import ChangeList, SEARCH_VAR
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import InvalidPage, Paginator
 from django.shortcuts import render_to_response
+from django.utils.encoding import force_text
 from django.utils.translation import ungettext
 
 from haystack import connections
 from haystack.query import SearchQuerySet
 from haystack.utils import get_model_ct_tuple
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 def list_max_show_all(changelist):
