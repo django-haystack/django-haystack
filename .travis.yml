@@ -42,13 +42,12 @@ script:
 env:
     matrix:
         - DJANGO_VERSION=">=1.8,<1.9"
+        - DJANGO_VERSION=">=1.9,<1.10"
 
 matrix:
     allow_failures:
+        - env: DJANGO_VERSION=">=1.9,<1.10"
         - python: "pypy"
-    exclude:
-       - python: 3.5
-         env: DJANGO_VERSION=">=1.7,<1.8"
 
 services:
     - elasticsearch
