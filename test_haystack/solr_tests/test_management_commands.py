@@ -40,7 +40,7 @@ class SolrMockTagSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 
 class ManagementCommandTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(ManagementCommandTestCase, self).setUp()
@@ -178,7 +178,7 @@ class ManagementCommandTestCase(TestCase):
 
 
 class AppModelManagementCommandTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data', 'bulk_data.json']
 
     def setUp(self):
         super(AppModelManagementCommandTestCase, self).setUp()

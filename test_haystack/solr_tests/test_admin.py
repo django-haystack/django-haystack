@@ -16,7 +16,7 @@ from .test_solr_backend import clear_solr_index, SolrMockModelSearchIndex
 
 @override_settings(DEBUG=True)
 class SearchModelAdminTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data', 'bulk_data.json']
 
     def setUp(self):
         super(SearchModelAdminTestCase, self).setUp()

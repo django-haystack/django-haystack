@@ -17,6 +17,8 @@ from ..core.models import AnotherMockModel, MockModel
 
 
 class ElasticsearchSearchQueryTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(ElasticsearchSearchQueryTestCase, self).setUp()
         self.sq = connections['elasticsearch'].get_query()
