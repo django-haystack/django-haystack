@@ -17,7 +17,7 @@ from .search_indexes import SimpleMockScoreIndex, SimpleMockSearchIndex
 
 
 class SimpleSearchBackendTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(SimpleSearchBackendTestCase, self).setUp()
@@ -104,7 +104,7 @@ class SimpleSearchBackendTestCase(TestCase):
 
 @override_settings(DEBUG=True)
 class LiveSimpleSearchQuerySetTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveSimpleSearchQuerySetTestCase, self).setUp()

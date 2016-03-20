@@ -10,6 +10,7 @@ from django.test import TestCase
 
 
 class WhooshTestCase(TestCase):
+    fixtures = ['base_data']
 
     @classmethod
     def setUpClass(cls):
