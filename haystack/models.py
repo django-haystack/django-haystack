@@ -4,6 +4,9 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from warnings import warn
+
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import six
 from django.utils.text import capfirst
@@ -44,7 +47,7 @@ class SearchResult(object):
         self._additional_fields = []
         self._point_of_origin = kwargs.pop('_point_of_origin', None)
         self._distance = kwargs.pop('_distance', None)
-        self.stored_fields = None
+        self._stored_fields = None
         self.log = self._get_log()
 
         for key, value in kwargs.items():
@@ -62,10 +65,19 @@ class SearchResult(object):
         return force_text(self.__repr__())
 
     def __getattr__(self, attr):
+        # This allows this object to be pickled:
         if attr == '__getnewargs__':
             raise AttributeError
-
-        return self.__dict__.get(attr, None)
+        elif attr in self.__dict__:
+            return self.__dict__[attr]
+        elif getattr(settings, 'HAYSTACK_ENABLE_LEGACY_SEARCHRESULT_GETATTR', False):
+            # TODO: Remove __getattr__ entirely for Haystack 3
+            warn("SearchResult's legacy __getattr__ behaviour will be removed in Haystack 3 and"
+                 " attempts to access undeclared fields will raise an AttributeError",
+                 DeprecationWarning)
+            return None
+        else:
+            raise AttributeError
 
     def _get_searchindex(self):
         from haystack import connections

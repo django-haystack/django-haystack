@@ -309,3 +309,16 @@ This setting allows you to change the number of terms fuzzy queries will
 expand to when using ``fuzzy`` filter.
 
 Default is ``50``
+
+
+``HAYSTACK_ENABLE_LEGACY_SEARCHRESULT_GETATTR``
+===============================================
+
+.. versionadded:: 1.2.1
+.. versionchanged:: 2.5
+.. deprecated:: 3
+
+In previous Haystack releases, :class:`SearchResult` an undefined property would return ``None``.
+In Haystack 3, this will change to match the standard Python behaviour and raise an ``AttributeError``.
+
+The default is ``False`` but the legacy 2.x behaviour can be maintained by setting it to ``True``.
