@@ -2,12 +2,11 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django import template
 from django.contrib.admin.options import csrf_protect_m, ModelAdmin
 from django.contrib.admin.views.main import ChangeList, SEARCH_VAR
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import InvalidPage, Paginator
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.utils.translation import ungettext
 
 from haystack import connections
@@ -150,13 +149,13 @@ class SearchModelAdminMixin(object):
             'actions_selection_counter': getattr(self, 'actions_selection_counter', 0),
         }
         context.update(extra_context or {})
-        context_instance = template.RequestContext(request, current_app=self.admin_site.name)
+        request.current_app = self.admin_site.name
         app_name, model_name = get_model_ct_tuple(self.model)
-        return render_to_response(self.change_list_template or [
+        return render(request, self.change_list_template or [
             'admin/%s/%s/change_list.html' % (app_name, model_name),
             'admin/%s/change_list.html' % app_name,
             'admin/change_list.html'
-        ], context, context_instance=context_instance)
+        ], context)
 
 
 class SearchModelAdmin(SearchModelAdminMixin, ModelAdmin):
