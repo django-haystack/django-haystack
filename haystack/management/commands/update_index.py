@@ -7,6 +7,7 @@ import sys
 import warnings
 from datetime import timedelta
 from optparse import make_option
+from django.db import connection
 
 try:
     from django.db import close_old_connections
@@ -63,9 +64,9 @@ def worker(bits):
                 pass
 
     if bits[0] == 'do_update':
-        func, model, start, end, total, using, start_date, end_date, verbosity, commit = bits
+        func, model, start, end, total, using, start_date, end_date, verbosity, commit, schema_name = bits
     elif bits[0] == 'do_remove':
-        func, model, pks_seen, start, upper_bound, using, verbosity, commit = bits
+        func, model, pks_seen, start, upper_bound, using, verbosity, commit, schema_name = bits
     else:
         return
 
@@ -75,12 +76,14 @@ def worker(bits):
 
     if func == 'do_update':
         qs = index.build_queryset(start_date=start_date, end_date=end_date)
-        do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit)
+        do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit, schema_name=schema_name)
     else:
         raise NotImplementedError('Unknown function %s' % func)
 
 
-def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
+def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True, schema_name=None):
+    connection.set_schema(schema_name)
+
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
     small_cache_qs = qs.all()
@@ -133,6 +136,9 @@ class Command(LabelCommand):
         make_option('--nocommit', action='store_false', dest='commit',
             default=True, help='Will pass commit=False to the backend.'
         ),
+        make_option('--schema', action='store', dest='schema_name',
+            default='', help='specify tenant schema.'
+        ),
     )
     option_list = LabelCommand.option_list + base_options
 
@@ -144,6 +150,7 @@ class Command(LabelCommand):
         self.remove = options.get('remove', False)
         self.workers = int(options.get('workers', 0))
         self.commit = options.get('commit', True)
+        self.schema_name = options.get('schema_name')
 
         if sys.version_info < (2, 7):
             warnings.warn('multiprocessing is disabled on Python 2.6 and earlier. '
@@ -199,6 +206,8 @@ class Command(LabelCommand):
         if self.workers > 0:
             import multiprocessing
 
+        connection.set_schema(self.schema_name)
+
         for model in haystack_get_models(label):
             try:
                 index = unified_index.get_index(model)
@@ -230,9 +239,9 @@ class Command(LabelCommand):
                 end = min(start + batch_size, total)
 
                 if self.workers == 0:
-                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit)
+                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit, schema_name=self.schema_name)
                 else:
-                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit))
+                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit, self.schema_name))
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
