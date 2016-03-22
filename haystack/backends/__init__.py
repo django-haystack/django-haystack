@@ -858,9 +858,9 @@ class BaseSearchQuery(object):
         """Adds stats and stats_facets queries for the Solr backend."""
         self.stats[stats_field] = stats_facets
 
-    def add_highlight(self, options=True):
+    def add_highlight(self, **kwargs):
         """Adds highlighting to the search results."""
-        self.highlight = options
+        self.highlight = kwargs or True
 
     def add_within(self, field, point_1, point_2):
         """Adds bounding box parameters to search query."""

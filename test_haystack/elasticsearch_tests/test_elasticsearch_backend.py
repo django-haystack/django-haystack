@@ -774,7 +774,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     def test_highlight_options(self):
         reset_search_queries()
         results = self.sqs.filter(content='index')
-        results = results.highlight({'pre_tags': ['<i>'],'post_tags': ['</i>']})
+        results = results.highlight(pre_tags=['<i>'], post_tags=['</i>'])
         self.assertEqual(results[0].highlighted, [u'<i>Indexed</i>!\n1'])
 
     def test_manual_iter(self):
