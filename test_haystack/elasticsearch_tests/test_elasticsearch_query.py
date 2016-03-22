@@ -160,6 +160,15 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.assertEqual(len(sqs.query.narrow_queries), 1)
         self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
 
+    def test_query__in(self):
+        sqs = SearchQuerySet(using='elasticsearch').filter(id__in=[1, 2, 3])
+        self.assertEqual(sqs.query.build_query(), u'id:("1" OR "2" OR "3")')
+
+    def test_query__in_empty_list(self):
+        """Confirm that an empty list avoids a Elasticsearch exception"""
+        sqs = SearchQuerySet(using='elasticsearch').filter(id__in=[])
+        self.assertEqual(sqs.query.build_query(), u'id:(!*:*)')
+
 
 class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
     def setUp(self):
