@@ -319,10 +319,10 @@ class SearchQuerySet(object):
 
         return clone
 
-    def highlight(self):
+    def highlight(self, options=True):
         """Adds highlighting to the results."""
         clone = self._clone()
-        clone.query.add_highlight()
+        clone.query.add_highlight(options)
         return clone
 
     def models(self, *models):
