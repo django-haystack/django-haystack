@@ -51,8 +51,8 @@ matrix:
     allow_failures:
         - python: "pypy"
 
-services:
-    - elasticsearch
+#services:
+#    - elasticsearch
 
 notifications:
     irc: "irc.freenode.org#haystack"
