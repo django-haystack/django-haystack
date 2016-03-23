@@ -28,7 +28,7 @@ before_install:
     - mkdir -p $HOME/download-cache
     - wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.2.1/elasticsearch-2.2.1.tar.gz
     - tar zxf elasticsearch-2.2.1.tar.gz
-    - elasticsearch-2.2.1/bin/elasticsearch -Dtransport.tcp.port=29300 -Dhttp.port=29200
+    - elasticsearch-2.2.1/bin/elasticsearch -d -Dtransport.tcp.port=29300 -Dhttp.port=29200
 
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
