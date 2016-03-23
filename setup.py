@@ -16,7 +16,7 @@ install_requires = [
 ]
 
 tests_require = [
-    'elasticsearch>=1.0.0,<2.0.0',
+    'elasticsearch>=2.0.0,<3.0.0',
     'pysolr>=3.3.2',
     'whoosh==2.5.4',
     'python-dateutil',
