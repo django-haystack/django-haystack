@@ -10,7 +10,7 @@ warnings.simplefilter('ignore', Warning)
 
 def setup():
     try:
-        from elasticsearch import Elasticsearch, ElasticsearchException
+        from elasticsearch import Elasticsearch, exceptions
     except ImportError:
         raise unittest.SkipTest("elasticsearch-py not installed.")
 
@@ -18,5 +18,5 @@ def setup():
     es = Elasticsearch(url)
     try:
         es.info()
-    except ElasticsearchException as e:
+    except exceptions.ConnectionError as e:
         raise unittest.SkipTest("elasticsearch not running on %r" % url, e)
