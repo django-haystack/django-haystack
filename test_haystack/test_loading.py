@@ -112,24 +112,31 @@ class ConnectionRouterTestCase(TestCase):
     def test_actions1(self):
         del settings.HAYSTACK_ROUTERS
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.for_read(), ['default'])
+        self.assertEqual(cr.for_read(), 'default')
         self.assertEqual(cr.for_write(), ['default'])
 
     @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
     def test_actions2(self):
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
+        self.assertEqual(cr.for_read(), 'slave')
         self.assertEqual(cr.for_write(), ['master', 'default'])
 
     @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
     def test_actions3(self):
         cr = loading.ConnectionRouter()
         # Demonstrate pass-through
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
+        self.assertEqual(cr.for_read(), 'slave')
         self.assertEqual(cr.for_write(), ['master', 'default'])
         # Demonstrate that hinting can change routing.
-        self.assertEqual(cr.for_read(pass_through=False), ['pass', 'slave', 'default'])
+        self.assertEqual(cr.for_read(pass_through=False), 'pass')
         self.assertEqual(cr.for_write(pass_through=False), ['pass', 'master', 'default'])
+
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMultiRouter', 'haystack.routers.DefaultRouter'])
+    def test_actions4(self):
+        cr = loading.ConnectionRouter()
+        # Demonstrate that a router can return multiple backends in the "for_write" method
+        self.assertEqual(cr.for_read(), 'default')
+        self.assertEqual(cr.for_write(), ['multi1', 'multi2', 'default'])
 
 
 class MockNotAModel(object):
