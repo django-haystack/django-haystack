@@ -52,8 +52,8 @@ matrix:
         - env: DJANGO_VERSION=">=1.9,<1.10"
         - python: "pypy"
 
-services:
-    - elasticsearch
+#services:
+#    - elasticsearch
 
 notifications:
     irc: "irc.freenode.org#haystack"
