@@ -1,14 +1,11 @@
 # encoding: utf-8
-
 from __future__ import absolute_import, division, print_function, unicode_literals
-
-from django.apps import apps
-get_model = apps.get_model
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.models import SearchResult
 from haystack.routers import BaseRouter
 from haystack.utils import get_identifier
+from haystack.utils.app_loading import haystack_get_model
 
 
 class MockMasterSlaveRouter(BaseRouter):
@@ -36,7 +33,7 @@ class MockPassthroughRouter(BaseRouter):
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
         super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
-        self._model = get_model('core', model_name)
+        self._model = haystack_get_model('core', model_name)
 
 MOCK_SEARCH_RESULTS = [MockSearchResult('core', 'MockModel', i, 1 - (i / 100.0)) for i in range(1, 100)]
 MOCK_INDEX_DATA = {}
@@ -79,7 +76,7 @@ class MockSearchBackend(BaseSearchBackend):
 
         for i, result in enumerate(sliced):
             app_label, model_name, pk = result.split('.')
-            model = get_model(app_label, model_name)
+            model = haystack_get_model(app_label, model_name)
 
             if model:
                 if model in indexed_models:
