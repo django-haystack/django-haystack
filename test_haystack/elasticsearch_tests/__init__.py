@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
 import unittest
 import warnings
@@ -7,6 +7,7 @@ from django.conf import settings
 
 
 warnings.simplefilter('ignore', Warning)
+
 
 def setup():
     try:

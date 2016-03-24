@@ -84,12 +84,6 @@ HAYSTACK_CONNECTIONS = {
         'INDEX_NAME': 'test_default',
         'INCLUDE_SPELLING': True,
     },
-    'elasticsearch2': {
-        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
-        'URL': 'http://127.0.0.1:29200/',
-        'INDEX_NAME': 'test_default',
-        'INCLUDE_SPELLING': True,
-    },
     'simple': {
         'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
     },
