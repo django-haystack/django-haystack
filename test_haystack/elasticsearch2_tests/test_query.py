@@ -17,7 +17,7 @@ from ..core.models import AnotherMockModel, MockModel
 class Elasticsearch2SearchQueryTestCase(TestCase):
     def setUp(self):
         super(Elasticsearch2SearchQueryTestCase, self).setUp()
-        self.sq = connections['elasticsearch2'].get_query()
+        self.sq = connections['elasticsearch'].get_query()
 
     def test_build_query_all(self):
         self.assertEqual(self.sq.build_query(), '*:*')
@@ -157,7 +157,7 @@ class Elasticsearch2SearchQueryTestCase(TestCase):
         self.assertEqual(self.sq.build_query(), u'((why) AND title:("1" OR "2" OR "3"))')
 
     def test_narrow_sq(self):
-        sqs = SearchQuerySet(using='elasticsearch2').narrow(SQ(foo='moof'))
+        sqs = SearchQuerySet(using='elasticsearch').narrow(SQ(foo='moof'))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.narrow_queries), 1)
         self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
@@ -166,7 +166,7 @@ class Elasticsearch2SearchQueryTestCase(TestCase):
 class Elasticsearch2SearchQuerySpatialBeforeReleaseTestCase(TestCase):
     def setUp(self):
         super(Elasticsearch2SearchQuerySpatialBeforeReleaseTestCase, self).setUp()
-        self.backend = connections['elasticsearch2'].get_backend()
+        self.backend = connections['elasticsearch'].get_backend()
         self._elasticsearch_version = elasticsearch.VERSION
         elasticsearch.VERSION = (0, 9, 9)
 
@@ -189,7 +189,7 @@ class Elasticsearch2SearchQuerySpatialBeforeReleaseTestCase(TestCase):
 class Elasticsearch2SearchQuerySpatialAfterReleaseTestCase(TestCase):
     def setUp(self):
         super(Elasticsearch2SearchQuerySpatialAfterReleaseTestCase, self).setUp()
-        self.backend = connections['elasticsearch2'].get_backend()
+        self.backend = connections['elasticsearch'].get_backend()
         self._elasticsearch_version = elasticsearch.VERSION
         elasticsearch.VERSION = (1, 0, 0)
 
