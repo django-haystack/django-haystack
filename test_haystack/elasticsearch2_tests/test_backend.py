@@ -417,7 +417,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search(''), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('*:*')['hits'], 3)
-        self.assertEqual(set([result.pk for result in self.sb.search('*:*')['results']]), set([u'2', u'1', u'3']))
+        self.assertEqual(set([result.pk for result in self.sb.search('*:*')['results']]), {u'2', u'1', u'3'})
 
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
@@ -434,7 +434,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 3)
         self.assertSetEqual(
             set(results['facets']['fields']['name']),
-            set([('daniel3', 1), ('daniel2', 1), ('daniel1', 1)])
+            {('daniel3', 1), ('daniel2', 1), ('daniel1', 1)}
         )
 
         self.assertEqual(self.sb.search('', date_facets={
@@ -451,8 +451,8 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {u'name': 3})
 
-        self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
-        results = self.sb.search('Index', narrow_queries=set(['name:daniel1']))
+        self.assertEqual(self.sb.search('', narrow_queries={'name:daniel1'}), {'hits': 0, 'results': []})
+        results = self.sb.search('Index', narrow_queries={'name:daniel1'})
         self.assertEqual(results['hits'], 1)
 
         # Ensure that swapping the ``result_class`` works.
@@ -782,7 +782,7 @@ class LiveElasticsearch2SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = set([int(result.pk) for result in results._manual_iter()])
         self.assertEqual(results,
-                         set([2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20]))
+                         {2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20})
         self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_fill_cache(self):
@@ -900,8 +900,8 @@ class LiveElasticsearch2SearchQuerySetTestCase(TestCase):
         sqs = sqs.load_all_queryset(MockModel, MockModel.objects.filter(id__gt=10))
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs._load_all_querysets), 1)
-        self.assertEqual(set([obj.object.id for obj in sqs]), set([12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20]))
-        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), set([21, 22, 23]))
+        self.assertEqual(set([obj.object.id for obj in sqs]), {12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20})
+        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), {21, 22, 23})
 
     def test_related_iter(self):
         reset_search_queries()
@@ -909,7 +909,7 @@ class LiveElasticsearch2SearchQuerySetTestCase(TestCase):
         sqs = self.rsqs.all()
         results = set([int(result.pk) for result in sqs])
         self.assertEqual(results,
-                         set([2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20]))
+                         {2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20})
         self.assertEqual(len(connections['elasticsearch'].queries), 4)
 
     def test_related_slice(self):
@@ -928,7 +928,7 @@ class LiveElasticsearch2SearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
-        self.assertEqual(set([int(result.pk) for result in results[20:30]]), set([21, 22, 23]))
+        self.assertEqual(set([int(result.pk) for result in results[20:30]]), {21, 22, 23})
         self.assertEqual(len(connections['elasticsearch'].queries), 4)
 
     def test_related_manual_iter(self):
@@ -1095,19 +1095,19 @@ class LiveElasticsearch2MoreLikeThisTestCase(TestCase):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
         results = [result.pk for result in mlt]
         self.assertEqual(mlt.count(), 11)
-        self.assertEqual(set(results), set([u'10', u'5', u'2', u'21', u'4', u'6', u'23', u'9', u'14']))
+        self.assertEqual(set(results), {u'10', u'5', u'2', u'21', u'4', u'6', u'23', u'9', u'14'})
         self.assertEqual(len(results), 10)
 
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=2))
         results = [result.pk for result in alt_mlt]
         self.assertEqual(alt_mlt.count(), 9)
-        self.assertEqual(set(results), set([u'2', u'16', u'3', u'19', u'4', u'17', u'10', u'22', u'23']))
+        self.assertEqual(set(results), {u'2', u'16', u'3', u'19', u'4', u'17', u'10', u'22', u'23'})
         self.assertEqual(len(results), 9)
 
         alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
         results = [result.pk for result in alt_mlt_with_models]
         self.assertEqual(alt_mlt_with_models.count(), 10)
-        self.assertEqual(set(results), set([u'10', u'5', u'21', u'2', u'4', u'6', u'23', u'9', u'14', u'16']))
+        self.assertEqual(set(results), {u'10', u'5', u'21', u'2', u'4', u'6', u'23', u'9', u'14', u'16'})
         self.assertEqual(len(results), 10)
 
         if hasattr(MockModel.objects, 'defer'):
@@ -1184,8 +1184,8 @@ class LiveElasticsearch2AutocompleteTestCase(TestCase):
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
         self.assertEqual(autocomplete.count(), 16)
-        self.assertEqual(set([result.pk for result in autocomplete]), set(
-            ['1', '12', '6', '14', '7', '4', '23', '17', '13', '18', '20', '22', '19', '15', '10', '2']))
+        self.assertEqual(set([result.pk for result in autocomplete]),
+                         {'1', '12', '6', '14', '7', '4', '23', '17', '13', '18', '20', '22', '19', '15', '10', '2'})
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())
@@ -1197,7 +1197,7 @@ class LiveElasticsearch2AutocompleteTestCase(TestCase):
         autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
         self.assertEqual(autocomplete_2.count(), 13)
         self.assertEqual(set([result.pk for result in autocomplete_2]),
-                         set(['1', '6', '2', '14', '12', '13', '10', '19', '4', '20', '23', '22', '15']))
+                         {'1', '6', '2', '14', '12', '13', '10', '19', '4', '20', '23', '22', '15'})
         map_results = {result.pk: result for result in autocomplete_2}
         self.assertTrue('your' in map_results['1'].text.lower())
         self.assertTrue('mod' in map_results['1'].text.lower())
@@ -1209,18 +1209,18 @@ class LiveElasticsearch2AutocompleteTestCase(TestCase):
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
         self.assertEqual(autocomplete_3.count(), 4)
-        self.assertEqual(set([result.pk for result in autocomplete_3]), set(['12', '1', '22', '14']))
+        self.assertEqual(set([result.pk for result in autocomplete_3]), {'12', '1', '22', '14'})
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
         # Test numbers in phrases
         autocomplete_4 = self.sqs.autocomplete(text_auto='Jen 867')
         self.assertEqual(autocomplete_4.count(), 1)
-        self.assertEqual(set([result.pk for result in autocomplete_4]), set(['20']))
+        self.assertEqual(set([result.pk for result in autocomplete_4]), {'20'})
 
         # Test numbers alone
         autocomplete_4 = self.sqs.autocomplete(text_auto='867')
         self.assertEqual(autocomplete_4.count(), 1)
-        self.assertEqual(set([result.pk for result in autocomplete_4]), set(['20']))
+        self.assertEqual(set([result.pk for result in autocomplete_4]), {'20'})
 
 
 class LiveElasticsearch2RoundTripTestCase(TestCase):
@@ -1357,12 +1357,9 @@ class Elasticsearch2BoostBackendTestCase(TestCase):
 
         results = SearchQuerySet(using='elasticsearch').filter(SQ(author='daniel') | SQ(editor='daniel'))
 
-        self.assertEqual(set([result.id for result in results]), set([
-            'core.afourthmockmodel.4',
-            'core.afourthmockmodel.3',
-            'core.afourthmockmodel.1',
-            'core.afourthmockmodel.2'
-        ]))
+        self.assertEqual(set([result.id for result in results]),
+                         {'core.afourthmockmodel.4', 'core.afourthmockmodel.3', 'core.afourthmockmodel.1',
+                          'core.afourthmockmodel.2'})
 
     def test__to_python(self):
         self.assertEqual(self.sb._to_python('abc'), 'abc')
