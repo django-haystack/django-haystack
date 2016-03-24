@@ -26,13 +26,21 @@ addons:
 
 before_install:
     - mkdir -p $HOME/download-cache
-    - wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.2.1/elasticsearch-2.2.1.tar.gz
-    - tar zxf elasticsearch-2.2.1.tar.gz
-    - elasticsearch-2.2.1/bin/elasticsearch -d -Dtransport.tcp.port=29300 -Dhttp.port=29200
+    - >
+      if [[ $VERSION_ES == '>=1.0.0,<2.0.0' ]];
+      then
+        wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.5.tar.gz
+        tar zxf elasticsearch-1.7.5.tar.gz
+        elasticsearch-1.7.5/bin/elasticsearch -d -Dhttp.port=9200
+      else
+        wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.2.1/elasticsearch-2.2.1.tar.gz
+        tar zxf elasticsearch-2.2.1.tar.gz
+        elasticsearch-2.2.1/bin/elasticsearch -d -Dhttp.port=9200
+      fi
 
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
-    - pip install requests "Django${DJANGO_VERSION}"
+    - pip install requests "Django${DJANGO_VERSION}" "elasticsearch${VERSION_ES}"
     - python setup.py clean build install
 
 before_script:
@@ -44,15 +52,14 @@ script:
 
 env:
     matrix:
-        - DJANGO_VERSION=">=1.8,<1.9"
-        - DJANGO_VERSION=">=1.9,<1.10"
+        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=2.0.0,<3.0.0"
 
 matrix:
     allow_failures:
         - python: "pypy"
-
-#services:
-#    - elasticsearch
 
 notifications:
     irc: "irc.freenode.org#haystack"
