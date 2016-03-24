@@ -105,7 +105,7 @@ class Elasticsearch2SearchQueryTestCase(TestCase):
 
     def test_build_query_in_with_set(self):
         self.sq.add_filter(SQ(content='why'))
-        self.sq.add_filter(SQ(title__in=set(["A Famous Paper", "An Infamous Article"])))
+        self.sq.add_filter(SQ(title__in={"A Famous Paper", "An Infamous Article"}))
         self.assertTrue('((why) AND title:(' in self.sq.build_query())
         self.assertTrue('"A Famous Paper"' in self.sq.build_query())
         self.assertTrue('"An Infamous Article"' in self.sq.build_query())
