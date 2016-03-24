@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import time
 from tempfile import mkdtemp
 
 import pysolr
@@ -160,6 +161,7 @@ class ManagementCommandTestCase(TestCase):
 
         # TODO: Watch the output, make sure there are multiple pids.
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
+        time.sleep(2)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         call_command('clear_index', interactive=False, verbosity=0)
