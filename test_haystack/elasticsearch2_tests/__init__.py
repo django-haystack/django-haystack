@@ -10,11 +10,14 @@ warnings.simplefilter('ignore', Warning)
 
 def setup():
     try:
+        import elasticsearch
+        if not ((2, 0, 0) <= elasticsearch.__version__ < (3, 0, 0)):
+            raise ImportError
         from elasticsearch import Elasticsearch, exceptions
     except ImportError:
-        raise unittest.SkipTest("elasticsearch-py not installed.")
+        raise unittest.SkipTest("'elasticsearch>=2.0.0,<3.0.0' not installed.")
 
-    url = settings.HAYSTACK_CONNECTIONS['elasticsearch2']['URL']
+    url = settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL']
     es = Elasticsearch(url)
     try:
         es.info()
