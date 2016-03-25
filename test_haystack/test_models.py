@@ -26,6 +26,8 @@ class CaptureHandler(std_logging.Handler):
 
 
 class SearchResultTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SearchResultTestCase, self).setUp()
         cap = CaptureHandler()

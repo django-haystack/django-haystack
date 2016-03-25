@@ -34,6 +34,8 @@ class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexab
 
 
 class SearchViewTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SearchViewTestCase, self).setUp()
 
@@ -151,6 +153,7 @@ class SearchViewTestCase(TestCase):
 
 
 class ResultsPerPageTestCase(TestCase):
+    fixtures = ['base_data']
     urls = 'test_haystack.results_per_page_urls'
 
     def setUp(self):
@@ -240,6 +243,8 @@ class FacetedSearchViewTestCase(TestCase):
 
 
 class BasicSearchViewTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(BasicSearchViewTestCase, self).setUp()
 

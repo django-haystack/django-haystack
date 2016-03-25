@@ -12,6 +12,8 @@ from ..core.models import MockModel
 
 @patch("haystack.templatetags.more_like_this.SearchQuerySet")
 class MoreLikeThisTagTestCase(TestCase):
+    fixtures = ['base_data']
+
     def render(self, template, context):
         # Why on Earth does Django not have a TemplateTestCase yet?
         t = Template(template)

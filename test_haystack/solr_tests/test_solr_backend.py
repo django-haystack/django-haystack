@@ -720,7 +720,7 @@ class FailedSolrSearchBackendTestCase(TestCase):
 
 
 class LiveSolrSearchQueryTestCase(TestCase):
-    fixtures = ['initial_data.json']
+    fixtures = ['base_data.json']
 
     def setUp(self):
         super(LiveSolrSearchQueryTestCase, self).setUp()
@@ -778,7 +778,7 @@ class LiveSolrSearchQueryTestCase(TestCase):
 @override_settings(DEBUG=True)
 class LiveSolrSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     @classmethod
     def setUpClass(cls):
@@ -1159,7 +1159,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
 
 class LiveSolrMoreLikeThisTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveSolrMoreLikeThisTestCase, self).setUp()
@@ -1227,7 +1227,7 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
 
 
 class LiveSolrAutocompleteTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveSolrAutocompleteTestCase, self).setUp()
@@ -1331,7 +1331,7 @@ class LiveSolrRoundTripTestCase(TestCase):
 
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 class LiveSolrPickleTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveSolrPickleTestCase, self).setUp()

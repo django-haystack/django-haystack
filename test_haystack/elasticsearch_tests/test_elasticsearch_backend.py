@@ -613,7 +613,7 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
 
 
 class LiveElasticsearchSearchQueryTestCase(TestCase):
-    fixtures = ['initial_data.json']
+    fixtures = ['base_data.json']
 
     def setUp(self):
         super(LiveElasticsearchSearchQueryTestCase, self).setUp()
@@ -672,7 +672,7 @@ lssqstc_all_loaded = None
 @override_settings(DEBUG=True)
 class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchSearchQuerySetTestCase, self).setUp()
@@ -1015,7 +1015,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 @override_settings(DEBUG=True)
 class LiveElasticsearchSpellingTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchSpellingTestCase, self).setUp()
@@ -1051,7 +1051,7 @@ class LiveElasticsearchSpellingTestCase(TestCase):
 
 
 class LiveElasticsearchMoreLikeThisTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchMoreLikeThisTestCase, self).setUp()
@@ -1106,7 +1106,7 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
 
 
 class LiveElasticsearchAutocompleteTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchAutocompleteTestCase, self).setUp()
@@ -1250,7 +1250,7 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
 
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 class LiveElasticsearchPickleTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchPickleTestCase, self).setUp()
