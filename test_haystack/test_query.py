@@ -2,12 +2,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import unittest
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from test_haystack.core.models import AFifthMockModel, AnotherMockModel, CharPKMockModel, MockModel
-from test_haystack.utils import unittest
 
 from haystack import connection_router, connections, indexes, reset_search_queries
 from haystack.backends import BaseSearchQuery, SQ

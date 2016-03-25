@@ -2,17 +2,16 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import unittest
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from test_haystack.core.models import AnotherMockModel, MockModel
-from test_haystack.utils import unittest
 
 from haystack import indexes
 from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import loading
-
-from .utils import unittest
 
 try:
     import pysolr

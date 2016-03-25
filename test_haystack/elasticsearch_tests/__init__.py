@@ -1,10 +1,10 @@
 # encoding: utf-8
 
+import unittest
 import warnings
 
 from django.conf import settings
 
-from ..utils import unittest
 
 warnings.simplefilter('ignore', Warning)
 
