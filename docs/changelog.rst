@@ -7,6 +7,8 @@ Changelog
 New
 ~~~
 
+- Django 1.9 support thanks to Claude Paroz. [Chris Adams]
+
 - Create a changelog using gitchangelog. [Chris Adams]
 
   This uses `gitchangelog <https://github.com/vaab/gitchangelog>`_ to
@@ -27,6 +29,17 @@ Changes
 
 Other
 ~~~~~
+
+- Merge pull request #1328 from claudep/travis19. [Chris Adams]
+
+  Updated test configs to include Django 1.9
+
+- Updated test configs to include Django 1.9. [Claude Paroz]
+
+- Merge pull request #1313 from chrisbrooke/Fix-elasticsearch-2.0-meta-
+  data-changes. [Chris Adams]
+
+- Remove boost which is now unsupported. [Chris Brooke]
 
 - Fix concurrency issues when building UnifiedIndex. [Chris Adams]
 
@@ -2149,9 +2162,8 @@ v2.0.0 (2013-05-12)
 - Fixed an ES test that seems like a change in behavior in recent ES
   versions. [Jannis Leidel]
 
-- Merge branch 'sq-run-refactor' of
-  https://github.com/mattdeboard/django-haystack into mattdeboard-sq-
-  run-refactor. [Jannis Leidel]
+- Merge branch 'sq-run-refactor' of https://github.com/mattdeboard
+  /django-haystack into mattdeboard-sq-run-refactor. [Jannis Leidel]
 
 - Refactor Solr & ES SearchQuery subclasses to use the ``build_params``
   from ``BaseSearchQuery`` to build the kwargs to be passed to the
