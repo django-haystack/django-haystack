@@ -8,6 +8,7 @@ import unittest
 from decimal import Decimal
 
 import elasticsearch
+from django.apps import apps
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -569,8 +570,8 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
         settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'] = "%s/foo/" % self.old_es_url
         self.cap = CaptureHandler()
         logging.getLogger('haystack').addHandler(self.cap)
-        import haystack
-        logging.getLogger('haystack').removeHandler(haystack.stream)
+        config = apps.get_app_config('haystack')
+        logging.getLogger('haystack').removeHandler(config.stream)
 
         # Setup the rest of the bits.
         self.old_ui = connections['elasticsearch'].get_unified_index()
@@ -581,12 +582,12 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
         self.sb = connections['elasticsearch'].get_backend()
 
     def tearDown(self):
-        import haystack
         # Restore.
         settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'] = self.old_es_url
         connections['elasticsearch']._index = self.old_ui
+        config = apps.get_app_config('haystack')
         logging.getLogger('haystack').removeHandler(self.cap)
-        logging.getLogger('haystack').addHandler(haystack.stream)
+        logging.getLogger('haystack').addHandler(config.stream)
 
     @unittest.expectedFailure
     def test_all_cases(self):

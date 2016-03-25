@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import haystack
 from haystack.signals import RealtimeSignalProcessor
 
-from django.db.models import signals
+from django.apps import apps
 
 from ..utils import check_solr
 
@@ -13,11 +13,11 @@ _old_sp = None
 def setup():
     check_solr()
     global _old_sp
-    _old_sp = haystack.signal_processor
-    haystack.signal_processor = RealtimeSignalProcessor(haystack.connections, haystack.connection_router)
+    config = apps.get_app_config('haystack')
+    _old_sp = config.signal_processor
+    config.signal_processor = RealtimeSignalProcessor(haystack.connections, haystack.connection_router)
 
 def teardown():
-    haystack.signal_processor = _old_sp
-    signals.post_save.receivers = []
-    signals.post_delete.receivers = []
-
+    config = apps.get_app_config('haystack')
+    config.signal_processor.teardown()
+    config.signal_processor = _old_sp
