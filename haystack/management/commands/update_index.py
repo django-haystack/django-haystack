@@ -6,22 +6,20 @@ import multiprocessing
 import os
 import time
 from datetime import timedelta
-from optparse import make_option
 
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.db import close_old_connections, reset_queries
 from django.utils.encoding import force_text, smart_bytes
 from django.utils.timezone import now
 
 from haystack import connections as haystack_connections
+from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
 from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
 
 DEFAULT_BATCH_SIZE = None
 DEFAULT_AGE = None
 DEFAULT_MAX_RETRIES = 5
-APP = 'app'
-MODEL = 'model'
 
 LOG = multiprocessing.log_to_stderr(level=logging.WARNING)
 
@@ -45,7 +43,7 @@ def update_worker(args):
             try:
                 close_old_connections()
                 if isinstance(connections.thread_local.connections, dict):
-                    del(connections.thread_local.connections[alias])
+                    del connections.thread_local.connections[alias]
                 else:
                     delattr(connections.thread_local.connections, alias)
             except KeyError:
@@ -116,44 +114,60 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
     reset_queries()
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Freshens the index for the given app(s)."
-    base_options = (
-        make_option('-a', '--age', action='store', dest='age',
-                    default=DEFAULT_AGE, type='int',
-                    help='Number of hours back to consider objects new.'),
-        make_option('-s', '--start', action='store', dest='start_date', default=None, type='string',
-                    help='The start date for indexing within. Can be any dateutil-parsable string,'
-                         ' recommended to be YYYY-MM-DDTHH:MM:SS.'),
-        make_option('-e', '--end', action='store', dest='end_date', default=None, type='string',
-                    help='The end date for indexing within. Can be any dateutil-parsable string,'
-                         ' recommended to be YYYY-MM-DDTHH:MM:SS.'),
-        make_option('-b', '--batch-size', action='store', dest='batchsize', default=None, type='int',
-                    help='Number of items to index at once.'),
-        make_option('-r', '--remove', action='store_true', dest='remove', default=False,
-                    help='Remove objects from the index that are no longer present in the database.'),
-        make_option("-u", "--using", action="append", dest="using",
-                    default=[],
-                    help='Update only the named backend (can be used multiple times). '
-                         'By default all backends will be updated.'),
-        make_option('-k', '--workers', action='store', dest='workers', default=0, type='int',
-                    help='Allows for the use multiple workers to parallelize indexing.'),
-        make_option('--nocommit', action='store_false', dest='commit', default=True,
-                    help='Will pass commit=False to the backend.'),
-        make_option('-t', '--max-retries', action='store', dest='max_retries',
-                    type='int',
-                    default=DEFAULT_MAX_RETRIES,
-                    help='Maximum number of attempts to write to the backend when an error occurs.'),
-    )
-    option_list = LabelCommand.option_list + base_options
 
-    def handle(self, *items, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'app_label', nargs='*',
+            help='App label of an application to update the search index.'
+        )
+        parser.add_argument(
+            '-a', '--age', type=int, default=DEFAULT_AGE,
+            help='Number of hours back to consider objects new.'
+        )
+        parser.add_argument(
+            '-s', '--start', dest='start_date',
+            help='The start date for indexing within. Can be any dateutil-parsable string, recommended to be YYYY-MM-DDTHH:MM:SS.'
+        )
+        parser.add_argument(
+            '-e', '--end', dest='end_date',
+            help='The end date for indexing within. Can be any dateutil-parsable string, recommended to be YYYY-MM-DDTHH:MM:SS.'
+        )
+        parser.add_argument(
+            '-b', '--batch-size', dest='batchsize', type=int,
+            help='Number of items to index at once.'
+        )
+        parser.add_argument(
+            '-r', '--remove', action='store_true', default=False,
+            help='Remove objects from the index that are no longer present in the database.'
+        )
+        parser.add_argument(
+            '-u', '--using', action='append', default=[],
+            help='Update only the named backend (can be used multiple times). '
+                 'By default all backends will be updated.'
+        )
+        parser.add_argument(
+            '-k', '--workers', type=int, default=0,
+            help='Allows for the use multiple workers to parallelize indexing.'
+        )
+        parser.add_argument(
+            '--nocommit', action='store_false', dest='commit',
+            default=True, help='Will pass commit=False to the backend.'
+        )
+        parser.add_argument(
+            '-t', '--max-retries', action='store', dest='max_retries',
+            type=int, default=DEFAULT_MAX_RETRIES,
+            help='Maximum number of attempts to write to the backend when an error occurs.'
+        )
+
+    def handle(self, **options):
         self.verbosity = int(options.get('verbosity', 1))
         self.batchsize = options.get('batchsize', DEFAULT_BATCH_SIZE)
         self.start_date = None
         self.end_date = None
         self.remove = options.get('remove', False)
-        self.workers = int(options.get('workers', 0))
+        self.workers = options.get('workers', 0)
         self.commit = options.get('commit', True)
         self.max_retries = options.get('max_retries', DEFAULT_MAX_RETRIES)
 
@@ -189,22 +203,16 @@ class Command(LabelCommand):
             except ValueError:
                 pass
 
-        if not items:
-            items = haystack_load_apps()
-
-        return super(Command, self).handle(*items, **options)
-
-    def handle_label(self, label, **options):
-        for using in self.backends:
-            try:
-                self.update_backend(label, using)
-            except:
-                LOG.exception("Error updating %s using %s ", label, using)
-                raise
+        labels = options.get('app_label') or haystack_load_apps()
+        for label in labels:
+            for using in self.backends:
+                try:
+                    self.update_backend(label, using)
+                except:
+                    LOG.exception("Error updating %s using %s ", label, using)
+                    raise
 
     def update_backend(self, label, using):
-        from haystack.exceptions import NotHandled
-
         backend = haystack_connections[using].get_backend()
         unified_index = haystack_connections[using].get_unified_index()
 
@@ -213,7 +221,7 @@ class Command(LabelCommand):
                 index = unified_index.get_index(model)
             except NotHandled:
                 if self.verbosity >= 2:
-                    print("Skipping '%s' - no index." % model)
+                    self.stdout.write("Skipping '%s' - no index." % model)
                 continue
 
             if self.workers > 0:
@@ -228,7 +236,9 @@ class Command(LabelCommand):
             total = qs.count()
 
             if self.verbosity >= 1:
-                print(u"Indexing %d %s" % (total, force_text(model._meta.verbose_name_plural)))
+                self.stdout.write(u"Indexing %d %s" % (
+                    total, force_text(model._meta.verbose_name_plural))
+                )
 
             batch_size = self.batchsize or backend.batch_size
 
@@ -290,12 +300,12 @@ class Command(LabelCommand):
 
                 if stale_records:
                     if self.verbosity >= 1:
-                        print("  removing %d stale records." % len(stale_records))
+                        self.stdout.write("  removing %d stale records." % len(stale_records))
 
                     for rec_id in stale_records:
                         # Since the PK was not in the database list, we'll delete the record from the search
                         # index:
                         if self.verbosity >= 2:
-                            print("  removing %s." % rec_id)
+                            self.stdout.write("  removing %s." % rec_id)
 
                         backend.remove(rec_id, commit=self.commit)
