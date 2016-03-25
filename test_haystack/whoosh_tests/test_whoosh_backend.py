@@ -399,13 +399,17 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
 
         (content_field_name, schema) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(schema.names()), 9)
-        self.assertEqual(schema.names(), ['django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
-        self.assertTrue(isinstance(schema._fields['text'], TEXT))
-        self.assertTrue(isinstance(schema._fields['pub_date'], DATETIME))
-        self.assertTrue(isinstance(schema._fields['seen_count'], NUMERIC))
-        self.assertTrue(isinstance(schema._fields['sites'], KEYWORD))
-        self.assertTrue(isinstance(schema._fields['is_active'], BOOLEAN))
+
+        schema_names = set(schema.names())
+        required_schema = {'django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count',
+                           'sites', 'text'}
+        self.assertTrue(required_schema.issubset(schema_names))
+
+        self.assertIsInstance(schema._fields['text'], TEXT)
+        self.assertIsInstance(schema._fields['pub_date'], DATETIME)
+        self.assertIsInstance(schema._fields['seen_count'], NUMERIC)
+        self.assertIsInstance(schema._fields['sites'], KEYWORD)
+        self.assertIsInstance(schema._fields['is_active'], BOOLEAN)
 
     def test_verify_type(self):
         old_ui = connections['whoosh'].get_unified_index()
