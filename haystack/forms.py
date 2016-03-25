@@ -98,7 +98,7 @@ class ModelSearchForm(SearchForm):
         self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label=_('Search In'), widget=forms.CheckboxSelectMultiple)
 
     def get_models(self):
-        """Return an alphabetical list of model classes in the index."""
+        """Return a list of the selected models."""
         search_models = []
 
         if self.is_valid():
