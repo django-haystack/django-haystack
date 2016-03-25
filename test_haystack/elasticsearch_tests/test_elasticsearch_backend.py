@@ -423,6 +423,9 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight=True)['results']]),
                          [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
+        self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight={'pre_tags': ['<start>'],'post_tags': ['</end>']})['results']]),
+                         [u'<start>Indexed</end>!\n1', u'<start>Indexed</end>!\n2', u'<start>Indexed</end>!\n3'])
+
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
@@ -762,6 +765,17 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(sqs.count(), 23)
         # Should only execute one query to count the length of the result set.
         self.assertEqual(len(connections['elasticsearch'].queries), 1)
+
+    def test_highlight(self):
+        reset_search_queries()
+        results = self.sqs.filter(content='index').highlight()
+        self.assertEqual(results[0].highlighted, [u'<em>Indexed</em>!\n1'])
+
+    def test_highlight_options(self):
+        reset_search_queries()
+        results = self.sqs.filter(content='index')
+        results = results.highlight(pre_tags=['<i>'], post_tags=['</i>'])
+        self.assertEqual(results[0].highlighted, [u'<i>Indexed</i>!\n1'])
 
     def test_manual_iter(self):
         results = self.sqs.all()
