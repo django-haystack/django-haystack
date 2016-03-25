@@ -20,7 +20,6 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
 
     'haystack',
 
@@ -40,7 +39,27 @@ INSTALLED_APPS = [
     'test_haystack.test_app_using_appconfig.apps.SimpleTestAppConfig',
 ]
 
-SITE_ID = 1
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+            ]
+        },
+    },
+]
+
+MIDDLEWARE_CLASSES = [
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+]
+
 ROOT_URLCONF = 'test_haystack.core.urls'
 
 HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter', 'test_haystack.multipleindex.routers.MultipleIndexRouter']
@@ -74,9 +93,3 @@ HAYSTACK_CONNECTIONS = {
         'INCLUDE_SPELLING': True,
     },
 }
-
-MIDDLEWARE_CLASSES = ('django.middleware.common.CommonMiddleware',
-                      'django.contrib.sessions.middleware.SessionMiddleware',
-                      'django.middleware.csrf.CsrfViewMiddleware',
-                      'django.contrib.auth.middleware.AuthenticationMiddleware',
-                      'django.contrib.messages.middleware.MessageMiddleware')
