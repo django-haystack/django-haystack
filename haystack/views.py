@@ -124,10 +124,7 @@ class SearchView(object):
         """
         return {}
 
-    def create_response(self):
-        """
-        Generates the actual HttpResponse to send back to the user.
-        """
+    def get_context(self):
         (paginator, page) = self.build_page()
 
         context = {
@@ -142,6 +139,16 @@ class SearchView(object):
             context['suggestion'] = self.form.get_suggestion()
 
         context.update(self.extra_context())
+
+        return context
+
+    def create_response(self):
+        """
+        Generates the actual HttpResponse to send back to the user.
+        """
+
+        context = self.get_context()
+
         return render(self.request, self.template, context)
 
 
