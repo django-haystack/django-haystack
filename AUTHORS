@@ -108,3 +108,4 @@ Thanks to
       SearchQuerySet
     * Tadas Dailyda (@skirsdeda) for various patches
     * Craig de Stigter (@craigds) for a patch fixing concurrency issues when building UnifiedIndex
+    * Claude Paroz (@claudep) for Django 1.9 support
