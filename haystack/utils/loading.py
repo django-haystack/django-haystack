@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import six
 from django.utils.module_loading import module_has_submodule
 
 from haystack.exceptions import NotHandled, SearchFieldError
@@ -140,7 +141,7 @@ class ConnectionRouter(object):
                 self._routers.append(router_class())
         return self._routers
 
-    def for_action(self, action, **hints):
+    def _for_action(self, action, many, **hints):
         conns = []
 
         for router in self.routers:
@@ -149,15 +150,20 @@ class ConnectionRouter(object):
                 connection_to_use = action_callable(**hints)
 
                 if connection_to_use is not None:
-                    conns.append(connection_to_use)
+                    if isinstance(connection_to_use, six.string_types):
+                        conns.append(connection_to_use)
+                    else:
+                        conns.extend(connection_to_use)
+                    if not many:
+                        break
 
         return conns
 
     def for_write(self, **hints):
-        return self.for_action('for_write', **hints)
+        return self._for_action('for_write', True, **hints)
 
     def for_read(self, **hints):
-        return self.for_action('for_read', **hints)
+        return self._for_action('for_read', False, **hints)[0]
 
 
 class UnifiedIndex(object):

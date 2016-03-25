@@ -32,6 +32,11 @@ class MockPassthroughRouter(BaseRouter):
         return None
 
 
+class MockMultiRouter(BaseRouter):
+    def for_write(self, **hints):
+        return ['multi1', 'multi2']
+
+
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
         super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
