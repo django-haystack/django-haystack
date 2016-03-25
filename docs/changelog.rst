@@ -27,6 +27,15 @@ Changes
   Closes #358
   Closes #1311
 
+Fix
+~~~
+
+- Graceful handling of empty __in= lists on ElasticSearch. [Chris Adams]
+
+  Thanks to @boulderdave for the ES version of #1311
+
+  Closes #1335
+
 Other
 ~~~~~
 
@@ -2162,8 +2171,9 @@ v2.0.0 (2013-05-12)
 - Fixed an ES test that seems like a change in behavior in recent ES
   versions. [Jannis Leidel]
 
-- Merge branch 'sq-run-refactor' of https://github.com/mattdeboard
-  /django-haystack into mattdeboard-sq-run-refactor. [Jannis Leidel]
+- Merge branch 'sq-run-refactor' of
+  https://github.com/mattdeboard/django-haystack into mattdeboard-sq-
+  run-refactor. [Jannis Leidel]
 
 - Refactor Solr & ES SearchQuery subclasses to use the ``build_params``
   from ``BaseSearchQuery`` to build the kwargs to be passed to the
