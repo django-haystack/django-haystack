@@ -17,7 +17,7 @@ from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SkipDocument
 from haystack.inputs import AltParser, AutoQuery, Raw
 from haystack.models import SearchResult
-from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
+from haystack.query import SQ, RelatedSearchQuerySet, SearchQuerySet
 from haystack.utils.geo import Point
 from haystack.utils.loading import UnifiedIndex
 
@@ -1038,35 +1038,34 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         sqs = self.rsqs.all()
         results = [int(result.pk) for result in sqs]
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['solr'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test_related_slice(self):
         reset_search_queries()
         self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual([int(result.pk) for result in results[1:11]], [2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-        self.assertEqual(len(connections['solr'].queries), 3)
+        self.assertEqual(len(connections['solr'].queries), 1)
 
         reset_search_queries()
         self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual(int(results[21].pk), 22)
-        self.assertEqual(len(connections['solr'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 1)
 
         reset_search_queries()
         self.assertEqual(len(connections['solr'].queries), 0)
         results = self.rsqs.all()
         self.assertEqual([int(result.pk) for result in results[20:30]], [21, 22, 23])
-        self.assertEqual(len(connections['solr'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 1)
 
     def test_related_manual_iter(self):
         results = self.rsqs.all()
-
         reset_search_queries()
         self.assertEqual(len(connections['solr'].queries), 0)
         results = [int(result.pk) for result in results._manual_iter()]
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['solr'].queries), 4)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test_related_fill_cache(self):
         reset_search_queries()
@@ -1088,7 +1087,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         results = self.rsqs.all()
         fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['solr'].queries), 5)
+        self.assertEqual(len(connections['solr'].queries), 3)
 
     def test_quotes_regression(self):
         sqs = self.sqs.auto_query(u"44°48'40''N 20°28'32''E")
