@@ -7,6 +7,33 @@ Changelog
 New
 ~~~
 
+- `highlight()` accepts custom values on Solr and ES. [Chris Adams]
+
+  This allows the default values to be overriden and arbitrary
+  backend-specific parameters may be provided to Solr or ElasticSearch.
+
+  Thanks to @tymofij for the patch
+
+  Closes #1334
+
+- Allow Routers to return multiple indexes. [Chris Adams]
+
+  Thanks to Hugo Chargois (@hchargois) for the patch
+
+  Closes #1337
+  Closes #934
+
+- Support for newer versions of Whoosh. [Chris Adams]
+
+- Split SearchView.create_response into get_context. [Chris Adams]
+
+  This makes it easy to override the default `create_response` behaviour
+  if you don't want a standard HTML response.
+
+  Thanks @seocam for the patch
+
+  Closes #1338
+
 - Django 1.9 support thanks to Claude Paroz. [Chris Adams]
 
 - Create a changelog using gitchangelog. [Chris Adams]
@@ -19,6 +46,12 @@ New
 Changes
 ~~~~~~~
 
+- Moved signal processor loading to app_config.ready. [Chris Adams]
+
+  Thanks to @claudep for the patch
+
+  Closes #1260
+
 - Handle `__in=[]` gracefully on Solr. [Chris Adams]
 
   This commit avoids the need to check whether a list is empty to avoid an
@@ -30,6 +63,31 @@ Changes
 Fix
 ~~~
 
+- Queryset slicing and reduced code duplication. [Craig de Stigter]
+
+  Now pagination will not lazy-load all earlier pages before returning the
+  result.
+
+  Thanks to @craigds for the patch
+
+  Closes #1269
+  Closes #960
+
+- Handle negative timestamps returned from ES. [Chris Adams]
+
+  Elastic search can return negative timestamps for histograms if the
+  dates are pre-1970. This PR properly handles these pre-1970 dates.
+
+  Thanks to @speedplane for the patch
+
+  Closes #1239
+
+- SearchMixin allows form initial values. [Chris Adams]
+
+  Thanks to @ahoho for the patch
+
+  Closes #1319
+
 - Graceful handling of empty __in= lists on ElasticSearch. [Chris Adams]
 
   Thanks to @boulderdave for the ES version of #1311
@@ -38,6 +96,12 @@ Fix
 
 Other
 ~~~~~
+
+- Merge pull request #1225 from gregplaysguitar/patch-1. [Chris Adams]
+
+  fix: correct docstring for ModelSearchForm.get_models !minor
+
+- Fix bogus docstring. [Greg Brown]
 
 - Merge pull request #1328 from claudep/travis19. [Chris Adams]
 
