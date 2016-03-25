@@ -2,9 +2,9 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import datetime
 import re
 import warnings
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -586,13 +586,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 'queries': {},
             }
 
+            # ES can return negative timestamps for pre-1970 data. Handle it.
+            def from_timestamp(tm):
+                if tm >= 0:
+                    return datetime.utcfromtimestamp(tm)
+                else:
+                    return datetime(1970, 1, 1) + timedelta(seconds=tm)
+
             for facet_fieldname, facet_info in raw_results['facets'].items():
                 if facet_info.get('_type', 'terms') == 'terms':
                     facets['fields'][facet_fieldname] = [(individual['term'], individual['count']) for individual in facet_info['terms']]
                 elif facet_info.get('_type', 'terms') == 'date_histogram':
                     # Elasticsearch provides UTC timestamps with an extra three
                     # decimals of precision, which datetime barfs on.
-                    facets['dates'][facet_fieldname] = [(datetime.datetime.utcfromtimestamp(individual['time'] / 1000), individual['count']) for individual in facet_info['entries']]
+                    facets['dates'][facet_fieldname] = [(from_timestamp(individual['time'] / 1000),
+                                                         individual['count'])
+                                                        for individual in facet_info['entries']]
                 elif facet_info.get('_type', 'terms') == 'query':
                     facets['queries'][facet_fieldname] = facet_info['count']
 
@@ -706,10 +715,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for dk, dv in date_values.items():
                     date_values[dk] = int(dv)
 
-                return datetime.datetime(
-                    date_values['year'], date_values['month'],
-                    date_values['day'], date_values['hour'],
-                    date_values['minute'], date_values['second'])
+                return datetime(date_values['year'],
+                                date_values['month'],
+                                date_values['day'],
+                                date_values['hour'],
+                                date_values['minute'],
+                                date_values['second'])
 
         try:
             # This is slightly gross but it's hard to tell otherwise what the
