@@ -322,12 +322,18 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # if end_offset is not None:
         #     kwargs['size'] = end_offset - start_offset
 
-        if highlight is True:
+        if highlight:
+            # `highlight` can either be True or a dictionary containing custom parameters
+            # which will be passed to the backend and may override our default settings:
+
             kwargs['highlight'] = {
                 'fields': {
                     content_field: {'store': 'yes'},
                 }
             }
+
+            if isinstance(highlight, dict):
+                kwargs['highlight'].update(highlight)
 
         if self.include_spelling:
             kwargs['suggest'] = {

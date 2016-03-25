@@ -9,7 +9,7 @@ from django.utils import six
 
 from haystack import connection_router, connections
 from haystack.backends import SQ
-from haystack.constants import DEFAULT_OPERATOR, ITERATOR_LOAD_PER_QUERY, REPR_OUTPUT_SIZE
+from haystack.constants import DEFAULT_OPERATOR, ITERATOR_LOAD_PER_QUERY
 from haystack.exceptions import NotHandled
 from haystack.inputs import AutoQuery, Raw
 from haystack.utils import log as logging
@@ -313,10 +313,10 @@ class SearchQuerySet(object):
 
         return clone
 
-    def highlight(self):
+    def highlight(self, **kwargs):
         """Adds highlighting to the results."""
         clone = self._clone()
-        clone.query.add_highlight()
+        clone.query.add_highlight(**kwargs)
         return clone
 
     def models(self, *models):
