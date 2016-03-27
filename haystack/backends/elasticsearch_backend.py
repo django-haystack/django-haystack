@@ -256,6 +256,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
+                            shape=None,
                             models=None, limit_to_registered_models=None,
                             result_class=None):
         index = haystack.connections[self.connection_alias].get_unified_index()
@@ -477,6 +478,20 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 }
             }
             filters.append(dwithin_filter)
+
+        if shape is not None:
+            shape_filter = {
+                "geo_shape": {
+                    shape['field']: {
+                        "shape": {
+                            "type": "polygon",
+                            "coordinates": shape['shape']
+                        },
+                        "relation": shape['relation']
+                    }
+                }
+            }
+            filters.append(shape_filter)
 
         # if we want to filter, change the query type to filteres
         if filters:
@@ -756,6 +771,7 @@ FIELD_MAPPINGS = {
     'datetime':   {'type': 'date'},
 
     'location':   {'type': 'geo_point'},
+    'shape':      {'type': 'geo_shape'},
     'boolean':    {'type': 'boolean'},
     'float':      {'type': 'float'},
     'long':       {'type': 'long'},
@@ -927,6 +943,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         if self.within:
             search_kwargs['within'] = self.within
+
+        if self.shape:
+            search_kwargs['shape'] = self.shape
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
