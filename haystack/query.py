@@ -376,6 +376,12 @@ class SearchQuerySet(object):
         clone.query.add_dwithin(field, point, distance)
         return clone
 
+    def shape(self, field, other_shape, relation='within'):
+        """Spatial: Adds a geo-shape search to the query."""
+        clone = self._clone()
+        clone.query.add_shape(field, other_shape, relation)
+        return clone
+
     def stats(self, field):
         """Adds stats to a query for the provided field."""
         return self.stats_facet(field, facet_fields=None)

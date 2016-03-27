@@ -31,3 +31,5 @@ class Indexable(object):
 # For the geo bits, since that's what Solr & Elasticsearch seem to silently
 # assume...
 WGS_84_SRID = 4326
+# Valid spatial operators for Elasticsearch
+VALID_RELATIONS = set(['within', 'intersects', 'disjoint', 'contains'])
