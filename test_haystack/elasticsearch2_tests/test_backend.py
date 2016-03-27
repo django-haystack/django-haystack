@@ -624,7 +624,7 @@ class FailedElasticsearch2SearchBackendTestCase(TestCase):
 
 
 class LiveElasticsearch2SearchQueryTestCase(TestCase):
-    fixtures = ['initial_data.json']
+    fixtures = ['base_data.json']
 
     def setUp(self):
         super(LiveElasticsearch2SearchQueryTestCase, self).setUp()
