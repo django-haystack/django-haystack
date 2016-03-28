@@ -27,15 +27,15 @@ addons:
 before_install:
     - mkdir -p $HOME/download-cache
     - >
-      if [[ $VERSION_ES == '>=1.0.0,<2.0.0' ]];
+      if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
       then
-        wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.5.tar.gz
-        tar zxf elasticsearch-1.7.5.tar.gz
-        elasticsearch-1.7.5/bin/elasticsearch -d -Dhttp.port=9200
-      else
         wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.2.1/elasticsearch-2.2.1.tar.gz
         tar zxf elasticsearch-2.2.1.tar.gz
         elasticsearch-2.2.1/bin/elasticsearch -d -Dhttp.port=9200
+      else
+        wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.5.tar.gz
+        tar zxf elasticsearch-1.7.5.tar.gz
+        elasticsearch-1.7.5/bin/elasticsearch -d -Dhttp.port=9200
       fi
 
 install:
