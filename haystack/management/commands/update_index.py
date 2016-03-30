@@ -120,38 +120,29 @@ class Command(LabelCommand):
     help = "Freshens the index for the given app(s)."
     base_options = (
         make_option('-a', '--age', action='store', dest='age',
-            default=DEFAULT_AGE, type='int',
-            help='Number of hours back to consider objects new.'
-        ),
-        make_option('-s', '--start', action='store', dest='start_date',
-            default=None, type='string',
-            help='The start date for indexing within. Can be any dateutil-parsable string, recommended to be YYYY-MM-DDTHH:MM:SS.'
-        ),
-        make_option('-e', '--end', action='store', dest='end_date',
-            default=None, type='string',
-            help='The end date for indexing within. Can be any dateutil-parsable string, recommended to be YYYY-MM-DDTHH:MM:SS.'
-        ),
-        make_option('-b', '--batch-size', action='store', dest='batchsize',
-            default=None, type='int',
-            help='Number of items to index at once.'
-        ),
-        make_option('-r', '--remove', action='store_true', dest='remove',
-            default=False, help='Remove objects from the index that are no longer present in the database.'
-        ),
+                    default=DEFAULT_AGE, type='int',
+                    help='Number of hours back to consider objects new.'),
+        make_option('-s', '--start', action='store', dest='start_date', default=None, type='string',
+                    help='The start date for indexing within. Can be any dateutil-parsable string,'
+                         ' recommended to be YYYY-MM-DDTHH:MM:SS.'),
+        make_option('-e', '--end', action='store', dest='end_date', default=None, type='string',
+                    help='The end date for indexing within. Can be any dateutil-parsable string,'
+                         ' recommended to be YYYY-MM-DDTHH:MM:SS.'),
+        make_option('-b', '--batch-size', action='store', dest='batchsize', default=None, type='int',
+                    help='Number of items to index at once.'),
+        make_option('-r', '--remove', action='store_true', dest='remove', default=False,
+                    help='Remove objects from the index that are no longer present in the database.'),
         make_option("-u", "--using", action="append", dest="using",
-            default=[],
-            help='Update only the named backend (can be used multiple times). '
-                 'By default all backends will be updated.'
-        ),
-        make_option('-k', '--workers', action='store', dest='workers',
-            default=0, type='int',
-            help='Allows for the use multiple workers to parallelize indexing.'
-        ),
-        make_option('--nocommit', action='store_false', dest='commit',
-            default=True, help='Will pass commit=False to the backend.'
-        ),
+                    default=[],
+                    help='Update only the named backend (can be used multiple times). '
+                         'By default all backends will be updated.'),
+        make_option('-k', '--workers', action='store', dest='workers', default=0, type='int',
+                    help='Allows for the use multiple workers to parallelize indexing.'),
+        make_option('--nocommit', action='store_false', dest='commit', default=True,
+                    help='Will pass commit=False to the backend.'),
         make_option('-t', '--max-retries', action='store', dest='max_retries',
-                    default=DEFAULT_MAX_RETRIES, type='int',
+                    type='int',
+                    default=DEFAULT_MAX_RETRIES,
                     help='Maximum number of attempts to write to the backend when an error occurs.'),
     )
     option_list = LabelCommand.option_list + base_options
@@ -248,7 +239,8 @@ class Command(LabelCommand):
                 end = min(start + batch_size, total)
 
                 if self.workers == 0:
-                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit, max_retries=self.max_retries)
+                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity,
+                              commit=self.commit, max_retries=self.max_retries)
                 else:
                     ghetto_queue.append((model, start, end, total, using, self.start_date, self.end_date,
                                          self.verbosity, self.commit, self.max_retries))
@@ -301,7 +293,8 @@ class Command(LabelCommand):
                         print("  removing %d stale records." % len(stale_records))
 
                     for rec_id in stale_records:
-                        # Since the PK was not in the database list, we'll delete the record from the search index:
+                        # Since the PK was not in the database list, we'll delete the record from the search
+                        # index:
                         if self.verbosity >= 2:
                             print("  removing %s." % rec_id)
 
