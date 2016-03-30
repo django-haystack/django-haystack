@@ -2,10 +2,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
+import multiprocessing
 import os
-import sys
 import time
-import warnings
 from datetime import timedelta
 from optparse import make_option
 
@@ -24,8 +23,17 @@ DEFAULT_MAX_RETRIES = 5
 APP = 'app'
 MODEL = 'model'
 
+LOG = multiprocessing.log_to_stderr(level=logging.WARNING)
 
-def worker(bits):
+
+def update_worker(args):
+    if len(args) != 10:
+        LOG.error('update_worker received incorrect arguments: %r', args)
+        raise ValueError('update_worker received incorrect arguments')
+
+    model, start, end, total, using, start_date, end_date, verbosity, commit, max_retries = args
+
+    # FIXME: confirm that this is still relevant with modern versions of Django:
     # We need to reset the connections, otherwise the different processes
     # will try to share the connection, which causes things to blow up.
     from django.db import connections
@@ -43,22 +51,12 @@ def worker(bits):
             except KeyError:
                 pass
 
-    if bits[0] == 'do_update':
-        func, model, start, end, total, using, start_date, end_date, verbosity, commit = bits
-    elif bits[0] == 'do_remove':
-        func, model, pks_seen, start, upper_bound, using, verbosity, commit = bits
-    else:
-        return
-
     unified_index = haystack_connections[using].get_unified_index()
     index = unified_index.get_index(model)
     backend = haystack_connections[using].get_backend()
 
-    if func == 'do_update':
-        qs = index.build_queryset(start_date=start_date, end_date=end_date)
-        do_update(backend, index, qs, start, end, total, verbosity=verbosity, commit=commit)
-    else:
-        raise NotImplementedError('Unknown function %s' % func)
+    qs = index.build_queryset(start_date=start_date, end_date=end_date)
+    do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
 
 
 def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
@@ -106,10 +104,10 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
                 error_msg += ' (pid %(pid)s): %(exc)s'
 
             if retries >= max_retries:
-                logging.error(error_msg, exc_info=True, **error_context)
+                LOG.error(error_msg, exc_info=True, **error_context)
                 raise
             elif verbosity >= 2:
-                logging.warning(error_msg, exc_info=True, **error_context)
+                LOG.warning(error_msg, exc_info=True, **error_context)
 
             # If going to try again, sleep a bit before
             time.sleep(2 ** retries)
@@ -147,7 +145,7 @@ class Command(LabelCommand):
         ),
         make_option('-k', '--workers', action='store', dest='workers',
             default=0, type='int',
-            help='Allows for the use multiple workers to parallelize indexing. Requires multiprocessing.'
+            help='Allows for the use multiple workers to parallelize indexing.'
         ),
         make_option('--nocommit', action='store_false', dest='commit',
             default=True, help='Will pass commit=False to the backend.'
@@ -168,11 +166,6 @@ class Command(LabelCommand):
         self.commit = options.get('commit', True)
         self.max_retries = options.get('max_retries', DEFAULT_MAX_RETRIES)
 
-        if sys.version_info < (2, 7):
-            warnings.warn('multiprocessing is disabled on Python 2.6 and earlier. '
-                          'See https://github.com/toastdriven/django-haystack/issues/1001')
-            self.workers = 0
-
         self.backends = options.get('using')
         if not self.backends:
             self.backends = haystack_connections.connections_info.keys()
@@ -180,6 +173,11 @@ class Command(LabelCommand):
         age = options.get('age', DEFAULT_AGE)
         start_date = options.get('start_date')
         end_date = options.get('end_date')
+
+        if self.verbosity > 2:
+            LOG.setLevel(logging.DEBUG)
+        elif self.verbosity > 1:
+            LOG.setLevel(logging.INFO)
 
         if age is not None:
             self.start_date = now() - timedelta(hours=int(age))
@@ -210,7 +208,7 @@ class Command(LabelCommand):
             try:
                 self.update_backend(label, using)
             except:
-                logging.exception("Error updating %s using %s ", label, using)
+                LOG.exception("Error updating %s using %s ", label, using)
                 raise
 
     def update_backend(self, label, using):
@@ -218,9 +216,6 @@ class Command(LabelCommand):
 
         backend = haystack_connections[using].get_backend()
         unified_index = haystack_connections[using].get_unified_index()
-
-        if self.workers > 0:
-            import multiprocessing
 
         for model in haystack_get_models(label):
             try:
@@ -255,11 +250,12 @@ class Command(LabelCommand):
                 if self.workers == 0:
                     do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit, max_retries=self.max_retries)
                 else:
-                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit, self.max_retries))
+                    ghetto_queue.append((model, start, end, total, using, self.start_date, self.end_date,
+                                         self.verbosity, self.commit, self.max_retries))
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
-                pool.map(worker, ghetto_queue)
+                pool.map(update_worker, ghetto_queue)
                 pool.close()
                 pool.join()
 
