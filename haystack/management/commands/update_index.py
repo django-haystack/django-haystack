@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import os
 import sys
+import time
 import warnings
 from datetime import timedelta
 from optparse import make_option
@@ -19,6 +20,7 @@ from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
 
 DEFAULT_BATCH_SIZE = None
 DEFAULT_AGE = None
+DEFAULT_MAX_RETRIES = 5
 APP = 'app'
 MODEL = 'model'
 
@@ -59,20 +61,43 @@ def worker(bits):
         raise NotImplementedError('Unknown function %s' % func)
 
 
-def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True):
+def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
+              max_retries=DEFAULT_MAX_RETRIES):
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
     small_cache_qs = qs.all()
     current_qs = small_cache_qs[start:end]
 
+    is_parent_process = hasattr(os, 'getppid') and os.getpid() == os.getppid()
     if verbosity >= 2:
-        if hasattr(os, 'getppid') and os.getpid() == os.getppid():
+        if is_parent_process:
             print("  indexed %s - %d of %d." % (start + 1, end, total))
         else:
             print("  indexed %s - %d of %d (by %s)." % (start + 1, end, total, os.getpid()))
 
-    # FIXME: Get the right backend.
-    backend.update(index, current_qs, commit=commit)
+    retries = 0
+    while retries < max_retries:
+        try:
+            # FIXME: Get the right backend.
+            backend.update(index, current_qs, commit=commit)
+            if verbosity >= 2 and retries:
+                print('Succeeded indexing {} - {}, tried {}/{} times'.format(start + 1, end, retries + 1, max_retries))
+            break
+        except Exception:
+            # Exception - catch all errors that are non-system-existing, meaning not including
+            # SystemExit and KeyboardInterrupt.
+            # Elasticsearch's exceptions are all based on Exception.
+            retries += 1
+            if verbosity >= 2:
+                error_msg = 'Failed indexing %s - %s, tried %s/%s times' % (start + 1, end, retries, max_retries)
+                if not is_parent_process:
+                    error_msg += ' (by %s)' % os.getpid()
+                logging.exception(error_msg)
+            if retries >= max_retries:
+                # Retries failed so re-raise
+                raise
+            # If going to try again, sleep a bit before
+            time.sleep(2 ** retries)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
@@ -112,6 +137,10 @@ class Command(LabelCommand):
         make_option('--nocommit', action='store_false', dest='commit',
             default=True, help='Will pass commit=False to the backend.'
         ),
+        make_option('-t', '--max-retries', action='store', dest='max_retries',
+                    default=5, type='int',
+                    help='Maximum number of attempts to write to the backend when an error occurs.'
+                    ),
     )
     option_list = LabelCommand.option_list + base_options
 
@@ -123,6 +152,7 @@ class Command(LabelCommand):
         self.remove = options.get('remove', False)
         self.workers = int(options.get('workers', 0))
         self.commit = options.get('commit', True)
+        self.max_retries = options.get('max_retries', DEFAULT_MAX_RETRIES)
 
         if sys.version_info < (2, 7):
             warnings.warn('multiprocessing is disabled on Python 2.6 and earlier. '
@@ -209,9 +239,9 @@ class Command(LabelCommand):
                 end = min(start + batch_size, total)
 
                 if self.workers == 0:
-                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit)
+                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity, commit=self.commit, max_retries=self.max_retries)
                 else:
-                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit))
+                    ghetto_queue.append(('do_update', model, start, end, total, using, self.start_date, self.end_date, self.verbosity, self.commit, self.max_retries))
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
