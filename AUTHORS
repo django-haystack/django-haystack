@@ -110,3 +110,4 @@ Thanks to
     * Craig de Stigter (@craigds) for a patch fixing concurrency issues when building UnifiedIndex
     * Claude Paroz (@claudep) for Django 1.9 support
     * Chris Brooke (@chrisbrooke) for patching around a backwards-incompatible change in ElasticSearch 2
+    * Gilad Beeri (@giladbeeri) for adding retries when updating a backend
