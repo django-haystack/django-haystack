@@ -191,7 +191,10 @@ class SolrSearchBackend(BaseSearchBackend):
                 # autoprefix highlighter options with 'hl.', all of them start with it anyway
                 # this makes option dicts shorter: {'maxAnalyzedChars': 42}
                 # and lets some of options be used as keyword arguments: `.highlight(preserveMulti=False)`
-                kwargs.update({'hl.' + key: highlight[key] for key in highlight.keys()})
+                kwargs.update({
+                    key if key.startswith("hl.") else ('hl.' + key): highlight[key] 
+                    for key in highlight.keys()
+                })
 
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
