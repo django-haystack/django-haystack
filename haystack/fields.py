@@ -45,7 +45,8 @@ class SearchField(object):
         # `solr_field_params` should be a dict containing additional 
         # field arguments to be used in the Solr schema
         # e.g. {'termVectors': 'true'}.
-        if solr_field_params:
+        self.solr_field_params = solr_field_params
+        if self.solr_field_params:
             from haystack.utils import loading
             from haystack.exceptions import MissingDependency
             try:
@@ -53,8 +54,6 @@ class SearchField(object):
             except MissingDependency:
                 raise NotImplementedError("""The solr_field_params attribute 
                                            requires a configured Solr search backend.""")
-            else:
-                self.solr_field_params = self.solr_field_params
             
         # We supply the facet_class for making it easy to create a faceted
         # field based off of this field.
