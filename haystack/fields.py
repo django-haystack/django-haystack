@@ -42,6 +42,9 @@ class SearchField(object):
         self.boost = weight or boost
         self.is_multivalued = False
         
+        # `solr_field_params` should be a dict containing additional 
+        # field arguments to be used in the Solr schema
+        # e.g. {'termVectors': 'true'}.
         if solr_field_params:
             from haystack.utils import loading
             from haystack.exceptions import MissingDependency
