@@ -33,6 +33,7 @@ Included with Haystack are the following field types:
 * ``FloatField``
 * ``IntegerField``
 * ``LocationField``
+* ``ShapeField``
 * ``MultiValueField``
 * ``NgramField``
 
