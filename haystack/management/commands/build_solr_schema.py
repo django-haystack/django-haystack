@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
 from optparse import make_option
 
 from django.core.exceptions import ImproperlyConfigured
@@ -89,7 +88,7 @@ class Command(BaseCommand):
         self.stderr.write("--------------------------------------------------------------------------------------------")
         self.stderr.write("Save the following output to 'schema.xml' and place it in your Solr configuration directory.")
         self.stderr.write("--------------------------------------------------------------------------------------------")
-        self.stdout.write(schema_xml)
+        print(schema_xml)
 
     def log(self, field, response, backend):
         try:
@@ -101,6 +100,6 @@ class Command(BaseCommand):
         if 'errors' in message:
             self.stdout.write("%s." % [" ".join(err.get('errorMessages')) for err in message['errors']])
         elif 'responseHeader' in message and 'status' in message['responseHeader']:
-            sys.stdout.write("Successfully created the field %s" % field['name'])
+            self.stdout.write("Successfully created the field %s" % field['name'])
         else:
-            sys.stdout.write("%s" % message)
+            self.stdout.write("%s" % message)
