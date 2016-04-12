@@ -1,8 +1,6 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
-
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from django.template import Context, loader
@@ -102,6 +100,6 @@ class Command(BaseCommand):
         if 'errors' in message:
             self.stdout.write("%s." % [" ".join(err.get('errorMessages')) for err in message['errors']])
         elif 'responseHeader' in message and 'status' in message['responseHeader']:
-            sys.stdout.write("Successfully created the field %s" % field['name'])
+            self.stdout.write("Successfully created the field %s" % field['name'])
         else:
-            sys.stdout.write("%s" % message)
+            self.stdout.write("%s" % message)
