@@ -14,50 +14,38 @@ than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 5.0+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple:
 
-Install the latest version 5.0.0
+Install the latest 5.x version
 ----------------------------
 
 ::
+    export SOLR_VERSION="5.5.0"
+    curl -LO http://archive.apache.org/dist/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz
+    tar xvzf solr-${SOLR_VERSION}.tgz
+    cd solr-${SOLR_VERSION}
+    bin/solr start
 
-    curl -LO https://archive.apache.org/dist/lucene/solr/5.0.0/solr-5.0.0.tgz
-    tar xvzf solr-5.0.0.tgz
-    cd solr-5.0.0
-    cd bin/solr start
 
-
-Then you create at least on "cloud" core :
+Then you create at least one "cloud" core :
 ::
     sudo -u solr bin/solr create -c mycorename
 
 Your core is now accessible by default at http://localhost:8983/solr/#/mycorename
-    
-Install version 4.10.2
------------------------
-::
-
-    curl -LO https://archive.apache.org/dist/lucene/solr/4.10.2/solr-4.10.2.tgz
-    tar xvzf solr-4.10.2.tgz
-    cd solr-4.10.2
-    cd example
-    java -jar start.jar
-
-Your server is now accessible at http://localhost:8983/solr/
 
 Update your schema from the indexes
 ------------------------------------
 
 You can update the schema from your application (once Haystack is installed and setup) by running:
 
-- since Solr 5.0.0 ``./manage.py build_solr_schema``.
-- for previous version (4.10.2) ``./manage.py build_solr_schema --stdout``. or ``./manage.py build_solr_schema --filename schema.xml``
+- since Solr 5.x ``./manage.py build_solr_schema``.
+- for previous versions (4.x) ``./manage.py build_solr_schema --filename schema.xml``
 
-When using the version 5.0.0 of Solr, the command uses the Schema REST API described at https://wiki.apache.org/solr/SchemaRESTAPI
-Solr 5.0.0 provides many default dynamicFields and fieldTypes configured at the Core's creation by default. 
+When using the version 5.x of Solr, the command uses the Schema REST API described at https://wiki.apache.org/solr/SchemaRESTAPI
+Solr 5.x provides many default dynamicFields and fieldTypes configured at the Core's creation by default.
 If you like, these type are customisable using the Schema REST API Core's, or the http admin interface.
 
-When using previous version 4.10.2, please provide --filename schema.xml to export the schema file, and so that you can copy it to your solr installation. 
-build_solr_schema uses a template to generate schema.xml. 
-Haystack provides a default template using some sensible defaults. If you would like to provide your own template, you will need to place it in search_configuration/solr.xml, inside a directory specified by your app's TEMPLATE_DIRS setting. 
+When using previous version 4.10.2, please provide --filename schema.xml to export the schema file, and so that you can copy it to your solr installation.
+build_solr_schema uses a template to generate schema.xml.
+Haystack provides a default template using some sensible defaults. If you would like to provide your own template, you will need to place it in search_configuration/solr.xml, inside a directory specified by your app's TEMPLATE_DIRS setting.
 
 Examples:
 /myproj/myapp/templates/search_configuration/solr.xml
@@ -244,4 +232,3 @@ http://github.com/notanumber/xapian-haystack/tree/master. Installation
 instructions can be found on that page as well. The backend, written
 by David Sauve (notanumber), fully implements the `SearchQuerySet` API and is
 an excellent alternative to Solr.
-
