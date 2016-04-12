@@ -89,7 +89,7 @@ class CoreManagementCommandsTestCase(TestCase):
 
     @patch('haystack.management.commands.update_index.Command.handle')
     @patch('haystack.management.commands.clear_index.Command.handle')
-    def test_rebuild_index_nocommit(self, *mocks):
+    def test_rebuild_index_nocommit_command_line(self, *mocks):
         """
         Confirm that command-line option parsing produces the same results as using call_command() directly,
         mostly as a sanity check for the logic in rebuild_index which combines the option_lists for its

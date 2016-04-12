@@ -54,10 +54,10 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 class SolrMockSearchIndexWithSkipDocument(SolrMockSearchIndex):
 
-        def prepare_text(self, obj):
-            if obj.author == 'daniel3':
-                raise SkipDocument
-            return u"Indexed!\n%s" % obj.id
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return u"Indexed!\n%s" % obj.id
 
 
 class SolrMockOverriddenFieldNameSearchIndex(indexes.SearchIndex, indexes.Indexable):
