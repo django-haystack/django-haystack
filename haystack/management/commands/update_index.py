@@ -102,10 +102,10 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
                 error_msg += ' (pid %(pid)s): %(exc)s'
 
             if retries >= max_retries:
-                LOG.error(error_msg, exc_info=True, **error_context)
+                LOG.error(error_msg, error_context, exc_info=True)
                 raise
             elif verbosity >= 2:
-                LOG.warning(error_msg, exc_info=True, **error_context)
+                LOG.warning(error_msg, error_context, exc_info=True)
 
             # If going to try again, sleep a bit before
             time.sleep(2 ** retries)
