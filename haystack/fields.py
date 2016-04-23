@@ -80,8 +80,12 @@ class SearchField(object):
         if self.use_template:
             return self.prepare_template(obj)
         elif self.model_attr is not None:
-            # Check for `__` in the field for looking through the relation.
-            attrs = self.model_attr.split('__')
+            if self.model_attr.startswith('__'):
+                # Support special attributes that start with __
+                attrs = [self.model_attr]
+            else:
+                # Check for `__` in the field for looking through the relation.
+                attrs = self.model_attr.split('__')
             current_object = obj
 
             for attr in attrs:
