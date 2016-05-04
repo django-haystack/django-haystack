@@ -783,7 +783,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             index_fieldname = u'%s:' % connections[self._using].get_unified_index().get_index_fieldname(field)
 
         filter_types = {
-            'contains': u'%s',
+            'contains': u'*%s*',
             'startswith': u'%s*',
             'exact': u'%s',
             'gt': u'{%s TO *}',
