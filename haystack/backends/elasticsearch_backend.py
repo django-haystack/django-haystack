@@ -190,10 +190,20 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                                extra={"data": {"index": index,
                                                "object": get_identifier(obj)}})
 
-        bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
+        try:
+            bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
+        except elasticsearch.TransportError as e:
+            if not self.silently_fail:
+                raise
+            self.log.error(u'Error bulk updating Elasticsearch')
 
         if commit:
-            self.conn.indices.refresh(index=self.index_name)
+            try:
+                self.conn.indices.refresh(index=self.index_name)
+            except elasticsearch.TransportError as e:
+                if not self.silently_fail:
+                    raise
+                self.log.error(u'Error committing bulk update to Elasticsearch')
 
     def remove(self, obj_or_string, commit=True):
         doc_id = get_identifier(obj_or_string)
