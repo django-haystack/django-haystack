@@ -195,7 +195,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
                 raise
-            self.log.error(u'Error bulk updating Elasticsearch')
+            self.log.error(
+                u'{} while bulk updating Elasticsearch'.format(e.__class__.__name__),
+                exc_info=True,
+                extra={
+                    'data': {
+                        'index': index,
+                    },
+                },
+            )
 
         if commit:
             try:
@@ -203,7 +211,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             except elasticsearch.TransportError as e:
                 if not self.silently_fail:
                     raise
-                self.log.error(u'Error committing bulk update to Elasticsearch')
+                self.log.error(
+                    u'{} while committing bulk update to Elasticsearch'.format(e.__class__.__name__),
+                    exc_info=True,
+                    extra={
+                        'data': {
+                            'index': index,
+                        },
+                    },
+                )
 
     def remove(self, obj_or_string, commit=True):
         doc_id = get_identifier(obj_or_string)
