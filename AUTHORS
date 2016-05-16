@@ -111,3 +111,4 @@ Thanks to
     * Claude Paroz (@claudep) for Django 1.9 support
     * Chris Brooke (@chrisbrooke) for patching around a backwards-incompatible change in ElasticSearch 2
     * Gilad Beeri (@giladbeeri) for adding retries when updating a backend
+    * Arjen Verstoep (@terr) for a patch that allows attribute lookups through Django ManyToManyField relationships

@@ -80,39 +80,79 @@ class SearchField(object):
         if self.use_template:
             return self.prepare_template(obj)
         elif self.model_attr is not None:
-            # Check for `__` in the field for looking through the relation.
-            attrs = self.model_attr.split('__')
-            current_object = obj
+            attrs = self.split_model_attr_lookups()
+            current_objects = [obj]
 
-            for attr in attrs:
-                if not hasattr(current_object, attr):
-                    raise SearchFieldError("The model '%s' does not have a model_attr '%s'." % (repr(current_object), attr))
+            values = self.resolve_attributes_lookup(current_objects, attrs)
 
-                current_object = getattr(current_object, attr, None)
-
-                if current_object is None:
-                    if self.has_default():
-                        current_object = self._default
-                        # Fall out of the loop, given any further attempts at
-                        # accesses will fail miserably.
-                        break
-                    elif self.null:
-                        current_object = None
-                        # Fall out of the loop, given any further attempts at
-                        # accesses will fail miserably.
-                        break
-                    else:
-                        raise SearchFieldError("The model '%s' combined with model_attr '%s' returned None, but doesn't allow a default or null value." % (repr(obj), self.model_attr))
-
-            if callable(current_object):
-                return current_object()
-
-            return current_object
+            if len(values) == 1:
+                return values[0]
+            else:
+                return values
 
         if self.has_default():
             return self.default
         else:
             return None
+
+    def resolve_attributes_lookup(self, current_objects, attributes):
+        """
+        Recursive method that looks, for one or more objects, for an attribute that can be multiple
+        objects (relations) deep.
+        """
+        values = []
+
+        for current_object in current_objects:
+            if not hasattr(current_object, attributes[0]):
+                raise SearchFieldError(
+                    "The model '%s' does not have a model_attr '%s'." % (repr(current_object), attributes[0])
+                )
+
+            if len(attributes) > 1:
+                current_objects_in_attr = self.get_iterable_objects(getattr(current_object, attributes[0]))
+
+                return self.resolve_attributes_lookup(current_objects_in_attr, attributes[1:])
+
+            current_object = getattr(current_object, attributes[0])
+
+            if current_object is None:
+                if self.has_default():
+                    current_object = self._default
+                elif self.null:
+                    current_object = None
+                else:
+                    raise SearchFieldError(
+                        "The model '%s' combined with model_attr '%s' returned None, but doesn't allow "
+                        "a default or null value." % (repr(current_object), self.model_attr)
+                    )
+
+            if callable(current_object):
+                values.append(current_object())
+            else:
+                values.append(current_object)
+
+        return values
+
+    def split_model_attr_lookups(self):
+        """Returns list of nested attributes for looking through the relation."""
+        return self.model_attr.split('__')
+
+    @classmethod
+    def get_iterable_objects(cls, current_objects):
+        """
+        Returns iterable of objects that contain data. For example, resolves Django ManyToMany relationship
+        so the attributes of the related models can then be accessed.
+        """
+        if current_objects is None:
+            return []
+
+        if hasattr(current_objects, 'all'):
+            # i.e, Django ManyToMany relationships
+            current_objects = current_objects.all()
+        elif not hasattr(current_objects, '__iter__'):
+            current_objects = [current_objects]
+
+        return current_objects
 
     def prepare_template(self, obj):
         """

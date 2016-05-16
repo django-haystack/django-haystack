@@ -5,11 +5,85 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 from decimal import Decimal
 
+from mock import Mock
+
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from test_haystack.core.models import MockModel, MockTag
+from test_haystack.core.models import MockModel, MockTag, ManyToManyLeftSideModel, ManyToManyRightSideModel, \
+    OneToManyLeftSideModel, OneToManyRightSideModel
 
 from haystack.fields import *
+
+
+class SearchFieldTestCase(TestCase):
+    def test_get_iterable_objects_with_none(self):
+        self.assertEqual([], SearchField.get_iterable_objects(None))
+
+    def test_get_iterable_objects_with_single_non_iterable_object(self):
+        obj = object()
+        expected = [obj]
+
+        self.assertEqual(expected, SearchField.get_iterable_objects(obj))
+
+    def test_get_iterable_objects_with_list_stays_the_same(self):
+        objects = [object(), object()]
+
+        self.assertIs(objects, SearchField.get_iterable_objects(objects))
+
+    def test_get_iterable_objects_with_django_manytomany_rel(self):
+        left_model = ManyToManyLeftSideModel.objects.create()
+        right_model_1 = ManyToManyRightSideModel.objects.create(name='Right side 1')
+        right_model_2 = ManyToManyRightSideModel.objects.create()
+        left_model.related_models.add(right_model_1)
+        left_model.related_models.add(right_model_2)
+
+        result = SearchField.get_iterable_objects(left_model.related_models)
+
+        self.assertTrue(right_model_1 in result)
+        self.assertTrue(right_model_2 in result)
+
+    def test_get_iterable_objects_with_django_onetomany_rel(self):
+        left_model = OneToManyLeftSideModel.objects.create()
+        right_model_1 = OneToManyRightSideModel.objects.create(left_side=left_model)
+        right_model_2 = OneToManyRightSideModel.objects.create(left_side=left_model)
+
+        result = SearchField.get_iterable_objects(left_model.right_side)
+
+        self.assertTrue(right_model_1 in result)
+        self.assertTrue(right_model_2 in result)
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none(self):
+        related = Mock(spec=['none_field'], none_field=None)
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField(null=False)
+
+        self.assertRaises(SearchFieldError, field.resolve_attributes_lookup, [obj], ['related', 'none_field'])
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_is_allowed_to_be_null(self):
+        related = Mock(spec=['none_field'], none_field=None)
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField(null=True)
+
+        self.assertEqual([None], field.resolve_attributes_lookup([obj], ['related', 'none_field']))
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_has_default(self):
+        related = Mock(spec=['none_field'], none_field=None)
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField(default='Default value')
+
+        self.assertEqual(['Default value'], field.resolve_attributes_lookup([obj], ['related', 'none_field']))
+
+    def test_resolve_attributes_lookup_with_deep_relationship(self):
+        related_lvl_2 = Mock(spec=['value'], value=1)
+        related = Mock(spec=['related'], related=[related_lvl_2, related_lvl_2])
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField()
+
+        self.assertEqual([1, 1], field.resolve_attributes_lookup([obj], ['related', 'related', 'value']))
 
 
 class CharFieldTestCase(TestCase):
