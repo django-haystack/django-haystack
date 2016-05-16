@@ -472,6 +472,26 @@ class MultiValueFieldTestCase(TestCase):
 
         self.assertEqual(multy_none.prepare(mock), None)
 
+    def test_convert_with_single_string(self):
+        field = MultiValueField()
+
+        self.assertEqual(['String'], field.convert('String'))
+
+    def test_convert_with_single_int(self):
+        field = MultiValueField()
+
+        self.assertEqual([1], field.convert(1))
+
+    def test_convert_with_list_of_strings(self):
+        field = MultiValueField()
+
+        self.assertEqual(['String 1', 'String 2'], field.convert(['String 1', 'String 2']))
+
+    def test_convert_with_list_of_ints(self):
+        field = MultiValueField()
+
+        self.assertEqual([1, 2, 3], field.convert([1, 2, 3]))
+
 
 class CharFieldWithTemplateTestCase(TestCase):
     def test_init(self):

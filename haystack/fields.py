@@ -411,7 +411,10 @@ class MultiValueField(SearchField):
         if value is None:
             return None
 
-        return list(value)
+        if hasattr(value, '__iter__'):
+            return value
+
+        return [value]
 
 
 class FacetField(SearchField):
