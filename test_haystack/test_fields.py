@@ -85,6 +85,14 @@ class SearchFieldTestCase(TestCase):
 
         self.assertEqual([1, 1], field.resolve_attributes_lookup([obj], ['related', 'related', 'value']))
 
+    def test_prepare_with_null_django_onetomany_rel(self):
+        left_model = OneToManyLeftSideModel.objects.create()
+
+        field = SearchField(model_attr='right_side__pk', null=True)
+        result = field.prepare(left_model)
+
+        self.assertEqual(None, result)
+
 
 class CharFieldTestCase(TestCase):
     def test_init(self):
