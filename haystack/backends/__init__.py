@@ -129,7 +129,7 @@ class BaseSearchBackend(object):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, **extra_kwargs):
         # A convenience method most backends should include in order to make
         # extension easier.
         raise NotImplementedError

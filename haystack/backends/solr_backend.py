@@ -147,7 +147,8 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None, stats=None):
+                            result_class=None, stats=None,
+                            **extra_kwargs):
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -282,6 +283,9 @@ class SolrSearchBackend(BaseSearchBackend):
             # time yet.
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
+
+        if extra_kwargs:
+            kwargs.update(extra_kwargs)
 
         return kwargs
 
