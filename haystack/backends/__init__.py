@@ -8,17 +8,13 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import six
 from django.utils import tree
+from django.utils.encoding import force_text
+
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
 from haystack.utils import get_model_ct
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
-
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
@@ -133,7 +129,7 @@ class BaseSearchBackend(object):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, **extra_kwargs):
         # A convenience method most backends should include in order to make
         # extension easier.
         raise NotImplementedError
@@ -858,9 +854,9 @@ class BaseSearchQuery(object):
         """Adds stats and stats_facets queries for the Solr backend."""
         self.stats[stats_field] = stats_facets
 
-    def add_highlight(self):
+    def add_highlight(self, **kwargs):
         """Adds highlighting to the search results."""
-        self.highlight = True
+        self.highlight = kwargs or True
 
     def add_within(self, field, point_1, point_2):
         """Adds bounding box parameters to search query."""

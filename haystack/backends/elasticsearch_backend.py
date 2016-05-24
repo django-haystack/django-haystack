@@ -2,9 +2,9 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import datetime
 import re
 import warnings
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -135,10 +135,6 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         current_mapping = {
             'modelresult': {
                 'properties': field_mapping,
-                '_boost': {
-                    'name': 'boost',
-                    'null_value': 1.0
-                }
             }
         }
 
@@ -261,7 +257,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, **extra_kwargs):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
 
@@ -326,12 +322,18 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # if end_offset is not None:
         #     kwargs['size'] = end_offset - start_offset
 
-        if highlight is True:
+        if highlight:
+            # `highlight` can either be True or a dictionary containing custom parameters
+            # which will be passed to the backend and may override our default settings:
+
             kwargs['highlight'] = {
                 'fields': {
                     content_field: {'store': 'yes'},
                 }
             }
+
+            if isinstance(highlight, dict):
+                kwargs['highlight'].update(highlight)
 
         if self.include_spelling:
             kwargs['suggest'] = {
@@ -484,6 +486,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             else:
                 kwargs['query']['filtered']["filter"] = {"bool": {"must": filters}}
 
+        if extra_kwargs:
+            kwargs.update(extra_kwargs)
+
         return kwargs
 
     @log_query
@@ -590,13 +595,22 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 'queries': {},
             }
 
+            # ES can return negative timestamps for pre-1970 data. Handle it.
+            def from_timestamp(tm):
+                if tm >= 0:
+                    return datetime.utcfromtimestamp(tm)
+                else:
+                    return datetime(1970, 1, 1) + timedelta(seconds=tm)
+
             for facet_fieldname, facet_info in raw_results['facets'].items():
                 if facet_info.get('_type', 'terms') == 'terms':
                     facets['fields'][facet_fieldname] = [(individual['term'], individual['count']) for individual in facet_info['terms']]
                 elif facet_info.get('_type', 'terms') == 'date_histogram':
                     # Elasticsearch provides UTC timestamps with an extra three
                     # decimals of precision, which datetime barfs on.
-                    facets['dates'][facet_fieldname] = [(datetime.datetime.utcfromtimestamp(individual['time'] / 1000), individual['count']) for individual in facet_info['entries']]
+                    facets['dates'][facet_fieldname] = [(from_timestamp(individual['time'] / 1000),
+                                                         individual['count'])
+                                                        for individual in facet_info['entries']]
                 elif facet_info.get('_type', 'terms') == 'query':
                     facets['queries'][facet_fieldname] = facet_info['count']
 
@@ -710,10 +724,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for dk, dv in date_values.items():
                     date_values[dk] = int(dv)
 
-                return datetime.datetime(
-                    date_values['year'], date_values['month'],
-                    date_values['day'], date_values['hour'],
-                    date_values['minute'], date_values['second'])
+                return datetime(date_values['year'],
+                                date_values['month'],
+                                date_values['day'],
+                                date_values['hour'],
+                                date_values['minute'],
+                                date_values['second'])
 
         try:
             # This is slightly gross but it's hard to tell otherwise what the
@@ -819,10 +835,13 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             elif filter_type == 'in':
                 in_options = []
 
-                for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend._from_python(possible_value))
+                if not prepared_value:
+                    query_frag = u'(!*:*)'
+                else:
+                    for possible_value in prepared_value:
+                        in_options.append(u'"%s"' % self.backend._from_python(possible_value))
+                    query_frag = u"(%s)" % " OR ".join(in_options)
 
-                query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
                 start = self.backend._from_python(prepared_value[0])
                 end = self.backend._from_python(prepared_value[1])

@@ -147,7 +147,8 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None, stats=None):
+                            result_class=None, stats=None,
+                            **extra_kwargs):
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -180,9 +181,15 @@ class SolrSearchBackend(BaseSearchBackend):
         if end_offset is not None:
             kwargs['rows'] = end_offset - start_offset
 
-        if highlight is True:
+        if highlight:
+            # `highlight` can either be True or a dictionary containing custom parameters
+            # which will be passed to the backend and may override our default settings:
+
             kwargs['hl'] = 'true'
             kwargs['hl.fragsize'] = '200'
+
+            if isinstance(highlight, dict):
+                kwargs.update(highlight)
 
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
@@ -276,6 +283,9 @@ class SolrSearchBackend(BaseSearchBackend):
             # time yet.
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
+
+        if extra_kwargs:
+            kwargs.update(extra_kwargs)
 
         return kwargs
 
@@ -581,10 +591,13 @@ class SolrSearchQuery(BaseSearchQuery):
             elif filter_type == 'in':
                 in_options = []
 
-                for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
+                if not prepared_value:
+                    query_frag = u'(!*:*)'
+                else:
+                    for possible_value in prepared_value:
+                        in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
 
-                query_frag = u"(%s)" % " OR ".join(in_options)
+                    query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
                 start = self.backend.conn._from_python(prepared_value[0])
                 end = self.backend.conn._from_python(prepared_value[1])

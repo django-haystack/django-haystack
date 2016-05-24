@@ -2,17 +2,9 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.conf import settings
-
 import unittest
 
-
-if not hasattr(unittest, 'skipIf'):
-    # Some unittest features we need were introduced in Python 2.7, but we are
-    # dealing with Python 2.6, so we fallback to Django's unittest2. It was
-    # deprecated in Django 1.8; removed in Django 1.9 (both of which require
-    # at least Python 2.7)
-    from django.utils import unittest
+from django.conf import settings
 
 
 def check_solr(using='solr'):

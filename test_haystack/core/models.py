@@ -79,3 +79,22 @@ class ScoreMockModel(models.Model):
 
     def __unicode__(self):
         return self.score
+
+
+class ManyToManyLeftSideModel(models.Model):
+    related_models = models.ManyToManyField('ManyToManyRightSideModel')
+
+
+class ManyToManyRightSideModel(models.Model):
+    name = models.CharField(max_length=32, default='Default name')
+
+    def __unicode__(self):
+        return self.name
+
+
+class OneToManyLeftSideModel(models.Model):
+    pass
+
+
+class OneToManyRightSideModel(models.Model):
+    left_side = models.ForeignKey(OneToManyLeftSideModel, related_name='right_side')

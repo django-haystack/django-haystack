@@ -5,11 +5,85 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 from decimal import Decimal
 
+from mock import Mock
+
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from test_haystack.core.models import MockModel, MockTag
+from test_haystack.core.models import MockModel, MockTag, ManyToManyLeftSideModel, ManyToManyRightSideModel, \
+    OneToManyLeftSideModel, OneToManyRightSideModel
 
 from haystack.fields import *
+
+
+class SearchFieldTestCase(TestCase):
+    def test_get_iterable_objects_with_none(self):
+        self.assertEqual([], SearchField.get_iterable_objects(None))
+
+    def test_get_iterable_objects_with_single_non_iterable_object(self):
+        obj = object()
+        expected = [obj]
+
+        self.assertEqual(expected, SearchField.get_iterable_objects(obj))
+
+    def test_get_iterable_objects_with_list_stays_the_same(self):
+        objects = [object(), object()]
+
+        self.assertIs(objects, SearchField.get_iterable_objects(objects))
+
+    def test_get_iterable_objects_with_django_manytomany_rel(self):
+        left_model = ManyToManyLeftSideModel.objects.create()
+        right_model_1 = ManyToManyRightSideModel.objects.create(name='Right side 1')
+        right_model_2 = ManyToManyRightSideModel.objects.create()
+        left_model.related_models.add(right_model_1)
+        left_model.related_models.add(right_model_2)
+
+        result = SearchField.get_iterable_objects(left_model.related_models)
+
+        self.assertTrue(right_model_1 in result)
+        self.assertTrue(right_model_2 in result)
+
+    def test_get_iterable_objects_with_django_onetomany_rel(self):
+        left_model = OneToManyLeftSideModel.objects.create()
+        right_model_1 = OneToManyRightSideModel.objects.create(left_side=left_model)
+        right_model_2 = OneToManyRightSideModel.objects.create(left_side=left_model)
+
+        result = SearchField.get_iterable_objects(left_model.right_side)
+
+        self.assertTrue(right_model_1 in result)
+        self.assertTrue(right_model_2 in result)
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none(self):
+        related = Mock(spec=['none_field'], none_field=None)
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField(null=False)
+
+        self.assertRaises(SearchFieldError, field.resolve_attributes_lookup, [obj], ['related', 'none_field'])
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_is_allowed_to_be_null(self):
+        related = Mock(spec=['none_field'], none_field=None)
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField(null=True)
+
+        self.assertEqual([None], field.resolve_attributes_lookup([obj], ['related', 'none_field']))
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_has_default(self):
+        related = Mock(spec=['none_field'], none_field=None)
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField(default='Default value')
+
+        self.assertEqual(['Default value'], field.resolve_attributes_lookup([obj], ['related', 'none_field']))
+
+    def test_resolve_attributes_lookup_with_deep_relationship(self):
+        related_lvl_2 = Mock(spec=['value'], value=1)
+        related = Mock(spec=['related'], related=[related_lvl_2, related_lvl_2])
+        obj = Mock(spec=['related'], related=[related])
+
+        field = SearchField()
+
+        self.assertEqual([1, 1], field.resolve_attributes_lookup([obj], ['related', 'related', 'value']))
 
 
 class CharFieldTestCase(TestCase):
@@ -311,6 +385,10 @@ class DateFieldTestCase(TestCase):
         except:
             self.fail()
 
+    def test_convert(self):
+        pub_date = DateField()
+        self.assertEqual(pub_date.convert('2016-02-16'), datetime.date(2016, 2, 16))
+
     def test_prepare(self):
         mock = MockModel()
         mock.pub_date = datetime.date(2009, 2, 13)
@@ -324,6 +402,13 @@ class DateFieldTestCase(TestCase):
 
         self.assertEqual(default.prepare(mock), datetime.date(2000, 1, 1))
 
+    def test_prepare_from_string(self):
+        mock = MockModel()
+        mock.pub_date = datetime.date(2016, 2, 16)
+        pub_date = DateField(model_attr='pub_date')
+
+        self.assertEqual(pub_date.prepare(mock), datetime.date(2016, 2, 16))
+
 
 class DateTimeFieldTestCase(TestCase):
     def test_init(self):
@@ -331,6 +416,12 @@ class DateTimeFieldTestCase(TestCase):
             foo = DateTimeField(model_attr='foo')
         except:
             self.fail()
+
+    def test_convert(self):
+        pub_date = DateTimeField()
+
+        self.assertEqual(pub_date.convert('2016-02-16T10:02:03'),
+                         datetime.datetime(2016, 2, 16, 10, 2, 3))
 
     def test_prepare(self):
         mock = MockModel()
@@ -344,6 +435,13 @@ class DateTimeFieldTestCase(TestCase):
         default = DateTimeField(default=datetime.datetime(2000, 1, 1, 0, 0, 0))
 
         self.assertEqual(default.prepare(mock), datetime.datetime(2000, 1, 1, 0, 0, 0))
+
+    def test_prepare_from_string(self):
+        mock = MockModel()
+        mock.pub_date = '2016-02-16T10:01:02Z'
+        pub_date = DateTimeField(model_attr='pub_date')
+
+        self.assertEqual(pub_date.prepare(mock), datetime.datetime(2016, 2, 16, 10, 1, 2))
 
 
 class MultiValueFieldTestCase(TestCase):
@@ -373,6 +471,26 @@ class MultiValueFieldTestCase(TestCase):
         multy_none = MultiValueField(null=True)
 
         self.assertEqual(multy_none.prepare(mock), None)
+
+    def test_convert_with_single_string(self):
+        field = MultiValueField()
+
+        self.assertEqual(['String'], field.convert('String'))
+
+    def test_convert_with_single_int(self):
+        field = MultiValueField()
+
+        self.assertEqual([1], field.convert(1))
+
+    def test_convert_with_list_of_strings(self):
+        field = MultiValueField()
+
+        self.assertEqual(['String 1', 'String 2'], field.convert(['String 1', 'String 2']))
+
+    def test_convert_with_list_of_ints(self):
+        field = MultiValueField()
+
+        self.assertEqual([1, 2, 3], field.convert([1, 2, 3]))
 
 
 class CharFieldWithTemplateTestCase(TestCase):

@@ -16,7 +16,6 @@ from haystack.utils.loading import UnifiedIndex
 
 from .mocks import MockSearchResult
 from .test_indexes import ReadQuerySetTestSearchIndex
-from .utils import unittest
 
 
 class CaptureHandler(std_logging.Handler):
@@ -27,6 +26,8 @@ class CaptureHandler(std_logging.Handler):
 
 
 class SearchResultTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SearchResultTestCase, self).setUp()
         cap = CaptureHandler()

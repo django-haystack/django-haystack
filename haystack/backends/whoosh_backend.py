@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import json
 import os
 import re
 import shutil
@@ -12,6 +13,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 from django.utils.datetime_safe import datetime
+from django.utils.encoding import force_text
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
@@ -21,19 +23,6 @@ from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils import get_identifier, get_model_ct
 from haystack.utils.app_loading import haystack_get_model
-
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        from django.utils import simplejson as json
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 try:
     import whoosh

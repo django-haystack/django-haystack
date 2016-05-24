@@ -6,7 +6,6 @@ import datetime
 from tempfile import mkdtemp
 
 import pysolr
-from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
@@ -17,13 +16,12 @@ from haystack import connections, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
-from ..utils import unittest
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -40,7 +38,7 @@ class SolrMockTagSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 
 class ManagementCommandTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(ManagementCommandTestCase, self).setUp()
@@ -119,9 +117,8 @@ class ManagementCommandTestCase(TestCase):
         call_command('update_index', age=3, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 1)
 
-    @unittest.skipIf(DJANGO_VERSION < (1, 4, 0), 'timezone support was added in Django 1.4')
     def test_age_with_time_zones(self):
-        """Haystack should use django.utils.timezone.now on Django 1.4+"""
+        """Haystack should use django.utils.timezone.now"""
         from django.utils.timezone import now as django_now
         from haystack.management.commands.update_index import now as haystack_now
 
@@ -178,7 +175,7 @@ class ManagementCommandTestCase(TestCase):
 
 
 class AppModelManagementCommandTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data', 'bulk_data.json']
 
     def setUp(self):
         super(AppModelManagementCommandTestCase, self).setUp()
@@ -212,7 +209,8 @@ class AppModelManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        self.assertRaises(ImproperlyConfigured, call_command, 'update_index', 'fake_app_thats_not_there', interactive=False)
+        with self.assertRaises(ImproperlyConfigured):
+            call_command('update_index', 'fake_app_thats_not_there', interactive=False)
 
         call_command('update_index', 'core', 'discovery', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 25)
