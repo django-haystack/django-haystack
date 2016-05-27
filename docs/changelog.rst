@@ -7,6 +7,16 @@ Changelog
 New
 ~~~
 
+- SearchQuerySet.set_spelling_query for custom spellcheck. [Chris Adams]
+
+  This makes it much easier to customize the text sent to the
+  backend search engine for spelling suggestions independently
+  from the actual query being executed.
+
+- Support ManyToManyFields in model_attr lookups. [Arjen Verstoep]
+
+  Thanks to @Terr for the patch
+
 - `update_index` will retry after backend failures. [Gilad Beeri]
 
   Now `update_index` will retry failures multiple times before aborting
@@ -53,6 +63,11 @@ New
 Changes
 ~~~~~~~
 
+- Make backend subclassing easier. [Chris Adams]
+
+  This change allows the backend build_search_kwargs to
+  accept arbitrary extra arguments, making life easier for authors of `SearchQuery` or `SearchBackend` subclasses when they can directly pass a value which is directly supported by the backend search client.
+
 - Update_index logging & multiprocessing improvements. [Chris Adams]
 
   * Since older versions of Python are no longer supported we no
@@ -76,6 +91,18 @@ Changes
 
 Fix
 ~~~
+
+- Avoid an extra query on empty spelling suggestions. [Chris Adams]
+
+  None was being used as a placeholder to test whether to run
+  a spelling suggestion query but was also a possible response
+  when the backend didn’t return a suggestion, which meant
+  that calling `spelling_suggestion()` could run a duplicate
+  query.
+
+- MultiValueField issues with single value (#1364) [Arjen Verstoep]
+
+  Thanks to @terr for the patch!
 
 - Queryset slicing and reduced code duplication. [Craig de Stigter]
 
@@ -111,7 +138,20 @@ Fix
 Other
 ~~~~~
 
-- PEP-8. [Chris Adams]
+- Merge pull request #1349 from sbussetti/master. [Chris Adams]
+
+  Fix logging call in `update_index`
+
+- Fixes improper call to logger in mgmt command. [sbussetti]
+
+- Merge pull request #1340 from claudep/manage_commands. [Chris Adams]
+
+  chg: migrate management commands to argparse
+
+- Updated management commands from optparse to argparse. [Claude Paroz]
+
+  This follows Django's same move and prevents deprecation warnings.
+  Thanks Mario César for the initial patch.
 
 - Merge pull request #1225 from gregplaysguitar/patch-1. [Chris Adams]
 
