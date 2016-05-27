@@ -552,6 +552,18 @@ class SearchQuerySet(object):
             clone = self._clone()
             return clone.query.get_stats()
 
+    def set_spelling_query(self, spelling_query):
+        """Set the exact text to be used to generate spelling suggestions
+
+        When making complicated queries, such as the alt parser mechanism
+        used by Solr dismax/edismax, this provides a convenient way to set
+        the a simple text string which will be used to generate spelling
+        suggestions without including unnecessary syntax.
+        """
+        clone = self._clone()
+        clone.query.set_spelling_query(spelling_query)
+        return clone
+
     def spelling_suggestion(self, preferred_query=None):
         """
         Returns the spelling suggestion found by the query.

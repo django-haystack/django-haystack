@@ -470,6 +470,7 @@ class BaseSearchQuery(object):
         self._facet_counts = None
         self._stats = None
         self._spelling_suggestion = None
+        self.spelling_query = None
         self.result_class = SearchResult
         self.stats = {}
         from haystack import connections
@@ -524,6 +525,8 @@ class BaseSearchQuery(object):
 
         if spelling_query:
             kwargs['spelling_query'] = spelling_query
+        elif self.spelling_query:
+            kwargs['spelling_query'] = self.spelling_query
 
         if self.boost:
             kwargs['boost'] = self.boost
@@ -664,6 +667,9 @@ class BaseSearchQuery(object):
         if self._stats is None:
             self.run()
         return self._stats
+
+    def set_spelling_query(self, spelling_query):
+        self.spelling_query = spelling_query
 
     def get_spelling_suggestion(self, preferred_query=None):
         """
@@ -1000,6 +1006,7 @@ class BaseSearchQuery(object):
         clone.distance_point = self.distance_point.copy()
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+        clone.spelling_query = self.spelling_query
 
         return clone
 

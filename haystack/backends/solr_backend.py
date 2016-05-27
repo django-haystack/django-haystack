@@ -688,6 +688,8 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
+        elif self.spelling_query:
+            search_kwargs['spelling_query'] = self.spelling_query
 
         if self.stats:
             search_kwargs['stats'] = self.stats

@@ -1075,6 +1075,9 @@ class LiveElasticsearchSpellingTestCase(TestCase):
         self.assertEqual(self.sqs.auto_query('srchindex instanc').spelling_suggestion(), 'searchindex instance')
         self.assertEqual(self.sqs.spelling_suggestion('srchindex instanc'), 'searchindex instance')
 
+        sqs = self.sqs.auto_query('something completely different').set_spelling_query('structurd')
+        self.assertEqual(sqs.spelling_suggestion(), 'structured')
+
 
 class LiveElasticsearchMoreLikeThisTestCase(TestCase):
     fixtures = ['base_data.json', 'bulk_data.json']

@@ -495,7 +495,14 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(sqs.query.highlight, True)
 
-    def test_spelling(self):
+    def test_spelling_override(self):
+        sqs = self.msqs.filter(content='not the spellchecking query')
+        self.assertEqual(sqs.query.spelling_query, None)
+        sqs = self.msqs.set_spelling_query('override')
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(sqs.query.spelling_query, 'override')
+
+    def test_spelling_suggestions(self):
         # Test the case where spelling support is disabled.
         sqs = self.msqs.filter(content='Indx')
         self.assertTrue(isinstance(sqs, SearchQuerySet))

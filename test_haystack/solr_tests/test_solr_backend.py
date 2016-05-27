@@ -390,10 +390,6 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']], ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
 
-        self.assertEqual(self.sb.search('Indx')['hits'], 0)
-        self.assertEqual(self.sb.search('indax')['spelling_suggestion'], 'index')
-        self.assertEqual(self.sb.search('Indx', spelling_query='indexy')['spelling_suggestion'], 'index')
-
         self.assertEqual(self.sb.search('', facets={'name': {}}), {'hits': 0, 'results': []})
         results = self.sb.search('Index', facets={'name': {}})
         self.assertEqual(results['hits'], 3)
@@ -437,6 +433,13 @@ class SolrSearchBackendTestCase(TestCase):
 
         # Restore.
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
+
+    def test_spelling(self):
+        self.sb.update(self.smmi, self.sample_objs)
+
+        self.assertEqual(self.sb.search('Indx')['hits'], 0)
+        self.assertEqual(self.sb.search('indax')['spelling_suggestion'], 'index')
+        self.assertEqual(self.sb.search('Indx', spelling_query='indexy')['spelling_suggestion'], 'index')
 
     def test_spatial_search_parameters(self):
         p1 = Point(1.23, 4.56)

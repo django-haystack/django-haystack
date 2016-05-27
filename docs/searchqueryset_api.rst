@@ -699,6 +699,24 @@ Example::
     #
     # }
 
+``set_spelling_query``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.set_spelling_query(self, spelling_query)
+
+This method allows you to set the text which will be passed to the backend search engine for spelling
+suggestions. This is helpful when the actual query being sent to the backend has complex syntax which
+should not be seen by the spelling suggestion component.
+
+In this example, a Solr ``edismax`` query is being used to boost field and document weights and
+``set_spelling_query`` is being used to send only the actual user-entered text to the spellchecker::
+
+    alt_q = AltParser('edismax', self.query,
+                      qf='title^4 text provider^0.5',
+                      bq='django_ct:core.item^6.0')
+    sqs = sqs.filter(content=alt_q)
+    sqs = sqs.set_spelling_query(self.query)
+
 
 ``spelling_suggestion``
 ~~~~~~~~~~~~~~~~~~~~~~~
