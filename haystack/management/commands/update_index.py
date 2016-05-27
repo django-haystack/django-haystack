@@ -49,12 +49,16 @@ def update_worker(args):
             except KeyError:
                 pass
 
+    # Request that the connection clear out any transient sessions, file handles, etc.
+    haystack_connections[using].reset_sessions()
+
     unified_index = haystack_connections[using].get_unified_index()
     index = unified_index.get_index(model)
     backend = haystack_connections[using].get_backend()
 
     qs = index.build_queryset(start_date=start_date, end_date=end_date)
     do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
+    return args
 
 
 def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
@@ -71,7 +75,7 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
         if is_parent_process:
             print("  indexed %s - %d of %d." % (start + 1, end, total))
         else:
-            print("  indexed %s - %d of %d (by %s)." % (start + 1, end, total, os.getpid()))
+            print("  indexed %s - %d of %d (worker PID: %s)." % (start + 1, end, total, os.getpid()))
 
     retries = 0
     while retries < max_retries:
@@ -84,10 +88,9 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
                                                                              retries + 1,
                                                                              max_retries))
             break
+        except (SystemExit, KeyboardInterrupt):
+            raise
         except Exception as exc:
-            # Catch all exceptions which do not normally trigger a system exit, excluding SystemExit and
-            # KeyboardInterrupt. This avoids needing to import the backend-specific exception subclasses
-            # from pysolr, elasticsearch, whoosh, requests, etc.
             retries += 1
 
             error_context = {'start': start + 1,
@@ -257,7 +260,16 @@ class Command(BaseCommand):
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
-                pool.map(update_worker, ghetto_queue)
+
+                successful_tasks = pool.map(update_worker, ghetto_queue)
+
+                if len(ghetto_queue) != len(successful_tasks):
+                    self.stderr.write('Queued %d tasks but only %d completed' % (len(ghetto_queue),
+                                                                                 len(successful_tasks)))
+                    for i in ghetto_queue:
+                        if i not in successful_tasks:
+                            self.stderr.write('Incomplete task: %s' % repr(i))
+
                 pool.close()
                 pool.join()
 

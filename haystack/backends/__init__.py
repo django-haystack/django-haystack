@@ -1032,6 +1032,10 @@ class BaseEngine(object):
             self._backend = self.backend(self.using, **self.options)
         return self._backend
 
+    def reset_sessions(self):
+        """Reset any transient connections, file handles, etc."""
+        self._backend = None
+
     def get_query(self):
         return self.query(using=self.using)
 

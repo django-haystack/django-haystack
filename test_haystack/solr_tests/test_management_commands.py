@@ -55,6 +55,17 @@ class ManagementCommandTestCase(TestCase):
         connections['solr']._index = self.old_ui
         super(ManagementCommandTestCase, self).tearDown()
 
+    def verify_indexed_documents(self):
+        """Confirm that the documents in the search index match the database"""
+
+        res = self.solr.search('*:*', fl=['id'], rows=50)
+        self.assertEqual(res.hits, 23)
+
+        indexed_doc_ids = set(i['id'] for i in res.docs)
+        expected_doc_ids = set('core.mockmodel.%d' % i for i in MockModel.objects.values_list('pk', flat=True))
+
+        self.assertSetEqual(indexed_doc_ids, expected_doc_ids)
+
     def test_basic_commands(self):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
@@ -63,7 +74,7 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('update_index', verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.verify_indexed_documents()
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
@@ -72,17 +83,17 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('rebuild_index', interactive=False, verbosity=0, commit=True)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.verify_indexed_documents()
 
         call_command('clear_index', interactive=False, verbosity=0, commit=False)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.verify_indexed_documents()
 
     def test_remove(self):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('update_index', verbosity=0)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.verify_indexed_documents()
 
         # Remove several instances, two of which will fit in the same block:
         MockModel.objects.get(pk=1).delete()
@@ -155,9 +166,8 @@ class ManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        # TODO: Watch the output, make sure there are multiple pids.
         call_command('update_index', verbosity=2, workers=2, batchsize=5)
-        self.assertEqual(self.solr.search('*:*').hits, 23)
+        self.verify_indexed_documents()
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
