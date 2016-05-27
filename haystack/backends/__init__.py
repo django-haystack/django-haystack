@@ -18,6 +18,7 @@ from haystack.utils import get_model_ct
 
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
+SPELLING_SUGGESTION_HAS_NOT_RUN = object()
 
 def log_query(func):
     """
@@ -469,7 +470,7 @@ class BaseSearchQuery(object):
         self._hit_count = None
         self._facet_counts = None
         self._stats = None
-        self._spelling_suggestion = None
+        self._spelling_suggestion = SPELLING_SUGGESTION_HAS_NOT_RUN
         self.spelling_query = None
         self.result_class = SearchResult
         self.stats = {}
@@ -678,7 +679,7 @@ class BaseSearchQuery(object):
         If the query has not been run, this will execute the query and store
         the results.
         """
-        if self._spelling_suggestion is None:
+        if self._spelling_suggestion is SPELLING_SUGGESTION_HAS_NOT_RUN:
             self.run(spelling_query=preferred_query)
 
         return self._spelling_suggestion
@@ -975,7 +976,7 @@ class BaseSearchQuery(object):
         self._results = None
         self._hit_count = None
         self._facet_counts = None
-        self._spelling_suggestion = None
+        self._spelling_suggestion = SPELLING_SUGGESTION_HAS_NOT_RUN
 
     def _clone(self, klass=None, using=None):
         if using is None:
