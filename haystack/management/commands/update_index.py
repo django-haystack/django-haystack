@@ -88,9 +88,10 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
                                                                              retries + 1,
                                                                              max_retries))
             break
-        except (SystemExit, KeyboardInterrupt):
-            raise
         except Exception as exc:
+            # Catch all exceptions which do not normally trigger a system exit, excluding SystemExit and
+            # KeyboardInterrupt. This avoids needing to import the backend-specific exception subclasses
+            # from pysolr, elasticsearch, whoosh, requests, etc.
             retries += 1
 
             error_context = {'start': start + 1,
