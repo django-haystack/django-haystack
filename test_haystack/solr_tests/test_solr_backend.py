@@ -447,7 +447,7 @@ class SolrSearchBackendTestCase(TestCase):
                                              sort_by='distance asc')
 
         # Points in Solr are lat, lon pairs but Django GIS Point() uses lon, lat so we'll check for the flip
-        # See http://django-haystack.readthedocs.org/en/latest/spatial.html#points
+        # See https://django-haystack.readthedocs.io/en/latest/spatial.html#points
         self.assertEqual(kwargs.get('pt'), '4.56,1.23')
         self.assertEqual(kwargs.get('sfield'), 'location')
         self.assertEqual(kwargs.get('sort'), 'geodist() asc')
