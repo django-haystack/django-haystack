@@ -82,7 +82,7 @@ class SearchQuerySet(object):
         return u"<SearchQuerySet: query=%r, using=%r>" % (self.query, self._using)
 
     def __len__(self):
-        if not self._result_count:
+        if self._result_count is None:
             self._result_count = self.query.get_count()
 
             # Some backends give weird, false-y values here. Convert to zero.
