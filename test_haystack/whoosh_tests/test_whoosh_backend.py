@@ -691,7 +691,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         reset_search_queries()
         self.assertEqual(len(connections['whoosh'].queries), 0)
         sqs = self.sqs.auto_query('Indexed!')
-        results = [int(result.pk) for result in sqs]
+        results = [int(result.pk) for result in iter(sqs)]
         self.assertEqual(sorted(results), [1, 2, 3])
         self.assertEqual(len(connections['whoosh'].queries), 1)
 
@@ -765,7 +765,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         self.assertEqual(len(connections['whoosh'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.auto_query('Indexed!')
-        [result for result in results]
+        result_list = [i for i in iter(results)]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(connections['whoosh'].queries), 1)
 

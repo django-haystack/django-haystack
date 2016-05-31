@@ -46,7 +46,6 @@ env:
 
 matrix:
     allow_failures:
-        - python: "pypy"
         - env: DJANGO_VERSION="==1.10a1"
 
 services:

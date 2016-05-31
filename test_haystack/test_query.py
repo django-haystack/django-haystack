@@ -367,7 +367,7 @@ class SearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         msqs = self.msqs.all()
-        results = [int(res.pk) for res in msqs]
+        results = [int(res.pk) for res in iter(msqs)]
         self.assertEqual(results, [res.pk for res in MOCK_SEARCH_RESULTS[:23]])
         self.assertEqual(len(connections['default'].queries), 3)
 
@@ -418,9 +418,10 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertEqual(self.msqs._cache_is_full(), False)
         results = self.msqs.all()
-        fire_the_iterator_and_fill_cache = [result for result in results]
+        fire_the_iterator_and_fill_cache = list(results)
+        self.assertEqual(23, len(fire_the_iterator_and_fill_cache))
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['default'].queries), 3)
+        self.assertEqual(len(connections['default'].queries), 4)
 
     def test_all(self):
         sqs = self.msqs.all()
