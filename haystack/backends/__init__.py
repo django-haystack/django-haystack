@@ -1040,7 +1040,7 @@ class BaseEngine(object):
         return self.query(using=self.using)
 
     def reset_queries(self):
-        self.queries = []
+        del self.queries[:]
 
     def get_unified_index(self):
         if self._index is None:
