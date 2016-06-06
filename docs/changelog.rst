@@ -29,7 +29,7 @@ New
   This allows the default values to be overriden and arbitrary
   backend-specific parameters may be provided to Solr or ElasticSearch.
 
-  Thanks to @tymofij for the patch
+  Thanks to Tim Babych (@tymofij) for the patch
 
   Closes #1334
 
