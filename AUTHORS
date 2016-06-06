@@ -112,3 +112,4 @@ Thanks to
     * Chris Brooke (@chrisbrooke) for patching around a backwards-incompatible change in ElasticSearch 2
     * Gilad Beeri (@giladbeeri) for adding retries when updating a backend
     * Arjen Verstoep (@terr) for a patch that allows attribute lookups through Django ManyToManyField relationships
+    * Tim Babych (@tymofij) for enabling backend-specific parameters in ``.highlight()``
