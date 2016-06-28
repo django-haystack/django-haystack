@@ -93,3 +93,11 @@ HAYSTACK_CONNECTIONS = {
         'INCLUDE_SPELLING': True,
     },
 }
+
+if os.getenv('VERSION_ES') == ">=2.0.0,<3.0.0":
+    HAYSTACK_CONNECTIONS['elasticsearch'] = {
+        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+        'URL': '127.0.0.1:9200/',
+        'INDEX_NAME': 'test_default',
+        'INCLUDE_SPELLING': True,
+    }
