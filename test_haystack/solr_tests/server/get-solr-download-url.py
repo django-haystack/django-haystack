@@ -27,9 +27,11 @@ mirror_response = requests.get("http://www.apache.org/dyn/mirrors/mirrors.cgi/%s
 
 if mirror_response.ok:
     mirror_data = mirror_response.json()
-    download_url = urljoin(mirror_data['preferred'], mirror_data['path_info'])
+    download_url_mirror = urljoin(mirror_data['preferred'], mirror_data['path_info'])
     # The Apache mirror script's response format has recently changed to exclude the actual file paths:
-    if not download_url.endswith(tarball):
-        download_url = urljoin(download_url, dist_path)
-
+    if not download_url_mirror.endswith(tarball):
+        download_url_mirror = urljoin(download_url_mirror, dist_path)
+    response = requests.head(download_url_mirror)
+    if response.status_code == 200:
+        download_ulr = download_url_mirror
 print(download_url)
