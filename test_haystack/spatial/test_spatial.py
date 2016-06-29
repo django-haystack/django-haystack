@@ -9,7 +9,8 @@ from haystack import connections
 from haystack.exceptions import SpatialError
 from haystack.query import SearchQuerySet
 from haystack.utils.geo import (D, ensure_distance, ensure_geometry, ensure_point, ensure_wgs84,
-                                generate_bounding_box, Point)
+                                generate_bounding_box, Point, MultiPoint,
+                                ensure_multipoint, convert_to_point)
 
 from .models import Checkin
 
@@ -25,6 +26,11 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertRaises(SpatialError, ensure_point, [38.97127105172941, -95.23592948913574])
         self.assertRaises(SpatialError, ensure_point, GEOSGeometry('POLYGON((-95 38, -96 40, -97 42, -95 38))'))
         ensure_point(Point(-95.23592948913574, 38.97127105172941))
+
+    def test_ensure_multipoint(self):
+        self.assertRaises(SpatialError, ensure_multipoint, [38.97127105172941, -95.23592948913574])
+        self.assertRaises(SpatialError, ensure_multipoint, GEOSGeometry('POLYGON((-95 38, -96 40, -97 42, -95 38))'))
+        ensure_point(MultiPoint(Point(-95.23592948913574, 38.97127105172941), Point(-96.23592948913574, 39.97127105172941)))
 
     def test_ensure_wgs84(self):
         self.assertRaises(SpatialError, ensure_wgs84, GEOSGeometry('POLYGON((-95 38, -96 40, -97 42, -95 38))'))
@@ -66,6 +72,33 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(west, 95.23947)
         self.assertEqual(north, 38.973081081164715)
         self.assertEqual(east, -95.23362278938293)
+
+    def test_convert_str_to_point(self):
+        pnt = convert_to_point("38.97127105172941,-95.23592948913574")
+        self.assertIsInstance(pnt, Point)
+        self.assertEqual(pnt.x, -95.23592948913574)
+        self.assertEqual(pnt.y, 38.97127105172941)
+
+    def test_convert_list_to_point(self):
+        pnt = convert_to_point([-95.23592948913574, 38.97127105172941])
+        self.assertIsInstance(pnt, Point)
+        self.assertEqual(pnt.x, -95.23592948913574)
+        self.assertEqual(pnt.y, 38.97127105172941)
+
+    def test_convert_tuple_to_point(self):
+        pnt = convert_to_point((-95.23592948913574, 38.97127105172941))
+        self.assertIsInstance(pnt, Point)
+        self.assertEqual(pnt.x, -95.23592948913574)
+        self.assertEqual(pnt.y, 38.97127105172941)
+
+    def test_convert_dict_to_point(self):
+        pnt = convert_to_point({'lat': 38.97127105172941, 'lng': -95.23592948913574})
+        self.assertIsInstance(pnt, Point)
+        self.assertEqual(pnt.x, -95.23592948913574)
+        self.assertEqual(pnt.y, 38.97127105172941)
+
+    def test_convert_to_pointlist(self):
+        pass  # TODO
 
 
 class SpatialSolrTestCase(TestCase):

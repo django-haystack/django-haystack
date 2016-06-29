@@ -2,7 +2,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.contrib.gis.geos import Point
+import six
+from django.contrib.gis.geos import Point, MultiPoint
 from django.contrib.gis.measure import D, Distance
 
 from haystack.constants import WGS_84_SRID
@@ -29,6 +30,50 @@ def ensure_point(geom):
         raise SpatialError("Provided geometry '%s' is not a 'Point'." % geom)
 
     return geom
+
+
+def ensure_multipoint(geom):
+    """
+    Makes sure the parameter passed in looks like a GEOS ``MultiPoint``.
+    """
+    ensure_geometry(geom)
+
+    if geom.geom_type != 'MultiPoint':
+        raise SpatialError("Provided geometry '%s' is not a 'MultiPoint'." % geom)
+
+    return geom
+
+
+def convert_to_point(value):
+    """
+    Convert a string, list, tuple or dict to a GEOS ``Point`` object.
+    """
+    if isinstance(value, six.string_types):
+        lat, lng = value.split(',')
+    elif isinstance(value, (list, tuple)):
+        # GeoJSON-alike
+        lat, lng = value[1], value[0]
+    elif isinstance(value, dict):
+        lat = value.get('lat', 0)
+        lng = value.get('lon', 0)
+
+    return Point(float(lng), float(lat))
+
+
+def convert_to_pointlist(value):
+    """
+    Convert to a list of GEOS ``Point`` object from iterable of strings,
+    lists, tuples or dicts. Mixed content may be provided. Elements may be
+    a list of GEOS ``Point`` objects.
+    """
+    points_list = []
+    for point in value:
+        if hasattr(point, 'geom_type'):
+            pnt = ensure_point(value)
+        else:
+            pnt = convert_to_point(point)
+        points_list.append(pnt)
+    return points_list
 
 
 def ensure_wgs84(point):

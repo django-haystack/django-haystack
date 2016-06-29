@@ -30,3 +30,22 @@ class Checkin(models.Model):
         from haystack.utils.geo import Point
         pnt = Point(self.longitude, self.latitude)
         return pnt
+
+
+class CheckinMulti(models.Model):
+    username = models.CharField(max_length=255)
+    latitude1 = models.FloatField()
+    longitude1 = models.FloatField()
+    latitude2 = models.FloatField()
+    longitude2 = models.FloatField()
+    comment = models.CharField(max_length=140, blank=True, default='', help_text='Say something pithy.')
+    created = models.DateTimeField(default=datetime.datetime.now)
+
+    class Meta:
+        ordering = ['-created']
+
+    def get_multi_locations(self):
+        from haystack.utils.geo import Point
+        pnt1 = Point(self.longitude1, self.latitude1)
+        pnt2 = Point(self.longitude2, self.latitude2)
+        return [pnt1, pnt2]

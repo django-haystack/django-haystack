@@ -223,7 +223,7 @@ class LocationField(SearchField):
         return "%s,%s" % (pnt_lat, pnt_lng)
 
     def convert(self, value):
-        from haystack.utils.geo import ensure_point, Point
+        from haystack.utils.geo import ensure_point, convert_to_point
 
         if value is None:
             return None
@@ -232,16 +232,39 @@ class LocationField(SearchField):
             value = ensure_point(value)
             return value
 
-        if isinstance(value, six.string_types):
-            lat, lng = value.split(',')
-        elif isinstance(value, (list, tuple)):
-            # GeoJSON-alike
-            lat, lng = value[1], value[0]
-        elif isinstance(value, dict):
-            lat = value.get('lat', 0)
-            lng = value.get('lon', 0)
+        value = convert_to_point(value)
 
-        value = Point(float(lng), float(lat))
+        return value
+
+
+class MultiLocationField(SearchField):
+    field_type = 'location'
+
+    def __init__(self, **kwargs):
+        super(MultiLocationField, self).__init__(**kwargs)
+        self.is_multivalued = True
+
+    def prepare(self, obj):
+        value = super(MultiLocationField, self).prepare(obj)
+
+        if value is None:
+            return None
+
+        return ['{0},{1}'.format(point.y, point.x) for point in value]
+
+    def convert(self, value):
+        from haystack.utils.geo import ensure_multipoint, convert_to_pointlist, Point
+
+        if value is None:
+            return None
+
+        if hasattr(value, 'geom_type'):
+            value = ensure_multipoint(value)
+            value = convert_to_pointlist(value.coords)
+            return value
+
+        value = convert_to_pointlist(value)
+
         return value
 
 
