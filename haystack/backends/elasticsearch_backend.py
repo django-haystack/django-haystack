@@ -23,10 +23,10 @@ from haystack.utils.app_loading import haystack_get_model
 try:
     import elasticsearch
     try:
-        # let's try this, for elasticsearch > 1.7.0
+        # let's try this, for elasticsearch > 1.7.0
         from elasticsearch.helpers import bulk
     except ImportError:
-        # let's try this, for elasticsearch <= 1.7.0
+        # let's try this, for elasticsearch <= 1.7.0
         from elasticsearch.helpers import bulk_index as bulk
     from elasticsearch.exceptions import NotFoundError
 except ImportError:
