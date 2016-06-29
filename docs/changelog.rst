@@ -616,7 +616,7 @@ v2.4.0 (2015-06-09)
 - App_loading cleanup. [Chris Adams]
 
   * Add support for Django 1.7+ AppConfig
-  * Rename internal app_loading functions to have haystack_ prefix to make
+  * Rename internal app_loading functions to have haystack\_ prefix to make
     it immediately obvious that they are not Django utilities and start
   * Add tests to avoid regressions for apps nested with multiple levels of
     module hierarchy like `raven.contrib.django.raven_compat`
@@ -1120,9 +1120,12 @@ v2.2.0 (2014-08-03)
   * Massively simplified test runner (``python setup.py test``)
 
   Minor updates:
+
   * Travis:
-      - Test Python 3.4
-      - Use Solr 4.6.1
+
+    - Test Python 3.4
+    - Use Solr 4.6.1
+
   * Simplified legacy test code which can now be replaced by the test utilities in newer versions of Django
   * Update ElasticSearch client & tests for ES 1.0+
   * Add option for SearchModelAdmin to specify the haystack connection to use
@@ -1527,10 +1530,8 @@ v2.2.0 (2014-08-03)
 
 - Merge pull request #413 from phill-tornroth/patch-1. [Justin Caratzas]
 
-  Silly little change, I know.. but I actually ran into a case where I acci
-
 - Silly little change, I know.. but I actually ran into a case where I
-  accidentally passed a list of models in without *ing them. When that
+  accidentally passed a list of models in without \*ing them. When that
   happens, we get a string formatting exception (not all arguments were
   formatted) instead of the useful "that ain't a model, kid" business.
   [Phill Tornroth]
@@ -3675,7 +3676,7 @@ v1.1 (2010-11-23)
 
 - We actually want `repr`, not `str`. [Daniel Lindsley]
 
-- Pushed the `model_attr` check lower down into the `SearchField`s and
+- Pushed the `model_attr` check lower down into the `SearchField` and
   make it occur later, so that exceptions come at a point where Django
   can better deal with them. [Daniel Lindsley]
 
@@ -3897,7 +3898,7 @@ v1.1 (2010-11-23)
   SmileyChris for patches. [Daniel Lindsley]
 
 - Added a note and an exception about consistent fieldnames for the
-  document field across all `SearchIndex` classes. Thanks sk1p_! [Daniel
+  document field across all `SearchIndex` classes. Thanks sk1p\_! [Daniel
   Lindsley]
 
 - Possible thread-safety fix related to registration handling. [Daniel
@@ -4240,7 +4241,7 @@ v1.1 (2010-11-23)
 - Corrected Xapian's capabilities. Thanks richardb! [Daniel Lindsley]
 
 - BACKWARD INCOMPATIBLE - Altered all settings to be prefixed with
-  HAYSTACK_. Thanks Collin! [Daniel Lindsley]
+  HAYSTACK\_. Thanks Collin! [Daniel Lindsley]
 
 - Test cleanup from previous commits. [Daniel Lindsley]
 
