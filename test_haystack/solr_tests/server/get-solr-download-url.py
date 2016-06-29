@@ -33,5 +33,5 @@ if mirror_response.ok:
         download_url_mirror = urljoin(download_url_mirror, dist_path)
     response = requests.head(download_url_mirror)
     if response.status_code == 200:
-        download_ulr = download_url_mirror
+        download_url = download_url_mirror
 print(download_url)
