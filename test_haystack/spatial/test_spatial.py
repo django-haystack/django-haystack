@@ -10,7 +10,7 @@ from haystack.exceptions import SpatialError
 from haystack.query import SearchQuerySet
 from haystack.utils.geo import (D, ensure_distance, ensure_geometry, ensure_point, ensure_wgs84,
                                 generate_bounding_box, Point, MultiPoint,
-                                ensure_multipoint, convert_to_point)
+                                ensure_multipoint, convert_to_point, convert_to_pointlist)
 
 from .models import Checkin
 
@@ -97,8 +97,68 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(pnt.x, -95.23592948913574)
         self.assertEqual(pnt.y, 38.97127105172941)
 
-    def test_convert_to_pointlist(self):
-        pass  # TODO
+    def test_convert_multipoint_to_pointlist(self):
+        mpt = MultiPoint(Point(-95.23592948913574, 38.97127105172941),
+                         Point(-96.23592948913574, 39.97127105172941))
+        point_list = convert_to_pointlist(mpt.coords)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -96.23592948913574)
+        self.assertEqual(point_list[1].y, 39.97127105172941)
+
+    def test_convert_strs_to_pointlist(self):
+        mpt = ["38.97127105172941,-95.23592948913574",
+               "39.97127105172941,-96.23592948913574"]
+        point_list = convert_to_pointlist(mpt)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -96.23592948913574)
+        self.assertEqual(point_list[1].y, 39.97127105172941)
+
+    def test_convert_nested_list_to_pointlist(self):
+        mpt = [[-95.23592948913574, 38.97127105172941],
+               [-96.23592948913574, 39.97127105172941]]
+        point_list = convert_to_pointlist(mpt)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -96.23592948913574)
+        self.assertEqual(point_list[1].y, 39.97127105172941)
+
+    def test_convert_tuples_to_pointlist(self):
+        mpt = [(-95.23592948913574, 38.97127105172941),
+               (-96.23592948913574, 39.97127105172941)]
+        point_list = convert_to_pointlist(mpt)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -96.23592948913574)
+        self.assertEqual(point_list[1].y, 39.97127105172941)
+
+    def test_convert_dicts_to_pointlist(self):
+        mpt = [{'lat': 38.97127105172941, 'lon': -95.23592948913574},
+               {'lat': 39.97127105172941, 'lon': -96.23592948913574}]
+        point_list = convert_to_pointlist(mpt)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -96.23592948913574)
+        self.assertEqual(point_list[1].y, 39.97127105172941)
+
+    def test_convert_mixed_to_pointlist(self):
+        mpt = [Point(-95.23592948913574, 38.97127105172941),
+               "37.97127105172941,-94.23592948913574",
+               [-93.23592948913574, 36.97127105172941],
+               (-92.23592948913574, 35.97127105172941),
+               {'lat': 34.97127105172941, 'lon': -91.23592948913574}]
+        point_list = convert_to_pointlist(mpt)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -94.23592948913574)
+        self.assertEqual(point_list[1].y, 37.97127105172941)
+        self.assertEqual(point_list[2].x, -93.23592948913574)
+        self.assertEqual(point_list[2].y, 36.97127105172941)
+        self.assertEqual(point_list[3].x, -92.23592948913574)
+        self.assertEqual(point_list[3].y, 35.97127105172941)
+        self.assertEqual(point_list[4].x, -91.23592948913574)
+        self.assertEqual(point_list[4].y, 34.97127105172941)
 
 
 class SpatialSolrTestCase(TestCase):

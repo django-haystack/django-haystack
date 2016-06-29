@@ -253,7 +253,7 @@ class MultiLocationField(SearchField):
         return ['{0},{1}'.format(point.y, point.x) for point in value]
 
     def convert(self, value):
-        from haystack.utils.geo import ensure_multipoint, convert_to_pointlist, Point
+        from haystack.utils.geo import ensure_multipoint, convert_to_pointlist
 
         if value is None:
             return None
