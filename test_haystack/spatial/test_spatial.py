@@ -92,7 +92,7 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(pnt.y, 38.97127105172941)
 
     def test_convert_dict_to_point(self):
-        pnt = convert_to_point({'lat': 38.97127105172941, 'lng': -95.23592948913574})
+        pnt = convert_to_point({'lat': 38.97127105172941, 'lon': -95.23592948913574})
         self.assertIsInstance(pnt, Point)
         self.assertEqual(pnt.x, -95.23592948913574)
         self.assertEqual(pnt.y, 38.97127105172941)
