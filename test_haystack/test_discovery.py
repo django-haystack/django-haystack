@@ -8,7 +8,7 @@ from test_haystack.discovery.search_indexes import FooIndex
 from haystack import connections
 from haystack.utils.loading import UnifiedIndex
 
-EXPECTED_INDEX_MODEL_COUNT = 6
+EXPECTED_INDEX_MODEL_COUNT = 7
 
 
 class ManualDiscoveryTestCase(TestCase):

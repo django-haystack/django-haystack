@@ -30,7 +30,7 @@ class SpatialUtilitiesTestCase(TestCase):
     def test_ensure_multipoint(self):
         self.assertRaises(SpatialError, ensure_multipoint, [38.97127105172941, -95.23592948913574])
         self.assertRaises(SpatialError, ensure_multipoint, GEOSGeometry('POLYGON((-95 38, -96 40, -97 42, -95 38))'))
-        ensure_point(MultiPoint(Point(-95.23592948913574, 38.97127105172941), Point(-96.23592948913574, 39.97127105172941)))
+        ensure_multipoint(MultiPoint(Point(-95.23592948913574, 38.97127105172941), Point(-96.23592948913574, 39.97127105172941)))
 
     def test_ensure_wgs84(self):
         self.assertRaises(SpatialError, ensure_wgs84, GEOSGeometry('POLYGON((-95 38, -96 40, -97 42, -95 38))'))
