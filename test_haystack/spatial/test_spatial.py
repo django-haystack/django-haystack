@@ -106,6 +106,15 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(point_list[1].x, -96.23592948913574)
         self.assertEqual(point_list[1].y, 39.97127105172941)
 
+    def test_convert_to_pointlist(self):
+        mpt = [Point(-95.23592948913574, 38.97127105172941),
+               Point(-96.23592948913574, 39.97127105172941)]
+        point_list = convert_to_pointlist(mpt)
+        self.assertEqual(point_list[0].x, -95.23592948913574)
+        self.assertEqual(point_list[0].y, 38.97127105172941)
+        self.assertEqual(point_list[1].x, -96.23592948913574)
+        self.assertEqual(point_list[1].y, 39.97127105172941)
+
     def test_convert_strs_to_pointlist(self):
         mpt = ["38.97127105172941,-95.23592948913574",
                "39.97127105172941,-96.23592948913574"]

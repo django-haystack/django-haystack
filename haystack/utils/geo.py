@@ -69,7 +69,7 @@ def convert_to_pointlist(value):
     points_list = []
     for point in value:
         if hasattr(point, 'geom_type'):
-            pnt = ensure_point(value)
+            pnt = ensure_point(point)
         else:
             pnt = convert_to_point(point)
         points_list.append(pnt)
