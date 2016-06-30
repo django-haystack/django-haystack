@@ -377,12 +377,16 @@ class SolrSearchBackend(BaseSearchBackend):
                     # pairs.
                     facets[key][facet_field] = list(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
 
-        if self.include_spelling is True:
-            if hasattr(raw_results, 'spellcheck'):
-                if len(raw_results.spellcheck.get('suggestions', [])):
-                    # For some reason, it's an array of pairs. Pull off the
-                    # collated result from the end.
-                    spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
+        if self.include_spelling and hasattr(raw_results, 'spellcheck'):
+            # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
+            # than simply paired elements in a list, which is a nice improvement but incompatible with
+            # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
+            if len(raw_results.spellcheck.get('collations', [])):
+                spelling_suggestion = raw_results.spellcheck['collations'][-1]
+            elif len(raw_results.spellcheck.get('suggestions', [])):
+                spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
+
+            assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
