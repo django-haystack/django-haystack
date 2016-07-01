@@ -29,7 +29,7 @@ New
   This allows the default values to be overriden and arbitrary
   backend-specific parameters may be provided to Solr or ElasticSearch.
 
-  Thanks to @tymofij for the patch
+  Thanks to Tim Babych (@tymofij) for the patch
 
   Closes #1334
 
@@ -63,6 +63,24 @@ New
 Changes
 ~~~~~~~
 
+- Support for Solr 5+ spelling suggestion format. [Chris Adams]
+
+- Set install requirements for Django versions. [Chris Adams]
+
+  This will prevent accidentally breaking apps when Django 1.10 is
+  released.
+
+  Closes #1375
+
+- Avoid double-query for queries matching no results. [Chris Adams]
+
+- Update supported/tested Django versions. [Chris Adams]
+
+  * setup.py install_requires uses `>=1.8` to match our current test
+    matrix
+  * Travis allows failures for Django 1.10 so we can start tracking the
+    upcoming release
+
 - Make backend subclassing easier. [Chris Adams]
 
   This change allows the backend build_search_kwargs to
@@ -91,6 +109,51 @@ Changes
 
 Fix
 ~~~
+
+- Tests will fall back to the Apache archive server. [Chris Adams]
+
+  The Apache 4.10.4 release was quietly removed from the mirrors without a
+  redirect. Until we have time to add newer Solr releases to the test
+  suite we'll download from the archive and let the Travis build cache
+  store it.
+
+- Whoosh backend support for RAM_STORE (closes #1386) [Martin Owens]
+
+  Thanks to @doctormo for the patch
+
+- Unsafe update_worker multiprocessing sessions. [Chris Adams]
+
+  The `update_index` management command does not handle the
+  `multiprocessing` environment safely. On POSIX systems,
+  `multiprocessing` uses `fork()` which means that when called in a
+  context such as the test suite where the connection has already been
+  used some backends like pysolr or ElasticSearch may have an option
+  socket connected to the search server and that leaves a potential race
+  condition where HTTP requests are interleaved, producing unexpected
+  errors.
+
+  This commit resets the backend connection inside the workers and has
+  been stable across hundreds of runs, unlike the current situation where
+  a single-digit number of runs would almost certainly have at least one
+  failure.
+
+  Other improvements:
+  * Improved sanity checks for indexed documents in management
+    command test suite. This wasn’t actually the cause of the
+    problem above but since I wrote it while tracking down the
+    real problem there’s no reason not to use it.
+  * update_index now checks that each block dispatched was
+    executed to catch any possible silent failures.
+
+  Closes #1376
+  See #1001
+
+- Tests support PyPy. [Chris Adams]
+
+  PyPy has an optimization which causes it to call __len__ when running a
+  list comprehension, which is the same thing Python does for
+  `list(iterable)`. This commit simply changes the test code to always use
+  `list` the PyPy behaviour matches CPython.
 
 - Avoid an extra query on empty spelling suggestions. [Chris Adams]
 
