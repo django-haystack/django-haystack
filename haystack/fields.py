@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
+from decimal import Decimal
 
 from django.template import Context, loader
 from django.utils import datetime_safe, six
@@ -298,7 +299,7 @@ class FloatField(SearchField):
 
 
 class DecimalField(SearchField):
-    field_type = 'string'
+    field_type = 'float'
 
     def __init__(self, **kwargs):
         if kwargs.get('facet_class') is None:
@@ -313,7 +314,7 @@ class DecimalField(SearchField):
         if value is None:
             return None
 
-        return six.text_type(value)
+        return Decimal(value)
 
 
 class BooleanField(SearchField):
