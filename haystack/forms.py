@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django import forms
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import smart_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
@@ -66,25 +67,40 @@ class SearchForm(forms.Form):
 
 
 class HighlightedSearchForm(SearchForm):
+
     def search(self):
         return super(HighlightedSearchForm, self).search().highlight()
 
 
-class FacetedSearchForm(SearchForm):
+class FacetedSearchFormMixin(forms.Form):
+    _facet_separator = ':'
+    facets = forms.MultipleChoiceField(required=False, choices=[], widget=forms.MultipleHiddenInput)
+
+    def get_facet_choices(self):
+        return []
+
     def __init__(self, *args, **kwargs):
-        self.selected_facets = kwargs.pop("selected_facets", [])
-        super(FacetedSearchForm, self).__init__(*args, **kwargs)
+        super(FacetedSearchFormMixin, self).__init__(*args, **kwargs)
+        facet_choices = self.get_facet_choices()
+        for choice in facet_choices:
+            if self._facet_separator not in choice[0]:
+                raise ImproperlyConfigured("Facet choice values must take the form of 'field%svalue'" % self._facet_separator)
+
+        self.fields['facets'].choices = facet_choices
 
     def search(self):
-        sqs = super(FacetedSearchForm, self).search()
+        sqs = super(FacetedSearchFormMixin, self).search()
+
+        if not self.is_valid():
+            return sqs
 
         # We need to process each facet to ensure that the field name and the
         # value are quoted correctly and separately:
-        for facet in self.selected_facets:
-            if ":" not in facet:
+        for facet in self.cleaned_data['facets']:
+            if self._facet_separator not in facet:
                 continue
 
-            field, value = facet.split(":", 1)
+            field, value = facet.split(self._facet_separator, 1)
 
             if value:
                 sqs = sqs.narrow(u'%s:"%s"' % (field, sqs.query.clean(value)))
@@ -92,7 +108,12 @@ class FacetedSearchForm(SearchForm):
         return sqs
 
 
+class FacetedSearchForm(FacetedSearchFormMixin, SearchForm):
+    pass
+
+
 class ModelSearchForm(SearchForm):
+
     def __init__(self, *args, **kwargs):
         super(ModelSearchForm, self).__init__(*args, **kwargs)
         self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label=_('Search In'), widget=forms.CheckboxSelectMultiple)
@@ -113,17 +134,10 @@ class ModelSearchForm(SearchForm):
 
 
 class HighlightedModelSearchForm(ModelSearchForm):
+
     def search(self):
         return super(HighlightedModelSearchForm, self).search().highlight()
 
 
-class FacetedModelSearchForm(ModelSearchForm):
-    selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
-
-    def search(self):
-        sqs = super(FacetedModelSearchForm, self).search()
-
-        if hasattr(self, 'cleaned_data') and self.cleaned_data['selected_facets']:
-            sqs = sqs.narrow(self.cleaned_data['selected_facets'])
-
-        return sqs.models(*self.get_models())
+class FacetedModelSearchForm(FacetedSearchFormMixin, ModelSearchForm):
+    pass
