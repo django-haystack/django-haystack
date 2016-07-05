@@ -161,6 +161,13 @@ class HighlighterTestCase(TestCase):
         self.assertEqual(highlighter.highlight(self.document_2), u'...<span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
         self.assertEqual(highlighter.highlight(self.document_3), u'This is a test of the highlightable words <span class="highlighted">detection</span>. This is only a test. Were this an actual emerge...')
 
+        self.maxDiff = 4000
+
+        highlighter = Highlighter('content detection', trim_text=False)
+        self.assertEqual(highlighter.highlight(self.document_1), u'This is a test of the highlightable words <span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air.')
+        self.assertEqual(highlighter.highlight(self.document_2), u'The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
+        self.assertEqual(highlighter.highlight(self.document_3), u'This is a test of the highlightable words <span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air. The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.')
+
 
 class LoggingFacadeTestCase(TestCase):
     def test_everything_noops_if_settings_are_off(self):

@@ -6,24 +6,17 @@ from django.utils.html import strip_tags
 
 
 class Highlighter(object):
-    css_class = 'highlighted'
-    html_tag = 'span'
-    max_length = 200
     text_block = ''
 
-    def __init__(self, query, **kwargs):
+    def __init__(self, query, max_length=200, html_tag='span', css_class='highlighted', trim_text=True):
         self.query = query
 
-        if 'max_length' in kwargs:
-            self.max_length = int(kwargs['max_length'])
+        self.max_length = int(max_length)
+        self.html_tag = html_tag
+        self.css_class = css_class
+        self.trim_text = trim_text
 
-        if 'html_tag' in kwargs:
-            self.html_tag = kwargs['html_tag']
-
-        if 'css_class' in kwargs:
-            self.css_class = kwargs['css_class']
-
-        self.query_words = set([word.lower() for word in self.query.split() if not word.startswith('-')])
+        self.query_words = set([word for word in query.lower().split() if word[0] != '-'])
 
     def highlight(self, text_block):
         self.text_block = strip_tags(text_block)
@@ -40,8 +33,7 @@ class Highlighter(object):
         lower_text_block = self.text_block.lower()
 
         for word in self.query_words:
-            if not word in word_positions:
-                word_positions[word] = []
+            selected = word_positions.setdefault(word, [])
 
             start_offset = 0
 
@@ -53,7 +45,7 @@ class Highlighter(object):
                 if next_offset == -1:
                     break
 
-                word_positions[word].append(next_offset)
+                selected.append(next_offset)
                 start_offset = next_offset + len(word)
 
         return word_positions
@@ -157,9 +149,15 @@ class Highlighter(object):
         highlighted_chunk += text[matched_so_far:]
 
         if start_offset > 0:
-            highlighted_chunk = '...%s' % highlighted_chunk
+            if self.trim_text:
+                highlighted_chunk = '...%s' % highlighted_chunk
+            else:
+                highlighted_chunk = '%s%s' % (self.text_block[0:start_offset], highlighted_chunk)
 
         if end_offset < len(self.text_block):
-            highlighted_chunk = '%s...' % highlighted_chunk
+            if self.trim_text:
+                highlighted_chunk = '%s...' % highlighted_chunk
+            else:
+                highlighted_chunk = '%s%s' % (highlighted_chunk, self.text_block[end_offset:])
 
         return highlighted_chunk

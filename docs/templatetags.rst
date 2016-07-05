@@ -21,19 +21,30 @@ and 200 characters for the excerpt.
 
 Syntax::
 
-    {% highlight <text_block> with <query> [css_class "class_name"] [html_tag "span"] [max_length 200] %}
+    {% highlight <text_block> with <query> [css_class="highlighted"] [html_tag="span"] [max_length=200] [trim_text=True] %}
 
 Example::
 
+    # In these examples, the template_context will have the following values:
+    # result.summary -> 'This is a sample block that would be more meaningful in real life.'
+    # query -> 'block'
+
     # Highlight summary with default behavior.
     {% highlight result.summary with query %}
+    -> '...<span class="highlighted">block</span> that would be more meaningful in real life.'
     
     # Highlight summary but wrap highlighted words with a div and the
     # following CSS class.
-    {% highlight result.summary with query html_tag "div" css_class "highlight_me_please" %}
+    {% highlight result.summary with query html_tag="div" css_class="highlight_me_please" %}
+    -> '...<div class="highlight_me_please">block</div> that would be more meaningful in real life.'
     
     # Highlight summary but only show 40 words.
-    {% highlight result.summary with query max_length 40 %}
+    {% highlight result.summary with query max_length=40 %}
+    -> '...<div class="highlight_me_please">block</div> that would be more meaningful in r...'
+
+    # Highlight summary and don't trim any text
+    {% highlight result.summary with query trim_text=False %}
+    -> 'This is a sample  <div class="highlight_me_please">block</div> that would be more meaningful in real life.'
 
 The highlighter used by this tag can be overridden as needed. See the
 :doc:`highlighting` documentation for more information.

@@ -10,6 +10,7 @@ from haystack.utils import Highlighter
 
 
 class BorkHighlighter(Highlighter):
+
     def render_html(self, highlight_locations=None, start_offset=None, end_offset=None):
         highlighted_chunk = self.text_block[start_offset:end_offset]
 
@@ -20,6 +21,7 @@ class BorkHighlighter(Highlighter):
 
 
 class TemplateTagTestCase(TestCase):
+
     def render(self, template, context):
         # Why on Earth does Django not have a TemplateTestCase yet?
         t = Template(template)
@@ -60,23 +62,39 @@ the attribute of the object to populate that field with.
         }
         self.assertEqual(self.render(template, context), u'...<span class="highlighted">index</span>ing behavior for your model you can specify your own Search<span class="highlighted">Index</span> class.\nThis is useful for ensuring that future-dated or non-live content is not <span class="highlighted">index</span>ed\nand searchable.\n\nEvery custom Search<span class="highlighted">Index</span> ...')
 
-        template = """{% load highlight %}{% highlight entry with query html_tag "div" css_class "foo" max_length 100 %}"""
+        template = """{% load highlight %}{% highlight entry with query html_tag="div" css_class="foo" max_length=100 %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'field',
         }
         self.assertEqual(self.render(template, context), u'...<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing...')
 
-        template = """{% load highlight %}{% highlight entry with query html_tag "div" css_class "foo" max_length 100 %}"""
+        template = """{% load highlight %}{% highlight entry with query html_tag="div" css_class="foo" max_length=100 %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'Haystack',
         }
         self.assertEqual(self.render(template, context), u'...<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y...')
 
-        template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx foo bbxxxxx foo" with "foo" max_length 5 html_tag "span" %}"""
+        template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx foo bbxxxxx foo" with "foo" max_length=5 html_tag="span" %}"""
         context = {}
         self.assertEqual(self.render(template, context), u'...<span class="highlighted">foo</span> b...')
+
+        template = """{% load highlight %}{% highlight "test trim shows leading ellipsis" with "trim" %}"""
+        context = {}
+        self.assertEqual(self.render(template, context), u'...<span class="highlighted">trim</span> shows leading ellipsis')
+
+        template = """{% load highlight %}{% highlight "test trim shows leading ellipsis" with "trim" trim_text=False %}"""
+        context = {}
+        self.assertEqual(self.render(template, context), u'test <span class="highlighted">trim</span> shows leading ellipsis')
+
+        template = """{% load highlight %}{% highlight "test trim shows trailing ellipsis" with "trim" max_length=19 %}"""
+        context = {}
+        self.assertEqual(self.render(template, context), u'...<span class="highlighted">trim</span> shows trailing...')
+
+        template = """{% load highlight %}{% highlight "test trim shows trailing ellipsis" with "trim" max_length=19 trim_text=False %}"""
+        context = {}
+        self.assertEqual(self.render(template, context), u'test <span class="highlighted">trim</span> shows trailing ellipsis')
 
     def test_custom(self):
         # Stow.
