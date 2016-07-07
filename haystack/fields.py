@@ -9,6 +9,7 @@ from django.utils import datetime_safe, six
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
 
+from inspect import ismethod
 
 class NOT_PROVIDED:
     pass
@@ -110,7 +111,6 @@ class SearchField(object):
 
             if len(attributes) > 1:
                 current_objects_in_attr = self.get_iterable_objects(getattr(current_object, attributes[0]))
-
                 return self.resolve_attributes_lookup(current_objects_in_attr, attributes[1:])
 
             current_object = getattr(current_object, attributes[0])
@@ -148,11 +148,14 @@ class SearchField(object):
 
         if hasattr(current_objects, 'all'):
             # i.e, Django ManyToMany relationships
-            current_objects = current_objects.all()
-        elif not hasattr(current_objects, '__iter__'):
-            current_objects = [current_objects]
+            if ismethod(current_objects.all):
+                return current_objects.all()
+            return []
 
-        return current_objects
+        elif not hasattr(current_objects, '__iter__'):
+            return [current_objects]
+
+        return []
 
     def prepare_template(self, obj):
         """
