@@ -154,9 +154,9 @@ class SearchField(object):
             return []
 
         elif not hasattr(current_objects, '__iter__'):
-            return [current_objects]
+            current_objects = [current_objects]
 
-        return []
+        return current_objects
 
     def prepare_template(self, obj):
         """
