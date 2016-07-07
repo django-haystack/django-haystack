@@ -11,6 +11,7 @@ from haystack.utils import get_model_ct_tuple
 
 from inspect import ismethod
 
+
 class NOT_PROVIDED:
     pass
 
