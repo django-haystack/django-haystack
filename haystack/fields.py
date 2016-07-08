@@ -345,7 +345,7 @@ class DateField(SearchField):
         super(DateField, self).__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(DateField, self).prepare(obj))
+        return self.convert(super(DateField, self).prepare(obj).isoformat())
 
     def convert(self, value):
         if value is None:
