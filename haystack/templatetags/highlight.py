@@ -6,7 +6,7 @@ import re
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.template import Library, Node, TemplateSyntaxError
+from django.template import Library, Node, TemplateSyntaxError, VariableDoesNotExist
 from django.utils import six
 from django.utils.encoding import smart_str
 from django.utils.module_loading import import_string
@@ -69,8 +69,12 @@ class HighlightNode(Node):
             self.options[key] = value
 
     def render(self, context):
-        text_block = self.text_block.resolve(context)
-        query = self.query.resolve(context)
+        try:
+            text_block = self.text_block.resolve(context)
+            query = self.query.resolve(context)
+        except VariableDoesNotExist:
+            return ''
+
         kwargs = {}
 
         for key, value in self.options.items():
