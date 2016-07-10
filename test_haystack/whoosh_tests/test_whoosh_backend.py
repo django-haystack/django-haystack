@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import unittest
 from datetime import timedelta
 from decimal import Decimal
 
@@ -22,14 +23,13 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
 from ..mocks import MockSearchResult
-from ..utils import unittest
 from .testcases import WhooshTestCase
 
 
 class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -46,7 +46,7 @@ class WhooshMockSearchIndexWithSkipDocument(WhooshMockSearchIndex):
 class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return AnotherMockModel
@@ -58,7 +58,7 @@ class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class AllTypesWhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
     sites = indexes.MultiValueField()
     seen_count = indexes.IntegerField(indexed=False)
     is_active = indexes.BooleanField(default=True)
@@ -70,7 +70,7 @@ class AllTypesWhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     month = indexes.CharField(indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -89,7 +89,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     )
     author = indexes.CharField(model_attr='author', weight=2.0)
     editor = indexes.CharField(model_attr='editor')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return AFourthMockModel
@@ -106,7 +106,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class WhooshAutocompleteMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
     text_auto = indexes.EdgeNgramField(model_attr='foo')
     name_auto = indexes.EdgeNgramField(model_attr='author')
 
@@ -399,13 +399,17 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
 
         (content_field_name, schema) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(schema.names()), 9)
-        self.assertEqual(schema.names(), ['django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
-        self.assertTrue(isinstance(schema._fields['text'], TEXT))
-        self.assertTrue(isinstance(schema._fields['pub_date'], DATETIME))
-        self.assertTrue(isinstance(schema._fields['seen_count'], NUMERIC))
-        self.assertTrue(isinstance(schema._fields['sites'], KEYWORD))
-        self.assertTrue(isinstance(schema._fields['is_active'], BOOLEAN))
+
+        schema_names = set(schema.names())
+        required_schema = {'django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count',
+                           'sites', 'text'}
+        self.assertTrue(required_schema.issubset(schema_names))
+
+        self.assertIsInstance(schema._fields['text'], TEXT)
+        self.assertIsInstance(schema._fields['pub_date'], DATETIME)
+        self.assertIsInstance(schema._fields['seen_count'], NUMERIC)
+        self.assertIsInstance(schema._fields['sites'], KEYWORD)
+        self.assertIsInstance(schema._fields['is_active'], BOOLEAN)
 
     def test_verify_type(self):
         old_ui = connections['whoosh'].get_unified_index()
@@ -687,7 +691,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         reset_search_queries()
         self.assertEqual(len(connections['whoosh'].queries), 0)
         sqs = self.sqs.auto_query('Indexed!')
-        results = [int(result.pk) for result in sqs]
+        results = [int(result.pk) for result in iter(sqs)]
         self.assertEqual(sorted(results), [1, 2, 3])
         self.assertEqual(len(connections['whoosh'].queries), 1)
 
@@ -761,7 +765,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         self.assertEqual(len(connections['whoosh'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.auto_query('Indexed!')
-        [result for result in results]
+        result_list = [i for i in iter(results)]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(connections['whoosh'].queries), 1)
 

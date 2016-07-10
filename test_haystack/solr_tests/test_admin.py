@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.core.urlresolvers import reverse
 
 from haystack import connections, reset_search_queries
 from haystack.utils.loading import UnifiedIndex
@@ -16,7 +17,7 @@ from .test_solr_backend import clear_solr_index, SolrMockModelSearchIndex
 
 @override_settings(DEBUG=True)
 class SearchModelAdminTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(SearchModelAdminTestCase, self).setUp()
@@ -70,7 +71,10 @@ class SearchModelAdminTestCase(TestCase):
         self.assertIn(5, result_pks)
 
         # Make sure only changelist is affected.
-        resp = self.client.get('/admin/core/mockmodel/1/')
+        resp = self.client.get(reverse('admin:core_mockmodel_change', args=(1, )))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(connections['solr'].queries), 3)
         self.assertEqual(resp.context['original'].id, 1)
+        self.assertTemplateUsed(resp, 'admin/change_form.html')
+
+        # The Solr query count should be unchanged:
+        self.assertEqual(len(connections['solr'].queries), 3)

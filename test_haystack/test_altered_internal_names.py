@@ -16,7 +16,7 @@ from haystack.utils.loading import UnifiedIndex
 class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel

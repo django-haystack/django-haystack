@@ -19,6 +19,8 @@ class GetIdentifierTestCase(TestCase):
 
 
 class GetFacetFieldNameTestCase(TestCase):
+    fixtures = ['base_data']
+
     def test_get_identifier(self):
         self.assertEqual(get_identifier('core.mockmodel.1'), 'core.mockmodel.1')
 

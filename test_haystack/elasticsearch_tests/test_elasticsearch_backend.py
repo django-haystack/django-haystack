@@ -4,9 +4,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 import logging as std_logging
 import operator
+import unittest
 from decimal import Decimal
 
 import elasticsearch
+from django.apps import apps
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -15,14 +17,13 @@ from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
-from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
+from haystack.query import SQ, RelatedSearchQuerySet, SearchQuerySet
 from haystack.utils import log as logging
 from haystack.utils.geo import Point
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
-from ..utils import unittest
 
 test_pickling = True
 
@@ -52,7 +53,7 @@ def clear_elasticsearch_index():
 class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -69,7 +70,7 @@ class ElasticsearchMockSearchIndexWithSkipDocument(ElasticsearchMockSearchIndex)
 class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author', faceted=True)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -81,7 +82,7 @@ class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
 class ElasticsearchMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def prepare_month(self, obj):
         return "%02d" % obj.pub_date.month
@@ -93,7 +94,7 @@ class ElasticsearchMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Inde
 class ElasticsearchMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -102,7 +103,7 @@ class ElasticsearchMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class ElasticsearchAnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return AnotherMockModel
@@ -118,7 +119,7 @@ class ElasticsearchBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     )
     author = indexes.CharField(model_attr='author', weight=2.0)
     editor = indexes.CharField(model_attr='editor')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return AFourthMockModel
@@ -196,7 +197,7 @@ class ElasticsearchComplexFacetsMockSearchIndex(indexes.SearchIndex, indexes.Ind
 class ElasticsearchAutocompleteMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
     text_auto = indexes.EdgeNgramField(model_attr='foo')
     name_auto = indexes.EdgeNgramField(model_attr='author')
 
@@ -423,6 +424,9 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
         self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight=True)['results']]),
                          [u'<em>Indexed</em>!\n1', u'<em>Indexed</em>!\n2', u'<em>Indexed</em>!\n3'])
+        self.assertEqual(sorted([result.highlighted[0] for result in self.sb.search('Index', highlight={'pre_tags': ['<start>'],'post_tags': ['</end>']})['results']]),
+                         [u'<start>Indexed</end>!\n1', u'<start>Indexed</end>!\n2', u'<start>Indexed</end>!\n3'])
+
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indaxed')['spelling_suggestion'], 'indexed')
@@ -569,8 +573,8 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
         settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'] = "%s/foo/" % self.old_es_url
         self.cap = CaptureHandler()
         logging.getLogger('haystack').addHandler(self.cap)
-        import haystack
-        logging.getLogger('haystack').removeHandler(haystack.stream)
+        config = apps.get_app_config('haystack')
+        logging.getLogger('haystack').removeHandler(config.stream)
 
         # Setup the rest of the bits.
         self.old_ui = connections['elasticsearch'].get_unified_index()
@@ -581,12 +585,12 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
         self.sb = connections['elasticsearch'].get_backend()
 
     def tearDown(self):
-        import haystack
         # Restore.
         settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'] = self.old_es_url
         connections['elasticsearch']._index = self.old_ui
+        config = apps.get_app_config('haystack')
         logging.getLogger('haystack').removeHandler(self.cap)
-        logging.getLogger('haystack').addHandler(haystack.stream)
+        logging.getLogger('haystack').addHandler(config.stream)
 
     @unittest.expectedFailure
     def test_all_cases(self):
@@ -613,7 +617,7 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
 
 
 class LiveElasticsearchSearchQueryTestCase(TestCase):
-    fixtures = ['initial_data.json']
+    fixtures = ['base_data.json']
 
     def setUp(self):
         super(LiveElasticsearchSearchQueryTestCase, self).setUp()
@@ -672,7 +676,7 @@ lssqstc_all_loaded = None
 @override_settings(DEBUG=True)
 class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchSearchQuerySetTestCase, self).setUp()
@@ -714,9 +718,9 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         sqs = self.sqs.all()
-        results = sorted([int(result.pk) for result in sqs])
+        results = sorted([int(result.pk) for result in list(sqs)])
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['elasticsearch'].queries), 3)
+        self.assertEqual(len(connections['elasticsearch'].queries), 4)
 
     def test_slice(self):
         reset_search_queries()
@@ -763,6 +767,17 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         # Should only execute one query to count the length of the result set.
         self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
+    def test_highlight(self):
+        reset_search_queries()
+        results = self.sqs.filter(content='index').highlight()
+        self.assertEqual(results[0].highlighted, [u'<em>Indexed</em>!\n1'])
+
+    def test_highlight_options(self):
+        reset_search_queries()
+        results = self.sqs.filter(content='index')
+        results = results.highlight(pre_tags=['<i>'], post_tags=['</i>'])
+        self.assertEqual(results[0].highlighted, [u'<i>Indexed</i>!\n1'])
+
     def test_manual_iter(self):
         results = self.sqs.all()
 
@@ -790,9 +805,10 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.all()
-        fire_the_iterator_and_fill_cache = [result for result in results]
+        fire_the_iterator_and_fill_cache = list(results)
+        self.assertEqual(23, len(fire_the_iterator_and_fill_cache))
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['elasticsearch'].queries), 3)
+        self.assertEqual(len(connections['elasticsearch'].queries), 4)
 
     def test___and__(self):
         sqs1 = self.sqs.filter(content='foo')
@@ -837,6 +853,17 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__content="pants:rule">')
         self.assertEqual(sqs.query.build_query(), u'("pants\\:rule")')
+        self.assertEqual(len(sqs), 0)
+
+    def test_query__in(self):
+        self.assertGreater(len(self.sqs), 0)
+        sqs = self.sqs.filter(django_ct='core.mockmodel', django_id__in=[1, 2])
+        self.assertEqual(len(sqs), 2)
+
+    def test_query__in_empty_list(self):
+        """Confirm that an empty list avoids a Elasticsearch exception"""
+        self.assertGreater(len(self.sqs), 0)
+        sqs = self.sqs.filter(id__in=[])
         self.assertEqual(len(sqs), 0)
 
     # Regressions
@@ -893,7 +920,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         sqs = self.rsqs.all()
-        results = set([int(result.pk) for result in sqs])
+        results = set([int(result.pk) for result in list(sqs)])
         self.assertEqual(results, set([2, 7, 12, 17, 1, 6, 11, 16, 23, 5, 10, 15, 22, 4, 9, 14, 19, 21, 3, 8, 13, 18, 20]))
         self.assertEqual(len(connections['elasticsearch'].queries), 4)
 
@@ -902,19 +929,19 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
         self.assertEqual([int(result.pk) for result in results[1:11]], [3, 2, 4, 5, 6, 7, 8, 9, 10, 11])
-        self.assertEqual(len(connections['elasticsearch'].queries), 3)
+        self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
         self.assertEqual(int(results[21].pk), 22)
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
         reset_search_queries()
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = self.rsqs.all().order_by('pub_date')
         self.assertEqual(set([int(result.pk) for result in results[20:30]]), set([21, 22, 23]))
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 1)
 
     def test_related_manual_iter(self):
         results = self.rsqs.all()
@@ -923,7 +950,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         results = sorted([int(result.pk) for result in results._manual_iter()])
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections['elasticsearch'].queries), 4)
+        self.assertEqual(len(connections['elasticsearch'].queries), 3)
 
     def test_related_fill_cache(self):
         reset_search_queries()
@@ -943,9 +970,10 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections['elasticsearch'].queries), 0)
         self.assertEqual(self.rsqs._cache_is_full(), False)
         results = self.rsqs.all()
-        fire_the_iterator_and_fill_cache = [result for result in results]
+        fire_the_iterator_and_fill_cache = list(results)
+        self.assertEqual(23, len(fire_the_iterator_and_fill_cache))
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['elasticsearch'].queries), 5)
+        self.assertEqual(len(connections['elasticsearch'].queries), 4)
 
     def test_quotes_regression(self):
         sqs = self.sqs.auto_query(u"44°48'40''N 20°28'32''E")
@@ -1015,7 +1043,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 @override_settings(DEBUG=True)
 class LiveElasticsearchSpellingTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchSpellingTestCase, self).setUp()
@@ -1049,9 +1077,12 @@ class LiveElasticsearchSpellingTestCase(TestCase):
         self.assertEqual(self.sqs.auto_query('srchindex instanc').spelling_suggestion(), 'searchindex instance')
         self.assertEqual(self.sqs.spelling_suggestion('srchindex instanc'), 'searchindex instance')
 
+        sqs = self.sqs.auto_query('something completely different').set_spelling_query('structurd')
+        self.assertEqual(sqs.spelling_suggestion(), 'structured')
+
 
 class LiveElasticsearchMoreLikeThisTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchMoreLikeThisTestCase, self).setUp()
@@ -1106,7 +1137,7 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
 
 
 class LiveElasticsearchAutocompleteTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchAutocompleteTestCase, self).setUp()
@@ -1250,7 +1281,7 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
 
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 class LiveElasticsearchPickleTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveElasticsearchPickleTestCase, self).setUp()

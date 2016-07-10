@@ -2,24 +2,22 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import unittest
 
-from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from test_haystack.core.models import AFifthMockModel, AnotherMockModel, CharPKMockModel, MockModel
-from test_haystack.utils import unittest
+from test_haystack.core.models import AnotherMockModel, CharPKMockModel, MockModel
 
-from haystack import connection_router, connections, indexes, reset_search_queries
-from haystack.backends import BaseSearchQuery, SQ
+from haystack import connections, indexes, reset_search_queries
+from haystack.backends import SQ, BaseSearchQuery
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
 from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
-from .mocks import (CharPKMockSearchBackend, MixedMockSearchBackend, MOCK_SEARCH_RESULTS, MockSearchBackend,
-                    MockSearchQuery, ReadQuerySetMockSearchBackend)
-from .test_indexes import (GhettoAFifthMockModelSearchIndex, ReadQuerySetTestSearchIndex,
-                           TextReadQuerySetTestSearchIndex)
+from .mocks import (MOCK_SEARCH_RESULTS, CharPKMockSearchBackend, MockSearchBackend, MockSearchQuery,
+                    ReadQuerySetMockSearchBackend)
+from .test_indexes import GhettoAFifthMockModelSearchIndex, TextReadQuerySetTestSearchIndex
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
 
 test_pickling = True
@@ -73,7 +71,7 @@ class SQTestCase(TestCase):
 
 
 class BaseSearchQueryTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(BaseSearchQueryTestCase, self).setUp()
@@ -329,7 +327,7 @@ class CharPKMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 @override_settings(DEBUG=True)
 class SearchQuerySetTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(SearchQuerySetTestCase, self).setUp()
@@ -371,7 +369,7 @@ class SearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         msqs = self.msqs.all()
-        results = [int(res.pk) for res in msqs]
+        results = [int(res.pk) for res in iter(msqs)]
         self.assertEqual(results, [res.pk for res in MOCK_SEARCH_RESULTS[:23]])
         self.assertEqual(len(connections['default'].queries), 3)
 
@@ -417,51 +415,15 @@ class SearchQuerySetTestCase(TestCase):
 
         connections['default']._index = old_ui
 
-    def test_fill_cache(self):
-        reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
-        results = self.msqs.all()
-        self.assertEqual(len(results._result_cache), 0)
-        self.assertEqual(len(connections['default'].queries), 0)
-        results._fill_cache(0, 10)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 10)
-        self.assertEqual(len(connections['default'].queries), 1)
-        results._fill_cache(10, 20)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
-        self.assertEqual(len(connections['default'].queries), 2)
-
-        reset_search_queries()
-        self.assertEqual(len(connections['default'].queries), 0)
-
-        # Test to ensure we properly fill the cache, even if we get fewer
-        # results back (not a handled model) than the hit count indicates.
-        sqs = SearchQuerySet().all()
-        sqs.query.backend = MixedMockSearchBackend('default')
-        results = sqs
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 0)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [])
-        self.assertEqual(len(connections['default'].queries), 0)
-        results._fill_cache(0, 10)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 9)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [1, 2, 3, 4, 5, 6, 7, 8, 10])
-        self.assertEqual(len(connections['default'].queries), 2)
-        results._fill_cache(10, 20)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 17)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19, 20])
-        self.assertEqual(len(connections['default'].queries), 4)
-        results._fill_cache(20, 30)
-        self.assertEqual(len([result for result in results._result_cache if result is not None]), 20)
-        self.assertEqual([int(result.pk) for result in results._result_cache if result is not None], [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23])
-        self.assertEqual(len(connections['default'].queries), 6)
-
     def test_cache_is_full(self):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertEqual(self.msqs._cache_is_full(), False)
         results = self.msqs.all()
-        fire_the_iterator_and_fill_cache = [result for result in results]
+        fire_the_iterator_and_fill_cache = list(results)
+        self.assertEqual(23, len(fire_the_iterator_and_fill_cache))
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections['default'].queries), 3)
+        self.assertEqual(len(connections['default'].queries), 4)
 
     def test_all(self):
         sqs = self.msqs.all()
@@ -536,7 +498,14 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(sqs.query.highlight, True)
 
-    def test_spelling(self):
+    def test_spelling_override(self):
+        sqs = self.msqs.filter(content='not the spellchecking query')
+        self.assertEqual(sqs.query.spelling_query, None)
+        sqs = self.msqs.set_spelling_query('override')
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(sqs.query.spelling_query, 'override')
+
+    def test_spelling_suggestions(self):
         # Test the case where spelling support is disabled.
         sqs = self.msqs.filter(content='Indx')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
@@ -855,6 +824,8 @@ class EmptySearchQuerySetTestCase(TestCase):
 @unittest.skipUnless(test_pickling, 'Skipping pickling tests')
 @override_settings(DEBUG=True)
 class PickleSearchQuerySetTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(PickleSearchQuerySetTestCase, self).setUp()
         # Stow.

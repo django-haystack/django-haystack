@@ -8,20 +8,17 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import six
 from django.utils import tree
+from django.utils.encoding import force_text
+
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
 from haystack.utils import get_model_ct
 
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
-
-
 VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
+SPELLING_SUGGESTION_HAS_NOT_RUN = object()
 
 def log_query(func):
     """
@@ -133,7 +130,7 @@ class BaseSearchBackend(object):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, **extra_kwargs):
         # A convenience method most backends should include in order to make
         # extension easier.
         raise NotImplementedError
@@ -472,7 +469,8 @@ class BaseSearchQuery(object):
         self._hit_count = None
         self._facet_counts = None
         self._stats = None
-        self._spelling_suggestion = None
+        self._spelling_suggestion = SPELLING_SUGGESTION_HAS_NOT_RUN
+        self.spelling_query = None
         self.result_class = SearchResult
         self.stats = {}
         from haystack import connections
@@ -527,6 +525,8 @@ class BaseSearchQuery(object):
 
         if spelling_query:
             kwargs['spelling_query'] = spelling_query
+        elif self.spelling_query:
+            kwargs['spelling_query'] = self.spelling_query
 
         if self.boost:
             kwargs['boost'] = self.boost
@@ -668,6 +668,9 @@ class BaseSearchQuery(object):
             self.run()
         return self._stats
 
+    def set_spelling_query(self, spelling_query):
+        self.spelling_query = spelling_query
+
     def get_spelling_suggestion(self, preferred_query=None):
         """
         Returns the spelling suggestion received from the backend.
@@ -675,7 +678,7 @@ class BaseSearchQuery(object):
         If the query has not been run, this will execute the query and store
         the results.
         """
-        if self._spelling_suggestion is None:
+        if self._spelling_suggestion is SPELLING_SUGGESTION_HAS_NOT_RUN:
             self.run(spelling_query=preferred_query)
 
         return self._spelling_suggestion
@@ -857,9 +860,9 @@ class BaseSearchQuery(object):
         """Adds stats and stats_facets queries for the Solr backend."""
         self.stats[stats_field] = stats_facets
 
-    def add_highlight(self):
+    def add_highlight(self, **kwargs):
         """Adds highlighting to the search results."""
-        self.highlight = True
+        self.highlight = kwargs or True
 
     def add_within(self, field, point_1, point_2):
         """Adds bounding box parameters to search query."""
@@ -972,7 +975,7 @@ class BaseSearchQuery(object):
         self._results = None
         self._hit_count = None
         self._facet_counts = None
-        self._spelling_suggestion = None
+        self._spelling_suggestion = SPELLING_SUGGESTION_HAS_NOT_RUN
 
     def _clone(self, klass=None, using=None):
         if using is None:
@@ -1003,6 +1006,7 @@ class BaseSearchQuery(object):
         clone.distance_point = self.distance_point.copy()
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
+        clone.spelling_query = self.spelling_query
 
         return clone
 
@@ -1027,11 +1031,15 @@ class BaseEngine(object):
             self._backend = self.backend(self.using, **self.options)
         return self._backend
 
+    def reset_sessions(self):
+        """Reset any transient connections, file handles, etc."""
+        self._backend = None
+
     def get_query(self):
         return self.query(using=self.using)
 
     def reset_queries(self):
-        self.queries = []
+        del self.queries[:]
 
     def get_unified_index(self):
         if self._index is None:

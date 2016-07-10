@@ -13,10 +13,15 @@ Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. note::
 
-    This documentation represents Haystack 2.x. For old versions of the documentation: `1.2`_, `1.1`_.
+    This documentation represents the current version of Haystack. For old versions of the documentation:
 
-.. _`1.2`: http://django-haystack.readthedocs.org/en/v1.2.6/index.html
-.. _`1.1`: http://django-haystack.readthedocs.org/en/v1.1/index.html
+    * v2.4.X: https://django-haystack.readthedocs.io/en/v2.4.1/
+    * v2.3.X: https://django-haystack.readthedocs.io/en/v2.3.0/
+    * v2.2.X: https://django-haystack.readthedocs.io/en/v2.2.0/
+    * v2.1.X: https://django-haystack.readthedocs.io/en/v2.1.0/
+    * v2.0.X: https://django-haystack.readthedocs.io/en/v2.0.0/
+    * v1.2.X: https://django-haystack.readthedocs.io/en/v1.2.7/
+    * v1.1.X: https://django-haystack.readthedocs.io/en/v1.1/
 
 Getting Started
 ---------------
@@ -42,9 +47,10 @@ you up and running:
    installing_search_engines
    debugging
 
-   migration_from_1_to_2
-   python3
+   changelog
    contributing
+   python3
+   migration_from_1_to_2
 
 
 Advanced Uses

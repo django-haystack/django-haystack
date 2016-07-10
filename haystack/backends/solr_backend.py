@@ -147,7 +147,8 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None, stats=None):
+                            result_class=None, stats=None,
+                            **extra_kwargs):
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -180,9 +181,15 @@ class SolrSearchBackend(BaseSearchBackend):
         if end_offset is not None:
             kwargs['rows'] = end_offset - start_offset
 
-        if highlight is True:
+        if highlight:
+            # `highlight` can either be True or a dictionary containing custom parameters
+            # which will be passed to the backend and may override our default settings:
+
             kwargs['hl'] = 'true'
             kwargs['hl.fragsize'] = '200'
+
+            if isinstance(highlight, dict):
+                kwargs.update(highlight)
 
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
@@ -277,6 +284,9 @@ class SolrSearchBackend(BaseSearchBackend):
             # kwargs['fl'] += ' _dist_:geodist()'
             pass
 
+        if extra_kwargs:
+            kwargs.update(extra_kwargs)
+
         return kwargs
 
     def more_like_this(self, model_instance, additional_query_string=None,
@@ -367,12 +377,16 @@ class SolrSearchBackend(BaseSearchBackend):
                     # pairs.
                     facets[key][facet_field] = list(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
 
-        if self.include_spelling is True:
-            if hasattr(raw_results, 'spellcheck'):
-                if len(raw_results.spellcheck.get('suggestions', [])):
-                    # For some reason, it's an array of pairs. Pull off the
-                    # collated result from the end.
-                    spelling_suggestion = raw_results.spellcheck.get('suggestions')[-1]
+        if self.include_spelling and hasattr(raw_results, 'spellcheck'):
+            # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
+            # than simply paired elements in a list, which is a nice improvement but incompatible with
+            # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
+            if len(raw_results.spellcheck.get('collations', [])):
+                spelling_suggestion = raw_results.spellcheck['collations'][-1]
+            elif len(raw_results.spellcheck.get('suggestions', [])):
+                spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
+
+            assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
@@ -583,10 +597,13 @@ class SolrSearchQuery(BaseSearchQuery):
             elif filter_type == 'in':
                 in_options = []
 
-                for possible_value in prepared_value:
-                    in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
+                if not prepared_value:
+                    query_frag = u'(!*:*)'
+                else:
+                    for possible_value in prepared_value:
+                        in_options.append(u'"%s"' % self.backend.conn._from_python(possible_value))
 
-                query_frag = u"(%s)" % " OR ".join(in_options)
+                    query_frag = u"(%s)" % " OR ".join(in_options)
             elif filter_type == 'range':
                 start = self.backend.conn._from_python(prepared_value[0])
                 end = self.backend.conn._from_python(prepared_value[1])
@@ -677,6 +694,8 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
+        elif self.spelling_query:
+            search_kwargs['spelling_query'] = self.spelling_query
 
         if self.stats:
             search_kwargs['stats'] = self.stats

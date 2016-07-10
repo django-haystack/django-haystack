@@ -2,16 +2,13 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import django
 from django.test import TestCase
 from test_haystack.discovery.search_indexes import FooIndex
 
 from haystack import connections
 from haystack.utils.loading import UnifiedIndex
 
-# This is a necessary evil until we can drop support for Django 1.6 and earlier
-# because the number of models will increase when the AppConfig test is enabled
-EXPECTED_INDEX_MODEL_COUNT = 5 if django.VERSION < (1, 7) else 6
+EXPECTED_INDEX_MODEL_COUNT = 6
 
 
 class ManualDiscoveryTestCase(TestCase):
