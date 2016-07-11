@@ -113,3 +113,5 @@ Thanks to
     * Gilad Beeri (@giladbeeri) for adding retries when updating a backend
     * Arjen Verstoep (@terr) for a patch that allows attribute lookups through Django ManyToManyField relationships
     * Tim Babych (@tymofij) for enabling backend-specific parameters in ``.highlight()``
+    * parruc for basic Whoosh faceting support
+    * Jens Kadenbach (audax) for updating and testing Whoosh faceting support
