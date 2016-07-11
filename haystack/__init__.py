@@ -11,7 +11,7 @@ from haystack.utils import loading
 
 
 __author__ = 'Daniel Lindsley'
-__version__ = (2, 5, 'dev2')
+__version__ = (2, 5, 0)
 
 default_app_config = 'haystack.apps.HaystackConfig'
 
