@@ -309,3 +309,19 @@ This setting allows you to change the number of terms fuzzy queries will
 expand to when using ``fuzzy`` filter.
 
 Default is ``50``
+
+
+``HAYSTACK_SEARCH_INDEX_MODULES``
+=================================
+
+**Optional**
+
+This setting allows you to directly specify modules, that contain search
+indexes. It is a list of python modules (of the form
+``'package.module.submodule'``), that should be scanned for search index
+models. Invalid or non-existing python modules will be silently ignored. These
+modules will be used in addition to the default modules, that get automatically
+collected by filtering the ``INSTALLED_APPS`` of your project for files named
+``search_indexes.py``.
+
+Default is ``[]``
