@@ -96,32 +96,19 @@ Backend Support Matrix
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
 
 
-Wishlist
-========
+Unsupported Backends & Alternatives
+===================================
 
-The following are search backends that would be nice to have in Haystack but are
-licensed in a way that prevents them from being officially bundled. If the
-community expresses interest in any of these, there may be future development.
-
-* Riak_
-* Lupyne_
-* Sphinx_
-
-.. _Riak: http://www.basho.com/
-.. _Lupyne: http://code.google.com/p/lupyne/
-.. _Sphinx: http://www.sphinxsearch.com/
-
+If you have a search engine which you would like to see supported in Haystack, the current recommendation is
+to develop a plugin following the lead of `xapian-haystack <https://pypi.python.org/pypi/xapian-haystack>`_ so
+that project can be developed and tested independently of the core Haystack release schedule.
 
 Sphinx
-------
+~~~~~~
 
-This backend is unlikely to be built. Sphinx is pretty gimpy & doesn't do
-blended search results across all models the way the other engines can.
-Very limited featureset as well.
+This backend has been requested multiple times over the years but does not yet have a volunteer maintainer. If
+you would like to work on it, please contact the Haystack maintainers so your project can be linked here and,
+if desired, added to the `django-haystack <https://github.com/django-haystack/>`_ organization on GitHub.
 
-* Full SearchQuerySet support
-* Automatic query building
-* Term Boosting
-* Stored (non-indexed) fields
-* Highlighting
-* Requires: sphinxapi.py (Comes with Sphinx)
+In the meantime, Sphinx users should consider Jorge C. Leitão's
+`django-sphinxql <https://github.com/jorgecarleitao/django-sphinxql>`_ project.
