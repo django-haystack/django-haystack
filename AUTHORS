@@ -115,3 +115,4 @@ Thanks to
     * Tim Babych (@tymofij) for enabling backend-specific parameters in ``.highlight()``
     * Antony Raj (@antonyr) for adding endswith input type and fixing contains input type
     * Morgan Aubert (@ellmetha) for Django 1.10 support
+    * Karl Fleischmann (@fleischie) for enabling the setting of custom search index modules.
