@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.apps import apps
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 __all__ = ['haystack_get_models', 'haystack_load_apps']
@@ -13,6 +14,13 @@ MODEL = 'model'
 def haystack_get_app_modules():
     """Return the Python module for each installed app"""
     return [i.module for i in apps.get_app_configs()]
+
+def haystack_get_search_indexes():
+    """Return all modules to collect search indexes in"""
+    app_modules = ['%s.search_indexes' % app_mod.__name__ for app_mod in haystack_get_app_modules()]
+    app_modules.extend(getattr(settings, 'HAYSTACK_SEARCH_INDEX_MODULES', []))
+
+    return app_modules
 
 def haystack_load_apps():
     """Return a list of app labels for all installed applications which have models"""
