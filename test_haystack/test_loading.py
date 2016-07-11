@@ -6,7 +6,7 @@ import unittest
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, mock
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import indexes
@@ -350,3 +350,41 @@ class UnifiedIndexTestCase(TestCase):
         self.assertEqual(self.ui._facet_fieldnames, {'bare_facet': 'bare_facet', 'title': 'title_facet', 'author': 'author_exact'})
         self.assertEqual(self.ui.get_facet_fieldname('title'), 'title_facet')
         self.assertEqual(self.ui.get_facet_fieldname('bare_facet'), 'bare_facet')
+
+    def test_collect_app_modules_indexes(self):
+        collected_indexes = self.ui.collect_indexes()
+
+        for i in collected_indexes:
+            self.assertIsInstance(i, indexes.SearchIndex)
+
+    def test_collect_indexes_with_invalid_custom_search_indexes(self):
+        SEARCH_INDEX_MODULES = [
+            'invalid_search_indexes',
+            'more_invlid_search_indexes',
+        ]
+
+        with self.settings(HAYSTACK_SEARCH_INDEX_MODULES=SEARCH_INDEX_MODULES):
+            custom_indexes = self.ui.collect_indexes()
+        default_indexes = self.ui.collect_indexes()
+
+        self.assertEqual(len(custom_indexes), len(default_indexes))
+
+    def test_collect_indexes_with_custom_search_indexes(self):
+        SEARCH_INDEX_MODULES = [
+            'test_haystack.custom_search_indexes.custom_indexes',
+            'test_haystack.custom_search_indexes.custom_search_indexes'
+        ]
+
+        with self.settings(HAYSTACK_SEARCH_INDEX_MODULES=SEARCH_INDEX_MODULES):
+            custom_indexes = self.ui.collect_indexes()
+        default_indexes = self.ui.collect_indexes()
+
+        self.assertGreater(len(custom_indexes), len(default_indexes))
+        self.assertEqual(len(custom_indexes),
+                         len(default_indexes) + len(SEARCH_INDEX_MODULES))
+
+    @mock.patch('haystack.utils.loading.module_has_submodule',
+                return_value=True)
+    def test_collect_indexes_import_error(self, mocking):
+        with self.assertRaises(ImportError):
+            self.ui.collect_indexes()
