@@ -80,7 +80,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'elasticsearch': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        'URL': '127.0.0.1:9200/',
+        'URL': os.environ.get('TEST_ELASTICSEARCH_1_URL', 'http://localhost:9200/'),
         'INDEX_NAME': 'test_default',
         'INCLUDE_SPELLING': True,
     },
@@ -89,7 +89,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'solr': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:9001/solr/',
+        'URL': os.environ.get('TEST_SOLR_URL', 'http://localhost:9001/solr/'),
         'INCLUDE_SPELLING': True,
     },
 }
