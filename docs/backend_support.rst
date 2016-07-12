@@ -78,7 +78,7 @@ Xapian
 * Stored (non-indexed) fields
 * Highlighting
 * Requires: Xapian 1.0.5+ & python-xapian 1.0.5+
-* Backend can be downloaded here: `xapian-haystack <http://github.com/notanumber/xapian-haystack/>`_
+* Backend can be downloaded here: `xapian-haystack <http://github.com/notanumber/xapian-haystack/>`__
 
 Backend Support Matrix
 ======================
