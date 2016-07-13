@@ -33,9 +33,11 @@ before_install:
         tar zxf elasticsearch-2.2.1.tar.gz
         elasticsearch-2.2.1/bin/elasticsearch -d -Dhttp.port=9200
       else
-        wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.5.tar.gz
-        tar zxf elasticsearch-1.7.5.tar.gz
-        elasticsearch-1.7.5/bin/elasticsearch -d -Dhttp.port=9200
+        wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+        echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
+        sudo apt-get update
+        sudo apt-get -y install elasticsearch
+        sudo service elasticsearch restart
       fi
 
 install:
