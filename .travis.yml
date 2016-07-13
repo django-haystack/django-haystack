@@ -39,7 +39,6 @@ before_install:
       fi
 
 install:
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
     - pip install requests "Django${DJANGO_VERSION}" "elasticsearch${VERSION_ES}"
     - python setup.py clean build install
 
