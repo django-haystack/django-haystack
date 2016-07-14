@@ -4,17 +4,20 @@ import warnings
 from django.conf import settings
 
 from ..utils import unittest
+from haystack.utils import log as logging
 
 warnings.simplefilter('ignore', Warning)
 
 
 def setup():
+    log = logging.getLogger('haystack')
     try:
         import elasticsearch
         if not ((2, 0, 0) <= elasticsearch.__version__ < (3, 0, 0)):
             raise ImportError
         from elasticsearch import Elasticsearch, exceptions
     except ImportError:
+        self.log.error("'elasticsearch>=2.0.0,<3.0.0' not installed.", exc_info=True)
         raise unittest.SkipTest("'elasticsearch>=2.0.0,<3.0.0' not installed.")
 
     url = settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL']
@@ -22,4 +25,5 @@ def setup():
     try:
         es.info()
     except exceptions.ConnectionError as e:
+        self.log.error("elasticsearch not running on %r" % url, exc_info=True)
         raise unittest.SkipTest("elasticsearch not running on %r" % url, e)
