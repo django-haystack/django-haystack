@@ -64,6 +64,9 @@ ROOT_URLCONF = 'test_haystack.core.urls'
 
 HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter', 'test_haystack.multipleindex.routers.MultipleIndexRouter']
 
+ENGINE_ELASTICSEARCH = {'>=1.0.0,<2.0.0': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+                        '>=2.0.0,<3.0.0': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngin'}
+
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'test_haystack.mocks.MockEngine',
@@ -79,7 +82,7 @@ HAYSTACK_CONNECTIONS = {
         'EXCLUDED_INDEXES': ['test_haystack.multipleindex.search_indexes.BarIndex'],
     },
     'elasticsearch': {
-        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'ENGINE': ENGINE_ELASTICSEARCH[os.getenv('VERSION_ES')],
         'URL': '127.0.0.1:9200/',
         'INDEX_NAME': 'test_default',
         'INCLUDE_SPELLING': True,
@@ -94,10 +97,3 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-if os.getenv('VERSION_ES') == ">=2.0.0,<3.0.0":
-    HAYSTACK_CONNECTIONS['elasticsearch'] = {
-        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
-        'URL': '127.0.0.1:9200/',
-        'INDEX_NAME': 'test_default',
-        'INCLUDE_SPELLING': True,
-    }
