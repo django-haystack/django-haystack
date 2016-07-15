@@ -65,7 +65,6 @@ matrix:
 
 services:
     - elasticsearch
-        - python: "pypy"
 
 notifications:
     irc: "irc.freenode.org#haystack"
