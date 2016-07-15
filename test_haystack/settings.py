@@ -65,7 +65,7 @@ ROOT_URLCONF = 'test_haystack.core.urls'
 HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter', 'test_haystack.multipleindex.routers.MultipleIndexRouter']
 
 ENGINE_ELASTICSEARCH = {'>=1.0.0,<2.0.0': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-                        '>=2.0.0,<3.0.0': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngin'}
+                        '>=2.0.0,<3.0.0': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine'}
 
 HAYSTACK_CONNECTIONS = {
     'default': {
