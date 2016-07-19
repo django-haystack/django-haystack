@@ -235,6 +235,23 @@ a highlighted version of the result::
     result = sqs[0]
     result.highlighted['text'][0] # u'Two computer scientists walk into a bar. The bartender says "<em>Foo</em>!".'
 
+The default functionality of the highlighter may not suite your needs.
+You can pass additional keyword arguments to ``highlight`` that will
+ultimately be used to build the query for your backend. Depending on the
+available arguments for your backend, you may need to pass in a dictionary
+instead of normal keyword arguments::
+
+    # Solr defines the fields to higlight by the ``hl.fl`` param. If not specified, we
+    # would only get `text` back in the ``highlighted`` dict.
+    kwargs = {
+        'hl.fl': 'other_field',
+        'hl.simple.pre': '<span class="highlighted">',
+        'hl.simple.post': '</span>'
+    }
+    sqs = SearchQuerySet().filter(content='foo').highlight(**kwargs)
+    result = sqs[0]
+    result.highlighted['other_field'][0] # u'Two computer scientists walk into a bar. The bartender says "<span class="highlighted">Foo</span>!".'
+
 ``models``
 ~~~~~~~~~~
 
