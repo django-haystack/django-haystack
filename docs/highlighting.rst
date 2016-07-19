@@ -38,20 +38,27 @@ your code. For example::
     >>> highlight.highlight(my_text)
     u'...<span class="highlighted">block</span> that would be more <span class="highlighted">meaningful</span> in real life.'
 
-The default implementation takes four optional kwargs: ``html_tag``, ``css_class``, 
-``max_length``, and ``trim_text``. These allow for basic customizations to the
-output, like so::
+
+The default implementation takes five optional kwargs:
+
+    ``html_tag``
+    ``css_class``
+    ``max_window``
+    ``trim``
+    ``min_query_length``
+
+These allow for basic customizations to the output, like so::
 
     >>> from haystack.utils import Highlighter
     
     >>> my_text = 'This is a sample block that would be more meaningful in real life.'
     >>> my_query = 'block meaningful'
     
-    >>> highlight = Highlighter(my_query, html_tag='div', css_class='found', max_length=35)
+    >>> highlight = Highlighter(my_query, html_tag='div', css_class='found', max_window=35)
     >>> highlight.highlight(my_text)
     u'...<div class="found">block</div> that would be more <div class="found">meaningful</div>...'
 
-    >>> highlight = Highlighter(my_query, css_class='found', trim_text=False)
+    >>> highlight = Highlighter(my_query, css_class='found', trim=False)
     >>> highlight.highlight(my_text)
     u'This is a sample <span class="found">block</span> that would be more <span class="found">meaningful</span> in real life.'
 
@@ -63,6 +70,7 @@ can highlight however you choose. For example::
     from haystack.utils import Highlighter
     
     class BorkHighlighter(Highlighter):
+
         def render_html(self, highlight_locations=None, start_offset=None, end_offset=None):
             highlighted_chunk = self.text_block[start_offset:end_offset]
             

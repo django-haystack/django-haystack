@@ -11,10 +11,10 @@ from haystack.utils import Highlighter
 
 class BorkHighlighter(Highlighter):
 
-    def render_html(self, highlight_locations=None, start_offset=None, end_offset=None):
-        highlighted_chunk = self.text_block[start_offset:end_offset]
+    def render_html(self, text_block, highlight_locations=None, start_offset=None, end_offset=None):
+        highlighted_chunk = text_block[start_offset:end_offset]
 
-        for word in self.query_words:
+        for word in self.extract_query_words():
             highlighted_chunk = highlighted_chunk.replace(word, 'Bork!')
 
         return highlighted_chunk
@@ -30,6 +30,7 @@ class TemplateTagTestCase(TestCase):
 
 
 class HighlightTestCase(TemplateTagTestCase):
+
     def setUp(self):
         super(HighlightTestCase, self).setUp()
         self.sample_entry = """
@@ -55,53 +56,48 @@ the attribute of the object to populate that field with.
 """
 
     def test_simple(self):
-        template = """{% load highlight %}{% highlight entry with query %}"""
+        template = """{% load highlight %}{% highlight entry query %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'index',
         }
-        self.assertEqual(self.render(template, context), u'...<span class="highlighted">index</span>ing behavior for your model you can specify your own Search<span class="highlighted">Index</span> class.\nThis is useful for ensuring that future-dated or non-live content is not <span class="highlighted">index</span>ed\nand searchable.\n\nEvery custom Search<span class="highlighted">Index</span> ...')
+        self.assertEqual(self.render(template, context), u'\N{HORIZONTAL ELLIPSIS}<span class="highlighted">index</span>ing behavior for your model you can specify your own Search<span class="highlighted">Index</span> class.\nThis is useful for ensuring that future-dated or non-live content is not <span class="highlighted">index</span>ed\nand searchable.\n\nEvery custom Search<span class="highlighted">Index</span> \N{HORIZONTAL ELLIPSIS}')
 
-        template = """{% load highlight %}{% highlight entry with query html_tag="div" css_class="foo" max_length=100 %}"""
+        template = """{% load highlight %}{% highlight entry query html_tag="div" css_class="foo" max_window=100 %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'field',
         }
-        self.assertEqual(self.render(template, context), u'...<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing...')
+        self.assertEqual(self.render(template, context), u'\N{HORIZONTAL ELLIPSIS}<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing\N{HORIZONTAL ELLIPSIS}')
 
-        template = """{% load highlight %}{% highlight entry with query html_tag="div" css_class="foo" max_length=100 %}"""
+        template = """{% load highlight %}{% highlight entry query html_tag="div" css_class="foo" max_window=100 %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'Haystack',
         }
-        self.assertEqual(self.render(template, context), u'...<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y...')
+        self.assertEqual(self.render(template, context), u'\N{HORIZONTAL ELLIPSIS}<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y\N{HORIZONTAL ELLIPSIS}')
 
-        template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx foo bbxxxxx foo" with "foo" max_length=5 html_tag="span" %}"""
-        context = {}
-        self.assertEqual(self.render(template, context), u'...<span class="highlighted">foo</span> b...')
+        template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx test bbxxxxx test" "test" max_window=6 html_tag="span" %}"""
+        self.assertEqual(self.render(template, {}), u'\N{HORIZONTAL ELLIPSIS}<span class="highlighted">test</span> b\N{HORIZONTAL ELLIPSIS}')
 
-        template = """{% load highlight %}{% highlight "test trim shows leading ellipsis" with "trim" %}"""
-        context = {}
-        self.assertEqual(self.render(template, context), u'...<span class="highlighted">trim</span> shows leading ellipsis')
+        template = """{% load highlight %}{% highlight "test trim shows leading ellipsis" "trim" %}"""
+        self.assertEqual(self.render(template, {}), u'\N{HORIZONTAL ELLIPSIS}<span class="highlighted">trim</span> shows leading ellipsis')
 
-        template = """{% load highlight %}{% highlight "test trim shows leading ellipsis" with "trim" trim_text=False %}"""
-        context = {}
-        self.assertEqual(self.render(template, context), u'test <span class="highlighted">trim</span> shows leading ellipsis')
+        template = """{% load highlight %}{% highlight "test trim shows leading ellipsis" "trim" trim=False %}"""
+        self.assertEqual(self.render(template, {}), u'test <span class="highlighted">trim</span> shows leading ellipsis')
 
-        template = """{% load highlight %}{% highlight "test trim shows trailing ellipsis" with "trim" max_length=19 %}"""
-        context = {}
-        self.assertEqual(self.render(template, context), u'...<span class="highlighted">trim</span> shows trailing...')
+        template = """{% load highlight %}{% highlight "test trim shows trailing ellipsis" "trim" max_window=19 %}"""
+        self.assertEqual(self.render(template, {}), u'\N{HORIZONTAL ELLIPSIS}<span class="highlighted">trim</span> shows trailing\N{HORIZONTAL ELLIPSIS}')
 
-        template = """{% load highlight %}{% highlight "test trim shows trailing ellipsis" with "trim" max_length=19 trim_text=False %}"""
-        context = {}
-        self.assertEqual(self.render(template, context), u'test <span class="highlighted">trim</span> shows trailing ellipsis')
+        template = """{% load highlight %}{% highlight "test trim shows trailing ellipsis" "trim" max_window=19 trim=False %}"""
+        self.assertEqual(self.render(template, {}), u'test <span class="highlighted">trim</span> shows trailing ellipsis')
 
     def test_custom(self):
         # Stow.
         old_custom_highlighter = getattr(settings, 'HAYSTACK_CUSTOM_HIGHLIGHTER', None)
         settings.HAYSTACK_CUSTOM_HIGHLIGHTER = 'not.here.FooHighlighter'
 
-        template = """{% load highlight %}{% highlight entry with query %}"""
+        template = """{% load highlight %}{% highlight entry query %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'index',
@@ -110,7 +106,7 @@ the attribute of the object to populate that field with.
 
         settings.HAYSTACK_CUSTOM_HIGHLIGHTER = 'test_haystack.test_templatetags.BorkHighlighter'
 
-        template = """{% load highlight %}{% highlight entry with query %}"""
+        template = """{% load highlight %}{% highlight entry query %}"""
         context = {
             'entry': self.sample_entry,
             'query': 'index',
