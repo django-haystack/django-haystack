@@ -235,7 +235,7 @@ a highlighted version of the result::
     result = sqs[0]
     result.highlighted['text'][0] # u'Two computer scientists walk into a bar. The bartender says "<em>Foo</em>!".'
 
-The default functionality of the highlighter may not suite your needs.
+The default functionality of the highlighter may not suit your needs.
 You can pass additional keyword arguments to ``highlight`` that will
 ultimately be used to build the query for your backend. Depending on the
 available arguments for your backend, you may need to pass in a dictionary
