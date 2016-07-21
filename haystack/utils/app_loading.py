@@ -17,8 +17,9 @@ def haystack_get_app_modules():
 
 def haystack_get_search_indexes():
     """Return all modules to collect search indexes in"""
-    app_modules = ['%s.search_indexes' % app_mod.__name__ for app_mod in haystack_get_app_modules()]
-    app_modules.extend(getattr(settings, 'HAYSTACK_SEARCH_INDEX_MODULES', []))
+    app_modules = [(app_mod, '%s.search_indexes' % app_mod.__name__) for app_mod in haystack_get_app_modules()]
+    custom_search_indexes = getattr(settings, 'HAYSTACK_SEARCH_INDEX_MODULES', [])
+    app_modules.extend([(None, search_index) for search_index in custom_search_indexes])
 
     return app_modules
 

@@ -186,12 +186,13 @@ class UnifiedIndex(object):
     def collect_indexes(self):
         indexes = []
 
-        for app_mod in haystack_get_search_indexes():
+        for module, search_index in haystack_get_search_indexes():
             try:
-                search_index_module = importlib.import_module(app_mod)
+                search_index_module = importlib.import_module(search_index)
             except ImportError:
-                module_splits = app_mod.split('.')
-                if module_has_submodule('.'.join(module_splits[:-1]), module_splits[-1]):
+                module_splits = search_index.split('.')
+                if (module is not None and
+                        module_has_submodule(module, module_splits[-1]):
                     raise
 
                 continue
@@ -199,7 +200,7 @@ class UnifiedIndex(object):
             for item_name, item in inspect.getmembers(search_index_module, inspect.isclass):
                 if getattr(item, 'haystack_use_for_indexing', False) and getattr(item, 'get_model', None):
                     # We've got an index. Check if we should be ignoring it.
-                    class_path = "%s.%s" % (app_mod, item_name)
+                    class_path = "%s.%s" % (search_index, item_name)
 
                     if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(item_name) == id(item):
                         self.excluded_indexes_ids[str(item_name)] = id(item)
