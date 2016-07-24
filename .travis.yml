@@ -26,19 +26,17 @@ addons:
 
 before_install:
     - mkdir -p $HOME/download-cache
+    - wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
     - >
       if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
       then
-        wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.2.1/elasticsearch-2.2.1.tar.gz
-        tar zxf elasticsearch-2.2.1.tar.gz
-        elasticsearch-2.2.1/bin/elasticsearch -d -Dhttp.port=9200
+        echo "deb http://packages.elastic.co/elasticsearch/2.0/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.0.list
       else
-        wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
         echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
-        sudo apt-get update
-        sudo apt-get -y install elasticsearch
-        sudo service elasticsearch restart
       fi
+    - sudo apt-get update
+    - sudo apt-get -y install elasticsearch
+    - sudo service elasticsearch restart
 
 install:
     - pip install --upgrade setuptools
