@@ -17,14 +17,14 @@ def setup():
             raise ImportError
         from elasticsearch import Elasticsearch, ElasticsearchException
     except ImportError:
-        self.log.error("elasticsearch-py not installed.", exc_info=True)
+        log.error("elasticsearch-py not installed.", exc_info=True)
         raise unittest.SkipTest("elasticsearch-py not installed.")
 
     es = Elasticsearch(settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'])
     try:
         es.info()
     except ElasticsearchException as e:
-        self.log.error("elasticsearch not running on %r" % \
+        log.error("elasticsearch not running on %r" % \
                        settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'], exc_info=True)
         raise unittest.SkipTest("elasticsearch not running on %r" % \
                                 settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'], e)
