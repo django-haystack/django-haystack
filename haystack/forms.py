@@ -66,11 +66,13 @@ class SearchForm(forms.Form):
 
 
 class HighlightedSearchForm(SearchForm):
+
     def search(self):
         return super(HighlightedSearchForm, self).search().highlight()
 
 
 class FacetedSearchForm(SearchForm):
+
     def __init__(self, *args, **kwargs):
         self.selected_facets = kwargs.pop("selected_facets", [])
         super(FacetedSearchForm, self).__init__(*args, **kwargs)
@@ -93,6 +95,7 @@ class FacetedSearchForm(SearchForm):
 
 
 class ModelSearchForm(SearchForm):
+
     def __init__(self, *args, **kwargs):
         super(ModelSearchForm, self).__init__(*args, **kwargs)
         self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label=_('Search In'), widget=forms.CheckboxSelectMultiple)
@@ -113,6 +116,7 @@ class ModelSearchForm(SearchForm):
 
 
 class HighlightedModelSearchForm(ModelSearchForm):
+
     def search(self):
         return super(HighlightedModelSearchForm, self).search().highlight()
 

@@ -2,10 +2,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+
 from django.conf import settings
-from django.core.paginator import Paginator
-from django.views.generic import FormView
-from django.views.generic.edit import FormMixin
+from django.views.generic.base import TemplateResponseMixin
+from django.views.generic.edit import FormMixin, ProcessFormView
 from django.views.generic.list import MultipleObjectMixin
 
 from .forms import FacetedSearchForm, ModelSearchForm
@@ -40,24 +40,16 @@ class SearchMixin(MultipleObjectMixin, FormMixin):
         3. Return the paginated queryset
 
     """
-    template_name = 'search/search.html'
     load_all = True
     form_class = ModelSearchForm
     queryset = SearchQuerySet()
-    context_object_name = None
     paginate_by = RESULTS_PER_PAGE
-    paginate_orphans = 0
-    paginator_class = Paginator
-    page_kwarg = 'page'
     form_name = 'form'
     search_field = 'q'
     object_list = None
 
     def get_form_kwargs(self):
-        """
-        Returns the keyword arguments for instantiating the form.
-        """
-        kwargs = {'initial': self.get_initial()}
+        kwargs = super(SearchMixin, self).get_form_kwargs()
         if self.request.method == 'GET' and self.request.GET:
             kwargs.update({
                 'data': self.request.GET,
@@ -99,33 +91,40 @@ class FacetedSearchMixin(SearchMixin):
 
     def get_context_data(self, **kwargs):
         context = super(FacetedSearchMixin, self).get_context_data(**kwargs)
-        context.update({'facets': self.queryset.facet_counts()})
+        context.update({
+            'facets': self.queryset.facet_counts()
+        })
         return context
 
-    def get_queryset(self):
-        qs = super(FacetedSearchMixin, self).get_queryset()
+    def facet_queryset(self, qs):
         for field in self.facet_fields:
             qs = qs.facet(field)
         return qs
 
+    def get_queryset(self):
+        qs = super(FacetedSearchMixin, self).get_queryset()
+        return self.facet_queryset(qs)
 
-class SearchView(SearchMixin, FormView):
-    """A view class for searching a Haystack managed search index"""
+
+class BaseSearchView(TemplateResponseMixin, SearchMixin, ProcessFormView):
+    template_name = 'search/search.html'
 
     def get(self, request, *args, **kwargs):
-        """
-        Handles GET requests and instantiates a blank version of the form.
-        """
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
         if form.is_valid():
             return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
+
+        return self.form_invalid(form)
 
 
-class FacetedSearchView(FacetedSearchMixin, SearchView):
+class SearchView(BaseSearchView):
+    """A view class for searching a Haystack managed search index"""
+    pass
+
+
+class FacetedSearchView(FacetedSearchMixin, BaseSearchView):
     """
     A view class for searching a Haystack managed search index with
     facets
