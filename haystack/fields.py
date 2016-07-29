@@ -373,7 +373,7 @@ class DateTimeField(SearchField):
         super(DateTimeField, self).__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(DateTimeField, self).prepare(obj).isoformat())
+        return self.convert(super(DateTimeField, self).prepare(obj))
 
     def convert(self, value):
         if value is None:
