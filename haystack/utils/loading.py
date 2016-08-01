@@ -192,7 +192,7 @@ class UnifiedIndex(object):
             except ImportError:
                 module_splits = search_index.split('.')
                 if (module is not None and
-                        module_has_submodule(module, module_splits[-1]):
+                        module_has_submodule(module, module_splits[-1])):
                     raise
 
                 continue
