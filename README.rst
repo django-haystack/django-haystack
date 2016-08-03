@@ -33,6 +33,7 @@ Documentation
 =============
 
 * Development version: http://docs.haystacksearch.org/
+* v2.5.X: https://django-haystack.readthedocs.io/en/v2.5.0/
 * v2.4.X: https://django-haystack.readthedocs.io/en/v2.4.1/
 * v2.3.X: https://django-haystack.readthedocs.io/en/v2.3.0/
 * v2.2.X: https://django-haystack.readthedocs.io/en/v2.2.0/
