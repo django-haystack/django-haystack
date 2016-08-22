@@ -401,9 +401,8 @@ class SearchNode(tree.Node):
         """Parses an expression and determines the field and filter type."""
         parts = expression.split(FILTER_SEPARATOR)
         field = parts[0]
-
         if len(parts) == 1 or parts[-1] not in VALID_FILTERS:
-            filter_type = 'contains'
+            filter_type = 'content'
         else:
             filter_type = parts.pop()
 

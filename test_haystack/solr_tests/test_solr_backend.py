@@ -973,7 +973,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         # This will break horrifically if escaping isn't working.
         sqs = self.sqs.auto_query('"pants:rule"')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains="pants:rule">')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__content="pants:rule">')
         self.assertEqual(sqs.query.build_query(), u'("pants\\:rule")')
         self.assertEqual(len(sqs), 0)
 

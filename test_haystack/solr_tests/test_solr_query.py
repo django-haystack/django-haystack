@@ -13,7 +13,6 @@ from haystack.query import SearchQuerySet, SQ
 
 from ..core.models import AnotherMockModel, MockModel
 
-
 class SolrSearchQueryTestCase(TestCase):
     fixtures = ['base_data']
 
@@ -131,6 +130,16 @@ class SolrSearchQueryTestCase(TestCase):
             self.assertTrue(u'title:("A Famous Paper" OR "An Infamous Article")' in query)
         else:
             self.assertTrue(u'title:("An Infamous Article" OR "A Famous Paper")' in query)
+
+    def test_build_query_with_contains(self):
+        self.sq.add_filter(SQ(content='circular'))
+        self.sq.add_filter(SQ(title__contains='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((circular) AND title:(*haystack*))')
+
+    def test_build_query_with_endswith(self):
+        self.sq.add_filter(SQ(content='circular'))
+        self.sq.add_filter(SQ(title__endswith='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((circular) AND title:(*haystack))')
 
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))

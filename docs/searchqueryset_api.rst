@@ -817,6 +817,7 @@ Field Lookups
 
 The following lookup types are supported:
 
+* content
 * contains
 * exact
 * gt
@@ -825,6 +826,7 @@ The following lookup types are supported:
 * lte
 * in
 * startswith
+* endswith
 * range
 * fuzzy
 
@@ -843,10 +845,10 @@ The actual behavior of these lookups is backend-specific.
 
 .. warning::
 
-    The ``contains`` filter became the new default filter as of Haystack v2.X
+    The ``content`` filter became the new default filter as of Haystack v2.X
     (the default in Haystack v1.X was ``exact``). This changed because ``exact``
     caused problems and was unintuitive for new people trying to use Haystack.
-    ``contains`` is a much more natural usage.
+    ``content`` is a much more natural usage.
 
     If you had an app built on Haystack v1.X & are upgrading, you'll need to
     sanity-check & possibly change any code that was relying on the default.
@@ -858,7 +860,7 @@ Example::
     SearchQuerySet().filter(content='foo')
 
     # Identical to:
-    SearchQuerySet().filter(content__contains='foo')
+    SearchQuerySet().filter(content__content='foo')
 
     # Phrase matching.
     SearchQuerySet().filter(content__exact='hello world')

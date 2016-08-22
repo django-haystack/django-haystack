@@ -168,12 +168,12 @@ class ManagerTestCase(TestCase):
     def test_auto_query(self):
         sqs = self.search_index.objects.auto_query('test search -stuff')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__contains=test search -stuff>')
+        self.assertEqual(repr(sqs.query.query_filter), '<SQ: AND content__content=test search -stuff>')
 
         # With keyword argument
         sqs = self.search_index.objects.auto_query('test search -stuff', fieldname='title')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(repr(sqs.query.query_filter), "<SQ: AND title__contains=test search -stuff>")
+        self.assertEqual(repr(sqs.query.query_filter), "<SQ: AND title__content=test search -stuff>")
 
     def test_autocomplete(self):
         # Not implemented
