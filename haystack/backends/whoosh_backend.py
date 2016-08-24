@@ -191,8 +191,9 @@ class WhooshSearchBackend(BaseSearchBackend):
                 for key in doc:
                     doc[key] = self._from_python(doc[key])
 
-                # Document boosts aren't supported in Whoosh 2.5.0+.
+                # Document boosts are supported in Whoosh 2.0+ via `_boost` kwarg
                 if 'boost' in doc:
+                    doc['_boost'] = doc['boost']
                     del doc['boost']
 
                 try:
