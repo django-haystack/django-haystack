@@ -14,16 +14,16 @@ than the JRE and Jetty. It's very performant and has an advanced featureset.
 Haystack suggests using Solr 3.5+, though it's possible to get it working on
 Solr 1.4 with a little effort. Installation is relatively simple::
 
-    curl -LO https://archive.apache.org/dist/lucene/solr/4.10.2/solr-4.10.2.tgz
-    tar xvzf solr-4.10.2.tgz
-    cd solr-4.10.2
+    curl -LO https://archive.apache.org/dist/lucene/solr/6.2.0/solr-6.2.0.tgz
+    tar xvzf solr-6.2.0.tgz
+    cd solr-6.2.0
     cd example
     java -jar start.jar
 
 You'll need to revise your schema. You can generate this from your application
 (once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
-it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart Solr.
+it in ``solr-6.2.0/example/solr/collection1/conf/schema.xml``. Then restart Solr.
 
 .. note::
     ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
