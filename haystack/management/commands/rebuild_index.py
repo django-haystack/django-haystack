@@ -27,6 +27,10 @@ class Command(BaseCommand):
             '--nocommit', action='store_false', dest='commit',
             default=True, help='Will pass commit=False to the backend.'
         )
+        parser.add_argument(
+            '-b', '--batch-size', dest='batchsize', type=int,
+            help='Number of items to index at once.'
+        )
 
     def handle(self, **options):
         call_command('clear_index', **options)
