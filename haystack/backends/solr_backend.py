@@ -392,6 +392,14 @@ class SolrSearchBackend(BaseSearchBackend):
             elif len(raw_results.spellcheck.get('suggestions', [])):
                 spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
 
+            if isinstance(spelling_suggestion, dict):
+                # Solr 5+ JSON response format
+                if isinstance(spelling_suggestion.get('suggestion', [None])[-1], dict):
+                    # Solr setting: spellcheck.extendedResults = true
+                    spelling_suggestion = spelling_suggestion['suggestion'][-1]['word']
+                elif isinstance(spelling_suggestion.get('suggestion', [None])[-1], str):
+                    spelling_suggestion = spelling_suggestion['suggestion'][-1]
+
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
         unified_index = connections[self.connection_alias].get_unified_index()
