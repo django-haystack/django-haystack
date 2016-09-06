@@ -42,11 +42,10 @@ env:
     matrix:
         - DJANGO_VERSION=">=1.8,<1.9"
         - DJANGO_VERSION=">=1.9,<1.10"
-        - DJANGO_VERSION="==1.10a1"
+        - DJANGO_VERSION=">=1.10,<1.11"
 
 matrix:
     allow_failures:
-        - env: DJANGO_VERSION="==1.10a1"
         - python: 'pypy'
 
 services:
