@@ -193,7 +193,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 # this makes option dicts shorter: {'maxAnalyzedChars': 42}
                 # and lets some of options be used as keyword arguments: `.highlight(preserveMulti=False)`
                 kwargs.update({
-                    key if key.startswith("hl.") else ('hl.' + key): highlight[key] 
+                    key if key.startswith("hl.") else ('hl.' + key): highlight[key]
                     for key in highlight.keys()
                 })
 
@@ -393,12 +393,11 @@ class SolrSearchBackend(BaseSearchBackend):
                 spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
 
             if isinstance(spelling_suggestion, dict):
+                spelling_suggestion = spelling_suggestion.get('suggestion', [None])[-1]
                 # Solr 5+ JSON response format
-                if isinstance(spelling_suggestion.get('suggestion', [None])[-1], dict):
+                if isinstance(spelling_suggestion, dict):
                     # Solr setting: spellcheck.extendedResults = true
-                    spelling_suggestion = spelling_suggestion['suggestion'][-1]['word']
-                elif isinstance(spelling_suggestion.get('suggestion', [None])[-1], str):
-                    spelling_suggestion = spelling_suggestion['suggestion'][-1]
+                    spelling_suggestion = spelling_suggestion['word']
 
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
