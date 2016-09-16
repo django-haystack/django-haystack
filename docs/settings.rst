@@ -316,12 +316,13 @@ Default is ``50``
 
 **Optional**
 
-This setting allows you to directly specify modules, that contain search
-indexes. It is a list of python modules (of the form
-``'package.module.submodule'``), that should be scanned for search index
-models. Invalid or non-existing python modules will be silently ignored. These
-modules will be used in addition to the default modules, that get automatically
-collected by filtering the ``INSTALLED_APPS`` of your project for files named
-``search_indexes.py``.
+This setting allows you to directly specify modules that contain search
+indexes instead of/in addition to relying on ``search_index.py`` files
+residing in your installed apps. It is a list of dotted paths to python
+modules (of the form ``'package.module.submodule'``) that should be scanned
+for search index classes. Invalid or non-existing python modules will be
+silently ignored. These modules will be used in addition to the default
+modules that are automatically collected by searching the ``INSTALLED_APPS``
+of your project.
 
 Default is ``[]``
