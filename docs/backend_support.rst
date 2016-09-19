@@ -104,7 +104,7 @@ to develop a plugin following the lead of `xapian-haystack <https://pypi.python.
 that project can be developed and tested independently of the core Haystack release schedule.
 
 Sphinx
-~~~~~~
+------
 
 This backend has been requested multiple times over the years but does not yet have a volunteer maintainer. If
 you would like to work on it, please contact the Haystack maintainers so your project can be linked here and,
