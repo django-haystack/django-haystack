@@ -784,7 +784,18 @@ class SolrSchemaAdmin(object):
         resp = self.session.post(url, data=json.dumps(data), headers=headers)
         return resp
 
-    def add_field(self, fields):
+    def get_fields(self):
+        url = urljoin(self.url, 'schema/fields')
+        fields = self.session.get(url).json().get('fields')
+        
+        return {f['name']: f for f in fields}
+        
+    def modify_fields(self, fields, action):
+        """ action can be one of add, delete, or replace """
         if not isinstance(fields, list):
             fields = [fields]
-        return self._post(urljoin(self.url, 'schema'), {'add-field' : fields})
+        if action == 'delete':
+            fields = [{'name':f['name']} for f in fields]
+        
+        post_request = '{}-field'.format(action)
+        return self._post(urljoin(self.url, 'schema'), {post_request : fields})

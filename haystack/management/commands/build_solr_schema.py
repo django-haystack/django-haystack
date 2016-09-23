@@ -50,8 +50,18 @@ class Command(BaseCommand):
         ]
 
         admin = backend.schema_admin
+        # dict of fields, where field names are keys
+        existing_fields = admin.get_fields()
+
         for field in fields + django_fields:
-            resp = admin.add_field(field)
+            prior_field = existing_fields.get(field['name'])
+
+            # check if the field in `search_indexes` matches that currently defined in the Solr schema
+            if prior_field and not self.compare_caseless_dict(prior_field, field):
+                resp = admin.modify_fields(field, action='replace')
+            else:
+                resp = admin.modify_fields(field, action='add')
+
             self.log(field, resp, backend)
 
     def build_context(self, using):
@@ -103,3 +113,11 @@ class Command(BaseCommand):
             self.stdout.write("Successfully created the field %s" % field['name'])
         else:
             self.stdout.write("%s" % message)
+
+    @staticmethod
+    def compare_caseless_dict(d1, d2):
+        """ Compare dictionaries with case insensitive keys """
+        d1 = {k: unicode(v).lower() for k, v in d1.items()}
+        d2 = {k: unicode(v).lower() for k, v in d2.items()}
+
+        return d1 == d2
