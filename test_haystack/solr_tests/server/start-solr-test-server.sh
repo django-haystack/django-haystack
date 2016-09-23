@@ -68,7 +68,7 @@ else
         echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr-${SOLR_VERSION}/"
         tar -xf ${SOLR_ARCHIVE}
         echo "cd into solr 5 directory"
-        cd solr-${SOLR_VERSION}
+        cd solr-5.*
 
         # We use exec to allow process monitors to correctly kill the
         # actual Java process rather than this launcher script:
