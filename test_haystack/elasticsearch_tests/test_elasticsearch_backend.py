@@ -1126,7 +1126,7 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
             mi = MockModel.objects.defer('foo').get(pk=1)
-            self.assertEqual(mi._deferred, True)
+            self.assertIn('foo', mi.get_deferred_fields())
             deferred = self.sqs.models(MockModel).more_like_this(mi)
             self.assertEqual(deferred.count(), 0)
             self.assertEqual([result.pk for result in deferred], [])
