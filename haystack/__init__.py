@@ -143,7 +143,8 @@ def handle_registrations(*args, **kwargs):
     stack = inspect.stack()
 
     for stack_info in stack[1:]:
-        if 'handle_registrations' in stack_info[3]:
+        if 'handle_registrations' in stack_info[3]\
+            __file__ == stack_info[2]:
             return
 
     # Pull in the config file, causing any SearchSite initialization code to
