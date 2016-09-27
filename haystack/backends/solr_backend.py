@@ -193,7 +193,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 # this makes option dicts shorter: {'maxAnalyzedChars': 42}
                 # and lets some of options be used as keyword arguments: `.highlight(preserveMulti=False)`
                 kwargs.update({
-                    key if key.startswith("hl.") else ('hl.' + key): highlight[key] 
+                    key if key.startswith("hl.") else ('hl.' + key): highlight[key]
                     for key in highlight.keys()
                 })
 
@@ -432,7 +432,7 @@ class SolrSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields['_distance'] = None
 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], self.connection_alias, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1

@@ -640,7 +640,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                         self.content_field_name: [whoosh_result],
                     }
 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], score, using=self.connection_alias, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1

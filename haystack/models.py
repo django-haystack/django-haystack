@@ -30,7 +30,7 @@ class SearchResult(object):
     result will do O(N) database queries, which may not fit your needs for
     performance.
     """
-    def __init__(self, app_label, model_name, pk, score, **kwargs):
+    def __init__(self, app_label, model_name, pk, score, using='default', **kwargs):
         self.app_label, self.model_name = app_label, model_name
         self.pk = pk
         self.score = score
@@ -42,6 +42,7 @@ class SearchResult(object):
         self._distance = kwargs.pop('_distance', None)
         self.stored_fields = None
         self.log = self._get_log()
+        self.using = using
 
         for key, value in kwargs.items():
             if key not in self.__dict__:
@@ -65,7 +66,7 @@ class SearchResult(object):
 
     def _get_searchindex(self):
         from haystack import connections
-        return connections['default'].get_unified_index().get_index(self.model)
+        return connections[self.using].get_unified_index().get_index(self.model)
 
     searchindex = property(_get_searchindex)
 
