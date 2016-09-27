@@ -533,7 +533,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                                      highlight=kwargs.get('highlight'),
                                      result_class=kwargs.get('result_class', SearchResult),
                                      distance_point=kwargs.get('distance_point'),
-                                     geo_sort=geo_sort)
+                                     geo_sort=geo_sort,
+                                     index_name=self.index_name)
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -573,7 +574,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
     def _process_results(self, raw_results, highlight=False,
                          result_class=None, distance_point=None,
-                         geo_sort=False):
+                         geo_sort=False, index_name='default'):
         from haystack import connections
         results = []
         hits = raw_results.get('hits', {}).get('total', 0)
@@ -649,7 +650,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields['_distance'] = None
 
-                result = result_class(app_label, model_name, source[DJANGO_ID], raw_result['_score'], **additional_fields)
+                result = result_class(app_label, model_name, source[DJANGO_ID], raw_result['_score'], index_name=index_name, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
