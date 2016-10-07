@@ -28,6 +28,7 @@ before_install:
     - mkdir -p $HOME/download-cache
 
 install:
+    - pip install --upgrade setuptools
     - pip install requests "Django${DJANGO_VERSION}"
     - python setup.py clean build install
 
