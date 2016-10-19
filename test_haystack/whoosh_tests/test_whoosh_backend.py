@@ -901,12 +901,11 @@ class LiveWhooshMoreLikeThisTestCase(WhooshTestCase):
 
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
-            mi = MockModel.objects.defer('foo').get(pk=21)
-            self.assertEqual(mi._deferred, True)
+            mi = MockModel.objects.defer('foo').get(pk=22)
             deferred = self.sqs.models(MockModel).more_like_this(mi)
-            self.assertEqual(deferred.count(), 0)
-            self.assertEqual([result.pk for result in deferred], [])
-            self.assertEqual(len([result.pk for result in deferred]), 0)
+            self.assertEqual(deferred.count(), 22)
+            self.assertEqual(sorted([result.pk for result in deferred]), sorted([u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'2', u'1', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'23']))
+            self.assertEqual(len([result.pk for result in deferred]), 22)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=21))[0], MockSearchResult))
