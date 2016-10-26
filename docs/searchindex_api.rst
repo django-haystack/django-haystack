@@ -111,12 +111,12 @@ them through one query instead of many. This still hits the DB and incurs a
 performance penalty.
 
 The other option is to leverage stored fields. By default, all fields in
-Haystack are both indexed (searchable by the engine) and stored (retained by
+Haystack are either indexed (searchable by the engine) or stored (retained by
 the engine and presented in the results). By using a stored field, you can
 store commonly used data in such a way that you don't need to hit the database
 when processing the search result to get more information.
 
-For example, one great way to leverage this is to pre-rendering an object's
+For example, one great way to leverage this is to pre-render an object's
 search result template DURING indexing. You define an additional field, render
 a template with it and it follows the main indexed record into the index. Then,
 when that record is pulled when it matches a query, you can simply display the
@@ -152,9 +152,9 @@ Keeping The Index Fresh
 =======================
 
 There are several approaches to keeping the search index in sync with your
-database. None are more correct than the others and depending the traffic you
-see, the churn rate of your data and what concerns are important to you
-(CPU load, how recent, et cetera).
+database. None are more correct than the others and which one you use depends
+on the traffic you see, the churn rate of your data, and what concerns are
+important to you (CPU load, how recent, et cetera).
 
 The conventional method is to use ``SearchIndex`` in combination with cron
 jobs. Running a ``./manage.py update_index`` every couple hours will keep your
