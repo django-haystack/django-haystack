@@ -153,8 +153,8 @@ class SearchField(object):
                 return current_objects.all()
             return []
 
-        elif not hasattr(current_objects, '__iter__'):
-            current_objects = [current_objects]
+        if not isinstance(current_objects, list):
+            return [current_objects]
 
         return current_objects
 
