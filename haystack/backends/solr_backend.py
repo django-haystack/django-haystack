@@ -3,10 +3,18 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import warnings
+import json
+
+# Try to import urljoin from the Python 3 reorganized stdlib first:
+try:
+    from urllib.parse import urljoin
+except ImportError:
+    from urlparse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
+from django.utils.functional import cached_property
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
@@ -47,6 +55,13 @@ class SolrSearchBackend(BaseSearchBackend):
 
         self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
+
+    @cached_property
+    def schema_admin(self):
+        '''
+        SolrSchemaAdmin singleton
+        '''
+        return SolrSchemaAdmin(self.conn.url, self.conn.session)
 
     def update(self, index, iterable, commit=True):
         docs = []
@@ -451,11 +466,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
         for field_name, field_class in fields.items():
             field_data = {
-                'field_name': field_class.index_fieldname,
+                'name': field_class.index_fieldname,
                 'type': 'text_en',
                 'indexed': 'true',
                 'stored': 'true',
-                'multi_valued': 'false',
+                'multiValued': 'false',
             }
 
             if field_class.document is True:
@@ -480,7 +495,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'location'
 
             if field_class.is_multivalued:
-                field_data['multi_valued'] = 'true'
+                field_data['multiValued'] = 'true'
 
             if field_class.stored is False:
                 field_data['stored'] = 'false'
@@ -746,3 +761,41 @@ class SolrSearchQuery(BaseSearchQuery):
 class SolrEngine(BaseEngine):
     backend = SolrSearchBackend
     query = SolrSearchQuery
+
+
+class SolrSchemaAdmin(object):
+    """
+    Handles Schema API operations: see https://wiki.apache.org/solr/SchemaRESTAPI
+    """
+    def __init__(self, url, session):
+        super(SolrSchemaAdmin, self).__init__()
+        self.url = url
+        self.session = session
+
+    def _post(self, url, data=None, headers=None):
+        """
+        Post json encoded data body to a Schema endpoint
+        """
+        if data is None:
+            data = {}
+        if headers is None:
+            headers = {}
+        headers['content-type'] = 'application/json'
+        resp = self.session.post(url, data=json.dumps(data), headers=headers)
+        return resp
+
+    def get_fields(self):
+        url = urljoin(self.url, 'schema/fields')
+        fields = self.session.get(url).json().get('fields')
+        
+        return {f['name']: f for f in fields}
+        
+    def modify_fields(self, fields, action):
+        """ action can be one of add, delete, or replace """
+        if not isinstance(fields, list):
+            fields = [fields]
+        if action == 'delete':
+            fields = [{'name':f['name']} for f in fields]
+        
+        post_request = '{}-field'.format(action)
+        return self._post(urljoin(self.url, 'schema'), {post_request : fields})

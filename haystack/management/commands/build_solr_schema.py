@@ -1,14 +1,14 @@
 # encoding: utf-8
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from django.template import Context, loader
 
-from haystack import connections, connection_router, constants
-from haystack.backends.solr_backend import SolrSearchBackend
+from haystack import connections, constants
 
+from haystack.backends.solr_backend import SolrSearchBackend
+from haystack.exceptions import SearchBackendError
 
 class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes."
@@ -25,13 +25,44 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
+
         using = options.get('using')
-        schema_xml = self.build_template(using=using)
+        backend = connections[using].get_backend()
+
+        if not isinstance(backend, SolrSearchBackend):
+            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % backend.connection_alias)
 
         if options.get('filename'):
-            self.write_file(options.get('filename'), schema_xml)
-        else:
-            self.print_stdout(schema_xml)
+            schema_xml = self.build_template(using=using)
+            if options.get('filename'):
+                self.write_file(options.get('filename'), schema_xml)
+            else:
+                self.print_schema(schema_xml)
+            return
+
+        content_field_name, fields = backend.build_schema(connections[using].get_unified_index().all_searchfields())
+
+        django_fields = [
+            dict(name=constants.ID, type="string", indexed="true", stored="true", multiValued="false", required="true"),
+            dict(name= constants.DJANGO_CT, type="string", indexed="true", stored="true", multiValued="false"),
+            dict(name= constants.DJANGO_ID, type="string", indexed="true", stored="true", multiValued="false"),
+            dict(name="_version_", type="long", indexed="true", stored ="true"),
+        ]
+
+        admin = backend.schema_admin
+        # dict of fields, where field names are keys
+        existing_fields = admin.get_fields()
+
+        for field in fields + django_fields:
+            prior_field = existing_fields.get(field['name'])
+
+            # check if the field in `search_indexes` matches that currently defined in the Solr schema
+            if prior_field and not self.compare_caseless_dict(prior_field, field):
+                resp = admin.modify_fields(field, action='replace')
+            else:
+                resp = admin.modify_fields(field, action='add')
+
+            self.log(field, resp, backend)
 
     def build_context(self, using):
         backend = connections[using].get_backend()
@@ -56,7 +87,7 @@ class Command(BaseCommand):
         c = self.build_context(using=using)
         return t.render(c)
 
-    def print_stdout(self, schema_xml):
+    def print_schema(self, schema_xml):
         self.stderr.write("\n")
         self.stderr.write("\n")
         self.stderr.write("\n")
@@ -68,3 +99,25 @@ class Command(BaseCommand):
     def write_file(self, filename, schema_xml):
         with open(filename, 'w') as schema_file:
             schema_file.write(schema_xml)
+
+    def log(self, field, response, backend):
+        try:
+            message = response.json()
+        except ValueError as exc:
+            self.stderr.write('Unable to decode response from Solr: %s' % exc)
+            raise SearchBackendError('Unable to decode response from Solr')
+
+        if 'errors' in message:
+            self.stdout.write("%s." % [" ".join(err.get('errorMessages')) for err in message['errors']])
+        elif 'responseHeader' in message and 'status' in message['responseHeader']:
+            self.stdout.write("Successfully created the field %s" % field['name'])
+        else:
+            self.stdout.write("%s" % message)
+
+    @staticmethod
+    def compare_caseless_dict(d1, d2):
+        """ Compare dictionaries with case insensitive keys """
+        d1 = {k: unicode(v).lower() for k, v in d1.items()}
+        d2 = {k: unicode(v).lower() for k, v in d2.items()}
+
+        return d1 == d2
