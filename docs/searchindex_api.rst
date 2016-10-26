@@ -88,11 +88,11 @@ within which to primarily search. Because this ideal is so central and most of
 Haystack is designed to have pluggable backends, it is important to ensure that
 all engines have at least a bare minimum of the data they need to function.
 
-As a result, when creating a ``SearchIndex``, at least one field must be marked
-with ``document=True``. This signifies to Haystack that whatever is placed in
-this field while indexing is to be the primary text the search engine indexes.
-The name of this field can be almost anything, but ``text`` is one of the
-more common names used.
+As a result, when creating a ``SearchIndex``, one (and only one) field must be
+marked with ``document=True``. This signifies to Haystack that whatever is
+placed in this field while indexing is to be the primary text the search engine
+indexes. The name of this field can be almost anything, but ``text`` is one of
+the more common names used.
 
 
 Stored/Indexed Fields
