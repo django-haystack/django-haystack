@@ -8,6 +8,7 @@ from django import forms
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
+from django.test import override_settings
 from django.test import TestCase
 from django.utils.six.moves import queue
 from test_haystack.core.models import AnotherMockModel, MockModel
@@ -152,9 +153,9 @@ class SearchViewTestCase(TestCase):
             del settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING']
 
 
+@override_settings(ROOT_URLCONF='test_haystack.results_per_page_urls')
 class ResultsPerPageTestCase(TestCase):
     fixtures = ['base_data']
-    urls = 'test_haystack.results_per_page_urls'
 
     def setUp(self):
         super(ResultsPerPageTestCase, self).setUp()
