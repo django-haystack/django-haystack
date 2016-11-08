@@ -12,7 +12,10 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
-install_requires = ["Django>=1.11"]
+install_requires = [
+    'Django>=1.11',
+    'sparse_list',
+]
 
 tests_require = [
     "pysolr>=3.7.0",
