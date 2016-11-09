@@ -238,7 +238,7 @@ class SearchQuerySet(object):
 
         if results is None or len(results) == 0:
             # trim missing stuff from the result cache
-            del self._result_cache[start:]
+            del self._result_cache[start:len(self._result_cache)]
             return False
 
         # Setup the full cache now that we know how many results there are.
@@ -271,11 +271,12 @@ class SearchQuerySet(object):
                 # Tell the query where to start from and how many we'd like.
                 self.query._reset()
                 self.query.set_limits(fill_start, fill_end)
+
                 results = self.query.get_results()
 
                 if results is None or len(results) == 0:
                     # No more results. Trim missing stuff from the result cache
-                    del self._result_cache[cache_start:]
+                    del self._result_cache[cache_start:len(self._result_cache)]
                     break
             else:
                 break
