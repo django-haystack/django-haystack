@@ -87,7 +87,7 @@ class ManagerTestCase(TestCase):
         self.assertIn('distance_point', params)
         self.assertDictEqual(params['distance_point'], {'field': 'location',
                                                          'point': p})
-        self.assertTupleEqual(params['distance_point']['point'].get_coords(), (1.23, 4.56))
+        self.assertTupleEqual(params['distance_point']['point'].coords, (1.23, 4.56))
 
         self.assertListEqual(params['sort_by'], ['distance'])
 

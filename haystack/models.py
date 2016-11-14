@@ -127,7 +127,7 @@ class SearchResult(object):
             if not hasattr(self, self._point_of_origin['field']):
                 raise SpatialError("The field '%s' was not included in search results, so the distance could not be calculated." % self._point_of_origin['field'])
 
-            po_lng, po_lat = self._point_of_origin['point'].get_coords()
+            po_lng, po_lat = self._point_of_origin['point'].coords
             location_field = getattr(self, self._point_of_origin['field'])
 
             if location_field is None:
