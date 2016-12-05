@@ -3,7 +3,7 @@ import warnings
 
 from django.conf import settings
 
-from ..utils import unittest
+import unittest
 from haystack.utils import log as logging
 
 warnings.simplefilter('ignore', Warning)
