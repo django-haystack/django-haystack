@@ -1007,6 +1007,8 @@ class BaseSearchQuery(object):
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
         clone.spelling_query = self.spelling_query
+        clone._more_like_this = self._more_like_this
+        clone._mlt_instance = self._mlt_instance
 
         return clone
 
