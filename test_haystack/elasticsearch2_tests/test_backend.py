@@ -1113,12 +1113,12 @@ class LiveElasticsearch2MoreLikeThisTestCase(TestCase):
 
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
-            mi = MockModel.objects.defer('foo').get(pk=1)
-            self.assertEqual(mi._deferred, True)
-            deferred = self.sqs.models(MockModel).more_like_this(mi)
-            self.assertEqual(deferred.count(), 0)
-            self.assertEqual([result.pk for result in deferred], [])
-            self.assertEqual(len([result.pk for result in deferred]), 0)
+            qs = MockModel.objects.defer('foo')
+            self.assertEqual(qs.query.deferred_loading[1], True)
+            deferred = self.sqs.models(MockModel).more_like_this(qs.get(pk=1))
+            self.assertEqual(deferred.count(), 10)
+            self.assertEqual({result.pk for result in deferred}, {u'10', u'5', u'21', u'2', u'4', u'6', u'23', u'9', u'14', u'16'})
+            self.assertEqual(len([result.pk for result in deferred]), 10)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(
