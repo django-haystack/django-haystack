@@ -29,6 +29,7 @@ addons:
         - wajig
 
 before_install:
+    - sudo apt-get install -qy oracle-java8-installer
     - mkdir -p $HOME/download-cache
     # See https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo
     - wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
