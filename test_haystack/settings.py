@@ -95,13 +95,21 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-if 'elasticsearch' in HAYSTACK_CONNECTIONS:
+if "elasticsearch" in HAYSTACK_CONNECTIONS:
     try:
         import elasticsearch
 
-        if (2, ) <= elasticsearch.__version__ <= (3, ):
-            HAYSTACK_CONNECTIONS['elasticsearch'].update({
-                'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine'
-            })
+        if (2,) <= elasticsearch.__version__ <= (3,):
+            HAYSTACK_CONNECTIONS["elasticsearch"].update(
+                {
+                    "ENGINE": "haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine"
+                }
+            )
+        elif (5,) <= elasticsearch.__version__ <= (6,):
+            HAYSTACK_CONNECTIONS["elasticsearch"].update(
+                {
+                    "ENGINE": "haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine"
+                }
+            )
     except ImportError:
-        del HAYSTACK_CONNECTIONS['elasticsearch']
+        del HAYSTACK_CONNECTIONS["elasticsearch"]
