@@ -5,9 +5,10 @@ import datetime
 
 from django.conf import settings
 
+import haystack
 from haystack.backends import BaseEngine
 from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend, ElasticsearchSearchQuery
-from haystack.constants import DJANGO_CT
+from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
 
@@ -76,16 +77,28 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
                             result_class=None):
-        kwargs = super(Elasticsearch5SearchBackend, self).build_search_kwargs(query_string, sort_by,
-                                                                              start_offset, end_offset,
-                                                                              fields, highlight,
-                                                                              spelling_query=spelling_query,
-                                                                              within=within, dwithin=dwithin,
-                                                                              distance_point=distance_point,
-                                                                              models=models,
-                                                                              limit_to_registered_models=
-                                                                              limit_to_registered_models,
-                                                                              result_class=result_class)
+        index = haystack.connections[self.connection_alias].get_unified_index()
+        content_field = index.document_field
+
+        if query_string == '*:*':
+            kwargs = {
+                'query': {
+                    "match_all": {}
+                },
+            }
+        else:
+            kwargs = {
+                'query': {
+                    'query_string': {
+                        'default_field': content_field,
+                        'default_operator': DEFAULT_OPERATOR,
+                        'query': query_string,
+                        'analyze_wildcard': True,
+                        'auto_generate_phrase_queries': True,
+                        'fuzziness': FUZZINESS,
+                    },
+                },
+            }
 
         filters = []
         if start_offset is not None:
@@ -177,22 +190,22 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                 }
             })
 
-        # if we want to filter, change the query type to filteres
+        # if we want to filter, change the query type to bool
         if filters:
-            kwargs["query"] = {"filtered": {"query": kwargs.pop("query")}}
-            filtered = kwargs["query"]["filtered"]
+            kwargs["query"] = {"bool": {"must": kwargs.pop("query")}}
+            filtered = kwargs["query"]["bool"]
             if 'filter' in filtered:
                 if "bool" in filtered["filter"].keys():
-                    another_filters = kwargs['query']['filtered']['filter']['bool']['must']
+                    another_filters = kwargs['query']['bool']['filter']['bool']['must']
                 else:
-                    another_filters = [kwargs['query']['filtered']['filter']]
+                    another_filters = [kwargs['query']['bool']['filter']]
             else:
                 another_filters = filters
 
             if len(another_filters) == 1:
-                kwargs['query']['filtered']["filter"] = another_filters[0]
+                kwargs['query']['bool']["filter"] = another_filters[0]
             else:
-                kwargs['query']['filtered']["filter"] = {"bool": {"must": another_filters}}
+                kwargs['query']['bool']["filter"] = {"bool": {"must": another_filters}}
 
         return kwargs
 
@@ -265,8 +278,8 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
             if len(narrow_queries) > 0:
                 mlt_query = {
                     "query": {
-                        "filtered": {
-                            'query': mlt_query['query'],
+                        "bool": {
+                            'must': mlt_query['query'],
                             'filter': {
                                 'bool': {
                                     'must': list(narrow_queries)
