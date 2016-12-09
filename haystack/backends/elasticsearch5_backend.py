@@ -107,7 +107,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
             if isinstance(fields, (list, set)):
                 fields = " ".join(fields)
 
-            kwargs['fields'] = fields
+            kwargs['stored_fields'] = fields
 
         if sort_by is not None:
             order_list = []
@@ -146,7 +146,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
 
             kwargs['highlight'] = {
                 'fields': {
-                    content_field: {'store': 'yes'},
+                    content_field: {},
                 }
             }
 
