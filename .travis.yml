@@ -39,7 +39,7 @@ before_install:
         echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
       fi
     - sudo apt-get update
-    - sudo apt-get -y install elasticsearch
+    - sudo apt-get -y install oracle-java8-installer elasticsearch
     - sudo service elasticsearch restart
 
 install:
