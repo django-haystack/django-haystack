@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import warnings
 
 from django.conf import settings
 
@@ -76,7 +77,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, **kwargs):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
 
@@ -101,11 +102,67 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
             }
 
         filters = []
+
+        if fields:
+            if isinstance(fields, (list, set)):
+                fields = " ".join(fields)
+
+            kwargs['fields'] = fields
+
+        if sort_by is not None:
+            order_list = []
+            for field, direction in sort_by:
+                if field == 'distance' and distance_point:
+                    # Do the geo-enabled sort.
+                    lng, lat = distance_point['point'].get_coords()
+                    sort_kwargs = {
+                        "_geo_distance": {
+                            distance_point['field']: [lng, lat],
+                            "order": direction,
+                            "unit": "km"
+                        }
+                    }
+                else:
+                    if field == 'distance':
+                        warnings.warn(
+                            "In order to sort by distance, you must call the '.distance(...)' method.")
+
+                    # Regular sorting.
+                    sort_kwargs = {field: {'order': direction}}
+
+                order_list.append(sort_kwargs)
+
+            kwargs['sort'] = order_list
+
         if start_offset is not None:
             kwargs['from'] = start_offset
 
         if end_offset is not None:
             kwargs['size'] = end_offset - start_offset
+
+        if highlight:
+            # `highlight` can either be True or a dictionary containing custom parameters
+            # which will be passed to the backend and may override our default settings:
+
+            kwargs['highlight'] = {
+                'fields': {
+                    content_field: {'store': 'yes'},
+                }
+            }
+
+            if isinstance(highlight, dict):
+                kwargs['highlight'].update(highlight)
+
+        if self.include_spelling:
+            kwargs['suggest'] = {
+                'suggest': {
+                    'text': spelling_query or query_string,
+                    'term': {
+                        # Using content_field here will result in suggestions of stemmed words.
+                        'field': '_all',
+                    },
+                },
+            }
 
         if narrow_queries is None:
             narrow_queries = set()
