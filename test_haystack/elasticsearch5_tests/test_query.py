@@ -162,48 +162,12 @@ class Elasticsearch5SearchQueryTestCase(TestCase):
         self.assertEqual(len(sqs.query.narrow_queries), 1)
         self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
 
-
-class Elasticsearch5SearchQuerySpatialBeforeReleaseTestCase(TestCase):
-    def setUp(self):
-        super(Elasticsearch5SearchQuerySpatialBeforeReleaseTestCase, self).setUp()
-        self.backend = connections['elasticsearch'].get_backend()
-        self._elasticsearch_version = elasticsearch.VERSION
-        elasticsearch.VERSION = (0, 9, 9)
-
-    def tearDown(self):
-        elasticsearch.VERSION = self._elasticsearch_version
-
     def test_build_query_with_dwithin_range(self):
-        """
-        Test build_search_kwargs with dwithin range for Elasticsearch versions < 1.0.0
-        """
-        search_kwargs = self.backend.build_search_kwargs('where', dwithin={
+        backend = connections['elasticsearch'].get_backend()
+        search_kwargs = backend.build_search_kwargs('where', dwithin={
             'field': "location_field",
             'point': Point(1.2345678, 2.3456789),
             'distance': D(m=500)
         })
-        self.assertEqual(search_kwargs['query']['bool']['filter']['bool']['must'][1]['geo_distance'],
-                         {'distance': 0.5, 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})
-
-
-class Elasticsearch5SearchQuerySpatialAfterReleaseTestCase(TestCase):
-    def setUp(self):
-        super(Elasticsearch5SearchQuerySpatialAfterReleaseTestCase, self).setUp()
-        self.backend = connections['elasticsearch'].get_backend()
-        self._elasticsearch_version = elasticsearch.VERSION
-        elasticsearch.VERSION = (1, 0, 0)
-
-    def tearDown(self):
-        elasticsearch.VERSION = self._elasticsearch_version
-
-    def test_build_query_with_dwithin_range(self):
-        """
-        Test build_search_kwargs with dwithin range for Elasticsearch versions >= 1.0.0
-        """
-        search_kwargs = self.backend.build_search_kwargs('where', dwithin={
-            'field': "location_field",
-            'point': Point(1.2345678, 2.3456789),
-            'distance': D(m=500)
-        })
-        self.assertEqual(search_kwargs['query']['bool']['filter']['bool']['must'][1]['geo_distance'],
+        self.assertEqual(search_kwargs['query']['bool']['filter']['geo_distance'],
                          {'distance': "0.500000km", 'location_field': {'lat': 2.3456789, 'lon': 1.2345678}})

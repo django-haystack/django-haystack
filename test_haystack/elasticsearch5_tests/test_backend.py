@@ -1096,7 +1096,7 @@ class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
         results = [result.pk for result in mlt]
         self.assertEqual(mlt.count(), 11)
-        self.assertEqual(set(results), {u'10', u'5', u'2', u'21', u'4', u'6', u'23', u'9', u'14'})
+        self.assertEqual(set(results), {u'10', u'5', u'2', u'21', u'4', u'6', u'16', u'9', u'14'})
         self.assertEqual(len(results), 10)
 
         alt_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=2))
