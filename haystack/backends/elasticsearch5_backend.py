@@ -247,6 +247,12 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                 }
             })
 
+        if within is not None:
+            filters.append(self._build_search_query_within(within))
+
+        if dwithin is not None:
+            filters.append(self._build_search_query_dwithin(dwithin))
+
         # if we want to filter, change the query type to bool
         if filters:
             kwargs["query"] = {"bool": {"must": kwargs.pop("query")}}
@@ -265,6 +271,40 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                 kwargs['query']['bool']["filter"] = {"bool": {"must": another_filters}}
 
         return kwargs
+
+    def _build_search_query_dwithin(self, dwithin):
+        lng, lat = dwithin['point'].get_coords()
+        distance = "%(dist).6f%(unit)s" % {
+            'dist': dwithin['distance'].km,
+            'unit': "km"
+        }
+        return {
+            "geo_distance": {
+                "distance": distance,
+                dwithin['field']: {
+                    "lat": lat,
+                    "lon": lng
+                }
+            }
+        }
+
+    def _build_search_query_within(self, within):
+        from haystack.utils.geo import generate_bounding_box
+        ((south, west), (north, east)) = generate_bounding_box(within['point_1'], within['point_2'])
+        return {
+            "geo_bounding_box": {
+                within['field']: {
+                    "top_left": {
+                        "lat": north,
+                        "lon": west
+                    },
+                    "bottom_right": {
+                        "lat": south,
+                        "lon": east
+                    }
+                }
+            },
+        }
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -308,10 +348,8 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
 
             if additional_query_string and additional_query_string != '*:*':
                 additional_filter = {
-                    "query": {
-                        "query_string": {
-                            "query": additional_query_string
-                        }
+                    "query_string": {
+                        "query": additional_query_string
                     }
                 }
                 narrow_queries.append(additional_filter)
