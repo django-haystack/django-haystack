@@ -21,8 +21,8 @@ following arguments::
     ``--verbosity``:
         Accepted but ignored.
     ``--using``:
-        If provided, determines which connection should be used. Default is
-        ``default``.
+        Update only the named backend (can be used multiple times). By default,
+        all backends will be updated.
     ``--nocommit``:
         If provided, it will pass commit=False to the backend.  This means that the
         update will not become immediately visible and will depend on another explicit commit
@@ -86,8 +86,8 @@ arguments::
           * ``2`` = Full output, including everything from ``1`` plus output
             on each batch that is indexed, which is useful when debugging.
     ``--using``:
-        If provided, determines which connection should be used. Default is
-        ``default``.
+        Update only the named backend (can be used multiple times). By default,
+        all backends will be updated.
     ``--nocommit``:
         If provided, it will pass commit=False to the backend.  This means that the
         updates will not become immediately visible and will depend on another explicit commit
@@ -161,8 +161,8 @@ of the arguments of the following arguments::
           * ``2`` = Full output, including everything from ``1`` plus output
             on each batch that is indexed, which is useful when debugging.
     ``--using``:
-        If provided, determines which connection should be used. Default is
-        ``default``.
+        Update only the named backend (can be used multiple times). By default,
+        all backends will be updated.
     ``--nocommit``:
         If provided, it will pass commit=False to the backend.  This means that the
         update will not become immediately visible and will depend on another explicit commit
@@ -181,8 +181,8 @@ following arguments::
     ``--filename``:
         If provided, directs output to a file instead of stdout.
     ``--using``:
-        If provided, determines which connection should be used. Default is
-        ``default``.
+        Update only the named backend (can be used multiple times). By default
+        all backends will be updated.
 
 .. warning::
 
