@@ -134,11 +134,12 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
 
             kwargs['sort'] = order_list
 
-        if start_offset is not None:
-            kwargs['from'] = start_offset
+        # From/size offsets don't seem to work right in Elasticsearch's DSL. :/
+        # if start_offset is not None:
+        #     kwargs['from'] = start_offset
 
-        if end_offset is not None:
-            kwargs['size'] = end_offset - start_offset
+        # if end_offset is not None:
+        #     kwargs['size'] = end_offset - start_offset
 
         if highlight:
             # `highlight` can either be True or a dictionary containing custom parameters
@@ -256,19 +257,10 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
         # if we want to filter, change the query type to bool
         if filters:
             kwargs["query"] = {"bool": {"must": kwargs.pop("query")}}
-            filtered = kwargs["query"]["bool"]
-            if 'filter' in filtered:
-                if "bool" in filtered["filter"].keys():
-                    another_filters = kwargs['query']['bool']['filter']['bool']['must']
-                else:
-                    another_filters = [kwargs['query']['bool']['filter']]
+            if len(filters) == 1:
+                kwargs['query']['bool']["filter"] = filters[0]
             else:
-                another_filters = filters
-
-            if len(another_filters) == 1:
-                kwargs['query']['bool']["filter"] = another_filters[0]
-            else:
-                kwargs['query']['bool']["filter"] = {"bool": {"must": another_filters}}
+                kwargs['query']['bool']["filter"] = {"bool": {"must": filters}}
 
         if extra_kwargs:
             kwargs.update(extra_kwargs)
