@@ -77,7 +77,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None, **kwargs):
+                            result_class=None, **extra_kwargs):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
 
@@ -269,6 +269,9 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                 kwargs['query']['bool']["filter"] = another_filters[0]
             else:
                 kwargs['query']['bool']["filter"] = {"bool": {"must": another_filters}}
+
+        if extra_kwargs:
+            kwargs.update(extra_kwargs)
 
         return kwargs
 
