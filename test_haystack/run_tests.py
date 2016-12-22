@@ -19,6 +19,8 @@ def run_all(argv=None):
             '--cover-erase', '--verbose',
         ]
 
+    argv.extend([str('--nocapture')])
+
     nose.run_exit(
         argv=argv,
         defaultTest=abspath(dirname(__file__))
