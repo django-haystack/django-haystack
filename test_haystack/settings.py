@@ -94,10 +94,12 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-if os.getenv('VERSION_ES') == ">=2.0.0,<3.0.0":
-    HAYSTACK_CONNECTIONS['elasticsearch'] = {
-        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
-        'URL': '127.0.0.1:9200/',
-        'INDEX_NAME': 'test_default',
-        'INCLUDE_SPELLING': True,
-    }
+try:
+    import elasticsearch
+
+    if (2, ) <= elasticsearch.__version__ <= (3, ):
+        HAYSTACK_CONNECTIONS['elasticsearch'].update({
+            'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine'
+        })
+except ImportError:
+    pass
