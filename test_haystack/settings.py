@@ -102,4 +102,4 @@ try:
             'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine'
         })
 except ImportError:
-    pass
+    del HAYSTACK_CONNECTIONS['elasticsearch']
