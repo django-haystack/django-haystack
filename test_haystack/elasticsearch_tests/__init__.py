@@ -17,7 +17,7 @@ def setup():
             raise ImportError
         from elasticsearch import Elasticsearch, ElasticsearchException
     except ImportError:
-        log.error("'elasticsearch>=1.0.0,<2.0.0' not installed.", exc_info=True)
+        log.error("Skipping ElasticSearch 1 tests: 'elasticsearch>=1.0.0,<2.0.0' not installed.")
         raise unittest.SkipTest("'elasticsearch>=1.0.0,<2.0.0' not installed.")
 
     es = Elasticsearch(settings.HAYSTACK_CONNECTIONS['elasticsearch']['URL'])
