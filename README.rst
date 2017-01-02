@@ -10,7 +10,7 @@ API that allows you to plug in different search backends (such as Solr_,
 Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Elasticsearch: http://elasticsearch.org/
+.. _Elasticsearch: https://www.elastic.co/products/elasticsearch
 .. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
