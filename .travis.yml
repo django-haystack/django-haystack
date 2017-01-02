@@ -26,6 +26,7 @@ addons:
 
 before_install:
     - mkdir -p $HOME/download-cache
+    # See https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo
     - wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
     - >
       if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
