@@ -1,8 +1,232 @@
 Changelog
 =========
 
-%%version%% (unreleased)
-------------------------
+v2.6.0 (2017-01-02)
+-------------------
+
+- Merge #1460: backend support for Elasticsearch 2.x. [Chris Adams]
+
+  Thanks to João Junior (@joaojunior) and Bruno Marques (@ElSaico) for the
+  patch
+
+  Closes #1460
+  Closes #1391
+  Closes #1336
+  Closes #1247
+
+- Docs: update Elasticsearch support status. [Chris Adams]
+
+- Tests: avoid unrelated failures when elasticsearch is not installed.
+  [Chris Adams]
+
+  This avoids spurious failures in tests for other search engines when the
+  elasticsearch client library is not installed at all but the ES backend
+  is still declared in the settings.
+
+- Tests: friendlier log message for ES version checks. [Chris Adams]
+
+  This avoids a potentially scary-looking ImportError flying by in the
+  test output for what's expected in normal usage.
+
+- Tests: update ES version detection in settings. [Chris Adams]
+
+  This allows the tests to work when run locally or otherwise outside of
+  our Travis / Tox scripts by obtaining the version from the installed
+  `elasticsearch` client library.
+
+- Tests: update ES1 client version check message. [Chris Adams]
+
+  The name of the Python module changed over time and this now matches the
+  ES2 codebase behaviour of having the error message give you the exact
+  package to install including the version.
+
+- Update travis script with ES documentation. [Chris Adams]
+
+  Add a comment for anyone wondering why this isn't a simple
+  `add-apt-repository` call
+
+- Fixed More Like This test with deferred query on Elasticsearch 2.x.
+  [Bruno Marques]
+
+- Fixed expected query behaviour on ES2.x test. [Bruno Marques]
+
+- Install elasticsearch2.0 via apt. [joaojunior]
+
+- Install elasticsearch2.0 via apt. [joaojunior]
+
+- Remove typo. [joaojunior]
+
+- Remove services elasticsearch. [joaojunior]
+
+- Fix typo. [joaojunior]
+
+- Sudo=true in .travis.yml to install elasticsearch from apt-get.
+  [joaojunior]
+
+- Fix .travis. [joaojunior]
+
+- Add logging in __init__ tests elasticsearch. [joaojunior]
+
+- Get changes from Master to resolve conflicts. [joaojunior]
+
+- Install elasticsearch1.7 via apt. [joaojunior]
+
+- Update Files to run tests in Elasticsearch2.x. [joaojunior]
+
+- Refactoring the code in pull request #1336 . This pull request is to
+  permit use ElasticSearch 2.X. [joaojunior]
+
+- Improved custom object identifier test. [Chris Adams]
+
+  This provides an example for implementors and ensures that failing to
+  use the custom class would cause a test failure.
+
+- Update management backend documentation for `--using` [flinkflonk]
+
+  Thanks to @flinkflonk for the patch!
+
+  Closes #1215
+
+- Fix filtered "more like this" queries (#1459) [David Cook]
+
+  Now the Solr backend correctly handles a `more_like_this()` query which is subsequently `filter()`-ed.
+
+  Thanks to @divergentdave for the patch and tests!
+
+- ReStructuredText link format fixes. (#1458) [John Heasly]
+
+- Add note to Backend Support docs about lack of ES 5.X support. (#1457)
+  [John Heasly]
+
+- Replace deprecated Point.get_coords() calls. [Chris Adams]
+
+  This works as far back as Django 1.8, which is the earliest which we
+  support.
+
+  See #1454
+
+- Use setuptools_scm to manage package version numbers. [Chris Adams]
+
+v2.5.1 (2016-10-28)
+-------------------
+
+New
+~~~
+
+- Support for Django 1.10. [Chris Adams]
+
+  Thanks to Morgan Aubert (@ellmetha) for the patch
+
+  Closes #1434
+  Closes #1437
+  Closes #1445
+
+Fix
+~~~
+
+- Contains filter, add endswith filter. [Antony]
+
+  * `__contains` now works in a more intuitive manner (the previous behaviour remains the default for `=` shortcut queries and can be requested explicitly with `__content`)
+  * `__endswith` is now supported as the logical counterpart to `__startswith`
+
+  Thanks to @antonyr for the patch and @sebslomski for code review and testing.
+
+Other
+~~~~~
+
+- V2.5.1. [Chris Adams]
+
+- Add support for Django 1.10 (refs: #1437, #1434) [Morgan Aubert]
+
+- Docs: fix Sphinx hierarchy issue. [Chris Adams]
+
+- Fix multiprocessing regression in update_index. [Chris Adams]
+
+  4e1e2e1c5df1ed1c5432b9d26fcb9dc1abab71f4 introduced a bug because it
+  used a property name which exists on haystack.ConnectionHandler but not
+  the Django ConnectionHandler class it's modeled on. Long-term, we should
+  rename the Haystack class to something like `SearchConnectionHandler`
+  to avoid future confusion.
+
+  Closes #1449
+
+- Doc: cleanup searchindex_api.rst. [Jack Norman]
+
+  Thanks to Jack Norman (@jwnorman) for the patch
+
+- Merge pull request #1444 from jeremycline/master. [Chris Adams]
+
+  Upgrade setuptools in Travis so urllib3-1.18 installs
+
+- Upgrade setuptools in Travis so urllib3-1.18 installs. [Jeremy Cline]
+
+  The version of setuptools in Travis is too old to handle <= as an
+  environment marker.
+
+- Tests: accept Solr/ES config from environment. [Chris Adams]
+
+  This makes it easy to override these values for e.g. running test
+  instances using Docker images with something like this:
+
+  ```
+  TEST_ELASTICSEARCH_1_URL="http://$(docker port elasticsearch-1.7 9200/tcp)/" TEST_SOLR_URL="http://$(docker port solr-6 8983/tcp)/solr/" test_haystack/run_tests.py
+  ```
+
+  See #1408
+
+- Merge pull request #1418 from Alkalit/master. [Steve Byerly]
+
+  Added link for 2.5.x version docs
+
+- Added link for 2.5.x version. [Alexey Kalinin]
+
+- Merge pull request #1432 from farooqaaa/master. [Steve Byerly]
+
+  Added missing `--batch-size` argument for `rebuild_index` management command.
+
+- Added missing --batch-size argument. [Farooq Azam]
+
+- Merge pull request #1036 from merwok/patch-1. [Steve Byerly]
+
+  Documentation update
+
+- Use ellipsis instead of pass. [Éric Araujo]
+
+- Fix code to enable highlighting. [Éric Araujo]
+
+- Merge pull request #1392 from browniebroke/bugfix/doc-error. [Steve
+  Byerly]
+
+  Fix Sphinx errors in the changelog
+
+- Fix Sphinx errors in the changelog. [Bruno Alla]
+
+- Merge pull request #1341 from tymofij/solr-hl-options. [Steve Byerly]
+
+- Merge master > tymofij/solr-hl-options. [Steve Byerly]
+
+- Make solr backend accept both shortened and full-form highlighting
+  options. [Tim Babych]
+
+- Autoprefix 'hl.' for solr options. [Tim Babych]
+
+- Update gitignore to not track test artifacts. [Steve Byerly]
+
+- Merge pull request #1413 from tymofij/patch-2. [Steve Byerly]
+
+  typo: suite -> suit
+
+- Typo: suite -> suit. [Tim Babych]
+
+- Merge pull request #1412 from SteveByerly/highlight_sqs_docs. [Steve
+  Byerly]
+
+  improve sqs highlight docs - illustrate custom parameters
+
+- Improve highlight docs for custom options. [Steve Byerly]
+
+v2.5.0 (2016-07-11)
+-------------------
 
 New
 ~~~
@@ -29,7 +253,7 @@ New
   This allows the default values to be overriden and arbitrary
   backend-specific parameters may be provided to Solr or ElasticSearch.
 
-  Thanks to Tim Babych (@tymofij) for the patch
+  Thanks to @tymofij for the patch
 
   Closes #1334
 
@@ -109,6 +333,13 @@ Changes
 
 Fix
 ~~~
+
+- Attribute resolution on models which have a property named `all`
+  (#1405) [Henrique Chehad]
+
+  Thanks to Henrique Chehad (@henriquechehad) for the patch
+
+  Closes #1404
 
 - Tests will fall back to the Apache archive server. [Chris Adams]
 
@@ -200,6 +431,34 @@ Fix
 
 Other
 ~~~~~
+
+- Docs: update unsupported backends notes. [Chris Adams]
+
+  * Officially suggest developing backends as separate projects
+  * Recommend Sphinx users consider django-sphinxql
+
+- V2.5.0. [Chris Adams]
+
+- Bump version to 2.5.dev2. [Chris Adams]
+
+- AUTHORS. [Tim Babych]
+
+- Expand my username into name in changelog.txt. [Tim Babych]
+
+- Corrected non-ascii characters in comments. (#1390) [Mark Walker]
+
+- Add lower and upper bounds for django versions. [Simon Hanna]
+
+- Convert readthedocs link for their .org -> .io migration for hosted
+  projects. [Adam Chainz]
+
+  As per [their blog post of the 27th April](https://blog.readthedocs.com/securing-subdomains/) ‘Securing subdomains’:
+
+  > Starting today, Read the Docs will start hosting projects from subdomains on the domain readthedocs.io, instead of on readthedocs.org. This change addresses some security concerns around site cookies while hosting user generated data on the same domain as our dashboard.
+
+  Test Plan: Manually visited all the links I’ve modified.
+
+- V2.5.dev1. [Chris Adams]
 
 - Merge pull request #1349 from sbussetti/master. [Chris Adams]
 
@@ -679,7 +938,7 @@ v2.4.0 (2015-06-09)
 - App_loading cleanup. [Chris Adams]
 
   * Add support for Django 1.7+ AppConfig
-  * Rename internal app_loading functions to have haystack\_ prefix to make
+  * Rename internal app_loading functions to have haystack_ prefix to make
     it immediately obvious that they are not Django utilities and start
   * Add tests to avoid regressions for apps nested with multiple levels of
     module hierarchy like `raven.contrib.django.raven_compat`
@@ -1183,12 +1442,9 @@ v2.2.0 (2014-08-03)
   * Massively simplified test runner (``python setup.py test``)
 
   Minor updates:
-
   * Travis:
-
-    - Test Python 3.4
-    - Use Solr 4.6.1
-
+      - Test Python 3.4
+      - Use Solr 4.6.1
   * Simplified legacy test code which can now be replaced by the test utilities in newer versions of Django
   * Update ElasticSearch client & tests for ES 1.0+
   * Add option for SearchModelAdmin to specify the haystack connection to use
@@ -1593,8 +1849,10 @@ v2.2.0 (2014-08-03)
 
 - Merge pull request #413 from phill-tornroth/patch-1. [Justin Caratzas]
 
+  Silly little change, I know.. but I actually ran into a case where I acci
+
 - Silly little change, I know.. but I actually ran into a case where I
-  accidentally passed a list of models in without \*ing them. When that
+  accidentally passed a list of models in without *ing them. When that
   happens, we get a string formatting exception (not all arguments were
   formatted) instead of the useful "that ain't a model, kid" business.
   [Phill Tornroth]
@@ -3739,7 +3997,7 @@ v1.1 (2010-11-23)
 
 - We actually want `repr`, not `str`. [Daniel Lindsley]
 
-- Pushed the `model_attr` check lower down into the `SearchField` and
+- Pushed the `model_attr` check lower down into the `SearchField`s and
   make it occur later, so that exceptions come at a point where Django
   can better deal with them. [Daniel Lindsley]
 
@@ -3961,7 +4219,7 @@ v1.1 (2010-11-23)
   SmileyChris for patches. [Daniel Lindsley]
 
 - Added a note and an exception about consistent fieldnames for the
-  document field across all `SearchIndex` classes. Thanks sk1p\_! [Daniel
+  document field across all `SearchIndex` classes. Thanks sk1p_! [Daniel
   Lindsley]
 
 - Possible thread-safety fix related to registration handling. [Daniel
@@ -4304,7 +4562,7 @@ v1.1 (2010-11-23)
 - Corrected Xapian's capabilities. Thanks richardb! [Daniel Lindsley]
 
 - BACKWARD INCOMPATIBLE - Altered all settings to be prefixed with
-  HAYSTACK\_. Thanks Collin! [Daniel Lindsley]
+  HAYSTACK_. Thanks Collin! [Daniel Lindsley]
 
 - Test cleanup from previous commits. [Daniel Lindsley]
 
