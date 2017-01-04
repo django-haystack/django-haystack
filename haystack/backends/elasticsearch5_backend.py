@@ -177,7 +177,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                         '_type': 'terms',
                     },
                     'terms': {
-                        'field': facet_fieldname,
+                        'field': index.get_facet_fieldname(facet_fieldname),
                     }
                 }
                 if 'order' in extra_options:
@@ -427,7 +427,10 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
 
 
 class Elasticsearch5SearchQuery(ElasticsearchSearchQuery):
-    pass
+    def add_field_facet(self, field, **options):
+        """Adds a regular facet on a field."""
+        # to be renamed to the facet fieldname by build_search_kwargs later
+        self.facets[field] = options.copy()
 
 
 class Elasticsearch5SearchEngine(BaseEngine):
