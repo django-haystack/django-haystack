@@ -1189,9 +1189,9 @@ class LiveElasticsearch5AutocompleteTestCase(TestCase):
                          {'1', '12', '6', '14', '7', '4', '23', '17', '13', '18', '20', '22', '19', '15', '10', '2'})
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
-        self.assertTrue('mod' in autocomplete[2].text.lower())
-        self.assertTrue('mod' in autocomplete[3].text.lower())
-        self.assertTrue('mod' in autocomplete[4].text.lower())
+        self.assertTrue('mod' in autocomplete[6].text.lower())
+        self.assertTrue('mod' in autocomplete[9].text.lower())
+        self.assertTrue('mod' in autocomplete[13].text.lower())
         self.assertEqual(len([result.pk for result in autocomplete]), 16)
 
         # Test multiple words.
