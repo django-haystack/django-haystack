@@ -135,7 +135,7 @@ class SearchView(object):
             'suggestion': None,
         }
 
-        if self.results and hasattr(self.results, 'query') and self.results.query.backend.include_spelling:
+        if hasattr(self.results, 'query') and self.results.query.backend.include_spelling:
             context['suggestion'] = self.form.get_suggestion()
 
         context.update(self.extra_context())
