@@ -140,11 +140,19 @@ class SearchViewTestCase(TestCase):
         from django.conf import settings
         old = settings.HAYSTACK_CONNECTIONS['default'].get('INCLUDE_SPELLING', None)
 
+        settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = True
+
         sv = SearchView()
         sv.query = 'Nothing'
         sv.results = []
         sv.build_page = lambda: (None, None)
-        output = sv.create_response()
+        sv.create_response()
+        context = sv.get_context()
+
+        self.assertIn('suggestion', context,
+                      msg='Spelling suggestions should be present even if'
+                          ' no results were returned')
+        self.assertEqual(context['suggestion'], None)
 
         # Restore
         settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = old
