@@ -62,12 +62,25 @@ def update_worker(args):
 
 
 def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
-              max_retries=DEFAULT_MAX_RETRIES):
+              max_retries=DEFAULT_MAX_RETRIES, last_max_pk=None):
 
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
     small_cache_qs = qs.all()
-    current_qs = small_cache_qs[start:end]
+
+    # If we got the max seen PK from last batch, use it to restrict the qs
+    # to values above; this optimises the query for Postgres as not to
+    # devolve into multi-second run time at large offsets.
+    if last_max_pk is not None:
+        current_qs = small_cache_qs.filter(pk__gt=last_max_pk)[:end - start]
+    else:
+        current_qs = small_cache_qs[start:end]
+
+    # Remember maximum PK seen so far
+    max_pk = None
+    current_qs = list(current_qs)
+    if current_qs:
+        max_pk = current_qs[-1].pk
 
     is_parent_process = hasattr(os, 'getppid') and os.getpid() == os.getppid()
 
@@ -116,7 +129,7 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
-
+    return max_pk
 
 class Command(BaseCommand):
     help = "Freshens the index for the given app(s)."
@@ -249,12 +262,15 @@ class Command(BaseCommand):
             if self.workers > 0:
                 ghetto_queue = []
 
+            max_pk = None
             for start in range(0, total, batch_size):
                 end = min(start + batch_size, total)
 
                 if self.workers == 0:
-                    do_update(backend, index, qs, start, end, total, verbosity=self.verbosity,
-                              commit=self.commit, max_retries=self.max_retries)
+                    max_pk = do_update(backend, index, qs, start, end, total,
+                        verbosity=self.verbosity,
+                        commit=self.commit, max_retries=self.max_retries,
+                        last_max_pk=max_pk)
                 else:
                     ghetto_queue.append((model, start, end, total, using, self.start_date, self.end_date,
                                          self.verbosity, self.commit, self.max_retries))
