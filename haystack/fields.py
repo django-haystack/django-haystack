@@ -2,14 +2,14 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
+from collections import Iterable
 
+from django.db.models.manager import BaseManager
 from django.template import loader
 from django.utils import datetime_safe, six
 
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
-
-from inspect import ismethod
 
 
 class NOT_PROVIDED:
@@ -82,81 +82,108 @@ class SearchField(object):
         if self.use_template:
             return self.prepare_template(obj)
         elif self.model_attr is not None:
-            attrs = self.split_model_attr_lookups()
-            current_objects = [obj]
-
-            values = self.resolve_attributes_lookup(current_objects, attrs)
-
-            if len(values) == 1:
-                return values[0]
-            elif len(values) > 1:
-                return values
-
+            return self.resolve_model_attr(obj, self.model_attr)
         if self.has_default():
             return self.default
         else:
             return None
 
-    def resolve_attributes_lookup(self, current_objects, attributes):
+    def _get_attr_or_raise(self, obj, name):
+        # Get attribute from object or raise SearchFieldError
+        try:
+            return getattr(obj, name)
+        except AttributeError:
+            raise SearchFieldError('"%r" has no attribute named "%s"' % (obj, name))
+
+    def _null_check(self, value, name):
+        # Check whether a value is null and take action depending on how
+        # the field is configured:
+        #
+        # - Return the value without further processing if it's not
+        #   null.
+        # - Raise a SearchFieldError if the field doesn't allow null and
+        #   no default is configured on the field.
+        # - Return the default if one is configured on the field.
+        # - Otherwise, return None.
+
+        if value is not None:
+            return value
+
+        null_allowed = self.null
+        has_default = self.has_default()
+        required = not (null_allowed or has_default)
+
+        if required:
+            raise SearchFieldError(
+                'The attribute "%s" is not nullable and no default was specified; '
+                'set `null=True` or `default=<default value>` on the field definition'
+                % (name,))
+
+        if has_default:
+            return self._default
+
+        return None  # Explicitly allow null
+
+    def resolve_model_attr(self, obj, model_attr):
+        """Retrieve attribute, which may be nested, from object.
+
+        Args:
+            obj (Model): A model instance
+            model_attr (str): A string like 'x' to retrieve ``obj.x`` or
+                'x__y__z' to retrieve ``obj.x.y.z``
+
+        Returns:
+            object: The specified attribute
+
+        This starts with a model instance and retrieves the specified
+        attribute, which may be nested in sub-objects.
+
+        While retrieving objects and sub-objects, if the current
+        object...
+
+            - is a manager, its ``all()`` method will be called
+            - is an iterable, sub-objects will be retrieved from the
+              items in the iterable *but only if the iterable itself
+              doesn't have an attribute with the current name*
+
         """
-        Recursive method that looks, for one or more objects, for an attribute that can be multiple
-        objects (relations) deep.
-        """
-        values = []
+        attr = obj
+        names = model_attr.split('__')
 
-        for current_object in current_objects:
-            if not hasattr(current_object, attributes[0]):
-                raise SearchFieldError(
-                    "The model '%s' does not have a model_attr '%s'." % (repr(current_object), attributes[0])
-                )
-
-            if len(attributes) > 1:
-                current_objects_in_attr = self.get_iterable_objects(getattr(current_object, attributes[0]))
-                return self.resolve_attributes_lookup(current_objects_in_attr, attributes[1:])
-
-            current_object = getattr(current_object, attributes[0])
-
-            if current_object is None:
-                if self.has_default():
-                    current_object = self._default
-                elif self.null:
-                    current_object = None
+        for i, name in enumerate(names, 1):
+            try:
+                # Prefer named attribute
+                attr = self._get_attr_or_raise(attr, name)
+            except SearchFieldError as exc:
+                # If the named attribute doesn't exist and the current
+                # object is iterable, get the attribute from the items
+                # the object contains.
+                if isinstance(attr, Iterable):
+                    items = []
+                    for item in attr:
+                        item = self._get_attr_or_raise(item, name)
+                        if item is None:
+                            item = self._null_check(item, name)
+                        items.append(item)
+                    attr = items
                 else:
-                    raise SearchFieldError(
-                        "The model '%s' combined with model_attr '%s' returned None, but doesn't allow "
-                        "a default or null value." % (repr(current_object), self.model_attr)
-                    )
+                    six.raise_from(exc, None)
 
-            if callable(current_object):
-                values.append(current_object())
-            else:
-                values.append(current_object)
+            if attr is None:
+                attr = self._null_check(attr, name)
+                # Fall out of the loop, given any further attempts at
+                # accesses will fail miserably.
+                break
 
-        return values
+            if isinstance(attr, BaseManager):
+                attr = attr.all()
+            elif callable(attr):
+                attr = attr()
 
-    def split_model_attr_lookups(self):
-        """Returns list of nested attributes for looking through the relation."""
-        return self.model_attr.split('__')
+        if isinstance(attr, BaseManager):
+            attr = attr.all()
 
-    @classmethod
-    def get_iterable_objects(cls, current_objects):
-        """
-        Returns iterable of objects that contain data. For example, resolves Django ManyToMany relationship
-        so the attributes of the related models can then be accessed.
-        """
-        if current_objects is None:
-            return []
-
-        if hasattr(current_objects, 'all'):
-            # i.e, Django ManyToMany relationships
-            if ismethod(current_objects.all):
-                return current_objects.all()
-            return []
-
-        elif not hasattr(current_objects, '__iter__'):
-            current_objects = [current_objects]
-
-        return current_objects
+        return attr
 
     def prepare_template(self, obj):
         """

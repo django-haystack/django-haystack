@@ -5,93 +5,116 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 from decimal import Decimal
 
-from mock import Mock
-
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from test_haystack.core.models import MockModel, MockTag, ManyToManyLeftSideModel, ManyToManyRightSideModel, \
-    OneToManyLeftSideModel, OneToManyRightSideModel
+from test_haystack.core.models import (
+    MockModel, MockTag, ManyToManyLeftSideModel, ManyToManyRightSideModel, OneToManyLeftSideModel,
+    OneToManyRightSideModel)
 
 from haystack.fields import *
 
 
-class SearchFieldTestCase(TestCase):
-    def test_get_iterable_objects_with_none(self):
-        self.assertEqual([], SearchField.get_iterable_objects(None))
+class Object(object):
 
-    def test_get_iterable_objects_with_single_non_iterable_object(self):
-        obj = object()
-        expected = [obj]
+    def __init__(self, attrs=()):
+        self.__dict__.update(attrs)
 
-        self.assertEqual(expected, SearchField.get_iterable_objects(obj))
 
-    def test_get_iterable_objects_with_list_stays_the_same(self):
-        objects = [object(), object()]
+class SearchFieldModelAttrRetrievalTest(TestCase):
 
-        self.assertIs(objects, SearchField.get_iterable_objects(objects))
+    def test_get_model_attr(self):
+        obj = Object({
+            'a': Object({
+                'b': Object(),
+            })
+        })
+        field = SearchField()
+        attr = field.resolve_model_attr(obj, 'a__b')
+        self.assertIs(attr, obj.a.b)
 
-    def test_get_iterable_objects_with_django_manytomany_rel(self):
-        left_model = ManyToManyLeftSideModel.objects.create()
-        right_model_1 = ManyToManyRightSideModel.objects.create(name='Right side 1')
-        right_model_2 = ManyToManyRightSideModel.objects.create()
-        left_model.related_models.add(right_model_1)
-        left_model.related_models.add(right_model_2)
+    def test_get_model_attr_from_obj_with_iterable(self):
+        obj = Object({
+            'a': Object({
+                'b': [Object({'c': 'c', 'd': 'd'}), Object({'c': 'c', 'd': 'd'})],
+            })
+        })
+        field = SearchField()
+        items = field.resolve_model_attr(obj, 'a__b__c')
+        self.assertEqual(items, ['c', 'c'])
 
-        result = SearchField.get_iterable_objects(left_model.related_models)
+    def test_model_attr_from_obj_with_many_to_many_relationship(self):
+        related_objects = [
+            ManyToManyRightSideModel.objects.create(),
+            ManyToManyRightSideModel.objects.create(),
+        ]
 
-        self.assertTrue(right_model_1 in result)
-        self.assertTrue(right_model_2 in result)
-
-    def test_get_iterable_objects_with_django_onetomany_rel(self):
-        left_model = OneToManyLeftSideModel.objects.create()
-        right_model_1 = OneToManyRightSideModel.objects.create(left_side=left_model)
-        right_model_2 = OneToManyRightSideModel.objects.create(left_side=left_model)
-
-        result = SearchField.get_iterable_objects(left_model.right_side)
-
-        self.assertTrue(right_model_1 in result)
-        self.assertTrue(right_model_2 in result)
-
-    def test_resolve_attributes_lookup_with_field_that_points_to_none(self):
-        related = Mock(spec=['none_field'], none_field=None)
-        obj = Mock(spec=['related'], related=[related])
-
-        field = SearchField(null=False)
-
-        self.assertRaises(SearchFieldError, field.resolve_attributes_lookup, [obj], ['related', 'none_field'])
-
-    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_is_allowed_to_be_null(self):
-        related = Mock(spec=['none_field'], none_field=None)
-        obj = Mock(spec=['related'], related=[related])
-
-        field = SearchField(null=True)
-
-        self.assertEqual([None], field.resolve_attributes_lookup([obj], ['related', 'none_field']))
-
-    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_has_default(self):
-        related = Mock(spec=['none_field'], none_field=None)
-        obj = Mock(spec=['related'], related=[related])
-
-        field = SearchField(default='Default value')
-
-        self.assertEqual(['Default value'], field.resolve_attributes_lookup([obj], ['related', 'none_field']))
-
-    def test_resolve_attributes_lookup_with_deep_relationship(self):
-        related_lvl_2 = Mock(spec=['value'], value=1)
-        related = Mock(spec=['related'], related=[related_lvl_2, related_lvl_2])
-        obj = Mock(spec=['related'], related=[related])
+        left_object = ManyToManyLeftSideModel.objects.create()
+        left_object.related_models.add(*related_objects)
 
         field = SearchField()
+        items = field.resolve_model_attr(left_object, 'related_models')
 
-        self.assertEqual([1, 1], field.resolve_attributes_lookup([obj], ['related', 'related', 'value']))
+        for item in related_objects:
+            self.assertIn(item, items)
 
-    def test_prepare_with_null_django_onetomany_rel(self):
-        left_model = OneToManyLeftSideModel.objects.create()
+    def test_model_attr_for_obj_with_one_to_many_relationship(self):
+        left_object = OneToManyLeftSideModel.objects.create()
 
-        field = SearchField(model_attr='right_side__pk', null=True)
-        result = field.prepare(left_model)
+        related_objects = [
+            OneToManyRightSideModel.objects.create(left_side=left_object),
+            OneToManyRightSideModel.objects.create(left_side=left_object),
+        ]
 
-        self.assertEqual(None, result)
+        field = SearchField()
+        items = field.resolve_model_attr(left_object, 'right_side')
+
+        for item in related_objects:
+            self.assertIn(item, items)
+
+    def test_prepare_get_attr_from_empty_onetomany_rel(self):
+        # Get a list of attributes from a related collection. In this
+        # case, there are no related objects so the list should be
+        # empty.
+        left_obj = OneToManyLeftSideModel.objects.create()
+
+        field = SearchField(model_attr='right_side__attr')
+        result = field.prepare(left_obj)
+
+        self.assertEqual(result, [])
+
+    def test_prepare_get_nullable_attr_from_onetomany_rel(self):
+        # Get a list of attributes from a related collection. In this
+        # case, the attribute on the related objects may be null so the
+        # list should contain a combination of int and None.
+        left_obj = OneToManyLeftSideModel.objects.create()
+
+        OneToManyRightSideModel.objects.create(attr=1, left_side=left_obj),
+        OneToManyRightSideModel.objects.create(attr=2, nullable_attr=2, left_side=left_obj),
+
+        field = SearchField(model_attr='right_side__nullable_attr', null=True)
+        result = field.prepare(left_obj)
+
+        self.assertEqual(len(result), 2)
+        self.assertIn(None, result)
+        self.assertIn(2, result)
+
+    def test_prepare_get_nullable_attr_from_onetomany_rel_where_null_is_not_allowed(self):
+        # Get a list of attributes from a related collection. In this
+        # case, the attribute on the related objects may be null but the
+        # field doesn't allow null so an error should be raised.
+        left_obj = OneToManyLeftSideModel.objects.create()
+
+        OneToManyRightSideModel.objects.create(attr=1, left_side=left_obj),
+        OneToManyRightSideModel.objects.create(attr=2, nullable_attr=2, left_side=left_obj),
+
+        field = SearchField(model_attr='right_side__nullable_attr', null=False)
+        self.assertRaises(SearchFieldError, field.prepare, left_obj)
+
+        # Make a weak attempt to check the type of the exception.
+        try:
+            field.prepare(left_obj)
+        except SearchFieldError as exc:
+            self.assertIn('null', str(exc))
 
 
 class CharFieldTestCase(TestCase):
