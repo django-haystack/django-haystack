@@ -428,6 +428,12 @@ class SearchQuerySet(object):
         clone.query.add_distance(field, point)
         return clone
 
+    def polygon(self, field, polygon):
+        """Spatial: Adds a polygon-based search to the query."""
+        clone = self._clone()
+        clone.query.add_polygon(field, polygon)
+        return clone
+
     def date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds faceting to a query for the provided field by date."""
         clone = self._clone()

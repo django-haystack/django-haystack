@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D, Distance
 
 from haystack.constants import WGS_84_SRID
@@ -76,3 +76,15 @@ def generate_bounding_box(bottom_left, top_right):
     east, lat_2 = top_right.get_coords()
     min_lat, max_lat = min(lat_1, lat_2), max(lat_1, lat_2)
     return ((min_lat, west), (max_lat, east))
+
+
+def ensure_polygon(geom):
+    """
+    Makes sure the parameter passed in looks like a GEOS ``Polygon``.
+    """
+    ensure_geometry(geom)
+
+    if geom.geom_type != 'Polygon':
+        raise SpatialError("Provided geometry '%s' is not a 'Polygon'." % geom)
+
+    return geom
