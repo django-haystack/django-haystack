@@ -128,6 +128,24 @@ class ManagementCommandTestCase(TestCase):
         call_command('update_index', age=3, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 1)
 
+        call_command('update_index', age="3h", verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 1)
+
+    def test_age_minutes(self):
+        call_command('clear_index', interactive=False, verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 0)
+
+        start = datetime.datetime.now() - datetime.timedelta(minutes=15)
+        end = datetime.datetime.now()
+
+        mock = MockModel.objects.get(pk=1)
+        mock.pub_date = datetime.datetime.now() - datetime.timedelta(minutes=3)
+        mock.save()
+        self.assertEqual(MockModel.objects.filter(pub_date__range=(start, end)).count(), 1)
+
+        call_command('update_index', age="15m", verbosity=0)
+        self.assertEqual(self.solr.search('*:*').hits, 1)
+
     def test_age_with_time_zones(self):
         """Haystack should use django.utils.timezone.now"""
         from django.utils.timezone import now as django_now

@@ -127,8 +127,8 @@ class Command(BaseCommand):
             help='App label of an application to update the search index.'
         )
         parser.add_argument(
-            '-a', '--age', type=int, default=DEFAULT_AGE,
-            help='Number of hours back to consider objects new.'
+            '-a', '--age', default=DEFAULT_AGE,
+            help='Number of hours or minutes back to consider objects new. Format: <number>[h|m]. Default unit is h(ours).'
         )
         parser.add_argument(
             '-s', '--start', dest='start_date',
@@ -189,7 +189,17 @@ class Command(BaseCommand):
             LOG.setLevel(logging.INFO)
 
         if age is not None:
-            self.start_date = now() - timedelta(hours=int(age))
+            delta_args = dict()
+            try:
+                if str(age).endswith('m'):
+                    delta_args['minutes'] = int(age[:-1])
+                elif str(age).endswith('h'):
+                    delta_args['hours'] = int(age[:-1])
+                else:
+                    delta_args['hours'] = int(age)
+            except ValueError:
+                raise ValueError('age must be an integer or of the form <number>[h|m]')
+            self.start_date = now() - timedelta(**delta_args)
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
