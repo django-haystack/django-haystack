@@ -89,7 +89,7 @@ class SearchField(object):
 
             if len(values) == 1:
                 return values[0]
-            else:
+            elif len(values) > 1:
                 return values
 
         if self.has_default():
