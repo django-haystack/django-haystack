@@ -82,6 +82,7 @@ class SimpleSearchBackend(BaseSearchBackend):
 
                 for match in qs:
                     match.__dict__.pop('score', None)
+                    match.__dict__.pop('app_label', None)
                     app_label, model_name = get_model_ct_tuple(match)
                     result = result_class(app_label, model_name, match.pk, 0, **match.__dict__)
                     # For efficiency.
