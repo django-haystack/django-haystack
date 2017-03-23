@@ -231,7 +231,9 @@ define the fields you want to store data with and define a ``get_model`` method.
 We'll create the following ``NoteIndex`` to correspond to our ``Note``
 model. This code generally goes in a ``search_indexes.py`` file within the app
 it applies to, though that is not required. This allows
-Haystack to automatically pick it up. The ``NoteIndex`` should look like::
+Haystack to automatically pick it up. [Please insert link to documentation about 
+how to make Haystack discover the SearchIndex subclass elsewhere]. The 
+``NoteIndex`` should look like::
 
     import datetime
     from haystack import indexes
