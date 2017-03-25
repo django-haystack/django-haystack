@@ -36,6 +36,16 @@ it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart Sol
         # ...or...
         /myproj/templates/search_configuration/solr.xml
 
+.. note::
+    ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
+    provides a default template using some sensible defaults. If you would like
+    to provide your own template, you will need to place it in
+    ``search_configuration/solr.xml``, inside a directory specified by your app's
+    ``TEMPLATE_DIRS`` setting.
+
+    Example: ``/myproj/myapp/templates/search_configuration/solr.xml``
+    
+
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
 distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
 somewhere on your ``PYTHONPATH``.
