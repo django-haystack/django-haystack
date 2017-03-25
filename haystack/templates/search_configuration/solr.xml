@@ -133,6 +133,8 @@
   </types>
 
   <fields>
+    <!-- version is required in Solr 4 -->
+    <field name="_version_" type="long" indexed="true" stored ="true"/>
     <!-- general -->
     <field name="{{ ID }}" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
     <field name="{{ DJANGO_CT }}" type="string" indexed="true" stored="true" multiValued="false"/>
@@ -151,7 +153,9 @@
     <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
 
 {% for field in fields %}
+    {% if field.field_name != ID %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />
+    {% endif %}
 {% endfor %}
   </fields>
 
