@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from haystack import indexes
 
-from ..core.models import MockModel, ScoreMockModel
+from ..core.models import MockModel, ScoreMockModel, MockUUIDModel
 
 
 class SimpleMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -22,5 +22,5 @@ class SimpleMockScoreIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return ScoreMockModel
 
-class SimpleMockUUIDModelIndex(BaseIndex, indexes.Indexable):
+class SimpleMockUUIDModelIndex(indexes.SearchIndex, indexes.Indexable):
       text = indexes.CharField(document=True,model_attr="characteristics")
