@@ -24,6 +24,12 @@ class MockModel(models.Model):
     def hello(self):
         return 'World!'
 
+class MockUUIDModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    characteristics = models.TextField()
+
+    def __unicode__(self):
+        return str(self.id)
 
 class AnotherMockModel(models.Model):
     author = models.CharField(max_length=255)

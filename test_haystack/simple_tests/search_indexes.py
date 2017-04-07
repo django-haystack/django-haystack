@@ -21,3 +21,6 @@ class SimpleMockScoreIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return ScoreMockModel
+
+class SimpleMockUUIDModelIndex(BaseIndex, indexes.Indexable):
+      text = indexes.CharField(document=True,model_attr="characteristics")
