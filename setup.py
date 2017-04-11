@@ -13,7 +13,7 @@ except ImportError:
 
 install_requires = [
     'Django>=1.8',
-    'Django<1.11',
+    'Django<1.12',
 ]
 
 tests_require = [
