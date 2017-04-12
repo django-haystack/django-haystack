@@ -1242,7 +1242,8 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         mi = MockModel.objects.defer('foo').get(pk=1)
         deferred = self.sqs.models(MockModel).more_like_this(mi)
         top_results = [int(result.pk) for result in deferred[:5]]
-        for i in (14, 6, 4, 22, 10):
+
+        for i in (14, 6, 4, 5, 10):
             self.assertIn(i, top_results)
 
     def test_more_like_this_custom_result_class(self):
