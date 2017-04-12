@@ -1213,29 +1213,29 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         # items which we'll confirm are included in the first 5 results. This is still ugly as we're
         # hard-coding primary keys but it's better than breaking any time a Solr update or data
         # change causes a score to shift slightly
-
         top_results = [int(result.pk) for result in all_mlt[:5]]
-        for i in (14, 6, 4, 22, 10):
+        for i in (14, 6, 10, 4, 5):
             self.assertIn(i, top_results)
 
         filtered_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
         self.assertLess(filtered_mlt.count(), all_mlt.count())
         top_filtered_results = [int(result.pk) for result in filtered_mlt[:5]]
 
-        for i in (16, 17, 19, 22, 23):
+        for i in (16, 17, 19, 13, 23):
             self.assertIn(i, top_filtered_results)
 
         mlt_filtered = self.sqs.more_like_this(MockModel.objects.get(pk=3)).filter(name='daniel3')
         self.assertLess(mlt_filtered.count(), all_mlt.count())
         top_mlt_filtered_pks = [int(result.pk) for result in mlt_filtered[:5]]
 
-        for i in (17, 16, 19, 23, 22):
+        for i in (17, 16, 19, 23, 13):
             self.assertIn(i, top_mlt_filtered_pks)
 
         filtered_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
         self.assertLessEqual(filtered_mlt_with_models.count(), all_mlt.count())
         top_filtered_with_models = [int(result.pk) for result in filtered_mlt_with_models[:5]]
-        for i in (14, 6, 4, 22, 10):
+
+        for i in (14, 6, 4, 5, 10):
             self.assertIn(i, top_filtered_with_models)
 
     def test_more_like_this_defer(self):
