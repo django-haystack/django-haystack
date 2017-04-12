@@ -1279,7 +1279,7 @@ class LiveSolrAutocompleteTestCase(TestCase):
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
         self.assertEqual(autocomplete.count(), 5)
-        self.assertEqual([result.pk for result in autocomplete], ['1', '12', '6', '7', '14'])
+        self.assertTrue(set([result.pk for result in autocomplete]) == set(['1', '12', '6', '7', '14']))
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())
@@ -1290,7 +1290,7 @@ class LiveSolrAutocompleteTestCase(TestCase):
         # Test multiple words.
         autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
         self.assertEqual(autocomplete_2.count(), 3)
-        self.assertEqual([result.pk for result in autocomplete_2], ['1', '14', '6'])
+        self.assertTrue(set([result.pk for result in autocomplete_2]) == set(['1', '14', '6']))
         self.assertTrue('your' in autocomplete_2[0].text.lower())
         self.assertTrue('mod' in autocomplete_2[0].text.lower())
         self.assertTrue('your' in autocomplete_2[1].text.lower())
@@ -1302,7 +1302,7 @@ class LiveSolrAutocompleteTestCase(TestCase):
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
         self.assertEqual(autocomplete_3.count(), 4)
-        self.assertEqual([result.pk for result in autocomplete_3], ['12', '1', '14', '22'])
+        self.assertTrue(set([result.pk for result in autocomplete_3]) == set(['12', '1', '14', '22']))
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
