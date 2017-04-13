@@ -387,10 +387,10 @@ class SolrSearchBackend(BaseSearchBackend):
             # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
             # than simply paired elements in a list, which is a nice improvement but incompatible with
             # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
-            spelling_suggestion=''
+            #spelling_suggestion=''
             cols = raw_results.spellcheck.get('collations', [])
             if len(cols):
-                #Handle sol6 suggestion format
+                #Handle sol6 collation format
                 if isinstance(cols,dict):
                         spelling_suggestions= [col['collationQuery'] for col in cols.values()] #aggregate for future use in multi suggestion response
                         spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
@@ -408,7 +408,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 #Legacy Solr4&5 handling
                 else:
                     spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
-
+            print("spelling_suggestion type: {}".format(type(spelling_suggestion)))
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
         unified_index = connections[self.connection_alias].get_unified_index()
