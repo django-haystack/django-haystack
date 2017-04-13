@@ -405,6 +405,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 if isinstance(cols,dict):
                     for word,sug in sugs.items():
                         spelling_suggestions = [item["word"] for item in sug['suggestion']] #aggregate for future use in multi suggestion response
+                        print("spelling_suggestions: {}".format(spelling_suggestions))
                         spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
                 #Legacy Solr4&5 handling
                 else:
