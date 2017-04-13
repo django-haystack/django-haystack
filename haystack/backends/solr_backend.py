@@ -393,6 +393,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 #Handle sol6 collation format
                 if isinstance(cols,dict):
                         spelling_suggestions= [col['collationQuery'] for col in cols.values()] #aggregate for future use in multi suggestion response
+                        print("spelling_suggestions: {}".format(spelling_suggestions))
                         spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
                 #Legacy Solr4&5 handling
                 else:
