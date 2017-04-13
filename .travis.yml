@@ -12,7 +12,7 @@ cache:
     directories:
         - $HOME/download-cache
 jdk:
-  - oraclejdk8
+    - oraclejdk8
 
 addons:
     apt_packages:
