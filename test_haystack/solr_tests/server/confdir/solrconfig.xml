@@ -749,6 +749,16 @@
       <str name="echoParams">explicit</str>
       <int name="rows">10</int>
       <!-- <str name="df">text</str> -->
+      <str name="spellcheck.dictionary">default</str>
+      <str name="spellcheck">on</str>
+      <str name="spellcheck.extendedResults">true</str>
+      <str name="spellcheck.count">10</str>
+      <str name="spellcheck.alternativeTermCount">5</str>
+      <str name="spellcheck.maxResultsForSuggest">5</str>
+      <str name="spellcheck.collate">true</str>
+      <str name="spellcheck.collateExtendedResults">true</str>
+      <str name="spellcheck.maxCollationTries">10</str>
+      <str name="spellcheck.maxCollations">5</str>
     </lst>
     <!-- In addition to defaults, "appends" params can be specified
          to identify values which should be appended to the list of
@@ -802,6 +812,9 @@
          <str>nameOfCustomComponent2</str>
        </arr>
       -->
+      <arr name="last-components">
+        <str>spellcheck</str>
+      </arr>
   </requestHandler>
 
   <!-- A request handler that returns indented JSON by default -->
@@ -908,7 +921,7 @@
     -->
   <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
 
-    <str name="queryAnalyzerFieldType">text_general</str>
+    <str name="queryAnalyzerFieldType">text_en</str>
 
     <!-- Multiple "Spell Checkers" can be declared and used by this
          component
@@ -917,7 +930,7 @@
     <!-- a spellchecker built from a field of the main index -->
     <lst name="spellchecker">
       <str name="name">default</str>
-      <str name="field">_text_</str>
+      <str name="field">text</str>
       <str name="classname">solr.DirectSolrSpellChecker</str>
       <!-- the spellcheck distance measure used, the default is the internal levenshtein -->
       <str name="distanceMeasure">internal</str>

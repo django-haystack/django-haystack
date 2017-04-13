@@ -11,6 +11,8 @@ cache:
     pip: true
     directories:
         - $HOME/download-cache
+jdk:
+  - oraclejdk8
 
 addons:
     apt_packages:

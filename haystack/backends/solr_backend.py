@@ -193,7 +193,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 # this makes option dicts shorter: {'maxAnalyzedChars': 42}
                 # and lets some of options be used as keyword arguments: `.highlight(preserveMulti=False)`
                 kwargs.update({
-                    key if key.startswith("hl.") else ('hl.' + key): highlight[key] 
+                    key if key.startswith("hl.") else ('hl.' + key): highlight[key]
                     for key in highlight.keys()
                 })
 
@@ -387,10 +387,25 @@ class SolrSearchBackend(BaseSearchBackend):
             # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
             # than simply paired elements in a list, which is a nice improvement but incompatible with
             # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
-            if len(raw_results.spellcheck.get('collations', [])):
-                spelling_suggestion = raw_results.spellcheck['collations'][-1]
-            elif len(raw_results.spellcheck.get('suggestions', [])):
-                spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
+            spelling_suggestion=''
+            cols = raw_results.spellcheck.get('collations', [])
+            if len(cols):
+                #Handle sol6 suggestion format
+                if isinstance(cols,dict):
+                    spelling_suggestion += ' '.join(['"{}"'.format(phrase) for phrase in cols])
+                    #Legacy Solr4&5 handling
+                else:
+                    spelling_suggestion += raw_results.spellcheck['collations'][-1]
+                #spelling_suggestion += '"'+raw_results.spellcheck['collations'][-1]+'"'
+            sugs = raw_results.spellcheck.get('suggestions', [])
+            if len(sugs):
+                #Handle sol6 suggestion format
+                if isinstance(cols,dict):
+                    for word,sug in sugs.items():
+                        spelling_suggestion += ' '.join(['{}'.format(item["word"]) for item in sug['suggestion']])
+                #Legacy Solr4&5 handling
+                else:
+                    spelling_suggestion += raw_results.spellcheck['suggestions'][-1]
 
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
@@ -717,6 +732,7 @@ class SolrSearchQuery(BaseSearchQuery):
             search_kwargs.update(kwargs)
 
         results = self.backend.search(final_query, **search_kwargs)
+
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
