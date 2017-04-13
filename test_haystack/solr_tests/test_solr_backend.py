@@ -432,7 +432,8 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 1)
 
         # Ensure that swapping the ``result_class`` works.
-        self.assertTrue(isinstance(self.sb.search(u'index document', result_class=MockSearchResult)['results'][0], MockSearchResult))
+        results = self.sb.search(u'index', result_class=MockSearchResult)
+        self.assertTrue(isinstance(self.sb.search(u'index', result_class=MockSearchResult)['results'][0], MockSearchResult))
 
         # Check the use of ``limit_to_registered_models``.
         self.assertEqual(self.sb.search('', limit_to_registered_models=False), {'hits': 0, 'results': []})
