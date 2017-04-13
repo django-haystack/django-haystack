@@ -1,4 +1,4 @@
-sudo: true
+sudo: required
 dist: trusty
 language: python
 python:
@@ -62,6 +62,7 @@ env:
         - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=1.11,<1.12" VERSION_ES=">=2.0.0,<3.0.0"
 
 matrix:
     allow_failures:

@@ -11,7 +11,7 @@ import requests
 max_retries = 100
 retry_count = 0
 retry_delay = 15
-status_url = 'http://localhost:9001/solr/admin/ping'
+status_url = 'http://localhost:9001/solr/collection1/admin/ping'
 
 
 while retry_count < max_retries:
