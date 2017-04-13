@@ -392,20 +392,22 @@ class SolrSearchBackend(BaseSearchBackend):
             if len(cols):
                 #Handle sol6 suggestion format
                 if isinstance(cols,dict):
-                    spelling_suggestion += ' '.join(['"{}"'.format(phrase) for phrase in cols])
-                    #Legacy Solr4&5 handling
+                        spelling_suggestions= [col['collationQuery'] for col in cols.values()] #aggregate for future use in multi suggestion response
+                        spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
+                #Legacy Solr4&5 handling
                 else:
-                    spelling_suggestion += raw_results.spellcheck['collations'][-1]
+                    spelling_suggestion = raw_results.spellcheck['collations'][-1]
                 #spelling_suggestion += '"'+raw_results.spellcheck['collations'][-1]+'"'
             sugs = raw_results.spellcheck.get('suggestions', [])
             if len(sugs):
                 #Handle sol6 suggestion format
                 if isinstance(cols,dict):
                     for word,sug in sugs.items():
-                        spelling_suggestion += ' '.join(['{}'.format(item["word"]) for item in sug['suggestion']])
+                        spelling_suggestions = [item["word"] for item in sug['suggestion']] #aggregate for future use in multi suggestion response
+                        spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
                 #Legacy Solr4&5 handling
                 else:
-                    spelling_suggestion += raw_results.spellcheck['suggestions'][-1]
+                    spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
 
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
