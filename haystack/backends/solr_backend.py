@@ -392,24 +392,29 @@ class SolrSearchBackend(BaseSearchBackend):
             if len(cols):
                 #Handle sol6 collation format
                 if isinstance(cols,dict):
-                        spelling_suggestions= [col['collationQuery'] for col in cols.values()] #aggregate for future use in multi suggestion response
-                        print("spelling_suggestions: {}".format(spelling_suggestions))
-                        spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
+                    print("Col Dict Path (Solr6) {}".format(type(cols)))
+                    spelling_suggestions= [col['collationQuery'] for col in cols.values()] #aggregate for future use in multi suggestion response
+                    print("spelling_suggestions: {}".format(spelling_suggestions))
+                    spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
                 #Legacy Solr4&5 handling
                 else:
-                    spelling_suggestion = raw_results.spellcheck['collations'][-1]
+                    print("Col List/Tuple Path (Solr4/5) {}".format(type(cols)))
+                    spelling_suggestion = cols[-1]
                 #spelling_suggestion += '"'+raw_results.spellcheck['collations'][-1]+'"'
             sugs = raw_results.spellcheck.get('suggestions', [])
             if len(sugs):
+                print("Sugg Path {}".format(sugs))
                 #Handle sol6 suggestion format
                 if isinstance(sugs,dict):
+                    print("Sugg Dict Path (Solr6) {}".format(type(sugs)))
                     for word,sug in sugs.items():
                         spelling_suggestions = [item["word"] for item in sug['suggestion']] #aggregate for future use in multi suggestion response
                         print("spelling_suggestions: {}".format(spelling_suggestions))
                         spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
                 #Legacy Solr4&5 handling
                 else:
-                    spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
+                    print("Sugg list/Tuple Path (Solr4/5) {}".format(type(sugs)))
+                    spelling_suggestion = sugs[-1]
             print("spelling_suggestion type: {}".format(type(spelling_suggestion)))
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
