@@ -390,7 +390,7 @@ class SolrSearchBackend(BaseSearchBackend):
             #spelling_suggestion=''
             cols = raw_results.spellcheck.get('collations', [])
             sugs = raw_results.spellcheck.get('suggestions', [])
-
+            print("Raw Response: {}".format(raw_results.raw_response))
             if len(cols):
                 print("Col Path {}".format(cols))
                 #Handle sol6 collation format
