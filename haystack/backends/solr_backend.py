@@ -384,40 +384,39 @@ class SolrSearchBackend(BaseSearchBackend):
                     facets[key][facet_field] = list(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
 
         if self.include_spelling and hasattr(raw_results, 'spellcheck'):
-            # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
-            # than simply paired elements in a list, which is a nice improvement but incompatible with
-            # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
-            #spelling_suggestion=''
+            # There are many different formats for Legacy, 6.4, and 6.5
+            # e.g. https://issues.apache.org/jira/browse/SOLR-3029
             cols = raw_results.spellcheck.get('collations', [])
             sugs = raw_results.spellcheck.get('suggestions', [])
-            print("Raw Response: {}".format(raw_results.raw_response))
             if len(cols):
-                print("Col Path {}".format(cols))
-                #Handle sol6 collation format
-                if isinstance(cols,dict):
-                    print("Col Dict Path (Solr6) {}".format(type(cols)))
+                #Handle sol6.5 collation format
+                if isinstance(cols,dict):#Solr
                     spelling_suggestions= [col['collationQuery'] for col in cols.values()] #aggregate for future use in multi suggestion response
-                    print("spelling_suggestions: {}".format(spelling_suggestions))
-                    spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
-                #Legacy Solr4&5 handling
+                #Legacy Legacy & 6.4 handling
                 else:
-                    print("Col List/Tuple Path (Solr4/5) {}".format(type(cols)))
-                    spelling_suggestion = cols[-1]
-                #spelling_suggestion += '"'+raw_results.spellcheck['collations'][-1]+'"'
+                    if isinstance(cols[1],dict):#Solr6.4
+                        spelling_suggestions = [item["collationQuery"] for item in cols if isinstance(item,dict)] #aggregate for future use in multi suggestion response
+                    else:#Legacy Solr format
+                        spelling_suggestions=cols[-1]
+
+                spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
             elif len(sugs):
-                print("Sugg Path {}".format(sugs))
-                #Handle sol6 suggestion format
+                #Handle sol6.5 suggestion format
                 if isinstance(sugs,dict):
-                    print("Sugg Dict Path (Solr6) {}".format(type(sugs)))
                     for word,sug in sugs.items():
                         spelling_suggestions = [item["word"] for item in sug['suggestion']] #aggregate for future use in multi suggestion response
-                        print("spelling_suggestions: {}".format(spelling_suggestions))
-                        spelling_suggestion = spelling_suggestions[-1]#Keep current method of returning single value
-                #Legacy Solr4&5 handling
+                #Legacy Legacy & 6.4 handling
                 else:
-                    print("Sugg list/Tuple Path (Solr4/5) {}".format(type(sugs)))
-                    spelling_suggestion = sugs[-1]
-            print("spelling_suggestion type: {}".format(type(spelling_suggestion)))
+                    spelling_suggestions = []
+                    if isinstance(sugs[1],dict):#Solr6.4
+                        for item in sugs:
+                            if isinstance(item,dict):
+                                spelling_suggestions += [subitem["word"] for subitem in item['suggestion']]
+                    else:#Legacy Solr
+                        spelling_suggestions=sugs[-1]
+
+                spelling_suggestion = spelling_suggestions[-1]
+
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
         unified_index = connections[self.connection_alias].get_unified_index()
