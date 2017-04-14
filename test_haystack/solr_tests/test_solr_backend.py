@@ -767,8 +767,8 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def test_get_spelling(self):
         self.sq.add_filter(SQ(content='Indexy'))
         results = self.sq.get_spelling_suggestion()
-        self.assertEqual(self.sq.get_spelling_suggestion(), u'index')
-        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'index')
+        self.assertEqual(self.sq.get_spelling_suggestion(), u'(index)')
+        self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'(index)')
 
     def test_log_query(self):
         reset_search_queries()

@@ -389,7 +389,10 @@ class SolrSearchBackend(BaseSearchBackend):
             # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
             #spelling_suggestion=''
             cols = raw_results.spellcheck.get('collations', [])
+            sugs = raw_results.spellcheck.get('suggestions', [])
+
             if len(cols):
+                print("Col Path {}".format(cols))
                 #Handle sol6 collation format
                 if isinstance(cols,dict):
                     print("Col Dict Path (Solr6) {}".format(type(cols)))
@@ -401,8 +404,7 @@ class SolrSearchBackend(BaseSearchBackend):
                     print("Col List/Tuple Path (Solr4/5) {}".format(type(cols)))
                     spelling_suggestion = cols[-1]
                 #spelling_suggestion += '"'+raw_results.spellcheck['collations'][-1]+'"'
-            sugs = raw_results.spellcheck.get('suggestions', [])
-            if len(sugs):
+            elif len(sugs):
                 print("Sugg Path {}".format(sugs))
                 #Handle sol6 suggestion format
                 if isinstance(sugs,dict):
