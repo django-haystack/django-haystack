@@ -402,7 +402,7 @@ class SolrSearchBackend(BaseSearchBackend):
             sugs = raw_results.spellcheck.get('suggestions', [])
             if len(sugs):
                 #Handle sol6 suggestion format
-                if isinstance(cols,dict):
+                if isinstance(sugs,dict):
                     for word,sug in sugs.items():
                         spelling_suggestions = [item["word"] for item in sug['suggestion']] #aggregate for future use in multi suggestion response
                         print("spelling_suggestions: {}".format(spelling_suggestions))
