@@ -40,6 +40,9 @@ cd ${SOLR_DIR}
 echo "Creating Solr Core"
 GC_LOG_OPTS= ./bin/solr start -p ${SOLR_PORT}
 GC_LOG_OPTS= ./bin/solr create -c collection1 -d ../confdir -p ${SOLR_PORT}
+
+echo "Getting SOLR info for Debug"
+curl 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on'
 GC_LOG_OPTS= ./bin/solr stop -p ${SOLR_PORT}
 
 # Add MoreLikeThis handler
