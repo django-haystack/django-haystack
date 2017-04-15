@@ -47,6 +47,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
+        self.result_class = SearchResult
 
     def update(self, index, iterable, commit=True):
         docs = []
@@ -139,7 +140,7 @@ class SolrSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Solr using '%s': %s", query_string, e, exc_info=True)
             raw_results = EmptyResults()
 
-        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult), distance_point=kwargs.get('distance_point'))
+        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', self.result_class), distance_point=kwargs.get('distance_point'))
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
@@ -365,7 +366,7 @@ class SolrSearchBackend(BaseSearchBackend):
         spelling_suggestion = None
 
         if result_class is None:
-            result_class = SearchResult
+            result_class = self.result_class
 
         if hasattr(raw_results,'stats'):
             stats = raw_results.stats.get('stats_fields',{})
