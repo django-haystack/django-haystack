@@ -31,7 +31,11 @@ class HighlightNode(template.Node):
             self.max_length = template.Variable(max_length)
 
     def render(self, context):
-        text_block = self.text_block.resolve(context)
+        try:
+            text_block = self.text_block.resolve(context)
+        except template.VariableDoesNotExist:
+            return u''
+            
         query = self.query.resolve(context)
         kwargs = {}
 
