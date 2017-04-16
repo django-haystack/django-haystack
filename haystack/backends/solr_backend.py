@@ -48,8 +48,11 @@ class SolrSearchBackend(BaseSearchBackend):
         self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
 
-    def update(self, index, iterable, commit=True):
+    def update(self, index, iterable, commit=None):
         docs = []
+
+        if commit == None:
+            commit = connection_options.get('COMMIT_UPDATES', True)
 
         for obj in iterable:
             try:
