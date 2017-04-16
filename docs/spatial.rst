@@ -166,7 +166,7 @@ convenient, returning a string-ified version of the coordinates in WGS-84 as
 
         def prepare_location(self, obj):
             # If you're just storing the floats...
-            return "%s,%s" % (obj.latitude, obj.longitude)
+            return "%s,%s" % (obj.longitude, obj.latitude) # remember, longitude first!
 
 Alternatively, you could build a method/property onto the ``Shop`` model that
 returns a ``Point`` based on those coordinates::
