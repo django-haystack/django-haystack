@@ -426,6 +426,7 @@ class ModelSearchIndex(SearchIndex):
 
         if not len(content_fields) == 1:
             raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
+        super(ModelSearchIndex, self).__init__()
 
     def should_skip_field(self, field):
         """
