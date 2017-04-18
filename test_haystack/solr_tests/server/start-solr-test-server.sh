@@ -3,7 +3,7 @@
 set -e
 
 SOLR_VERSION=6.5.0
-SOLR_DIR=solr-${SOLR_VERSION}
+SOLR_DIR=solr
 
 SOLR_PORT=9001
 
@@ -28,18 +28,19 @@ if [ ! -f ${SOLR_ARCHIVE} ]; then
 fi
 
 echo "Extracting Solr ${SOLR_ARCHIVE} to `pwd`/${SOLR_DIR}"
-rm -rf solr-*
+rm -rf ${SOLR_DIR}
 mkdir ${SOLR_DIR}
 FULL_SOLR_DIR=$(readlink -f ./${SOLR_DIR})
 tar -C ${SOLR_DIR} -xf ${SOLR_ARCHIVE} --strip-components=1
 
-echo "Changing into ${SOLR_DIR} "
+echo "Changing into ${FULL_SOLR_DIR} "
 
 cd ${SOLR_DIR}
 
 echo "Creating Solr Core"
 GC_LOG_OPTS= ./bin/solr start -p ${SOLR_PORT}
 GC_LOG_OPTS= ./bin/solr create -c collection1 -d ../confdir -p ${SOLR_PORT}
+GC_LOG_OPTS= ./bin/solr create -c mgmnt -p ${SOLR_PORT}
 
 echo "Getting SOLR info for Debug"
 curl 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on'

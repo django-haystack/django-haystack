@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="example-data-driven-schema" version="1.6">
+<schema name="haystack-schema" version="1.6">
 
     <!--
     ######################## django-haystack specifics begin ########################
@@ -83,7 +83,6 @@
     {% for field in fields %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />
     {% endfor %}
-
     <uniqueKey>{{ ID }}</uniqueKey>
 
     <!--
@@ -173,8 +172,8 @@
 
     <field name="_version_" type="long" indexed="true" stored="false"/>
     <field name="_root_" type="string" indexed="true" stored="false" docValues="false" />
-    <field name="_text_" type="text_general" indexed="true" stored="false" multiValued="true"/>
-    <copyField source="*" dest="_text_"/>
+    <!--<field name="_text_" type="edge_ngram" indexed="true" stored="false" multiValued="true"/>
+    <copyField source="*" dest="_text_"/>-->
 
 
     <!-- Dynamic field definitions allow using convention over configuration

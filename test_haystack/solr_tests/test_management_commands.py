@@ -3,20 +3,23 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+from StringIO import StringIO
+import pysolr
+import os
 from tempfile import mkdtemp
 
-import pysolr
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from mock import patch
 
-from haystack import connections, indexes
+from haystack import connections, indexes, constants
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
-
+from ..utils import get_script_dir
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
@@ -36,6 +39,13 @@ class SolrMockTagSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return MockTag
 
+class SolrMockSecretKeySearchIndex(indexes.SearchIndex, indexes.Indexable):
+    Th3S3cr3tK3y = indexes.CharField(document=True, model_attr='author')
+
+
+    def get_model(self):
+        return MockModel
+
 
 class ManagementCommandTestCase(TestCase):
     fixtures = ['base_data.json', 'bulk_data.json']
@@ -43,6 +53,7 @@ class ManagementCommandTestCase(TestCase):
     def setUp(self):
         super(ManagementCommandTestCase, self).setUp()
         self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['solr']['URL'])
+
 
         # Stow.
         self.old_ui = connections['solr'].get_unified_index()
@@ -182,6 +193,54 @@ class ManagementCommandTestCase(TestCase):
 
         connections['whoosh']._index = self.ui
         self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema', using='whoosh', interactive=False)
+
+    def test_build_schema(self):
+
+        # Stow.
+        oldhdf = constants.HAYSTACK_DOCUMENT_FIELD
+        oldui = connections['solr'].get_unified_index()
+        oldurl = settings.HAYSTACK_CONNECTIONS['solr']['URL']
+
+        needle = 'Th3S3cr3tK3y'
+        constants.HAYSTACK_DOCUMENT_FIELD = needle #Force index to use new key for document_fields
+        settings.HAYSTACK_CONNECTIONS['solr']['URL'] = settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/',1)[0]+'/mgmnt'
+
+        ui = UnifiedIndex()
+        ui.build(indexes=[SolrMockSecretKeySearchIndex()])
+        connections['solr']._index = ui
+
+        renderedfile = StringIO()
+        orig_dir = get_script_dir()+"/confdir"
+        conf_dir = get_script_dir()+"/server/solr/server/solr/mgmnt/conf"
+        schemafile = conf_dir+'/schema.xml'
+        solrcfgfile = conf_dir+'/solrconfig.xml'
+
+        call_command('build_solr_schema',using='solr',stdout=renderedfile)
+        contents = renderedfile.getvalue()
+        self.assertTrue(contents.find("name=\"" + needle)!=-1)
+
+        call_command('build_solr_schema',using='solr',configure_dir=conf_dir)
+        with open(schemafile) as s:
+            self.assertTrue(s.read().find("name=\""+needle)!=-1)
+        with open(solrcfgfile) as s:
+            self.assertTrue(s.read().find("name=\"df\">"+needle)!=-1)
+        self.assertTrue(os.path.isfile(conf_dir+'/managed-schema.old'))
+
+        call_command('build_solr_schema',using='solr',reload=True)
+
+        os.rename(schemafile,schemafile+".bak")
+        while os.path.isfile(schemafile):#work around stupid delay in filesystem
+            pass
+        self.assertRaises(CommandError,call_command,'build_solr_schema',using='solr',reload=True)
+
+        call_command('build_solr_schema',using='solr',filename=schemafile)
+        with open(schemafile) as s:
+            self.assertTrue(s.read().find("name=\""+needle)!=-1)
+
+        #reset
+        constants.HAYSTACK_DOCUMENT_FIELD = oldhdf
+        connections['solr']._index = oldui
+        settings.HAYSTACK_CONNECTIONS['solr']['URL'] = oldurl
 
 
 class AppModelManagementCommandTestCase(TestCase):
