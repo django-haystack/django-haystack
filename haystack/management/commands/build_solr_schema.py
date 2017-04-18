@@ -48,6 +48,7 @@ class Command(BaseCommand):
         solrcfg_xml = self.build_template(using=using,tfile=Command.solrcfg_template_loc)
 
         if options.get('filename'):
+            self.stdout.write("Trying to write schema file located at {}".format(options.get('filename')))
             self.write_file(options.get('filename'), schema_xml)
             if options.get('reload'):
                 connections[using].get_backend().reload()
@@ -71,7 +72,6 @@ class Command(BaseCommand):
                 raise CommandError('Could not configure core to use classic Schema Factory {}'.format(cdir+'/solrconfig.xml'))
 
         if options.get('reload'):
-            print("settings.HAYSTACK_CONNECTIONS['solr']['URL'] ==> {}".format(settings.HAYSTACK_CONNECTIONS['solr']['URL']))
             core= settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/',1)[-1]
             if 'ADMIN_URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
                 raise ImproperlyConfigured("'ADMIN_URL' must be specifid in the HAYSTACK_CONNECTIONS settins for the backend." )

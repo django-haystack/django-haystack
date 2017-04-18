@@ -45,6 +45,8 @@ class SolrSearchBackend(BaseSearchBackend):
         if not 'URL' in connection_options:
             raise ImproperlyConfigured("You must specify a 'URL' in your settings for connection '%s'." % connection_alias)
 
+        self.collate = connection_options.get('COLLATE_SPELLING', True)
+
         self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
 
@@ -147,7 +149,7 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None, stats=None,
+                            result_class=None, stats=None, collate=None,
                             **extra_kwargs):
         kwargs = {'fl': '* score'}
 
@@ -197,9 +199,11 @@ class SolrSearchBackend(BaseSearchBackend):
                     for key in highlight.keys()
                 })
 
+        if collate is None:
+            collate = self.collate
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
-            kwargs['spellcheck.collate'] = 'true'
+            kwargs['spellcheck.collate'] = str(collate).lower()
             kwargs['spellcheck.count'] = 1
 
             if spelling_query:
