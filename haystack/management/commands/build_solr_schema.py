@@ -19,7 +19,6 @@ class Command(BaseCommand):
     schema_template_loc = 'search_configuration/schema.xml'
     solrcfg_template_loc = 'search_configuration/solrconfig.xml'
 
-
     def add_arguments(self, parser):
         parser.add_argument(
             "-f", "--filename",
@@ -109,7 +108,7 @@ class Command(BaseCommand):
             'DJANGO_ID': constants.DJANGO_ID,
         }
 
-    def build_template(self, using, tfile):
+    def build_template(self, using, tfile=schema_template_loc):
         t = loader.get_template(tfile)
         c = self.build_context(using=using)
         return t.render(c)
