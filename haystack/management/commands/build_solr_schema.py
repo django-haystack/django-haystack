@@ -123,6 +123,6 @@ class Command(BaseCommand):
         self.stdout.write(schema_xml)
 
     def write_file(self, filename, schema_xml):
-        with open(filename, 'w', 0) as schema_file:
+        with open(filename, 'w') as schema_file:
             schema_file.write(schema_xml)
             os.fsync(schema_file.fileno())

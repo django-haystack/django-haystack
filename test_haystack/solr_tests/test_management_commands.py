@@ -3,10 +3,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
-from StringIO import StringIO
 import pysolr
 import os
 from tempfile import mkdtemp
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
