@@ -5,14 +5,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import traceback
 
-import pysolr
 import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError
-from django.template import Context, loader
+from django.template import loader
 
-from haystack import connection_router, connections, constants
+from haystack import connections, constants
 from haystack.backends.solr_backend import SolrSearchBackend
 
 
