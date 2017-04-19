@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
-import traceback
 
 import requests
 from django.conf import settings
@@ -56,45 +55,57 @@ class Command(BaseCommand):
         if options.get('configure_dir'):
             cdir = options.get('configure_dir')
             self.stdout.write("Trying to configure core located at {}".format(cdir))
-            if os.path.isfile(cdir+'/managed-schema'):
+
+            managed_schema_path = os.path.join(cdir, 'managed-schema')
+
+            if os.path.isfile(managed_schema_path):
                 try:
-                    os.rename(cdir+'/managed-schema',cdir+'/managed-schema.old')
+                    os.rename(managed_schema_path, '%s.old' % managed_schema_path)
                 except:
-                    raise CommandError('Could not rename managed schema out of the way: {}'.format(cdir+'/managed-schema'))
-            try:
-                self.write_file(cdir+'/schema.xml', schema_xml)
-            except:
-                raise CommandError('Could not configure {}: {}'.format(cdir+'/schema.xml',traceback.format_exc()))
+                    raise CommandError('Could not rename old schema file out of the way: {}'.format(managed_schema_path))
+
+            schema_xml_path = os.path.join(cdir, 'schema.xml')
 
             try:
-                self.write_file(cdir+'/solrconfig.xml',solrcfg_xml)
-            except:
-                raise CommandError('Could not configure core to use classic Schema Factory {}'.format(cdir+'/solrconfig.xml'))
+                self.write_file(schema_xml_path, schema_xml)
+            except EnvironmentError as exc:
+                raise CommandError('Could not configure {}: {}'.format(schema_xml_path, exc))
+
+            solrconfig_path = os.path.join(cdir, 'solrconfig.xml')
+
+            try:
+                self.write_file(solrconfig_path, solrcfg_xml)
+            except EnvironmentError as exc:
+                raise CommandError('Could not write {}: {}'.format(solrconfig_path, exc))
 
         if options.get('reload'):
-            core= settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/',1)[-1]
+            core = settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/', 1)[-1]
+
             if 'ADMIN_URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
-                raise ImproperlyConfigured("'ADMIN_URL' must be specifid in the HAYSTACK_CONNECTIONS settins for the backend." )
+                raise ImproperlyConfigured("'ADMIN_URL' must be specifid in the HAYSTACK_CONNECTIONS settins for the backend")
             if 'URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
-                raise ImproperlyConfigured("'URL' to the core must be specifid in the HAYSTACK_CONNECTIONS settins for the backend.")
+                raise ImproperlyConfigured("'URL' to the core must be specifid in the HAYSTACK_CONNECTIONS settins for the backend")
+
             try:
                 self.stdout.write("Trying to relaod core named {}".format(core))
-                resp = requests.get(settings.HAYSTACK_CONNECTIONS['solr']['ADMIN_URL'],params="action=RELOAD&core="+core).text#TODO: Fix when pysolr passes params as request params instead of data
-                if resp.find('SolrException')!=-1:
+                resp = requests.get(settings.HAYSTACK_CONNECTIONS['solr']['ADMIN_URL'],
+                                    params={'action': 'RELOAD', 'core': core})
+
+                if not resp.ok:
                     raise CommandError('Solr Exception Thrown -- Failed to reload core: {}'.format(resp))
             except CommandError:
                 raise
-            except:
-                raise CommandError('Failed to reload core: {}'.format(traceback.format_exc()))
+            except Exception as exc:
+                raise CommandError('Failed to reload core {}: {}'.format(core, exc))
 
-        if  options.get('filename') is None and options.get('configure_dir') is None and options.get('reload') is None:
+        if not options.get('filename') and not options.get('configure_dir') and not options.get('reload'):
             self.print_stdout(schema_xml)
 
     def build_context(self, using):
         backend = connections[using].get_backend()
 
         if not isinstance(backend, SolrSearchBackend):
-            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % backend.connection_alias)
+            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine" % backend.connection_alias)
 
         content_field_name, fields = backend.build_schema(
             connections[using].get_unified_index().all_searchfields()
