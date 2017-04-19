@@ -33,27 +33,28 @@ mkdir ${SOLR_DIR}
 FULL_SOLR_DIR=$(readlink -f ./${SOLR_DIR})
 tar -C ${SOLR_DIR} -xf ${SOLR_ARCHIVE} --strip-components=1
 
+export SOLR_LOGS_DIR="${FULL_SOLR_DIR}/logs"
+
+install -d ${SOLR_LOGS_DIR}
+
 echo "Changing into ${FULL_SOLR_DIR} "
 
-cd ${SOLR_DIR}
+cd ${FULL_SOLR_DIR}
 
 echo "Creating Solr Core"
-GC_LOG_OPTS= ./bin/solr start -p ${SOLR_PORT}
-GC_LOG_OPTS= ./bin/solr create -c collection1 -d ../confdir -p ${SOLR_PORT}
-GC_LOG_OPTS= ./bin/solr create -c mgmnt -p ${SOLR_PORT}
+./bin/solr start -p ${SOLR_PORT}
+./bin/solr create -c collection1 -d ../confdir -p ${SOLR_PORT}
+./bin/solr create -c mgmnt -p ${SOLR_PORT}
 
-echo "Getting SOLR info for Debug"
-curl 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on'
-GC_LOG_OPTS= ./bin/solr stop -p ${SOLR_PORT}
-
-# Add MoreLikeThis handler
-#perl -p -i -e 's|<!-- A Robust Example|<!-- More like this request handler -->\n  <requestHandler name="/mlt" class="solr.MoreLikeThisHandler" />\n\n\n  <!-- A Robust Example|'g solr/*/conf/solrconfig.xml
+echo "Solr system information:"
+curl --fail --silent 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on' | python -m json.tool
+./bin/solr stop -p ${SOLR_PORT}
 
 echo 'Starting server'
 cd server
 # We use exec to allow process monitors to correctly kill the
 # actual Java process rather than this launcher script:
-export CMD="java -Djetty.port=${SOLR_PORT} -Djava.awt.headless=true -Dapple.awt.UIElement=true -jar start.jar --module=http -Dsolr.install.dir=${FULL_SOLR_DIR}"
+export CMD="java -Djetty.port=${SOLR_PORT} -Djava.awt.headless=true -Dapple.awt.UIElement=true -jar start.jar --module=http -Dsolr.install.dir=${FULL_SOLR_DIR} -Dsolr.log.dir=${SOLR_LOGS_DIR}"
 
 if [ -z "${BACKGROUND_SOLR}" ]; then
     exec $CMD
