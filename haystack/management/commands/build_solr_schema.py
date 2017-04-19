@@ -44,8 +44,8 @@ class Command(BaseCommand):
         if not isinstance(connections[using].get_backend(), SolrSearchBackend):
             raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % connections[using].get_backend().connection_alias)
 
-        schema_xml = self.build_template(using=using,tfile=Command.schema_template_loc)
-        solrcfg_xml = self.build_template(using=using,tfile=Command.solrcfg_template_loc)
+        schema_xml = self.build_template(using=using, template_filename=Command.schema_template_loc)
+        solrcfg_xml = self.build_template(using=using, template_filename=Command.solrcfg_template_loc)
 
         if options.get('filename'):
             self.stdout.write("Trying to write schema file located at {}".format(options.get('filename')))
@@ -108,8 +108,8 @@ class Command(BaseCommand):
             'DJANGO_ID': constants.DJANGO_ID,
         }
 
-    def build_template(self, using, tfile=schema_template_loc):
-        t = loader.get_template(tfile)
+    def build_template(self, using, template_filename=schema_template_loc):
+        t = loader.get_template(template_filename)
         c = self.build_context(using=using)
         return t.render(c)
 
