@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
-import pysolr
 import os
 from tempfile import mkdtemp
 try:
@@ -11,6 +10,7 @@ try:
 except ImportError:
     from io import StringIO
 
+import pysolr
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
@@ -18,7 +18,7 @@ from django.core.management.base import CommandError
 from django.test import TestCase
 from mock import patch
 
-from haystack import connections, indexes, constants
+from haystack import connections, constants, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag

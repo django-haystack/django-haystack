@@ -8,16 +8,15 @@ from django import forms
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
-from django.test import override_settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils.six.moves import queue
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connection_router, connections, indexes
-from haystack.forms import FacetedSearchForm, model_choices, ModelSearchForm, SearchForm
+from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm, model_choices
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from haystack.views import FacetedSearchView, search_view_factory, SearchView
+from haystack.views import FacetedSearchView, SearchView, search_view_factory
 
 
 class InitialedSearchForm(SearchForm):

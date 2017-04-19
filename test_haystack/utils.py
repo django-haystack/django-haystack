@@ -2,12 +2,12 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import unittest
 import inspect
 import os
-import sys
-import string
 import random
+import string
+import sys
+import unittest
 
 from django.conf import settings
 

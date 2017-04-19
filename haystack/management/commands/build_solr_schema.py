@@ -2,18 +2,20 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.core.exceptions import ImproperlyConfigured
-from django.core.management.base import BaseCommand,CommandError
-from django.template import Context, loader
-from django.conf import settings
-
-from haystack import connections, connection_router, constants
-from haystack.backends.solr_backend import SolrSearchBackend
-
-import pysolr
 import os
 import traceback
+
+import pysolr
 import requests
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.base import BaseCommand, CommandError
+from django.template import Context, loader
+
+from haystack import connection_router, connections, constants
+from haystack.backends.solr_backend import SolrSearchBackend
+
+
 class Command(BaseCommand):
     help = "Generates a Solr schema that reflects the indexes using templates under a django template dir 'search_configuration/*.xml'"
     schema_template_loc = 'search_configuration/schema.xml'

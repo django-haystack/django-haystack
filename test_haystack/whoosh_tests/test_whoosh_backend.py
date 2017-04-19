@@ -15,10 +15,10 @@ from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
 from haystack import connections, indexes, reset_search_queries
-from haystack.exceptions import SkipDocument, SearchBackendError
+from haystack.exceptions import SearchBackendError, SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet, SQ
+from haystack.query import SQ, SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, MockModel

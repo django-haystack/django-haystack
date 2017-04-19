@@ -8,8 +8,8 @@ from threading import Thread
 
 from django.test import TestCase
 from django.utils.six.moves import queue
-from test_haystack.core.models import (AFifthMockModel, AThirdMockModel, MockModel, ManyToManyLeftSideModel,
-                                       ManyToManyRightSideModel)
+from test_haystack.core.models import (AFifthMockModel, AThirdMockModel, ManyToManyLeftSideModel,
+                                       ManyToManyRightSideModel, MockModel)
 
 from haystack import connection_router, connections, indexes
 from haystack.exceptions import SearchFieldError
