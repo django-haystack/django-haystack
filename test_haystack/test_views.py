@@ -2,18 +2,18 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import time
 from threading import Thread
 
 from django import forms
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.utils.six.moves import queue
 from test_haystack.core.models import AnotherMockModel, MockModel
 
-from haystack import connection_router, connections, indexes
-from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm, model_choices
+from haystack import connections, indexes
+from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 from haystack.views import FacetedSearchView, SearchView, search_view_factory
@@ -102,10 +102,10 @@ class SearchViewTestCase(TestCase):
         exceptions = []
 
         def threaded_view(resp_queue, view, request):
-            import time;
             time.sleep(2)
+
             try:
-                inst = view(request)
+                view(request)
                 resp_queue.put(request.GET['name'])
             except Exception as e:
                 exceptions.append(e)
