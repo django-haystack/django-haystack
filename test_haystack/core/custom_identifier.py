@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import hashlib
 
+
 def get_identifier_method(key):
     """
     Custom get_identifier method used for testing the

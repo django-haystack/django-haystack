@@ -32,14 +32,14 @@ class AlteredInternalNamesTestCase(TestCase):
         ui.build(indexes=[MockModelSearchIndex()])
         connections['solr']._index = ui
 
-        constants.ID  = 'my_id'
-        constants.DJANGO_CT  = 'my_django_ct'
-        constants.DJANGO_ID  = 'my_django_id'
+        constants.ID = 'my_id'
+        constants.DJANGO_CT = 'my_django_ct'
+        constants.DJANGO_ID = 'my_django_id'
 
     def tearDown(self):
-        constants.ID  = 'id'
-        constants.DJANGO_CT  = 'django_ct'
-        constants.DJANGO_ID  = 'django_id'
+        constants.ID = 'id'
+        constants.DJANGO_CT = 'django_ct'
+        constants.DJANGO_ID = 'django_id'
         connections['solr']._index = self.old_ui
         super(AlteredInternalNamesTestCase, self).tearDown()
 

@@ -62,7 +62,8 @@ MIDDLEWARE_CLASSES = [
 
 ROOT_URLCONF = 'test_haystack.core.urls'
 
-HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter', 'test_haystack.multipleindex.routers.MultipleIndexRouter']
+HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter',
+    'test_haystack.multipleindex.routers.MultipleIndexRouter']
 
 HAYSTACK_CONNECTIONS = {
     'default': {

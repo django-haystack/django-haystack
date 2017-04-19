@@ -50,12 +50,14 @@ class AFourthMockModel(models.Model):
     def __unicode__(self):
         return self.author
 
+
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return super(SoftDeleteManager, self).get_queryset().filter(deleted=False)
 
     def complete_set(self):
         return super(SoftDeleteManager, self).get_queryset()
+
 
 class AFifthMockModel(models.Model):
     author = models.CharField(max_length=255)
@@ -66,6 +68,7 @@ class AFifthMockModel(models.Model):
     def __unicode__(self):
         return self.author
 
+
 class ASixthMockModel(models.Model):
     name = models.CharField(max_length=255)
     lat = models.FloatField()
@@ -73,6 +76,7 @@ class ASixthMockModel(models.Model):
 
     def __unicode__(self):
         return self.name
+
 
 class ScoreMockModel(models.Model):
     score = models.CharField(max_length=10)

@@ -271,7 +271,6 @@ class SearchIndexTestCase(TestCase):
         # Restore the original attribute
         self.mi.__class__.get_updated_field = old_guf
 
-
     def test_prepare(self):
         mock = MockModel()
         mock.pk = 20

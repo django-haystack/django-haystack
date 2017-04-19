@@ -345,7 +345,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         results = self.sb.search(u'*', sort_by=['-pub_date', '-id'])
         self.assertEqual([result.pk for result in results['results']],
                          [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12',
-                          u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'2', u'3', u'1' ])
+                          u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'2', u'3', u'1'])
 
         self.assertRaises(SearchBackendError, self.sb.search, u'*', sort_by=['-pub_date', 'id'])
 

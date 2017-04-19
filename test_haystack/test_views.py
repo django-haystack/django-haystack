@@ -103,7 +103,8 @@ class SearchViewTestCase(TestCase):
         exceptions = []
 
         def threaded_view(resp_queue, view, request):
-            import time; time.sleep(2)
+            import time;
+            time.sleep(2)
             try:
                 inst = view(request)
                 resp_queue.put(request.GET['name'])
