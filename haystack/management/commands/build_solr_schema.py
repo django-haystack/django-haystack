@@ -38,7 +38,6 @@ class Command(BaseCommand):
             help='If provided, attempts to automatically reload the solr core'
         )
 
-
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
         using = options.get('using')

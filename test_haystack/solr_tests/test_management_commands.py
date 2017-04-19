@@ -24,6 +24,7 @@ from haystack.utils.loading import UnifiedIndex
 from ..core.models import MockModel, MockTag
 from ..utils import get_script_dir
 
+
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
