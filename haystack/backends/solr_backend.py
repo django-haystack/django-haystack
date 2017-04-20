@@ -398,33 +398,33 @@ class SolrSearchBackend(BaseSearchBackend):
             collations = raw_results.spellcheck.get('collations', [])
             suggestions = raw_results.spellcheck.get('suggestions', [])
             if len(collations):
-                #Handle sol6.5 collation format
+                # Handle sol6.5 collation format
                 if isinstance(collations, dict):
-                    spelling_suggestions= [col['collationQuery'] for col in collations.values()]  #aggregate for future use in multi suggestion response
-                #Legacy Legacy & 6.4 handling
+                    spelling_suggestions= [col['collationQuery'] for col in collations.values()]  # aggregate for future use in multi suggestion response
+                # Legacy Legacy & 6.4 handling
                 else:
                     if isinstance(collations[1], dict):  #Solr6.4
-                        spelling_suggestions = [item["collationQuery"] for item in collations if isinstance(item,dict)]  #aggregate for future use in multi suggestion response
-                    else:  #Legacy Solr format
+                        spelling_suggestions = [item["collationQuery"] for item in collations if isinstance(item,dict)]  # aggregate for future use in multi suggestion response
+                    else:  # Legacy Solr format
                         spelling_suggestions=collations[-1]
 
-                spelling_suggestion = spelling_suggestions[-1]  #Keep current method of returning single value
+                spelling_suggestion = spelling_suggestions[-1]  # Keep current method of returning single value
             elif len(suggestions):
-                #Handle sol6.5 suggestion format
+                # Handle sol6.5 suggestion format
                 if isinstance(suggestions, dict):
                     for word,sug in suggestions.items():
-                        spelling_suggestions = [item["word"] for item in sug['suggestion']]  #aggregate for future use in multi suggestion response
-                #Legacy Legacy & 6.4 handling
+                        spelling_suggestions = [item["word"] for item in sug['suggestion']]  # aggregate for future use in multi suggestion response
+                # Legacy Legacy & 6.4 handling
                 else:
                     spelling_suggestions = []
-                    if isinstance(suggestions[1], dict):  #Solr6.4
+                    if isinstance(suggestions[1], dict):  # Solr6.4
                         for item in suggestions:
                             if isinstance(item, dict):
                                 spelling_suggestions += [subitem["word"] for subitem in item['suggestion']]
-                    else:  #Legacy Solr
+                    else:  # Legacy Solr
                         spelling_suggestions=suggestions[-1]
 
-                spelling_suggestion = spelling_suggestions[-1]  #Keep current method of returning single value
+                spelling_suggestion = spelling_suggestions[-1]  # Keep current method of returning single value
 
             assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
 
