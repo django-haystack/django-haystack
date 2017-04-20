@@ -175,7 +175,7 @@ class UnifiedIndex(object):
         self._built = False
         self.excluded_indexes = excluded_indexes or []
         self.excluded_indexes_ids = {}
-        self.document_field = constants.HAYSTACK_DOCUMENT_FIELD
+        self.document_field = constants.DOCUMENT_FIELD
         self._fieldnames = {}
         self._facet_fieldnames = {}
 

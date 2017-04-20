@@ -201,12 +201,12 @@ class ManagementCommandTestCase(TestCase):
     def test_build_schema(self):
 
         # Stow.
-        oldhdf = constants.HAYSTACK_DOCUMENT_FIELD
+        oldhdf = constants.DOCUMENT_FIELD
         oldui = connections['solr'].get_unified_index()
         oldurl = settings.HAYSTACK_CONNECTIONS['solr']['URL']
 
         needle = 'Th3S3cr3tK3y'
-        constants.HAYSTACK_DOCUMENT_FIELD = needle #Force index to use new key for document_fields
+        constants.DOCUMENT_FIELD = needle #Force index to use new key for document_fields
         settings.HAYSTACK_CONNECTIONS['solr']['URL'] = settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/',1)[0]+'/mgmnt'
 
         ui = UnifiedIndex()
@@ -242,7 +242,7 @@ class ManagementCommandTestCase(TestCase):
             self.assertTrue(s.read().find("name=\""+needle)!=-1)
 
         #reset
-        constants.HAYSTACK_DOCUMENT_FIELD = oldhdf
+        constants.DOCUMENT_FIELD = oldhdf
         connections['solr']._index = oldui
         settings.HAYSTACK_CONNECTIONS['solr']['URL'] = oldurl
 
