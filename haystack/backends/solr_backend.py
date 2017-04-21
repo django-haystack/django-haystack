@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 
+import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError, SkipDocument
@@ -155,7 +156,13 @@ class SolrSearchBackend(BaseSearchBackend):
                             models=None, limit_to_registered_models=None,
                             result_class=None, stats=None, collate=None,
                             **extra_kwargs):
-        kwargs = {'fl': '* score'}
+
+        index = haystack.connections[self.connection_alias].get_unified_index()
+
+        kwargs = {
+            'fl': '* score',
+            'df': index.document_field,
+        }
 
         if fields:
             if isinstance(fields, (list, set)):
