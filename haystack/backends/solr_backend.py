@@ -370,7 +370,7 @@ class SolrSearchBackend(BaseSearchBackend):
         hits = raw_results.hits
         facets = {}
         stats = {}
-        spelling_suggestion = None
+        spelling_suggestion = spelling_suggestions = None
 
         if result_class is None:
             result_class = SearchResult
@@ -393,40 +393,23 @@ class SolrSearchBackend(BaseSearchBackend):
                                                         facets[key][facet_field][1::2]))
 
         if self.include_spelling and hasattr(raw_results, 'spellcheck'):
-            # There are many different formats for Legacy, 6.4, and 6.5
-            # e.g. https://issues.apache.org/jira/browse/SOLR-3029
-            collations = raw_results.spellcheck.get('collations', [])
-            suggestions = raw_results.spellcheck.get('suggestions', [])
-            if len(collations):
-                # Handle sol6.5 collation format
-                if isinstance(collations, dict):
-                    spelling_suggestions= [col['collationQuery'] for col in collations.values()]  # aggregate for future use in multi suggestion response
-                # Legacy Legacy & 6.4 handling
-                else:
-                    if isinstance(collations[1], dict):  #Solr6.4
-                        spelling_suggestions = [item["collationQuery"] for item in collations if isinstance(item,dict)]  # aggregate for future use in multi suggestion response
-                    else:  # Legacy Solr format
-                        spelling_suggestions=collations[-1]
+            try:
+                spelling_suggestions = self.extract_spelling_suggestions(raw_results)
+            except Exception as exc:
+                self.log.error('Error extracting spelling suggestions: %s', exc, exc_info=True,
+                               extra={'data': {'spellcheck': raw_results.spellcheck}})
 
-                spelling_suggestion = spelling_suggestions[-1]  # Keep current method of returning single value
-            elif len(suggestions):
-                # Handle sol6.5 suggestion format
-                if isinstance(suggestions, dict):
-                    for word,sug in suggestions.items():
-                        spelling_suggestions = [item["word"] for item in sug['suggestion']]  # aggregate for future use in multi suggestion response
-                # Legacy Legacy & 6.4 handling
-                else:
-                    spelling_suggestions = []
-                    if isinstance(suggestions[1], dict):  # Solr6.4
-                        for item in suggestions:
-                            if isinstance(item, dict):
-                                spelling_suggestions += [subitem["word"] for subitem in item['suggestion']]
-                    else:  # Legacy Solr
-                        spelling_suggestions=suggestions[-1]
+                if not self.silently_fail:
+                    raise
 
-                spelling_suggestion = spelling_suggestions[-1]  # Keep current method of returning single value
+                spelling_suggestions = None
 
-            assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
+            if spelling_suggestions:
+                # Maintain compatibility with older versions of Haystack which returned a single suggestion:
+                spelling_suggestion = spelling_suggestions[-1]
+                assert isinstance(spelling_suggestion, six.string_types)
+            else:
+                spelling_suggestion = None
 
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
@@ -477,7 +460,66 @@ class SolrSearchBackend(BaseSearchBackend):
             'stats': stats,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
+            'spelling_suggestions': spelling_suggestions,
         }
+
+    def extract_spelling_suggestions(self, raw_results):
+        # There are many different formats for Legacy, 6.4, and 6.5 e.g.
+        # https://issues.apache.org/jira/browse/SOLR-3029 and depending on the
+        # version and configuration the response format may be a dict of dicts,
+        # a list of dicts, or a list of strings.
+
+        collations = raw_results.spellcheck.get('collations', None)
+        suggestions = raw_results.spellcheck.get('suggestions', None)
+
+        # We'll collect multiple suggestions here. For backwards
+        # compatibility with older versions of Haystack we'll still return
+        # only a single suggestion but in the future we can expose all of
+        # them.
+
+        spelling_suggestions = []
+
+        if collations:
+            if isinstance(collations, dict):
+                # Solr 6.5
+                collation_values = collations['collation']
+                if isinstance(collation_values, six.string_types):
+                    collation_values = [collation_values]
+                elif isinstance(collation_values, dict):
+                    # spellcheck.collateExtendedResults changes the format to a dictionary:
+                    collation_values = [collation_values['collationQuery']]
+            elif isinstance(collations[1], dict):
+                # Solr 6.4
+                collation_values = collations
+            else:
+                # Older versions of Solr
+                collation_values = collations[-1:]
+
+            for i in collation_values:
+                # Depending on the options the values are either simple strings or dictionaries:
+                spelling_suggestions.append(i['collationQuery'] if isinstance(i, dict) else i)
+        elif suggestions:
+            if isinstance(suggestions, dict):
+                for i in suggestions.values():
+                    for j in i['suggestion']:
+                        if isinstance(j, dict):
+                            spelling_suggestions.append(j['word'])
+                        else:
+                            spelling_suggestions.append(j)
+            elif isinstance(suggestions[0], six.string_types) and isinstance(suggestions[1], dict):
+                # Solr 6.4 uses a list of paired (word, dictionary) pairs:
+                for suggestion in suggestions:
+                    if isinstance(suggestion, dict):
+                        for i in suggestion['suggestion']:
+                            if isinstance(i, dict):
+                                spelling_suggestions.append(i['word'])
+                            else:
+                                spelling_suggestions.append(i)
+            else:
+                # Legacy Solr
+                spelling_suggestions.append(suggestions[-1])
+
+        return spelling_suggestions
 
     def build_schema(self, fields):
         content_field_name = ''
