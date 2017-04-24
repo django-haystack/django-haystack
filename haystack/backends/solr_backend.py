@@ -509,7 +509,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         return (content_field_name, schema_fields)
 
-    def extract_file_contents(self, file_obj):
+    def extract_file_contents(self, file_obj, **kwargs):
         """Extract text and metadata from a structured file (PDF, MS Word, etc.)
 
         Uses the Solr ExtractingRequestHandler, which is based on Apache Tika.
@@ -535,7 +535,7 @@ class SolrSearchBackend(BaseSearchBackend):
         """
 
         try:
-            return self.conn.extract(file_obj)
+            return self.conn.extract(file_obj, **kwargs)
         except Exception as e:
             self.log.warning(u"Unable to extract file contents: %s", e,
                              exc_info=True, extra={"data": {"file": file_obj}})
