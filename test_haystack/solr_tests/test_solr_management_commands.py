@@ -225,7 +225,7 @@ class ManagementCommandTestCase(TestCase):
         contents = rendered_file.getvalue()
         self.assertGreater(contents.find("name=\"%s" % needle), -1)
 
-        call_command('build_solr_schema', using='solr', configure_dir=conf_dir)
+        call_command('build_solr_schema', using='solr', configure_directory=conf_dir)
         with open(schema_file) as s:
             self.assertGreater(s.read().find("name=\"%s" % needle), -1)
         with open(solrconfig_file) as s:
@@ -233,10 +233,10 @@ class ManagementCommandTestCase(TestCase):
 
         self.assertTrue(os.path.isfile(os.path.join(conf_dir, 'managed-schema.old')))
 
-        call_command('build_solr_schema', using='solr', reload=True)
+        call_command('build_solr_schema', using='solr', reload_core=True)
 
         os.rename(schema_file, '%s.bak' % schema_file)
-        self.assertRaises(CommandError, call_command, 'build_solr_schema', using='solr', reload=True)
+        self.assertRaises(CommandError, call_command, 'build_solr_schema', using='solr', reload_core=True)
 
         call_command('build_solr_schema', using='solr', filename=schema_file)
         with open(schema_file) as s:

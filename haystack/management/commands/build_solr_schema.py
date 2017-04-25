@@ -29,11 +29,11 @@ class Command(BaseCommand):
             help='If provided, chooses a connection to work with.'
         )
         parser.add_argument(
-            "-c", "--configure_dir",
+            "-c", "--configure-directory",
             help='If provided, attempts to configure a core located in the given directory by removing the managed-schema.xml(renaming), configuring the core to use a classic (non-dynamic) schema, and generating the schema.xml from the template provided in'
         )
         parser.add_argument(
-            "-r", "--reload",
+            "-r", "--reload-core",
             help='If provided, attempts to automatically reload the solr core'
         )
 
@@ -46,17 +46,21 @@ class Command(BaseCommand):
         schema_xml = self.build_template(using=using, template_filename=Command.schema_template_loc)
         solrcfg_xml = self.build_template(using=using, template_filename=Command.solrcfg_template_loc)
 
-        if options.get('filename'):
-            self.stdout.write("Trying to write schema file located at {}".format(options.get('filename')))
-            self.write_file(options.get('filename'), schema_xml)
-            if options.get('reload'):
+        filename = options.get('filename')
+        configure_directory = options.get('configure_directory')
+        reload_core = options.get('reload_core')
+
+        if filename:
+            self.stdout.write("Trying to write schema file located at {}".format(filename))
+            self.write_file(filename, schema_xml)
+
+            if reload_core:
                 connections[using].get_backend().reload()
 
-        if options.get('configure_dir'):
-            cdir = options.get('configure_dir')
-            self.stdout.write("Trying to configure core located at {}".format(cdir))
+        if configure_directory:
+            self.stdout.write("Trying to configure core located at {}".format(configure_directory))
 
-            managed_schema_path = os.path.join(cdir, 'managed-schema')
+            managed_schema_path = os.path.join(configure_directory, 'managed-schema')
 
             if os.path.isfile(managed_schema_path):
                 try:
@@ -64,41 +68,41 @@ class Command(BaseCommand):
                 except:
                     raise CommandError('Could not rename old schema file out of the way: {}'.format(managed_schema_path))
 
-            schema_xml_path = os.path.join(cdir, 'schema.xml')
+            schema_xml_path = os.path.join(configure_directory, 'schema.xml')
 
             try:
                 self.write_file(schema_xml_path, schema_xml)
             except EnvironmentError as exc:
                 raise CommandError('Could not configure {}: {}'.format(schema_xml_path, exc))
 
-            solrconfig_path = os.path.join(cdir, 'solrconfig.xml')
+            solrconfig_path = os.path.join(configure_directory, 'solrconfig.xml')
 
             try:
                 self.write_file(solrconfig_path, solrcfg_xml)
             except EnvironmentError as exc:
                 raise CommandError('Could not write {}: {}'.format(solrconfig_path, exc))
 
-        if options.get('reload'):
+        if reload_core:
             core = settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/', 1)[-1]
 
             if 'ADMIN_URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
-                raise ImproperlyConfigured("'ADMIN_URL' must be specifid in the HAYSTACK_CONNECTIONS settins for the backend")
+                raise ImproperlyConfigured("'ADMIN_URL' must be specified in the HAYSTACK_CONNECTIONS settings for the backend")
             if 'URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
-                raise ImproperlyConfigured("'URL' to the core must be specifid in the HAYSTACK_CONNECTIONS settins for the backend")
+                raise ImproperlyConfigured("'URL' to the core must be specified in the HAYSTACK_CONNECTIONS settings for the backend")
 
             try:
-                self.stdout.write("Trying to relaod core named {}".format(core))
+                self.stdout.write("Trying to reload core named {}".format(core))
                 resp = requests.get(settings.HAYSTACK_CONNECTIONS['solr']['ADMIN_URL'],
                                     params={'action': 'RELOAD', 'core': core})
 
                 if not resp.ok:
-                    raise CommandError('Solr Exception Thrown -- Failed to reload core: {}'.format(resp))
+                    raise CommandError('Failed to reload core – Solr error: {}'.format(resp))
             except CommandError:
                 raise
             except Exception as exc:
                 raise CommandError('Failed to reload core {}: {}'.format(core, exc))
 
-        if not options.get('filename') and not options.get('configure_dir') and not options.get('reload'):
+        if not filename and not configure_directory and not reload_core:
             self.print_stdout(schema_xml)
 
     def build_context(self, using):
