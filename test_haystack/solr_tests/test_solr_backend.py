@@ -422,8 +422,8 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {'name:[* TO e]': 3})
 
-        self.assertEqual(self.sb.search('', stats={}), {'hits':0,'results':[]})
-        results = self.sb.search('*:*', stats={'name':['name']})
+        self.assertEqual(self.sb.search('', stats={}), {'hits': 0, 'results': []})
+        results = self.sb.search('*:*', stats={'name': ['name']})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['stats']['name']['count'], 3)
 
@@ -433,12 +433,14 @@ class SolrSearchBackendTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         results = self.sb.search(u'index', result_class=MockSearchResult)
-        self.assertTrue(isinstance(self.sb.search(u'index', result_class=MockSearchResult)['results'][0], MockSearchResult))
+        self.assertIsInstance(self.sb.search(u'index', result_class=MockSearchResult)['results'][0],
+                              MockSearchResult)
 
         # Check the use of ``limit_to_registered_models``.
         self.assertEqual(self.sb.search('', limit_to_registered_models=False), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('*:*', limit_to_registered_models=False)['hits'], 3)
-        self.assertEqual([result.pk for result in self.sb.search('*:*', limit_to_registered_models=False)['results']], ['1', '2', '3'])
+        self.assertEqual([result.pk for result in self.sb.search('*:*', limit_to_registered_models=False)['results']],
+                         ['1', '2', '3'])
 
         # Stow.
         old_limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
@@ -767,15 +769,13 @@ class LiveSolrSearchQueryTestCase(TestCase):
     def test_get_spelling(self):
         self.sq.add_filter(SQ(content='Indexy'))
 
-        #Default collate + spelling path
-        results = self.sq.get_spelling_suggestion()
+        # Default collate + spelling path
         self.assertEqual(self.sq.get_spelling_suggestion(), u'(index)')
         self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'(index)')
 
-        #Just spelling path
-        self.sq.run(spelling_query='Indexy',collate=False)
-        self.assertEqual(self.sq._spelling_suggestion,u'index')
-
+        # Just spelling path
+        self.sq.run(spelling_query='Indexy', collate=False)
+        self.assertEqual(self.sq._spelling_suggestion, u'index')
 
     def test_log_query(self):
         reset_search_queries()
@@ -1289,7 +1289,8 @@ class LiveSolrAutocompleteTestCase(TestCase):
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
         self.assertEqual(autocomplete.count(), 5)
-        self.assertTrue(set([result.pk for result in autocomplete]) == set(['1', '12', '6', '7', '14']))
+        self.assertSetEqual(set([result.pk for result in autocomplete]),
+                            set(['1', '12', '6', '7', '14']))
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())
@@ -1300,7 +1301,8 @@ class LiveSolrAutocompleteTestCase(TestCase):
         # Test multiple words.
         autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
         self.assertEqual(autocomplete_2.count(), 3)
-        self.assertTrue(set([result.pk for result in autocomplete_2]) == set(['1', '14', '6']))
+        self.assertSetEqual(set([result.pk for result in autocomplete_2]),
+                            set(['1', '14', '6']))
         self.assertTrue('your' in autocomplete_2[0].text.lower())
         self.assertTrue('mod' in autocomplete_2[0].text.lower())
         self.assertTrue('your' in autocomplete_2[1].text.lower())
@@ -1312,7 +1314,8 @@ class LiveSolrAutocompleteTestCase(TestCase):
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
         self.assertEqual(autocomplete_3.count(), 4)
-        self.assertTrue(set([result.pk for result in autocomplete_3]) == set(['12', '1', '14', '22']))
+        self.assertSetEqual(set([result.pk for result in autocomplete_3]),
+                            set(['12', '1', '14', '22']))
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 
