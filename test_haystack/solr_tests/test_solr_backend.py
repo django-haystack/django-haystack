@@ -377,7 +377,6 @@ class SolrSearchBackendTestCase(TestCase):
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
 
-
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
@@ -388,19 +387,20 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
-        self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']], ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
+        self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']],
+                         ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
 
         # shortened highlighting options
-        highlight_dict = {'simple.pre':'<i>', 'simple.post': '</i>'}
+        highlight_dict = {'simple.pre': '<i>', 'simple.post': '</i>'}
         self.assertEqual(self.sb.search('', highlight=highlight_dict), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=highlight_dict)['hits'], 3)
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=highlight_dict)['results']],
-            ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
+                         ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
 
         # full-form highlighting options
-        highlight_dict = {'hl.simple.pre':'<i>', 'hl.simple.post': '</i>'}
+        highlight_dict = {'hl.simple.pre': '<i>', 'hl.simple.post': '</i>'}
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=highlight_dict)['results']],
-            ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
+                         ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indax')['spelling_suggestion'], 'index')
@@ -993,7 +993,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
     def test_query__in(self):
         self.assertGreater(len(self.sqs), 0)
-        sqs = self.sqs.filter(django_ct='core.mockmodel', django_id__in=[1,2])
+        sqs = self.sqs.filter(django_ct='core.mockmodel', django_id__in=[1, 2])
         self.assertEqual(len(sqs), 2)
 
     def test_query__in_empty_list(self):

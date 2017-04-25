@@ -22,7 +22,6 @@ from haystack import connections, constants, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
-from ..utils import get_script_dir
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -214,7 +213,7 @@ class ManagementCommandTestCase(TestCase):
 
         rendered_file = StringIO()
 
-        script_dir = get_script_dir()
+        script_dir = os.path.realpath(os.path.dirname(__file__))
         conf_dir = os.path.join(script_dir, 'server', 'solr', 'server', 'solr', 'mgmnt', 'conf')
         schema_file = os.path.join(conf_dir, 'schema.xml')
         solrconfig_file = os.path.join(conf_dir, 'solrconfig.xml')

@@ -200,10 +200,10 @@ class BaseSearchQueryTestCase(TestCase):
 
     def test_add_stats(self):
         self.bsq.add_stats_query('foo', ['bar'])
-        self.assertEqual(self.bsq.stats, {'foo':['bar']})
+        self.assertEqual(self.bsq.stats, {'foo': ['bar']})
 
-        self.bsq.add_stats_query('moof', ['bar','baz'])
-        self.assertEqual(self.bsq.stats, { 'foo':['bar'], 'moof':['bar', 'baz']})
+        self.bsq.add_stats_query('moof', ['bar', 'baz'])
+        self.assertEqual(self.bsq.stats, {'foo': ['bar'], 'moof': ['bar', 'baz']})
 
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
@@ -361,8 +361,8 @@ class SearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertRegexpMatches(repr(self.msqs),
-                                r'^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object'
-                                r' at 0x[0-9A-Fa-f]+>, using=None>$')
+                                 r'^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object'
+                                 r' at 0x[0-9A-Fa-f]+>, using=None>$')
 
     def test_iter(self):
         reset_search_queries()
