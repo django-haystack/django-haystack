@@ -175,22 +175,58 @@ For when you really, really want a completely rebuilt index.
 =====================
 
 Once all of your ``SearchIndex`` classes are in place, this command can be used
-to generate the XML schema Solr needs to handle the search data. It accepts the
-following arguments::
+to generate the XML schema Solr needs to handle the search data.  Generates a
+Solr schema and solrconfig file that reflects the indexes using templates under
+a django template dir 'search_configuration/\*.xml'. If none are found, then
+provides defaults suitable to solr6.4. It accepts the following arguments::
 
     ``--filename``:
-        If provided, directs output to a file instead of stdout.
+        If provided, renders schema.xml from the template directory directly to
+        a file instead of stdout. Does not render solrconfig.xml
     ``--using``:
         Update only the named backend (can be used multiple times). By default
         all backends will be updated.
+    ``--configure-directory``:
+        If provided, attempts to configure a core located in the given directory
+        by removing the managed-schema.xml(renaming) if it exists, configuring
+        the core by rendering the schema.xml and solrconfig.xml templates
+        provided in the django project's TEMPLATE_DIR/search_configuration DIR's
+    ``--reload-core``:
+        If provided, attempts to automatically reload the solr core via the urls
+        in the 'URL' and 'ADMIN_URL' settings of the SOLR
+        HAYSTACK_CONNECTIONS entry. BOTH MUST be provided
+
+.. note::
+   ``build_solr_schema --configure-directory=<dir>`` can be used in isolation to
+   drop configured files anywhere one might want for staging to one or more solr
+   instances through arbitrary means.  It will render all template files in the
+   directory into the ``configure-directory``
+
+   ``build_solr_schema --configure-directory=<dir> --reload-core`` can be used
+   together to reconfigure and reload a core located on a filesystem accessible
+   to django in a one-shot mechanism with no further requirements (assuming
+   there are no errors in the template or configuration)
+
+.. note::
+    ``build_solr_schema`` uses templates to generate the output files. Haystack
+    provides default templates for ``schema.xml`` and ``solrconfig.xml`` that
+    are solr 6.5 compatible using some sensible defaults. If you would like to
+    provide your own template, you will need to place it in
+    ``search_configuration/`` inside a directory specified by your app's
+    template directories settings. Examples::
+
+        /myproj/myapp/templates/search_configuration/schema.xml
+        /myproj/myapp/templates/search_configuration/sorlconfig.xml
+        /myproj/myapp/templates/search_configuration/otherfile.xml
+        # ...or...
+        /myproj/templates/search_configuration/schema.xml
+        /myproj/templates/search_configuration/sorlconfig.xml
+        /myproj/myapp/templates/search_configuration/otherfile.xml
 
 .. warning::
-
-    This command does NOT update the ``schema.xml`` file for you. You either
-    have to specify a ``filename`` flag or have to
-    copy-paste (or redirect) the output to the correct file. Haystack has no
-    way of knowing where your Solr is setup (or if it's even on the same
-    machine), hence the manual step.
+    This command does NOT automatically update the ``schema.xml`` file for you
+    all by itself.  You must use --filename or --configure-directory to achieve
+    this.
 
 
 ``haystack_info``

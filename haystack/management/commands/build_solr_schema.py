@@ -12,17 +12,22 @@ from django.template import loader
 
 from haystack import connections, constants
 from haystack.backends.solr_backend import SolrSearchBackend
+import haystack.utils
 
 
 class Command(BaseCommand):
-    help = "Generates a Solr schema that reflects the indexes using templates under a django template dir 'search_configuration/*.xml'"
+    help = "Generates a Solr schema that reflects the indexes using templates \
+    under a django template dir 'search_configuration/*.xml'.  If none are \
+    found, then provides defaults suitable to solr6.4"
     schema_template_loc = 'search_configuration/schema.xml'
     solrcfg_template_loc = 'search_configuration/solrconfig.xml'
 
     def add_arguments(self, parser):
         parser.add_argument(
             "-f", "--filename",
-            help='If provided, directs output to a file instead of stdout.'
+            help='If provided, renders schema.xml from the template \
+            directory directly to a file instead of stdout. Does not render \
+            solrconfig.xml'
         )
         parser.add_argument(
             "-u", "--using", default=constants.DEFAULT_ALIAS,
@@ -30,11 +35,17 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "-c", "--configure-directory",
-            help='If provided, attempts to configure a core located in the given directory by removing the managed-schema.xml(renaming), configuring the core to use a classic (non-dynamic) schema, and generating the schema.xml from the template provided in'
+            help='If provided, attempts to configure a core located in the \
+            given directory by removing the managed-schema.xml(renaming) if it \
+            exists, configuring the core by rendering the schema.xml and \
+            solrconfig.xml templates provided in the django project\'s \
+            TEMPLATE_DIR/search_configuration DIR\'s'
         )
         parser.add_argument(
             "-r", "--reload-core",
-            help='If provided, attempts to automatically reload the solr core'
+            help='If provided, attempts to automatically reload the solr core \
+            via the urls in the \'URL\' and \'ADMIN_URL\' settings of the SOLR \
+            HAYSTACK_CONNECTIONS entry. BOTH MUST be provided'
         )
 
     def handle(self, **options):
@@ -66,7 +77,7 @@ class Command(BaseCommand):
                 try:
                     os.rename(managed_schema_path, '%s.old' % managed_schema_path)
                 except:
-                    raise CommandError('Could not rename old schema file out of the way: {}'.format(managed_schema_path))
+                    raise CommandError('Could not rename old managed schema file out of the way: {}'.format(managed_schema_path))
 
             schema_xml_path = os.path.join(configure_directory, 'schema.xml')
 
