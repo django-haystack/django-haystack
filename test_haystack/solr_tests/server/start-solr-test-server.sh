@@ -4,6 +4,7 @@ set -e
 
 SOLR_VERSION=6.5.0
 SOLR_DIR=solr
+CONF_DIR=$(readlink -f ./confdir)
 
 SOLR_PORT=9001
 
@@ -43,12 +44,16 @@ cd ${FULL_SOLR_DIR}
 
 echo "Creating Solr Core"
 ./bin/solr start -p ${SOLR_PORT}
-./bin/solr create -c collection1 -d ../confdir -p ${SOLR_PORT}
+./bin/solr create -c collection1 -p ${SOLR_PORT} -n basic_config
 ./bin/solr create -c mgmnt -p ${SOLR_PORT}
 
 echo "Solr system information:"
 curl --fail --silent 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on' | python -m json.tool
 ./bin/solr stop -p ${SOLR_PORT}
+
+CORE_DIR=${FULL_SOLR_DIR}/server/solr/collection1
+mv ${CORE_DIR}/conf/managed-schema ${CORE_DIR}/conf/managed-schema.old
+cp ${CONF_DIR}/* ${CORE_DIR}/conf/
 
 echo 'Starting server'
 cd server
