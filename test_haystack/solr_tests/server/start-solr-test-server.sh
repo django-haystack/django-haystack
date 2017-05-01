@@ -4,7 +4,7 @@ set -e
 
 SOLR_VERSION=6.5.0
 SOLR_DIR=solr
-CONF_DIR=$(readlink -f ./confdir)
+
 
 SOLR_PORT=9001
 
@@ -51,6 +51,7 @@ echo "Solr system information:"
 curl --fail --silent 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on' | python -m json.tool
 ./bin/solr stop -p ${SOLR_PORT}
 
+CONF_DIR=${TEST_ROOT}/confdir
 CORE_DIR=${FULL_SOLR_DIR}/server/solr/collection1
 mv ${CORE_DIR}/conf/managed-schema ${CORE_DIR}/conf/managed-schema.old
 cp ${CONF_DIR}/* ${CORE_DIR}/conf/
