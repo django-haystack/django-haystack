@@ -184,6 +184,20 @@ No default is provided. Haystack automatically falls back to the default
 implementation.
 
 
+``HAYSTACK_SPELLING_SUGGESTIONS_COUNT``
+====================================
+
+**Optional**
+
+This setting controls the number of spelling suggestions that are returned.
+
+An example::
+
+    HAYSTACK_SPELLING_SUGGESTIONS_COUNT = 8
+
+Defaults to ``1``.
+
+
 ``HAYSTACK_ITERATOR_LOAD_PER_QUERY``
 ====================================
 
