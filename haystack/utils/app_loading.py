@@ -21,7 +21,7 @@ def haystack_load_apps():
 def haystack_get_models(label):
     try:
         app_mod = apps.get_app_config(label)
-        return app_mod.get_models()
+        return sorted(app_mod.get_models(), key=lambda model: u'%s.%s' % (model._meta.app_label, model._meta.object_name))
     except LookupError:
         if '.' not in label:
             raise ImproperlyConfigured('Unknown application label {}'.format(label))

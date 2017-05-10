@@ -25,11 +25,11 @@ LOG = multiprocessing.log_to_stderr(level=logging.WARNING)
 
 
 def update_worker(args):
-    if len(args) != 10:
+    if len(args) != 9:
         LOG.error('update_worker received incorrect arguments: %r', args)
         raise ValueError('update_worker received incorrect arguments')
 
-    model, start, end, total, using, start_date, end_date, verbosity, commit, max_retries = args
+    model, start, end, using, start_date, end_date, verbosity, commit, max_retries = args
 
     # FIXME: confirm that this is still relevant with modern versions of Django:
     # We need to reset the connections, otherwise the different processes
@@ -57,11 +57,11 @@ def update_worker(args):
     backend = haystack_connections[using].get_backend()
 
     qs = index.build_queryset(start_date=start_date, end_date=end_date)
-    do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
+    do_update(backend, index, qs, start, end, verbosity, commit, max_retries)
     return args
 
 
-def do_update(backend, index, qs, start_pk, end_pk, total, verbosity=1, commit=True,
+def do_update(backend, index, qs, start_pk, end_pk, verbosity=1, commit=True,
               max_retries=DEFAULT_MAX_RETRIES):
     current_qs = qs.filter(pk__range=(start_pk, end_pk)).order_by()
 
@@ -69,9 +69,9 @@ def do_update(backend, index, qs, start_pk, end_pk, total, verbosity=1, commit=T
 
     if verbosity >= 2:
         if is_parent_process:
-            print(u"  indexing %s - %s of %d." % (start_pk, end_pk, total))
+            print(u"  indexing %s - %s." % (start_pk, end_pk))
         else:
-            print(u"  indexing %s - %s of %d (worker PID: %s)." % (start_pk, end_pk, total, os.getpid()))
+            print(u"  indexing %s - %s (worker PID: %s)." % (start_pk, end_pk, os.getpid()))
 
     retries = 0
     while retries < max_retries:
@@ -233,12 +233,8 @@ class Command(BaseCommand):
             qs = index.build_queryset(using=using, start_date=self.start_date,
                                       end_date=self.end_date)
 
-            total = qs.count()
-
             if self.verbosity >= 1:
-                self.stdout.write(u"Indexing %d %s" % (
-                    total, force_text(model._meta.verbose_name_plural))
-                )
+                self.stdout.write(u"Indexing %s" % (force_text(model._meta.verbose_name_plural)))
 
             batch_size = self.batchsize or backend.batch_size
 
@@ -246,26 +242,35 @@ class Command(BaseCommand):
                 ghetto_queue = []
 
             start = 0
-            end_pk = ''
-            while True and batch_size > 0:
-                offset = min(batch_size, total - start) - 1
-                start_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gt=end_pk)[0], model._meta.pk.name)
-                end_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gte=start_pk)[offset], model._meta.pk.name)
-                end = start + offset
+            end_pk = None
+            offset = batch_size - 1
+            while batch_size:
+                try:
+                    if end_pk is None:
+                        start_pk = getattr(qs.only(model._meta.pk.name)[0], model._meta.pk.name)
+                    else:
+                        start_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gt=end_pk)[0], model._meta.pk.name)
+                except IndexError:
+                    if self.verbosity >= 1:
+                        self.stdout.write(u"  indexing %s" % start)  # i.e. actual total
+                    break  # all done
+                try:
+                    end_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gte=start_pk)[offset], model._meta.pk.name)
+                except IndexError:
+                    offset = len(qs.only(model._meta.pk.name).filter(pk__gte=start_pk)) - 1
+                    end_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gte=start_pk)[offset], model._meta.pk.name)
 
                 if self.verbosity >= 1:
-                    self.stdout.write(u'  partitioning %d - %d (as %s - %s)' % (start, end, start_pk, end_pk))
+                    self.stdout.write(u'  partitioning %d - %d (as %s - %s)' % (start, start+offset, start_pk, end_pk))
 
                 if self.workers == 0:
-                    do_update(backend, index, qs, start_pk, end_pk, total, verbosity=self.verbosity,
+                    do_update(backend, index, qs, start_pk, end_pk, verbosity=self.verbosity,
                               commit=self.commit, max_retries=self.max_retries)
                 else:
-                    ghetto_queue.append((model, start_pk, end_pk, total, using, self.start_date, self.end_date,
+                    ghetto_queue.append((model, start_pk, end_pk, using, self.start_date, self.end_date,
                                          self.verbosity, self.commit, self.max_retries))
 
-                if end >= (total - 1):
-                    break
-                start += batch_size
+                start += (offset + 1)
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
@@ -283,6 +288,7 @@ class Command(BaseCommand):
                 pool.join()
 
             if self.remove:
+                total = qs.count()
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
