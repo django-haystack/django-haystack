@@ -61,34 +61,17 @@ def update_worker(args):
     return args
 
 
-def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
-              max_retries=DEFAULT_MAX_RETRIES, last_max_pk=None):
-
-    # Get a clone of the QuerySet so that the cache doesn't bloat up
-    # in memory. Useful when reindexing large amounts of data.
-    small_cache_qs = qs.all()
-
-    # If we got the max seen PK from last batch, use it to restrict the qs
-    # to values above; this optimises the query for Postgres as not to
-    # devolve into multi-second run time at large offsets.
-    if last_max_pk is not None:
-        current_qs = small_cache_qs.filter(pk__gt=last_max_pk)[:end - start]
-    else:
-        current_qs = small_cache_qs[start:end]
-
-    # Remember maximum PK seen so far
-    max_pk = None
-    current_qs = list(current_qs)
-    if current_qs:
-        max_pk = current_qs[-1].pk
+def do_update(backend, index, qs, start_pk, end_pk, total, verbosity=1, commit=True,
+              max_retries=DEFAULT_MAX_RETRIES):
+    current_qs = qs.filter(pk__range=(start_pk, end_pk)).order_by()
 
     is_parent_process = hasattr(os, 'getppid') and os.getpid() == os.getppid()
 
     if verbosity >= 2:
         if is_parent_process:
-            print("  indexed %s - %d of %d." % (start + 1, end, total))
+            print(u"  indexing %s - %s of %d." % (start_pk, end_pk, total))
         else:
-            print("  indexed %s - %d of %d (worker PID: %s)." % (start + 1, end, total, os.getpid()))
+            print(u"  indexing %s - %s of %d (worker PID: %s)." % (start_pk, end_pk, total, os.getpid()))
 
     retries = 0
     while retries < max_retries:
@@ -96,10 +79,10 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
             # FIXME: Get the right backend.
             backend.update(index, current_qs, commit=commit)
             if verbosity >= 2 and retries:
-                print('Completed indexing {} - {}, tried {}/{} times'.format(start + 1,
-                                                                             end,
-                                                                             retries + 1,
-                                                                             max_retries))
+                print(u'Completed indexing {} - {}, tried {}/{} times'.format(start_pk,
+                                                                              end_pk,
+                                                                              retries + 1,
+                                                                              max_retries))
             break
         except Exception as exc:
             # Catch all exceptions which do not normally trigger a system exit, excluding SystemExit and
@@ -107,14 +90,14 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
             # from pysolr, elasticsearch, whoosh, requests, etc.
             retries += 1
 
-            error_context = {'start': start + 1,
-                             'end': end,
+            error_context = {'start_pk': start_pk,
+                             'end_pk': end_pk,
                              'retries': retries,
                              'max_retries': max_retries,
                              'pid': os.getpid(),
                              'exc': exc}
 
-            error_msg = 'Failed indexing %(start)s - %(end)s (retry %(retries)s/%(max_retries)s): %(exc)s'
+            error_msg = u'Failed indexing %(start_pk)s - %(end_pk)s (retry %(retries)s/%(max_retries)s): %(exc)s'
             if not is_parent_process:
                 error_msg += ' (pid %(pid)s): %(exc)s'
 
@@ -262,18 +245,27 @@ class Command(BaseCommand):
             if self.workers > 0:
                 ghetto_queue = []
 
-            max_pk = None
-            for start in range(0, total, batch_size):
-                end = min(start + batch_size, total)
+            start = 0
+            end_pk = ''
+            while True and batch_size > 0:
+                offset = min(batch_size, total - start) - 1
+                start_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gt=end_pk)[0], model._meta.pk.name)
+                end_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gte=start_pk)[offset], model._meta.pk.name)
+                end = start + offset
+
+                if self.verbosity >= 1:
+                    self.stdout.write(u'  partitioning %d - %d (as %s - %s)' % (start, end, start_pk, end_pk))
 
                 if self.workers == 0:
-                    max_pk = do_update(backend, index, qs, start, end, total,
-                        verbosity=self.verbosity,
-                        commit=self.commit, max_retries=self.max_retries,
-                        last_max_pk=max_pk)
+                    do_update(backend, index, qs, start_pk, end_pk, total, verbosity=self.verbosity,
+                              commit=self.commit, max_retries=self.max_retries)
                 else:
-                    ghetto_queue.append((model, start, end, total, using, self.start_date, self.end_date,
+                    ghetto_queue.append((model, start_pk, end_pk, total, using, self.start_date, self.end_date,
                                          self.verbosity, self.commit, self.max_retries))
+
+                if end >= (total - 1):
+                    break
+                start += batch_size
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
