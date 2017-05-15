@@ -204,6 +204,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
             kwargs['spellcheck.collate'] = 'true'
+            kwargs['spellcheck.collateExtendedResults'] = 'true'
             kwargs['spellcheck.count'] = 1
 
             if spelling_query:
@@ -389,15 +390,50 @@ class SolrSearchBackend(BaseSearchBackend):
                                                         facets[key][facet_field][1::2]))
 
         if self.include_spelling and hasattr(raw_results, 'spellcheck'):
-            # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
-            # than simply paired elements in a list, which is a nice improvement but incompatible with
-            # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
-            if len(raw_results.spellcheck.get('collations', [])):
-                spelling_suggestion = raw_results.spellcheck['collations'][-1]
-            elif len(raw_results.spellcheck.get('suggestions', [])):
-                spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
+            # Solr's format for spelling suggestions was stable for a number of years
+            # but has changed multiple times recently (6.4, 6.5, ???) and this code
+            # needs to be defensive. See e.g. https://issues.apache.org/jira/browse/SOLR-3029
 
-            assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
+            collations = raw_results.spellcheck.get('collations', None)
+            suggestions = raw_results.spellcheck.get('suggestions', None)
+
+            # We'll collect this in a list which we can decide how best to expose in a public interface
+            # but will maintain compatility with earlier versions of Haystack by returning only one value:
+            spelling_suggestions = []
+
+            if collations is not None:
+                if isinstance(collations, dict):
+                    # Solr 6.5 uses a dict of dicts
+                    spelling_suggestions.extend(i['collationQuery'] for i in collations.values())
+                elif isinstance(collations, list):
+                    if isinstance(collations[1], dict):
+                        # Solr 6.4 uses a list of dicts:
+                        spelling_suggestions.extend(i['collationQuery'] for i in collations if isinstance(i, dict))
+                    else:
+                        # Older versions of Solr used a list with adjacent key, value elements:
+                        spelling_suggestions.append(collations[-1])
+            elif suggestions is not None:
+                if isinstance(suggestions, dict):
+                    # Solr 6.5's spellchecker returns suggestions as per-word dictionaries
+                    # which have a "suggestion" list:
+                    for i in suggestions.values():
+                        spelling_suggestions.extend(i['suggestion'])
+                elif isinstance(suggestions, list):
+                    if isinstance(suggestions[1], dict):
+                        # Solr 6.4 uses a list of dicts:
+                        for item in suggestions:
+                            if isinstance(item, dict):
+                                spelling_suggestions.extend(subitem['word'] for subitem in item['suggestion'])
+                    else:
+                        # Legacy Solr
+                        spelling_suggestions.append(suggestions[-1])
+
+            if spelling_suggestions:
+                # Previous versions of Haystack returned a single value and so will we:
+                spelling_suggestion = spelling_suggestions[-1]
+                assert isinstance(spelling_suggestion, six.string_types)
+            else:
+                spelling_suggestion = None
 
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
