@@ -55,7 +55,7 @@ class AlteredInternalNamesTestCase(TestCase):
 
     def test_solr_schema(self):
         command = Command()
-        context_data = command.build_context(using='solr').dicts[-1]
+        context_data = command.build_context(using='solr')
         self.assertEqual(len(context_data), 6)
         self.assertEqual(context_data['DJANGO_ID'], 'my_django_id')
         self.assertEqual(context_data['content_field_name'], 'text')
