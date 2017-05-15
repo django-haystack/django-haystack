@@ -77,7 +77,7 @@ class BaseSearchBackend(object):
         self.silently_fail = connection_options.get('SILENTLY_FAIL', True)
         self.distance_available = connection_options.get('DISTANCE_AVAILABLE', False)
 
-    def update(self, index, iterable):
+    def update(self, index, iterable, commit=True):
         """
         Updates the backend when given a SearchIndex and a collection of
         documents.
