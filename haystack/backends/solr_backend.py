@@ -483,13 +483,12 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'edge_ngram'
             elif field_class.field_type == 'location':
                 field_data['type'] = 'location'
-
+                
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
 
             if field_class.stored is False:
                 field_data['stored'] = 'false'
-
             # Do this last to override `text` fields.
             if field_class.indexed is False:
                 field_data['indexed'] = 'false'
@@ -505,6 +504,16 @@ class SolrSearchBackend(BaseSearchBackend):
                 if field_data['type'] == 'text_en':
                     field_data['type'] = 'string'
 
+            # update `field_data` with user-specified parameters
+            # these are used in `add_field()` to change the schema
+            if field_class.solr_field_params:
+                overlap = field_class.solr_field_params.viewkeys() & field_data.viewkeys()
+                if overlap:
+                    import warnings
+                    warnings.warn("""Overwriting Haystack-defined field parameters with user definitions.
+                                     Changed parameters for %s: %s""" % (field_class.index_fieldname, overlap))
+                field_data.update(field_class.solr_field_params)
+                
             schema_fields.append(field_data)
 
         return (content_field_name, schema_fields)
