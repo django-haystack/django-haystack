@@ -94,16 +94,16 @@ class Command(BaseCommand):
                 raise CommandError('Could not write {}: {}'.format(solrconfig_path, exc))
 
         if reload_core:
-            core = settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/', 1)[-1]
+            core = settings.HAYSTACK_CONNECTIONS[using]['URL'].rsplit('/', 1)[-1]
 
-            if 'ADMIN_URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
+            if 'ADMIN_URL' not in settings.HAYSTACK_CONNECTIONS[using]:
                 raise ImproperlyConfigured("'ADMIN_URL' must be specified in the HAYSTACK_CONNECTIONS settings for the backend")
-            if 'URL' not in settings.HAYSTACK_CONNECTIONS['solr']:
+            if 'URL' not in settings.HAYSTACK_CONNECTIONS[using]:
                 raise ImproperlyConfigured("'URL' to the core must be specified in the HAYSTACK_CONNECTIONS settings for the backend")
 
             try:
                 self.stdout.write("Trying to reload core named {}".format(core))
-                resp = requests.get(settings.HAYSTACK_CONNECTIONS['solr']['ADMIN_URL'],
+                resp = requests.get(settings.HAYSTACK_CONNECTIONS[using]['ADMIN_URL'],
                                     params={'action': 'RELOAD', 'core': core})
 
                 if not resp.ok:
