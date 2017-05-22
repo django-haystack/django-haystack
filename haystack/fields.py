@@ -210,7 +210,9 @@ class CharField(SearchField):
 
         return six.text_type(value)
 
-
+class StringField(CharField):
+    field_type = 'raw_string'
+        
 class LocationField(SearchField):
     field_type = 'location'
 
@@ -419,7 +421,9 @@ class MultiValueField(SearchField):
             return value
 
         return [value]
-
+        
+class MultiValueStringField(MultiValueField):
+    field_type = 'raw_string'
 
 class FacetField(SearchField):
     """
@@ -467,6 +471,8 @@ class FacetField(SearchField):
 class FacetCharField(FacetField, CharField):
     pass
 
+class FacetStringField(FacetField, StringField):
+    pass
 
 class FacetIntegerField(FacetField, IntegerField):
     pass
@@ -493,4 +499,7 @@ class FacetDateTimeField(FacetField, DateTimeField):
 
 
 class FacetMultiValueField(FacetField, MultiValueField):
+    pass
+    
+class FacetMultiValueStringField(FacetField, MultiValueField):
     pass

@@ -37,7 +37,7 @@ if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
 from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
 from whoosh.fields import ID as WHOOSH_ID
-from whoosh.fields import BOOLEAN, DATETIME, IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, Schema, TEXT
+from whoosh.fields import BOOLEAN, DATETIME, IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, Schema, TEXT, ID
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.highlight import ContextFragmenter, HtmlFormatter
@@ -159,6 +159,8 @@ class WhooshSearchBackend(BaseSearchBackend):
                 schema_fields[field_class.index_fieldname] = NGRAM(minsize=3, maxsize=15, stored=field_class.stored, field_boost=field_class.boost)
             elif field_class.field_type == 'edge_ngram':
                 schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, at='start', stored=field_class.stored, field_boost=field_class.boost)
+            elif field_class.field_type == 'raw_string':
+                schema_fields[field_class.index_fieldname] = ID(stored=field_class.stored, field_boost=field_class.boost, sortable=True)
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer(), field_boost=field_class.boost, sortable=True)
 

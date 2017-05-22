@@ -757,6 +757,7 @@ FIELD_MAPPINGS = {
     'ngram':      {'type': 'string', 'analyzer': 'ngram_analyzer'},
     'date':       {'type': 'date'},
     'datetime':   {'type': 'date'},
+    'raw_string': {'type': 'string'},
 
     'location':   {'type': 'geo_point'},
     'boolean':    {'type': 'boolean'},

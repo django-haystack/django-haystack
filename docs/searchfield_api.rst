@@ -26,6 +26,7 @@ Included with Haystack are the following field types:
 
 * ``BooleanField``
 * ``CharField``
+* ``StringField``
 * ``DateField``
 * ``DateTimeField``
 * ``DecimalField``
@@ -34,18 +35,21 @@ Included with Haystack are the following field types:
 * ``IntegerField``
 * ``LocationField``
 * ``MultiValueField``
+* ``MultiValueStringField``
 * ``NgramField``
 
 And equivalent faceted versions:
 
 * ``FacetBooleanField``
 * ``FacetCharField``
+* ``FacetStringField``
 * ``FacetDateField``
 * ``FacetDateTimeField``
 * ``FacetDecimalField``
 * ``FacetFloatField``
 * ``FacetIntegerField``
 * ``FacetMultiValueField``
+* ``FacetMultiValueStringField``
 
 .. note::
 

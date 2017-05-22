@@ -483,6 +483,8 @@ class SolrSearchBackend(BaseSearchBackend):
                 field_data['type'] = 'edge_ngram'
             elif field_class.field_type == 'location':
                 field_data['type'] = 'location'
+            elif field_class.field_type == 'raw_string':
+                field_data['type'] = 'string'
 
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
