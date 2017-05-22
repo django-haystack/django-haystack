@@ -501,5 +501,5 @@ class FacetDateTimeField(FacetField, DateTimeField):
 class FacetMultiValueField(FacetField, MultiValueField):
     pass
     
-class FacetMultiValueStringField(FacetField, MultiValueField):
+class FacetMultiValueStringField(FacetField, MultiValueStringField):
     pass
