@@ -12,47 +12,45 @@ from django.template import loader
 
 from haystack import connections, constants
 from haystack.backends.solr_backend import SolrSearchBackend
-import haystack.utils
 
 
 class Command(BaseCommand):
-    help = "Generates a Solr schema that reflects the indexes using templates \
-    under a django template dir 'search_configuration/*.xml'.  If none are \
-    found, then provides defaults suitable to solr6.4"
+    help = "Generates a Solr schema that reflects the indexes using templates " \
+           " under a django template dir 'search_configuration/*.xml'.  If none are " \
+           " found, then provides defaults suitable to Solr 6.4"
     schema_template_loc = 'search_configuration/schema.xml'
     solrcfg_template_loc = 'search_configuration/solrconfig.xml'
 
     def add_arguments(self, parser):
         parser.add_argument(
             "-f", "--filename",
-            help='If provided, renders schema.xml from the template \
-            directory directly to a file instead of stdout. Does not render \
-            solrconfig.xml'
+            help='Generate schema.xml directly into a file instead of stdout.'
+                 ' Does not render solrconfig.xml'
         )
         parser.add_argument(
             "-u", "--using", default=constants.DEFAULT_ALIAS,
-            help='If provided, chooses a connection to work with.'
+            help='Select a specific Solr connection to work with.'
         )
         parser.add_argument(
             "-c", "--configure-directory",
-            help='If provided, attempts to configure a core located in the \
-            given directory by removing the managed-schema.xml(renaming) if it \
-            exists, configuring the core by rendering the schema.xml and \
-            solrconfig.xml templates provided in the django project\'s \
-            TEMPLATE_DIR/search_configuration DIR\'s'
+            help='Attempt to configure a core located in the given directory'
+                 ' by removing the managed-schema.xml(renaming) if it '
+                 ' exists, configuring the core by rendering the schema.xml and '
+                 ' solrconfig.xml templates provided in the django project\'s '
+                 ' TEMPLATE_DIR/search_configuration directories'
         )
         parser.add_argument(
             "-r", "--reload-core",
-            help='If provided, attempts to automatically reload the solr core \
-            via the urls in the \'URL\' and \'ADMIN_URL\' settings of the SOLR \
-            HAYSTACK_CONNECTIONS entry. BOTH MUST be provided'
+            help='If provided, attempts to automatically reload the solr core'
+                 ' via the urls in the "URL" and "ADMIN_URL" settings of the SOLR'
+                 ' HAYSTACK_CONNECTIONS entry. Both MUST be set.'
         )
 
     def handle(self, **options):
         """Generates a Solr schema that reflects the indexes."""
         using = options.get('using')
         if not isinstance(connections[using].get_backend(), SolrSearchBackend):
-            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine)." % connections[using].get_backend().connection_alias)
+            raise ImproperlyConfigured("'%s' isn't configured as a SolrEngine" % using)
 
         schema_xml = self.build_template(using=using, template_filename=Command.schema_template_loc)
         solrcfg_xml = self.build_template(using=using, template_filename=Command.solrcfg_template_loc)
@@ -76,8 +74,8 @@ class Command(BaseCommand):
             if os.path.isfile(managed_schema_path):
                 try:
                     os.rename(managed_schema_path, '%s.old' % managed_schema_path)
-                except:
-                    raise CommandError('Could not rename old managed schema file out of the way: {}'.format(managed_schema_path))
+                except (IOError, OSError) as exc:
+                    raise CommandError('Could not rename old managed schema file {}: {}'.format(managed_schema_path, exc))
 
             schema_xml_path = os.path.join(configure_directory, 'schema.xml')
 
@@ -97,9 +95,11 @@ class Command(BaseCommand):
             core = settings.HAYSTACK_CONNECTIONS[using]['URL'].rsplit('/', 1)[-1]
 
             if 'ADMIN_URL' not in settings.HAYSTACK_CONNECTIONS[using]:
-                raise ImproperlyConfigured("'ADMIN_URL' must be specified in the HAYSTACK_CONNECTIONS settings for the backend")
+                raise ImproperlyConfigured("'ADMIN_URL' must be specified in the HAYSTACK_CONNECTIONS"
+                                           " for the %s backend" % using)
             if 'URL' not in settings.HAYSTACK_CONNECTIONS[using]:
-                raise ImproperlyConfigured("'URL' to the core must be specified in the HAYSTACK_CONNECTIONS settings for the backend")
+                raise ImproperlyConfigured("'URL' must be specified in the HAYSTACK_CONNECTIONS"
+                                           " for the %s backend" % using)
 
             try:
                 self.stdout.write("Trying to reload core named {}".format(core))
