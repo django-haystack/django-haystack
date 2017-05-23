@@ -46,7 +46,6 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', faceted=True)
     pub_date = indexes.DateTimeField(model_attr='pub_date')
-    price = indexes.DecimalField(model_attr='price')
     def get_model(self):
         return MockModel
 
@@ -224,7 +223,6 @@ class SolrSearchBackendTestCase(TestCase):
             mock.id = i
             mock.author = 'daniel%s' % i
             mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
-            mock.price = i * 10
             self.sample_objs.append(mock)
 
     def tearDown(self):
@@ -274,7 +272,6 @@ class SolrSearchBackendTestCase(TestCase):
                 'name_exact': 'daniel1',
                 'text': 'Indexed!\n1',
                 'pub_date': '2009-02-24T00:00:00Z',
-                'price': 10,
                 'id': 'core.mockmodel.1'
             },
             {
@@ -284,7 +281,6 @@ class SolrSearchBackendTestCase(TestCase):
                 'name_exact': 'daniel2',
                 'text': 'Indexed!\n2',
                 'pub_date': '2009-02-23T00:00:00Z',
-                'price': 20,
                 'id': 'core.mockmodel.2'
             },
             {
@@ -294,7 +290,6 @@ class SolrSearchBackendTestCase(TestCase):
                 'name_exact': 'daniel3',
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00Z',
-                'price': 30,
                 'id': 'core.mockmodel.3'
             }
         ])
@@ -328,7 +323,6 @@ class SolrSearchBackendTestCase(TestCase):
                 'name_exact': 'daniel2',
                 'text': 'Indexed!\n2',
                 'pub_date': '2009-02-23T00:00:00Z',
-                'price': 20,
                 'id': 'core.mockmodel.2'
             },
             {
@@ -338,7 +332,6 @@ class SolrSearchBackendTestCase(TestCase):
                 'name_exact': 'daniel3',
                 'text': 'Indexed!\n3',
                 'pub_date': '2009-02-22T00:00:00Z',
-                'price': 30,
                 'id': 'core.mockmodel.3'
             }
         ])
@@ -540,7 +533,7 @@ class SolrSearchBackendTestCase(TestCase):
 
         (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(fields), 5)
+        self.assertEqual(len(fields), 4)
         self.assertEqual(sorted(fields, key=lambda x: x['field_name']), [
             {
                 'indexed': 'true',
@@ -554,13 +547,6 @@ class SolrSearchBackendTestCase(TestCase):
                 'field_name': 'name_exact',
                 'stored': 'true',
                 'type': 'string',
-                'multi_valued': 'false'
-            },
-            {
-                'indexed': 'true',
-                'type': 'text_en',
-                'stored': 'true',
-                'field_name': 'price',
                 'multi_valued': 'false'
             },
             {
