@@ -434,6 +434,12 @@ class SearchQuerySet(object):
         clone.query.add_date_facet(field, start_date, end_date, gap_by, gap_amount=gap_amount)
         return clone
 
+    def interval_facet(self, field, intervals):
+        """Adds interval faceting to a query for the provided field."""
+        clone = self._clone()
+        clone.query.add_interval_facet(field, intervals)
+        return clone
+
     def query_facet(self, field, query):
         """Adds faceting to a query for the provided field with a custom query."""
         clone = self._clone()

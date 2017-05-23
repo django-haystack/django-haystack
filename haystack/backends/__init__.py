@@ -127,7 +127,7 @@ class BaseSearchBackend(object):
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
-                            date_facets=None, query_facets=None,
+                            date_facets=None, interval_facet=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
@@ -443,6 +443,7 @@ class BaseSearchQuery(object):
         self.highlight = False
         self.facets = {}
         self.date_facets = {}
+        self.interval_facets = {}
         self.query_facets = []
         self.narrow_queries = set()
         #: If defined, fields should be a list of field names - no other values
@@ -510,6 +511,9 @@ class BaseSearchQuery(object):
 
         if self.date_facets:
             kwargs['date_facets'] = self.date_facets
+
+        if self.interval_facets:
+            kwargs['interval_facets'] = self.interval_facets
 
         if self.query_facets:
             kwargs['query_facets'] = self.query_facets
@@ -906,6 +910,15 @@ class BaseSearchQuery(object):
         }
         self.date_facets[connections[self._using].get_unified_index().get_facet_fieldname(field)] = details
 
+    def add_interval_facet(self, field, intervals):
+        """Adds an interval facet on a field."""
+        from haystack import connections
+
+        details = {
+            'intervals': intervals,
+        }
+        self.interval_facets[connections[self._using].get_unified_index().get_facet_fieldname(field)] = details
+
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
         from haystack import connections
@@ -989,6 +1002,7 @@ class BaseSearchQuery(object):
         clone.stats = self.stats.copy()
         clone.facets = self.facets.copy()
         clone.date_facets = self.date_facets.copy()
+        clone.interval_facets = self.interval_facets.copy()
         clone.query_facets = self.query_facets[:]
         clone.narrow_queries = self.narrow_queries.copy()
         clone.start_offset = self.start_offset

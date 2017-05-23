@@ -61,6 +61,9 @@ class SearchIndexManager(object):
     def date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         return self.get_search_queryset().date_facet(field, start_date, end_date, gap_by, gap_amount=1)
 
+    def interval_facet(self, field, intervals):
+        return self.get_search_queryset().interval_facet(field, intervals)
+
     def query_facet(self, field, query):
         return self.get_search_queryset().query_facet(field, query)
 
