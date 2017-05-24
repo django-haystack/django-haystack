@@ -32,11 +32,14 @@ before_install:
       if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
       then
         echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
+      elif [[ $VERSION_ES == '>=5.0.0,<6.0.0' ]];
+      then
+        echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-5.x.list
       else
         echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
       fi
     - sudo apt-get update
-    - sudo apt-get -y install elasticsearch
+    - sudo apt-get -y install oracle-java8-installer elasticsearch
     - sudo service elasticsearch restart
 
 install:
@@ -59,6 +62,9 @@ env:
         - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=5.0.0,<6.0.0"
+        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=5.0.0,<6.0.0"
+        - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=5.0.0,<6.0.0"
 
 matrix:
     allow_failures:

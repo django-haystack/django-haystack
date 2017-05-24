@@ -101,5 +101,9 @@ try:
         HAYSTACK_CONNECTIONS['elasticsearch'].update({
             'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine'
         })
+    elif (5,) <= elasticsearch.__version__ <= (6,):
+        HAYSTACK_CONNECTIONS['elasticsearch'].update({
+            'ENGINE': 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine'
+        })
 except ImportError:
     del HAYSTACK_CONNECTIONS['elasticsearch']
