@@ -44,8 +44,8 @@ include the extract content along with information retrieved from the database::
         # Now we'll finally perform the template processing to render the
         # text field with *all* of our metadata visible for templating:
         t = loader.select_template(('search/indexes/myapp/file_text.txt', ))
-        data['text'] = t.render(Context({'object': obj,
-                                         'extracted': extracted_data}))
+        data['text'] = t.render({'object': obj,
+                                         'extracted': extracted_data})
 
         return data
 
