@@ -13,11 +13,11 @@ easier.
 
 The ``clear_index`` command wipes out your entire search index. Use with
 caution. In addition to the standard management command options, it accepts the
-following arguments::
+following arguments:
 
     ``--noinput``:
         If provided, the interactive prompts are skipped and the index is
-        uncerimoniously wiped out.
+        unceremoniously wiped out.
     ``--verbosity``:
         Accepted but ignored.
     ``--using``:
@@ -55,7 +55,7 @@ wish to delete the entire index.
 The ``update_index`` command will freshen all of the content in your index. It
 iterates through all indexed models and updates the records in the index. In
 addition to the standard management command options, it accepts the following
-arguments::
+arguments:
 
     ``--age``:
         Number of hours back to consider objects new. Useful for nightly
@@ -95,7 +95,7 @@ arguments::
 
 .. note::
 
-    The ``--nocommit`` argument is only supported by the Solr and Elasticsearch backends.
+    The ``--nocommit`` argument is only supported by the Solr and ElasticSearch backends.
 
 Examples::
 
@@ -136,7 +136,7 @@ Examples::
 =================
 
 A shortcut for ``clear_index`` followed by ``update_index``. It accepts any/all
-of the arguments of the following arguments::
+of the arguments of the following arguments:
 
     ``--age``:
         Number of hours back to consider objects new. Useful for nightly
@@ -148,7 +148,7 @@ of the arguments of the following arguments::
         The site object to use when reindexing (like `search_sites.mysite`).
     ``--noinput``:
         If provided, the interactive prompts are skipped and the index is
-        uncerimoniously wiped out.
+        unceremoniously wiped out.
     ``--remove``:
         Remove objects from the index that are no longer present in the
         database.
@@ -177,8 +177,10 @@ For when you really, really want a completely rebuilt index.
 Once all of your ``SearchIndex`` classes are in place, this command can be used
 to generate the XML schema Solr needs to handle the search data.  Generates a
 Solr schema and solrconfig file that reflects the indexes using templates under
-a django template dir 'search_configuration/\*.xml'. If none are found, then
-provides defaults suitable to solr6.4. It accepts the following arguments::
+a Django template dir 'search_configuration/\*.xml'. If none are found, then
+provides defaults suitable for Solr 6.4.
+
+It accepts the following arguments:
 
     ``--filename``:
         If provided, renders schema.xml from the template directory directly to
@@ -188,13 +190,14 @@ provides defaults suitable to solr6.4. It accepts the following arguments::
         all backends will be updated.
     ``--configure-directory``:
         If provided, attempts to configure a core located in the given directory
-        by removing the managed-schema.xml(renaming) if it exists, configuring
-        the core by rendering the schema.xml and solrconfig.xml templates
-        provided in the django project's TEMPLATE_DIR/search_configuration DIR's
+        by removing the ``managed-schema.xml`` (renaming if it exists), configuring
+        the core by rendering the ``schema.xml`` and ``solrconfig.xml`` templates
+        provided in the Django project's ``TEMPLATE_DIR/search_configuration``
+        directories.
     ``--reload-core``:
         If provided, attempts to automatically reload the solr core via the urls
-        in the 'URL' and 'ADMIN_URL' settings of the SOLR
-        HAYSTACK_CONNECTIONS entry. BOTH MUST be provided
+        in the ``URL`` and ``ADMIN_URL`` settings of the Solr entry in
+        ``HAYSTACK_CONNECTIONS``. Both *must* be provided.
 
 .. note::
    ``build_solr_schema --configure-directory=<dir>`` can be used in isolation to
@@ -204,7 +207,7 @@ provides defaults suitable to solr6.4. It accepts the following arguments::
 
    ``build_solr_schema --configure-directory=<dir> --reload-core`` can be used
    together to reconfigure and reload a core located on a filesystem accessible
-   to django in a one-shot mechanism with no further requirements (assuming
+   to Django in a one-shot mechanism with no further requirements (assuming
    there are no errors in the template or configuration)
 
 .. note::
