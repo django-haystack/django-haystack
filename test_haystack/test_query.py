@@ -199,11 +199,11 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertEqual(self.bsq.query_facets, [('foo', 'bar'), ('moof', 'baz'), ('foo', 'baz')])
 
     def test_add_stats(self):
-        self.bsq.add_stats_query('foo',['bar'])
-        self.assertEqual(self.bsq.stats,{'foo':['bar']})
+        self.bsq.add_stats_query('foo', ['bar'])
+        self.assertEqual(self.bsq.stats, {'foo': ['bar']})
 
-        self.bsq.add_stats_query('moof',['bar','baz'])
-        self.assertEqual(self.bsq.stats,{'foo':['bar'],'moof':['bar','baz']})
+        self.bsq.add_stats_query('moof', ['bar', 'baz'])
+        self.assertEqual(self.bsq.stats, {'foo': ['bar'], 'moof': ['bar', 'baz']})
 
     def test_add_narrow_query(self):
         self.bsq.add_narrow_query('foo:bar')
@@ -294,7 +294,6 @@ class BaseSearchQueryTestCase(TestCase):
         backend.clear()
         self.bmmsi.update()
 
-
         with self.settings(DEBUG=False):
             msq = connections['default'].get_query()
             self.assertEqual(len(msq.get_results()), 23)
@@ -362,8 +361,8 @@ class SearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections['default'].queries), 0)
         self.assertRegexpMatches(repr(self.msqs),
-                                r'^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object'
-                                r' at 0x[0-9A-Fa-f]+>, using=None>$')
+                                 r'^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object'
+                                 r' at 0x[0-9A-Fa-f]+>, using=None>$')
 
     def test_iter(self):
         reset_search_queries()
@@ -664,17 +663,17 @@ class SearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs3.query.query_facets), 3)
 
     def test_stats(self):
-        sqs = self.msqs.stats_facet('foo','bar')
+        sqs = self.msqs.stats_facet('foo', 'bar')
         self.assertTrue(isinstance(sqs, SearchQuerySet))
-        self.assertEqual(len(sqs.query.stats),1)
+        self.assertEqual(len(sqs.query.stats), 1)
 
-        sqs2 = self.msqs.stats_facet('foo','bar').stats_facet('foo','baz')
+        sqs2 = self.msqs.stats_facet('foo', 'bar').stats_facet('foo', 'baz')
         self.assertTrue(isinstance(sqs2, SearchQuerySet))
-        self.assertEqual(len(sqs2.query.stats),1)
+        self.assertEqual(len(sqs2.query.stats), 1)
 
-        sqs3 = self.msqs.stats_facet('foo','bar').stats_facet('moof','baz')
+        sqs3 = self.msqs.stats_facet('foo', 'bar').stats_facet('moof', 'baz')
         self.assertTrue(isinstance(sqs3, SearchQuerySet))
-        self.assertEqual(len(sqs3.query.stats),2)
+        self.assertEqual(len(sqs3.query.stats), 2)
 
     def test_narrow(self):
         sqs = self.msqs.narrow('foo:moof')

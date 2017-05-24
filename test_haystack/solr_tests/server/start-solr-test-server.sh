@@ -2,7 +2,11 @@
 
 set -e
 
-SOLR_VERSION=4.10.4
+SOLR_VERSION=6.5.0
+SOLR_DIR=solr
+
+
+SOLR_PORT=9001
 
 cd $(dirname $0)
 
@@ -24,32 +28,39 @@ if [ ! -f ${SOLR_ARCHIVE} ]; then
     curl -Lo $SOLR_ARCHIVE ${SOLR_DOWNLOAD_URL} || (echo "Unable to download ${SOLR_DOWNLOAD_URL}"; exit 2)
 fi
 
-echo "Extracting Solr ${SOLR_VERSION} to `pwd`/solr4/"
-rm -rf solr4
-mkdir solr4
-tar -C solr4 -xf ${SOLR_ARCHIVE} --strip-components 2 solr-${SOLR_VERSION}/example
-tar -C solr4 -xf ${SOLR_ARCHIVE} --strip-components 1 solr-${SOLR_VERSION}/dist solr-${SOLR_VERSION}/contrib
+echo "Extracting Solr ${SOLR_ARCHIVE} to `pwd`/${SOLR_DIR}"
+rm -rf ${SOLR_DIR}
+mkdir ${SOLR_DIR}
+FULL_SOLR_DIR=$(readlink -f ./${SOLR_DIR})
+tar -C ${SOLR_DIR} -xf ${SOLR_ARCHIVE} --strip-components=1
 
-echo "Changing into solr4"
+export SOLR_LOGS_DIR="${FULL_SOLR_DIR}/logs"
 
-cd solr4
+install -d ${SOLR_LOGS_DIR}
 
-echo "Configuring Solr"
+echo "Changing into ${FULL_SOLR_DIR} "
 
-cp ${TEST_ROOT}/solrconfig.xml solr/collection1/conf/solrconfig.xml
-cp ${TEST_ROOT}/schema.xml solr/collection1/conf/schema.xml
+cd ${FULL_SOLR_DIR}
 
-# Fix paths for the content extraction handler:
-perl -p -i -e 's|<lib dir="../../../contrib/|<lib dir="../../contrib/|'g solr/*/conf/solrconfig.xml
-perl -p -i -e 's|<lib dir="../../../dist/|<lib dir="../../dist/|'g solr/*/conf/solrconfig.xml
+echo "Creating Solr Core"
+./bin/solr start -p ${SOLR_PORT}
+./bin/solr create -c collection1 -p ${SOLR_PORT} -n basic_config
+./bin/solr create -c mgmnt -p ${SOLR_PORT}
 
-# Add MoreLikeThis handler
-perl -p -i -e 's|<!-- A Robust Example|<!-- More like this request handler -->\n  <requestHandler name="/mlt" class="solr.MoreLikeThisHandler" />\n\n\n  <!-- A Robust Example|'g solr/*/conf/solrconfig.xml
+echo "Solr system information:"
+curl --fail --silent 'http://localhost:9001/solr/admin/info/system?wt=json&indent=on' | python -m json.tool
+./bin/solr stop -p ${SOLR_PORT}
+
+CONF_DIR=${TEST_ROOT}/confdir
+CORE_DIR=${FULL_SOLR_DIR}/server/solr/collection1
+mv ${CORE_DIR}/conf/managed-schema ${CORE_DIR}/conf/managed-schema.old
+cp ${CONF_DIR}/* ${CORE_DIR}/conf/
 
 echo 'Starting server'
+cd server
 # We use exec to allow process monitors to correctly kill the
 # actual Java process rather than this launcher script:
-export CMD="java -Djetty.port=9001 -Djava.awt.headless=true -Dapple.awt.UIElement=true -jar start.jar"
+export CMD="java -Djetty.port=${SOLR_PORT} -Djava.awt.headless=true -Dapple.awt.UIElement=true -jar start.jar --module=http -Dsolr.install.dir=${FULL_SOLR_DIR} -Dsolr.log.dir=${SOLR_LOGS_DIR}"
 
 if [ -z "${BACKGROUND_SOLR}" ]; then
     exec $CMD

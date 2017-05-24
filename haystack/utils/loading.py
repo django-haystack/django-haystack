@@ -13,6 +13,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 from django.utils.module_loading import module_has_submodule
 
+from haystack import constants
 from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import importlib
 from haystack.utils.app_loading import haystack_get_app_modules
@@ -174,7 +175,7 @@ class UnifiedIndex(object):
         self._built = False
         self.excluded_indexes = excluded_indexes or []
         self.excluded_indexes_ids = {}
-        self.document_field = getattr(settings, 'HAYSTACK_DOCUMENT_FIELD', 'text')
+        self.document_field = constants.DOCUMENT_FIELD
         self._fieldnames = {}
         self._facet_fieldnames = {}
 

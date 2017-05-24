@@ -8,8 +8,8 @@ from threading import Thread
 
 from django.test import TestCase
 from django.utils.six.moves import queue
-from test_haystack.core.models import (AFifthMockModel, AThirdMockModel, MockModel, ManyToManyLeftSideModel,
-                                       ManyToManyRightSideModel)
+from test_haystack.core.models import (AFifthMockModel, AThirdMockModel, ManyToManyLeftSideModel,
+                                       ManyToManyRightSideModel, MockModel)
 
 from haystack import connection_router, connections, indexes
 from haystack.exceptions import SearchFieldError
@@ -270,7 +270,6 @@ class SearchIndexTestCase(TestCase):
 
         # Restore the original attribute
         self.mi.__class__.get_updated_field = old_guf
-
 
     def test_prepare(self):
         mock = MockModel()
