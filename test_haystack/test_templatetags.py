@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.template import Context, Template
+from django.template import Template
 from django.test import TestCase
 
 from haystack.utils import Highlighter
@@ -23,8 +23,7 @@ class TemplateTagTestCase(TestCase):
     def render(self, template, context):
         # Why on Earth does Django not have a TemplateTestCase yet?
         t = Template(template)
-        c = Context(context)
-        return t.render(c)
+        return t.render(context)
 
 
 class HighlightTestCase(TemplateTagTestCase):

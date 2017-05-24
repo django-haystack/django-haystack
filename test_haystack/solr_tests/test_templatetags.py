@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import unittest
 
-from django.template import Context, Template
+from django.template import Template
 from django.test import TestCase
 from mock import call, patch
 
@@ -17,8 +17,7 @@ class MoreLikeThisTagTestCase(TestCase):
     def render(self, template, context):
         # Why on Earth does Django not have a TemplateTestCase yet?
         t = Template(template)
-        c = Context(context)
-        return t.render(c)
+        return t.render(context)
 
     def test_more_like_this_without_limit(self, mock_sqs):
         mock_model = MockModel.objects.get(pk=3)

@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
-from django.template import Context, loader
+from django.template import loader
 
 from haystack import connections, connection_router, constants
 from haystack.backends.solr_backend import SolrSearchBackend
@@ -42,14 +42,14 @@ class Command(BaseCommand):
         content_field_name, fields = backend.build_schema(
             connections[using].get_unified_index().all_searchfields()
         )
-        return Context({
+        return {
             'content_field_name': content_field_name,
             'fields': fields,
             'default_operator': constants.DEFAULT_OPERATOR,
             'ID': constants.ID,
             'DJANGO_CT': constants.DJANGO_CT,
             'DJANGO_ID': constants.DJANGO_ID,
-        })
+        }
 
     def build_template(self, using):
         t = loader.get_template('search_configuration/solr.xml')
