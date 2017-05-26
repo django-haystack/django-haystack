@@ -68,6 +68,8 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
     # in memory. Useful when reindexing large amounts of data.
     small_cache_qs = qs.all()
     current_qs = small_cache_qs[start:end]
+    
+    index.pre_process_data(current_qs)
 
     is_parent_process = hasattr(os, 'getppid') and os.getpid() == os.getppid()
 
