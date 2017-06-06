@@ -44,6 +44,7 @@ from whoosh.highlight import ContextFragmenter, HtmlFormatter
 from whoosh.qparser import QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
+from whoosh.query import And, Or, Term
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -379,12 +380,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         else:
             model_choices = []
 
-        if len(model_choices) > 0:
-            if narrow_queries is None:
-                narrow_queries = set()
-
-            narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in model_choices]))
-
         narrow_searcher = None
 
         if narrow_queries is not None:
@@ -411,6 +406,9 @@ class WhooshSearchBackend(BaseSearchBackend):
         if self.index.doc_count():
             searcher = self.index.searcher()
             parsed_query = self.parser.parse(query_string)
+            if len(model_choices) > 0:
+                narrow_model = [Term(DJANGO_CT, rm) for rm in model_choices]
+                parsed_query = And([Or(narrow_model), parsed_query])
 
             # In the event of an invalid/stopworded query, recover gracefully.
             if parsed_query is None:
@@ -505,12 +503,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         else:
             model_choices = []
 
-        if len(model_choices) > 0:
-            if narrow_queries is None:
-                narrow_queries = set()
-
-            narrow_queries.add(' OR '.join(['%s:%s' % (DJANGO_CT, rm) for rm in model_choices]))
-
         if additional_query_string and additional_query_string != '*':
             narrow_queries.add(additional_query_string)
 
@@ -544,6 +536,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             query = "%s:%s" % (ID, get_identifier(model_instance))
             searcher = self.index.searcher()
             parsed_query = self.parser.parse(query)
+            if len(model_choices) > 0:
+                narrow_model = [Term(DJANGO_CT, rm) for rm in model_choices]
+                parsed_query = And([Or(narrow_model), parsed_query])
             results = searcher.search(parsed_query)
 
             if len(results):
