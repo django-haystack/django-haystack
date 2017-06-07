@@ -27,5 +27,3 @@ def setup():
 def teardown():
     test_runner.teardown_databases(old_config)
     test_runner.teardown_test_environment()
-
-
