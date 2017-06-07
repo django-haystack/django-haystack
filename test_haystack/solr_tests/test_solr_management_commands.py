@@ -3,16 +3,22 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import os
 from tempfile import mkdtemp
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 import pysolr
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from mock import patch
 
-from haystack import connections, indexes
+from haystack import connections, constants, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
@@ -35,6 +41,13 @@ class SolrMockTagSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return MockTag
+
+
+class SolrMockSecretKeySearchIndex(indexes.SearchIndex, indexes.Indexable):
+    Th3S3cr3tK3y = indexes.CharField(document=True, model_attr='author')
+
+    def get_model(self):
+        return MockModel
 
 
 class ManagementCommandTestCase(TestCase):
@@ -182,6 +195,56 @@ class ManagementCommandTestCase(TestCase):
 
         connections['whoosh']._index = self.ui
         self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema', using='whoosh', interactive=False)
+
+    def test_build_schema(self):
+
+        # Stow.
+        oldhdf = constants.DOCUMENT_FIELD
+        oldui = connections['solr'].get_unified_index()
+        oldurl = settings.HAYSTACK_CONNECTIONS['solr']['URL']
+
+        needle = 'Th3S3cr3tK3y'
+        constants.DOCUMENT_FIELD = needle   # Force index to use new key for document_fields
+        settings.HAYSTACK_CONNECTIONS['solr']['URL'] = settings.HAYSTACK_CONNECTIONS['solr']['URL'].rsplit('/', 1)[0] + '/mgmnt'
+
+        ui = UnifiedIndex()
+        ui.build(indexes=[SolrMockSecretKeySearchIndex()])
+        connections['solr']._index = ui
+
+        rendered_file = StringIO()
+
+        script_dir = os.path.realpath(os.path.dirname(__file__))
+        conf_dir = os.path.join(script_dir, 'server', 'solr', 'server', 'solr', 'mgmnt', 'conf')
+        schema_file = os.path.join(conf_dir, 'schema.xml')
+        solrconfig_file = os.path.join(conf_dir, 'solrconfig.xml')
+
+        self.assertTrue(os.path.isdir(conf_dir), msg='Expected %s to be a directory' % conf_dir)
+
+        call_command('build_solr_schema', using='solr', stdout=rendered_file)
+        contents = rendered_file.getvalue()
+        self.assertGreater(contents.find("name=\"%s" % needle), -1)
+
+        call_command('build_solr_schema', using='solr', configure_directory=conf_dir)
+        with open(schema_file) as s:
+            self.assertGreater(s.read().find("name=\"%s" % needle), -1)
+        with open(solrconfig_file) as s:
+            self.assertGreater(s.read().find("name=\"df\">%s" % needle), -1)
+
+        self.assertTrue(os.path.isfile(os.path.join(conf_dir, 'managed-schema.old')))
+
+        call_command('build_solr_schema', using='solr', reload_core=True)
+
+        os.rename(schema_file, '%s.bak' % schema_file)
+        self.assertRaises(CommandError, call_command, 'build_solr_schema', using='solr', reload_core=True)
+
+        call_command('build_solr_schema', using='solr', filename=schema_file)
+        with open(schema_file) as s:
+            self.assertGreater(s.read().find("name=\"%s" % needle), -1)
+
+        # reset
+        constants.DOCUMENT_FIELD = oldhdf
+        connections['solr']._index = oldui
+        settings.HAYSTACK_CONNECTIONS['solr']['URL'] = oldurl
 
 
 class AppModelManagementCommandTestCase(TestCase):

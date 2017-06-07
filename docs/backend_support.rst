@@ -9,12 +9,12 @@ Supported Backends
 ==================
 
 * Solr_
-* Elasticsearch_
+* ElasticSearch_
 * Whoosh_
 * Xapian_
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Elasticsearch: http://elasticsearch.org/
+.. _ElasticSearch: http://elasticsearch.org/
 .. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
@@ -37,7 +37,7 @@ Solr
 * Spatial search
 * Requires: pysolr (2.0.13+) & Solr 3.5+
 
-Elasticsearch
+ElasticSearch
 -------------
 
 **Complete & included with Haystack.**
@@ -50,7 +50,7 @@ Elasticsearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: `elasticsearch <https://pypi.python.org/pypi/elasticsearch>`_ 1.x or 2.x. Elasticsearch 5.X is currently unsupported: see `#1383 <https://github.com/django-haystack/django-haystack/issues/1383>`_.
+* Requires: `elasticsearch-py <https://pypi.python.org/pypi/elasticsearch>`_ 1.x or 2.x. ElasticSearch 5.X is currently unsupported: see `#1383 <https://github.com/django-haystack/django-haystack/issues/1383>`_.
 
 Whoosh
 ------
@@ -88,7 +88,7 @@ Backend Support Matrix
 +================+========================+=====================+================+============+==========+===============+==============+=========+
 | Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          | Yes     |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
-| Elasticsearch  | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          | Yes     |
+| ElasticSearch  | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          | Yes     |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
 | Whoosh         | Yes                    | Yes                 | Yes            | Yes        | No       | Yes           | Yes          | No      |
 +----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+

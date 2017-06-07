@@ -20,6 +20,7 @@ VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
 SPELLING_SUGGESTION_HAS_NOT_RUN = object()
 
+
 def log_query(func):
     """
     A decorator for pseudo-logging search queries. Used in the ``SearchBackend``
@@ -77,7 +78,7 @@ class BaseSearchBackend(object):
         self.silently_fail = connection_options.get('SILENTLY_FAIL', True)
         self.distance_available = connection_options.get('DISTANCE_AVAILABLE', False)
 
-    def update(self, index, iterable):
+    def update(self, index, iterable, commit=True):
         """
         Updates the backend when given a SearchIndex and a collection of
         documents.
@@ -251,10 +252,8 @@ class SearchNode(tree.Node):
 
     def __str__(self):
         if self.negated:
-            return '(NOT (%s: %s))' % (self.connector, ', '.join([str(c) for c
-                    in self.children]))
-        return '(%s: %s)' % (self.connector, ', '.join([str(c) for c in
-                self.children]))
+            return '(NOT (%s: %s))' % (self.connector, ', '.join([str(c) for c in self.children]))
+        return '(%s: %s)' % (self.connector, ', '.join([str(c) for c in self.children]))
 
     def __deepcopy__(self, memodict):
         """
@@ -299,14 +298,12 @@ class SearchNode(tree.Node):
         if len(self.children) < 2:
             self.connector = conn_type
         if self.connector == conn_type:
-            if isinstance(node, SearchNode) and (node.connector == conn_type or
-                    len(node) == 1):
+            if isinstance(node, SearchNode) and (node.connector == conn_type or len(node) == 1):
                 self.children.extend(node.children)
             else:
                 self.children.append(node)
         else:
-            obj = self._new_instance(self.children, self.connector,
-                    self.negated)
+            obj = self._new_instance(self.children, self.connector, self.negated)
             self.connector = conn_type
             self.children = [obj, node]
 
@@ -320,8 +317,7 @@ class SearchNode(tree.Node):
         Interpreting the meaning of this negate is up to client code. This
         method is useful for implementing "not" arrangements.
         """
-        self.children = [self._new_instance(self.children, self.connector,
-                not self.negated)]
+        self.children = [self._new_instance(self.children, self.connector, not self.negated)]
         self.connector = self.default
 
     def start_subtree(self, conn_type):
@@ -333,13 +329,11 @@ class SearchNode(tree.Node):
         if len(self.children) == 1:
             self.connector = conn_type
         elif self.connector != conn_type:
-            self.children = [self._new_instance(self.children, self.connector,
-                    self.negated)]
+            self.children = [self._new_instance(self.children, self.connector, self.negated)]
             self.connector = conn_type
             self.negated = False
 
-        self.subtree_parents.append(self.__class__(self.children,
-                self.connector, self.negated))
+        self.subtree_parents.append(self.__class__(self.children, self.connector, self.negated))
         self.connector = self.default
         self.negated = False
         self.children = []
@@ -728,7 +722,6 @@ class BaseSearchQuery(object):
         """
         raise NotImplementedError("Subclasses must provide a way to generate query fragments via the 'build_query_fragment' method.")
 
-
     # Standard methods to alter the query.
 
     def clean(self, query_fragment):
@@ -856,7 +849,7 @@ class BaseSearchQuery(object):
         self._more_like_this = True
         self._mlt_instance = model_instance
 
-    def add_stats_query(self,stats_field,stats_facets):
+    def add_stats_query(self, stats_field, stats_facets):
         """Adds stats and stats_facets queries for the Solr backend."""
         self.stats[stats_field] = stats_facets
 
@@ -902,7 +895,7 @@ class BaseSearchQuery(object):
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
         from haystack import connections
-        if not gap_by in VALID_GAPS:
+        if gap_by not in VALID_GAPS:
             raise FacetingError("The gap_by ('%s') must be one of the following: %s." % (gap_by, ', '.join(VALID_GAPS)))
 
         details = {

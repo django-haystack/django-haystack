@@ -27,7 +27,7 @@ Indexing Extracted Content
 
 Generally you will want to include the extracted text in your main document
 field along with everything else specified in your search template. This example
-shows how to override a hypothetical ``FileIndex``'s ``prepare`` method to 
+shows how to override a hypothetical ``FileIndex``'s ``prepare`` method to
 include the extract content along with information retrieved from the database::
 
     def prepare(self, obj):
@@ -39,7 +39,7 @@ include the extract content along with information retrieved from the database::
         # manually before calling extract_file_contents:
         file_obj = obj.the_file.open()
 
-        extracted_data = self.backend.extract_file_contents(file_obj)
+        extracted_data = self.get_backend().extract_file_contents(file_obj)
 
         # Now we'll finally perform the template processing to render the
         # text field with *all* of our metadata visible for templating:

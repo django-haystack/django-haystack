@@ -377,7 +377,6 @@ class SolrSearchBackendTestCase(TestCase):
         self.ui.build(indexes=[self.smmi])
         connections['solr']._index = self.ui
 
-
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_solr.search('*:*').hits, 3)
@@ -388,19 +387,20 @@ class SolrSearchBackendTestCase(TestCase):
 
         self.assertEqual(self.sb.search('', highlight=True), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=True)['hits'], 3)
-        self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']], ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
+        self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=True)['results']],
+                         ['<em>Indexed</em>!\n1', '<em>Indexed</em>!\n2', '<em>Indexed</em>!\n3'])
 
         # shortened highlighting options
-        highlight_dict = {'simple.pre':'<i>', 'simple.post': '</i>'}
+        highlight_dict = {'simple.pre': '<i>', 'simple.post': '</i>'}
         self.assertEqual(self.sb.search('', highlight=highlight_dict), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('Index', highlight=highlight_dict)['hits'], 3)
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=highlight_dict)['results']],
-            ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
+                         ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
 
         # full-form highlighting options
-        highlight_dict = {'hl.simple.pre':'<i>', 'hl.simple.post': '</i>'}
+        highlight_dict = {'hl.simple.pre': '<i>', 'hl.simple.post': '</i>'}
         self.assertEqual([result.highlighted['text'][0] for result in self.sb.search('Index', highlight=highlight_dict)['results']],
-            ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
+                         ['<i>Indexed</i>!\n1', '<i>Indexed</i>!\n2', '<i>Indexed</i>!\n3'])
 
         self.assertEqual(self.sb.search('Indx')['hits'], 0)
         self.assertEqual(self.sb.search('indax')['spelling_suggestion'], 'index')
@@ -422,8 +422,8 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['facets']['queries'], {'name:[* TO e]': 3})
 
-        self.assertEqual(self.sb.search('', stats={}), {'hits':0,'results':[]})
-        results = self.sb.search('*:*', stats={'name':['name']})
+        self.assertEqual(self.sb.search('', stats={}), {'hits': 0, 'results': []})
+        results = self.sb.search('*:*', stats={'name': ['name']})
         self.assertEqual(results['hits'], 3)
         self.assertEqual(results['stats']['name']['count'], 3)
 
@@ -432,12 +432,15 @@ class SolrSearchBackendTestCase(TestCase):
         self.assertEqual(results['hits'], 1)
 
         # Ensure that swapping the ``result_class`` works.
-        self.assertTrue(isinstance(self.sb.search(u'index document', result_class=MockSearchResult)['results'][0], MockSearchResult))
+        results = self.sb.search(u'index', result_class=MockSearchResult)
+        self.assertIsInstance(self.sb.search(u'index', result_class=MockSearchResult)['results'][0],
+                              MockSearchResult)
 
         # Check the use of ``limit_to_registered_models``.
         self.assertEqual(self.sb.search('', limit_to_registered_models=False), {'hits': 0, 'results': []})
         self.assertEqual(self.sb.search('*:*', limit_to_registered_models=False)['hits'], 3)
-        self.assertEqual([result.pk for result in self.sb.search('*:*', limit_to_registered_models=False)['results']], ['1', '2', '3'])
+        self.assertEqual([result.pk for result in self.sb.search('*:*', limit_to_registered_models=False)['results']],
+                         ['1', '2', '3'])
 
         # Stow.
         old_limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
@@ -765,8 +768,14 @@ class LiveSolrSearchQueryTestCase(TestCase):
 
     def test_get_spelling(self):
         self.sq.add_filter(SQ(content='Indexy'))
+
+        # Default collate + spelling path
         self.assertEqual(self.sq.get_spelling_suggestion(), u'(index)')
         self.assertEqual(self.sq.get_spelling_suggestion('indexy'), u'(index)')
+
+        # Just spelling path
+        self.sq.run(spelling_query='Indexy', collate=False)
+        self.assertEqual(self.sq._spelling_suggestion, u'index')
 
     def test_log_query(self):
         reset_search_queries()
@@ -984,7 +993,7 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
     def test_query__in(self):
         self.assertGreater(len(self.sqs), 0)
-        sqs = self.sqs.filter(django_ct='core.mockmodel', django_id__in=[1,2])
+        sqs = self.sqs.filter(django_ct='core.mockmodel', django_id__in=[1, 2])
         self.assertEqual(len(sqs), 2)
 
     def test_query__in_empty_list(self):
@@ -1213,36 +1222,37 @@ class LiveSolrMoreLikeThisTestCase(TestCase):
         # items which we'll confirm are included in the first 5 results. This is still ugly as we're
         # hard-coding primary keys but it's better than breaking any time a Solr update or data
         # change causes a score to shift slightly
-
         top_results = [int(result.pk) for result in all_mlt[:5]]
-        for i in (14, 6, 4, 22, 10):
+        for i in (14, 6, 10, 4, 5):
             self.assertIn(i, top_results)
 
         filtered_mlt = self.sqs.filter(name='daniel3').more_like_this(MockModel.objects.get(pk=3))
         self.assertLess(filtered_mlt.count(), all_mlt.count())
         top_filtered_results = [int(result.pk) for result in filtered_mlt[:5]]
 
-        for i in (16, 17, 19, 22, 23):
+        for i in (16, 17, 19, 13, 23):
             self.assertIn(i, top_filtered_results)
 
         mlt_filtered = self.sqs.more_like_this(MockModel.objects.get(pk=3)).filter(name='daniel3')
         self.assertLess(mlt_filtered.count(), all_mlt.count())
         top_mlt_filtered_pks = [int(result.pk) for result in mlt_filtered[:5]]
 
-        for i in (17, 16, 19, 23, 22):
+        for i in (17, 16, 19, 23, 13):
             self.assertIn(i, top_mlt_filtered_pks)
 
         filtered_mlt_with_models = self.sqs.models(MockModel).more_like_this(MockModel.objects.get(pk=1))
         self.assertLessEqual(filtered_mlt_with_models.count(), all_mlt.count())
         top_filtered_with_models = [int(result.pk) for result in filtered_mlt_with_models[:5]]
-        for i in (14, 6, 4, 22, 10):
+
+        for i in (14, 6, 4, 5, 10):
             self.assertIn(i, top_filtered_with_models)
 
     def test_more_like_this_defer(self):
         mi = MockModel.objects.defer('foo').get(pk=1)
         deferred = self.sqs.models(MockModel).more_like_this(mi)
         top_results = [int(result.pk) for result in deferred[:5]]
-        for i in (14, 6, 4, 22, 10):
+
+        for i in (14, 6, 4, 5, 10):
             self.assertIn(i, top_results)
 
     def test_more_like_this_custom_result_class(self):
@@ -1279,7 +1289,8 @@ class LiveSolrAutocompleteTestCase(TestCase):
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto='mod')
         self.assertEqual(autocomplete.count(), 5)
-        self.assertEqual([result.pk for result in autocomplete], ['1', '12', '6', '7', '14'])
+        self.assertSetEqual(set([result.pk for result in autocomplete]),
+                            set(['1', '12', '6', '7', '14']))
         self.assertTrue('mod' in autocomplete[0].text.lower())
         self.assertTrue('mod' in autocomplete[1].text.lower())
         self.assertTrue('mod' in autocomplete[2].text.lower())
@@ -1290,7 +1301,8 @@ class LiveSolrAutocompleteTestCase(TestCase):
         # Test multiple words.
         autocomplete_2 = self.sqs.autocomplete(text_auto='your mod')
         self.assertEqual(autocomplete_2.count(), 3)
-        self.assertEqual([result.pk for result in autocomplete_2], ['1', '14', '6'])
+        self.assertSetEqual(set([result.pk for result in autocomplete_2]),
+                            set(['1', '14', '6']))
         self.assertTrue('your' in autocomplete_2[0].text.lower())
         self.assertTrue('mod' in autocomplete_2[0].text.lower())
         self.assertTrue('your' in autocomplete_2[1].text.lower())
@@ -1302,7 +1314,8 @@ class LiveSolrAutocompleteTestCase(TestCase):
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto='Django', name_auto='dan')
         self.assertEqual(autocomplete_3.count(), 4)
-        self.assertEqual([result.pk for result in autocomplete_3], ['12', '1', '14', '22'])
+        self.assertSetEqual(set([result.pk for result in autocomplete_3]),
+                            set(['12', '1', '14', '22']))
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
 

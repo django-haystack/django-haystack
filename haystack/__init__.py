@@ -54,7 +54,8 @@ connection_router = loading.ConnectionRouter()
 # DEBUG = True.
 def reset_search_queries(**kwargs):
     for conn in connections.all():
-        conn.reset_queries()
+        if conn:
+            conn.reset_queries()
 
 
 if settings.DEBUG:

@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 
+import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError, SkipDocument
@@ -42,10 +43,13 @@ class SolrSearchBackend(BaseSearchBackend):
     def __init__(self, connection_alias, **connection_options):
         super(SolrSearchBackend, self).__init__(connection_alias, **connection_options)
 
-        if not 'URL' in connection_options:
+        if 'URL' not in connection_options:
             raise ImproperlyConfigured("You must specify a 'URL' in your settings for connection '%s'." % connection_alias)
 
-        self.conn = Solr(connection_options['URL'], timeout=self.timeout, **connection_options.get('KWARGS', {}))
+        self.collate = connection_options.get('COLLATE_SPELLING', True)
+
+        self.conn = Solr(connection_options['URL'], timeout=self.timeout,
+                         **connection_options.get('KWARGS', {}))
         self.log = logging.getLogger('haystack')
 
     def update(self, index, iterable, commit=True):
@@ -139,7 +143,10 @@ class SolrSearchBackend(BaseSearchBackend):
             self.log.error("Failed to query Solr using '%s': %s", query_string, e, exc_info=True)
             raw_results = EmptyResults()
 
-        return self._process_results(raw_results, highlight=kwargs.get('highlight'), result_class=kwargs.get('result_class', SearchResult), distance_point=kwargs.get('distance_point'))
+        return self._process_results(raw_results,
+                                     highlight=kwargs.get('highlight'),
+                                     result_class=kwargs.get('result_class', SearchResult),
+                                     distance_point=kwargs.get('distance_point'))
 
     def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
                             fields='', highlight=False, facets=None,
@@ -147,9 +154,15 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None, stats=None,
+                            result_class=None, stats=None, collate=None,
                             **extra_kwargs):
-        kwargs = {'fl': '* score'}
+
+        index = haystack.connections[self.connection_alias].get_unified_index()
+
+        kwargs = {
+            'fl': '* score',
+            'df': index.document_field,
+        }
 
         if fields:
             if isinstance(fields, (list, set)):
@@ -193,13 +206,15 @@ class SolrSearchBackend(BaseSearchBackend):
                 # this makes option dicts shorter: {'maxAnalyzedChars': 42}
                 # and lets some of options be used as keyword arguments: `.highlight(preserveMulti=False)`
                 kwargs.update({
-                    key if key.startswith("hl.") else ('hl.' + key): highlight[key] 
+                    key if key.startswith("hl.") else ('hl.' + key): highlight[key]
                     for key in highlight.keys()
                 })
 
+        if collate is None:
+            collate = self.collate
         if self.include_spelling is True:
             kwargs['spellcheck'] = 'true'
-            kwargs['spellcheck.collate'] = 'true'
+            kwargs['spellcheck.collate'] = str(collate).lower()
             kwargs['spellcheck.count'] = 1
 
             if spelling_query:
@@ -362,13 +377,13 @@ class SolrSearchBackend(BaseSearchBackend):
         hits = raw_results.hits
         facets = {}
         stats = {}
-        spelling_suggestion = None
+        spelling_suggestion = spelling_suggestions = None
 
         if result_class is None:
             result_class = SearchResult
 
-        if hasattr(raw_results,'stats'):
-            stats = raw_results.stats.get('stats_fields',{})
+        if hasattr(raw_results, 'stats'):
+            stats = raw_results.stats.get('stats_fields', {})
 
         if hasattr(raw_results, 'facets'):
             facets = {
@@ -381,18 +396,27 @@ class SolrSearchBackend(BaseSearchBackend):
                 for facet_field in facets[key]:
                     # Convert to a two-tuple, as Solr's json format returns a list of
                     # pairs.
-                    facets[key][facet_field] = list(zip(facets[key][facet_field][::2], facets[key][facet_field][1::2]))
+                    facets[key][facet_field] = list(zip(facets[key][facet_field][::2],
+                                                        facets[key][facet_field][1::2]))
 
         if self.include_spelling and hasattr(raw_results, 'spellcheck'):
-            # Solr 5+ changed the JSON response format so the suggestions will be key-value mapped rather
-            # than simply paired elements in a list, which is a nice improvement but incompatible with
-            # Solr 4: https://issues.apache.org/jira/browse/SOLR-3029
-            if len(raw_results.spellcheck.get('collations', [])):
-                spelling_suggestion = raw_results.spellcheck['collations'][-1]
-            elif len(raw_results.spellcheck.get('suggestions', [])):
-                spelling_suggestion = raw_results.spellcheck['suggestions'][-1]
+            try:
+                spelling_suggestions = self.extract_spelling_suggestions(raw_results)
+            except Exception as exc:
+                self.log.error('Error extracting spelling suggestions: %s', exc, exc_info=True,
+                               extra={'data': {'spellcheck': raw_results.spellcheck}})
 
-            assert spelling_suggestion is None or isinstance(spelling_suggestion, six.string_types)
+                if not self.silently_fail:
+                    raise
+
+                spelling_suggestions = None
+
+            if spelling_suggestions:
+                # Maintain compatibility with older versions of Haystack which returned a single suggestion:
+                spelling_suggestion = spelling_suggestions[-1]
+                assert isinstance(spelling_suggestion, six.string_types)
+            else:
+                spelling_suggestion = None
 
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
@@ -443,7 +467,66 @@ class SolrSearchBackend(BaseSearchBackend):
             'stats': stats,
             'facets': facets,
             'spelling_suggestion': spelling_suggestion,
+            'spelling_suggestions': spelling_suggestions,
         }
+
+    def extract_spelling_suggestions(self, raw_results):
+        # There are many different formats for Legacy, 6.4, and 6.5 e.g.
+        # https://issues.apache.org/jira/browse/SOLR-3029 and depending on the
+        # version and configuration the response format may be a dict of dicts,
+        # a list of dicts, or a list of strings.
+
+        collations = raw_results.spellcheck.get('collations', None)
+        suggestions = raw_results.spellcheck.get('suggestions', None)
+
+        # We'll collect multiple suggestions here. For backwards
+        # compatibility with older versions of Haystack we'll still return
+        # only a single suggestion but in the future we can expose all of
+        # them.
+
+        spelling_suggestions = []
+
+        if collations:
+            if isinstance(collations, dict):
+                # Solr 6.5
+                collation_values = collations['collation']
+                if isinstance(collation_values, six.string_types):
+                    collation_values = [collation_values]
+                elif isinstance(collation_values, dict):
+                    # spellcheck.collateExtendedResults changes the format to a dictionary:
+                    collation_values = [collation_values['collationQuery']]
+            elif isinstance(collations[1], dict):
+                # Solr 6.4
+                collation_values = collations
+            else:
+                # Older versions of Solr
+                collation_values = collations[-1:]
+
+            for i in collation_values:
+                # Depending on the options the values are either simple strings or dictionaries:
+                spelling_suggestions.append(i['collationQuery'] if isinstance(i, dict) else i)
+        elif suggestions:
+            if isinstance(suggestions, dict):
+                for i in suggestions.values():
+                    for j in i['suggestion']:
+                        if isinstance(j, dict):
+                            spelling_suggestions.append(j['word'])
+                        else:
+                            spelling_suggestions.append(j)
+            elif isinstance(suggestions[0], six.string_types) and isinstance(suggestions[1], dict):
+                # Solr 6.4 uses a list of paired (word, dictionary) pairs:
+                for suggestion in suggestions:
+                    if isinstance(suggestion, dict):
+                        for i in suggestion['suggestion']:
+                            if isinstance(i, dict):
+                                spelling_suggestions.append(i['word'])
+                            else:
+                                spelling_suggestions.append(i)
+            else:
+                # Legacy Solr
+                spelling_suggestions.append(suggestions[-1])
+
+        return spelling_suggestions
 
     def build_schema(self, fields):
         content_field_name = ''
@@ -504,7 +587,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         return (content_field_name, schema_fields)
 
-    def extract_file_contents(self, file_obj):
+    def extract_file_contents(self, file_obj, **kwargs):
         """Extract text and metadata from a structured file (PDF, MS Word, etc.)
 
         Uses the Solr ExtractingRequestHandler, which is based on Apache Tika.
@@ -530,7 +613,7 @@ class SolrSearchBackend(BaseSearchBackend):
         """
 
         try:
-            return self.conn.extract(file_obj)
+            return self.conn.extract(file_obj, **kwargs)
         except Exception as e:
             self.log.warning(u"Unable to extract file contents: %s", e,
                              exc_info=True, extra={"data": {"file": file_obj}})
@@ -717,10 +800,11 @@ class SolrSearchQuery(BaseSearchQuery):
             search_kwargs.update(kwargs)
 
         results = self.backend.search(final_query, **search_kwargs)
+
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
         self._facet_counts = self.post_process_facets(results)
-        self._stats = results.get('stats',{})
+        self._stats = results.get('stats', {})
         self._spelling_suggestion = results.get('spelling_suggestion', None)
 
     def run_mlt(self, **kwargs):

@@ -11,8 +11,28 @@ Official Download Location: http://www.apache.org/dyn/closer.cgi/lucene/solr/
 
 Solr is Java but comes in a pre-packaged form that requires very little other
 than the JRE and Jetty. It's very performant and has an advanced featureset.
-Haystack suggests using Solr 3.5+, though it's possible to get it working on
-Solr 1.4 with a little effort. Installation is relatively simple::
+Haystack suggests using Solr 6.x, though it's possible to get it working on
+Solr 4.x+ with a little effort. Installation is relatively simple:
+
+For Solr 6.X::
+
+    curl -LO https://archive.apache.org/dist/lucene/solr/x.Y.0/solr-X.Y.0.tgz
+    tar -C solr -xf solr-X.Y.0.tgz --strip-components=1
+    cd solr
+    ./bin/solr create -c tester -n basic_config
+
+By default this will create a core with a managed schema.  This setup is dynamic
+but not useful for haystack, and we'll need to configure solr to use a static
+(classic) schema.  Haystack can generate a viable schema.xml and solrconfig.xml
+for you from your application and reload the core for you (once Haystack is
+installed and setup).  To do this run:
+``./manage.py build_solr_schema --configure-directory=<CoreConfigDif>
+--reload-core``. In this example CoreConfigDir is something like
+``../solr-6.5.0/server/solr/tester/conf``, and ``--reload-core``
+is what triggers reloading of the core.  Please refer to ``build_solr_schema``
+in the :doc:`management-commands` for required configuration.
+
+For Solr 4.X::
 
     curl -LO https://archive.apache.org/dist/lucene/solr/4.10.2/solr-4.10.2.tgz
     tar xvzf solr-4.10.2.tgz
@@ -20,21 +40,17 @@ Solr 1.4 with a little effort. Installation is relatively simple::
     cd example
     java -jar start.jar
 
-You'll need to revise your schema. You can generate this from your application
+You’ll need to revise your schema. You can generate this from your application
 (once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
-it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart Solr.
+it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart
+Solr.
 
-.. note::
-    ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
-    provides a default template using some sensible defaults. If you would like
-    to provide your own template, you will need to place it in
-    ``search_configuration/solr.xml``, inside a directory specified by your app's
-    ``TEMPLATE_DIRS`` setting. Examples::
-
-        /myproj/myapp/templates/search_configuration/solr.xml
-        # ...or...
-        /myproj/templates/search_configuration/solr.xml
+.. warning::
+    Please note; the template filename, the file YOU supply under
+    TEMPLATE_DIR/search_configuration has changed to schema.xml from solr.xml.
+    The previous template name solr.xml was a legacy holdover from older
+    versions of solr.
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
 distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
@@ -43,7 +59,8 @@ somewhere on your ``PYTHONPATH``.
 .. note::
 
     ``pysolr`` has its own dependencies that aren't covered by Haystack. See
-    https://pypi.python.org/pypi/pysolr for the latest documentation.
+    https://pypi.python.org/pypi/pysolr for the latest documentation.  Simplest
+    approach is to install using ``pip install pysolr``
 
 More Like This
 --------------
