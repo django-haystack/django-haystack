@@ -9,7 +9,6 @@ from django.conf import settings
 from django.utils import six
 
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
-from haystack.utils.highlighting import Highlighter
 
 IDENTIFIER_REGEX = re.compile('^[\w\d_]+\.[\w\d_]+\.[\w\d-]+$')
 
@@ -68,6 +67,7 @@ def get_model_ct_tuple(model):
     model_name = model._meta.concrete_model._meta.model_name \
         if hasattr(model, '_deferred') and model._deferred else model._meta.model_name
     return (model._meta.app_label, model_name)
+
 
 def get_model_ct(model):
     return "%s.%s" % get_model_ct_tuple(model)

@@ -5,9 +5,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging as std_logging
 import pickle
 
-import django
 from django.test import TestCase
-from test_haystack.core.models import AFifthMockModel, MockModel
+from test_haystack.core.models import MockModel
 
 from haystack import connections
 from haystack.models import SearchResult
@@ -81,12 +80,16 @@ class SearchResultTestCase(TestCase):
     def test_get_additional_fields(self):
         self.assertEqual(self.no_data_sr.get_additional_fields(), {})
         self.assertEqual(self.extra_data_sr.get_additional_fields(), {'stored': 'I am stored data. How fun.'})
-        self.assertEqual(self.no_overwrite_data_sr.get_additional_fields(), {'django_ct': 'haystack.anothermockmodel', 'django_id': 2, 'stored': 'I am stored data. How fun.'})
+        self.assertEqual(self.no_overwrite_data_sr.get_additional_fields(),
+                         {'django_ct': 'haystack.anothermockmodel',
+                          'django_id': 2,
+                          'stored': 'I am stored data. How fun.'})
 
     def test_unicode(self):
         self.assertEqual(self.no_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
         self.assertEqual(self.extra_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
-        self.assertEqual(self.no_overwrite_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
+        self.assertEqual(self.no_overwrite_data_sr.__unicode__(),
+                         u"<SearchResult: haystack.mockmodel (pk='1')>")
 
     def test_content_type(self):
         self.assertEqual(self.no_data_sr.content_type(), u'core.mockmodel')
@@ -119,7 +122,8 @@ class SearchResultTestCase(TestCase):
 
         self.assertEqual(self.no_data_sr.get_stored_fields(), {'stored': None})
         self.assertEqual(self.extra_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
-        self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
+        self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(),
+                         {'stored': 'I am stored data. How fun.'})
 
         # Restore.
         connections['default']._index = old_unified_index
