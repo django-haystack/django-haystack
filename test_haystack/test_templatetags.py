@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.template import Context, Template
 from django.test import TestCase
 
-from haystack.utils import Highlighter
+from haystack.utils.highlighting import Highlighter
 
 
 class BorkHighlighter(Highlighter):

@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from test_haystack.core.models import MockModel
 
-from haystack.utils import _lookup_identifier_method, get_facet_field_name, get_identifier, Highlighter, log
+from haystack.utils import _lookup_identifier_method, get_facet_field_name, get_identifier, log
+from haystack.utils.highlighting import Highlighter
 
 
 class GetIdentifierTestCase(TestCase):

@@ -55,7 +55,7 @@ class HighlightNode(template.Node):
             except (ImportError, AttributeError) as e:
                 raise ImproperlyConfigured("The highlighter '%s' could not be imported: %s" % (settings.HAYSTACK_CUSTOM_HIGHLIGHTER, e))
         else:
-            from haystack.utils import Highlighter
+            from haystack.utils.highlighting import Highlighter
             highlighter_class = Highlighter
 
         highlighter = highlighter_class(query, **kwargs)
