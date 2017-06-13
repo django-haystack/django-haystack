@@ -159,6 +159,8 @@ class WhooshSearchBackend(BaseSearchBackend):
                 schema_fields[field_class.index_fieldname] = NGRAM(minsize=3, maxsize=15, stored=field_class.stored, field_boost=field_class.boost)
             elif field_class.field_type == 'edge_ngram':
                 schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, at='start', stored=field_class.stored, field_boost=field_class.boost)
+            elif field_class.field_type == 'raw_string':
+                schema_fields[field_class.index_fieldname] = WHOOSH_ID(stored=field_class.stored, field_boost=field_class.boost, sortable=True)
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer(), field_boost=field_class.boost, sortable=True)
 

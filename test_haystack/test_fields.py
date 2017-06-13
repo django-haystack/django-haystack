@@ -150,7 +150,70 @@ class CharFieldTestCase(TestCase):
 
         self.assertEqual(author.prepare(mock), None)
 
+class StringFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = StringField(model_attr='foo')
+        except:
+            self.fail()
 
+    def test_prepare(self):
+        mock = MockModel()
+        mock.user = 'daniel'
+        author = StringField(model_attr='user')
+
+        self.assertEqual(author.prepare(mock), u'daniel')
+
+        # Do a lookup through the relation.
+        mock_tag = MockTag.objects.create(name='primary')
+
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_name = StringField(model_attr='tag__name')
+
+        self.assertEqual(tag_name.prepare(mock), u'primary')
+
+        # Use the default.
+        mock = MockModel()
+        author = StringField(model_attr='author', default='')
+
+        self.assertEqual(author.prepare(mock), u'')
+
+        # Simulate failed lookups.
+        mock_tag = MockTag.objects.create(name='primary')
+
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_slug = StringField(model_attr='tag__slug')
+
+        self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
+
+        # Simulate default='foo'.
+        mock = MockModel()
+        default = StringField(default='foo')
+
+        self.assertEqual(default.prepare(mock), 'foo')
+
+        # Simulate null=True.
+        mock = MockModel()
+        empty = StringField(null=True)
+
+        self.assertEqual(empty.prepare(mock), None)
+
+        mock = MockModel()
+        mock.user = None
+        author = StringField(model_attr='user', null=True)
+
+        self.assertEqual(author.prepare(mock), None)
+        
+        # Ensure lack of tokenization
+        mock = MockModel()
+        mock.user = 'The running Daniel is a boy'
+        author = StringField(model_attr='user')
+        
+        self.assertEqual(author.prepare(mock), u'The running Daniel is a boy')
+        
+        
 class NgramFieldTestCase(TestCase):
     def test_init(self):
         try:
@@ -499,6 +562,61 @@ class MultiValueFieldTestCase(TestCase):
         field = MultiValueField()
 
         self.assertEqual([1, 2, 3], field.convert([1, 2, 3]))
+        
+class MultiValueStringFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = MultiValueStringField(model_attr='foo')
+        except:
+            self.fail()
+
+        self.assertRaises(SearchFieldError, MultiValueStringField, use_template=True)
+
+    def test_prepare(self):
+        mock = MockModel()
+        mock.sites = ['3', '4', '5']
+        sites = MultiValueStringField(model_attr='sites')
+
+        self.assertEqual(sites.prepare(mock), ['3', '4', '5'])
+
+        # Simulate default=[1].
+        mock = MockModel()
+        default = MultiValueStringField(default=[1])
+
+        self.assertEqual(default.prepare(mock), [1])
+
+        # Simulate null=True.
+        mock = MockModel()
+        multy_none = MultiValueStringField(null=True)
+
+        self.assertEqual(multy_none.prepare(mock), None)
+        
+        #  Ensure that strings are not tokenized
+        mock = MockModel
+        mock.sites = (['The running Daniel is a boy', 'The running Sally is a girl'])
+        sites = MultiValueStringField(model_attr='sites')
+        
+        self.assertEqual(sites.prepare(mock), ['The running Daniel is a boy', 'The running Sally is a girl'])
+
+    def test_convert_with_single_string(self):
+        field = MultiValueStringField()
+
+        self.assertEqual(['String'], field.convert('String'))
+
+    def test_convert_with_single_int(self):
+        field = MultiValueStringField()
+
+        self.assertEqual([1], field.convert(1))
+
+    def test_convert_with_list_of_strings(self):
+        field = MultiValueStringField()
+
+        self.assertEqual(['String 1', 'String 2'], field.convert(['String 1', 'String 2']))
+
+    def test_convert_with_list_of_ints(self):
+        field = MultiValueStringField()
+
+        self.assertEqual([1, 2, 3], field.convert([1, 2, 3]))
 
 
 class CharFieldWithTemplateTestCase(TestCase):
@@ -588,6 +706,26 @@ class FacetCharFieldTestCase(TestCase):
         self.assertEqual(author.prepare(mock), u'daniel')
 
 
+class FacetStringFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = FacetStringField(model_attr='foo')
+            foo_exact = FacetStringField(facet_for='bar')
+        except:
+            self.fail()
+
+        self.assertEqual(foo.facet_for, None)
+        self.assertEqual(foo_exact.null, True)
+        self.assertEqual(foo_exact.facet_for, 'bar')
+
+    def test_prepare(self):
+        mock = MockModel()
+        mock.user = 'daniel'
+        author = FacetStringField(model_attr='user')
+
+        self.assertEqual(author.prepare(mock), u'daniel')
+        
+        
 class FacetIntegerFieldTestCase(TestCase):
     def test_init(self):
         try:
@@ -710,5 +848,25 @@ class FacetMultiValueFieldTestCase(TestCase):
         mock.user = 'daniel'
         mock.sites = [1, 3, 4]
         sites = FacetMultiValueField(model_attr='sites')
+
+        self.assertEqual(sites.prepare(mock), [1, 3, 4])
+
+class FacetMultiValueStringFieldTestCase(TestCase):
+    def test_init(self):
+        try:
+            foo = FacetMultiValueStringField(model_attr='foo')
+            foo_exact = FacetMultiValueStringField(facet_for='bar')
+        except:
+            self.fail()
+
+        self.assertEqual(foo.facet_for, None)
+        self.assertEqual(foo_exact.null, True)
+        self.assertEqual(foo_exact.facet_for, 'bar')
+
+    def test_prepare(self):
+        mock = MockModel()
+        mock.user = 'daniel'
+        mock.sites = [1, 3, 4]
+        sites = FacetMultiValueStringField(model_attr='sites')
 
         self.assertEqual(sites.prepare(mock), [1, 3, 4])
