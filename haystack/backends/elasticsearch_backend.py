@@ -6,6 +6,7 @@ import re
 import warnings
 from datetime import datetime, timedelta
 
+import itertools
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
@@ -505,12 +506,14 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         search_kwargs = self.build_search_kwargs(query_string, **kwargs)
         search_kwargs['from'] = kwargs.get('start_offset', 0)
 
-        order_fields = set()
-        for order in search_kwargs.get('sort', []):
-            for key in order.keys():
-                order_fields.add(key)
-
-        geo_sort = '_geo_distance' in order_fields
+        try:
+            geo_sort_index = list(
+                itertools.chain(
+                    [order.keys() for order in search_kwargs.get('sort', [])]
+                )
+            ).index('_geo_distance')
+        except ValueError:
+            geo_sort_index = None
 
         end_offset = kwargs.get('end_offset')
         start_offset = kwargs.get('start_offset', 0)
@@ -533,7 +536,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                                      highlight=kwargs.get('highlight'),
                                      result_class=kwargs.get('result_class', SearchResult),
                                      distance_point=kwargs.get('distance_point'),
-                                     geo_sort=geo_sort)
+                                     geo_sort_index=geo_sort_index)
 
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None, models=None,
@@ -573,7 +576,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
     def _process_results(self, raw_results, highlight=False,
                          result_class=None, distance_point=None,
-                         geo_sort=False):
+                         geo_sort_index=None):
         from haystack import connections
         results = []
         hits = raw_results.get('hits', {}).get('total', 0)
@@ -643,9 +646,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 if distance_point:
                     additional_fields['_point_of_origin'] = distance_point
 
-                    if geo_sort and raw_result.get('sort'):
+                    if geo_sort_index is not None and raw_result.get('sort'):
                         from haystack.utils.geo import Distance
-                        additional_fields['_distance'] = Distance(km=float(raw_result['sort'][0]))
+                        additional_fields['_distance'] = Distance(km=float(raw_result['sort'][geo_sort_index]))
                     else:
                         additional_fields['_distance'] = None
 
