@@ -485,6 +485,34 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.assertDictEqual(geo_d, {'location': [1.23, 4.56], 'unit': 'km', 'order': 'desc'})
 
+    def test_sort_with_multiple_criteria(self):
+        spatial_index = ElasticsearchSpatialSearchIndex()
+        old_ui = connections['elasticsearch'].get_unified_index()
+        ui = UnifiedIndex()
+        ui.build(indexes=[spatial_index])
+        connections['elasticsearch']._index = ui
+        sb = connections['elasticsearch'].get_backend()
+
+        p1 = Point(1.23, 4.56)
+        sample_objs = []
+        for i in range(1, 4):
+            mock = ASixthMockModel()
+            mock.name = "Name {}".format(i)
+            mock.lat = p1.y
+            mock.lon = p1.x
+            sample_objs.append(mock)
+
+        sb.update(spatial_index, sample_objs)
+
+        result = sb.search(
+            '*:*',
+            distance_point={'field': 'location', 'point': p1},
+            sort_by=(('name', 'desc'), ('distance', 'desc'), )
+        )
+        self.assertEqual(result['hits'], 3)
+
+        connections['elasticsearch']._index = old_ui
+
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_search('*:*')['hits']['total'], 3)
