@@ -96,27 +96,52 @@ Then, you enable it in Solr by adding the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
     <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
-
-        <str name="queryAnalyzerFieldType">textSpell</str>
-
-        <lst name="spellchecker">
-          <str name="name">default</str>
-          <str name="field">suggestions</str>
-          <str name="spellcheckIndexDir">./spellchecker1</str>
-          <str name="buildOnCommit">true</str>
-        </lst>
+    
+      <str name="queryAnalyzerFieldType">text_general</str>
+      <lst name="spellchecker">
+        <str name="name">default</str>
+        <str name="field">text</str>
+        <str name="classname">solr.DirectSolrSpellChecker</str>
+        <str name="distanceMeasure">internal</str>
+        <float name="accuracy">0.5</float>
+        <int name="maxEdits">2</int>
+        <int name="minPrefix">1</int>
+        <int name="maxInspections">5</int>
+        <int name="minQueryLength">4</int>
+        <float name="maxQueryFrequency">0.01</float>
+      </lst>
     </searchComponent>
 
 Then change your default handler from::
 
-    <requestHandler name="standard" class="solr.StandardRequestHandler" default="true" />
-
+    <requestHandler name="/select" class="solr.SearchHandler">
+      <lst name="defaults">
+        <str name="echoParams">explicit</str>
+        <int name="rows">10</int>
+      </lst>
+    </requestHandler>
+    
 ... to ...::
 
-    <requestHandler name="standard" class="solr.StandardRequestHandler" default="true">
-        <arr name="last-components">
-            <str>spellcheck</str>
-        </arr>
+    <requestHandler name="/select" class="solr.SearchHandler">
+      <lst name="defaults">
+        <str name="echoParams">explicit</str>
+        <int name="rows">10</int>
+      
+        <str name="spellcheck.dictionary">default</str>
+        <str name="spellcheck">on</str>
+        <str name="spellcheck.extendedResults">true</str>
+        <str name="spellcheck.count">10</str>
+        <str name="spellcheck.alternativeTermCount">5</str>
+        <str name="spellcheck.maxResultsForSuggest">5</str>
+        <str name="spellcheck.collate">true</str>
+        <str name="spellcheck.collateExtendedResults">true</str>
+        <str name="spellcheck.maxCollationTries">10</str>
+        <str name="spellcheck.maxCollations">5</str>
+       </lst>
+       <arr name="last-components">
+         <str>spellcheck</str>
+       </arr>
     </requestHandler>
 
 Be warned that the ``<str name="field">suggestions</str>`` portion will be specific to
