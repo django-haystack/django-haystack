@@ -39,7 +39,7 @@ Teachoo uses Haystack for its site search.
 
 Using: ElasticSearch
 
-* https://www.teachoo.com
+* https://www.teachoo.com/
 
 
 Trapeze
