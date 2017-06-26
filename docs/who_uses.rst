@@ -37,7 +37,7 @@ Teachoo
 
 Teachoo uses Haystack for its site search.
 
-Using: ElasticSearch
+Using: Elasticsearch
 
 * https://www.teachoo.com/
 
