@@ -62,7 +62,10 @@ class SearchMixin(MultipleObjectMixin, FormMixin):
             kwargs.update({
                 'data': self.request.GET,
             })
-        kwargs.update({'searchqueryset': self.get_queryset()})
+        kwargs.update({
+            'searchqueryset': self.get_queryset(),
+            'load_all': self.load_all,
+        })
         return kwargs
 
     def form_invalid(self, form):
