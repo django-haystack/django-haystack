@@ -35,11 +35,13 @@ before_install:
       if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
       then
         echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
+        sudo apt-get update
+        sudo apt-get -y --allow-downgrades install elasticsearch=2.4.5
       else
         echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
+        sudo apt-get update
+        sudo apt-get -y --allow-downgrades install elasticsearch=1.7.6
       fi
-    - sudo apt-get update
-    - sudo apt-get -y install elasticsearch
     - sudo service elasticsearch restart
 
 install:
