@@ -35,7 +35,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
   -->
-  <luceneMatchVersion>6.4.0</luceneMatchVersion>
+  <luceneMatchVersion>6.5.0</luceneMatchVersion>
   <schemaFactory class="ClassicIndexSchemaFactory"/>
 
   <!-- <lib/> directives can be used to instruct Solr to load any Jars
@@ -1435,4 +1435,12 @@
       EditorialMarkerFactory will do exactly that:
      <transformer name="qecBooster" class="org.apache.solr.response.transform.EditorialMarkerFactory" />
     -->
+
+    <!-- Extras noted by users of DJangoHaystack -->
+    <requestHandler name="/analysis/field"
+                  startup="lazy"
+                  class="solr.FieldAnalysisRequestHandler" />
+    <requestHandler name="/analysis/document"
+                  class="solr.DocumentAnalysisRequestHandler"
+                  startup="lazy" />
 </config>
