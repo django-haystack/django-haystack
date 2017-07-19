@@ -16,7 +16,7 @@ from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_text
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
-from haystack.constants import DJANGO_CT, DJANGO_ID, ID
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID, FUZZY_MIN_SIM
 from haystack.exceptions import MissingDependency, SearchBackendError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
@@ -118,6 +118,10 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         self.content_field_name, self.schema = self.build_schema(connections[self.connection_alias].get_unified_index().all_searchfields())
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
+
+        if FUZZY_MIN_SIM < 1.0:
+            from whoosh.qparser.plugins import FuzzyTermPlugin
+            self.parser.add_plugins([FuzzyTermPlugin])
 
         if new_index is True:
             self.index = self.storage.create_index(self.schema)
@@ -822,7 +826,7 @@ class WhooshSearchQuery(BaseSearchQuery):
             'gte': "[%s to]",
             'lt': "{to %s}",
             'lte': "[to %s]",
-            'fuzzy': u'%s~',
+            'fuzzy': u'%s~%d',
         }
 
         if value.post_process is False:
@@ -843,8 +847,15 @@ class WhooshSearchQuery(BaseSearchQuery):
 
                         possible_values = [prepared_value]
 
+                    fuzzy_mode = filter_type == 'fuzzy'
                     for possible_value in possible_values:
-                        terms.append(filter_types[filter_type] % self.backend._from_python(possible_value))
+                        possible_value = self.backend._from_python(possible_value)
+                        if fuzzy_mode:
+                            value_len = len(possible_value)
+                            fuzzy_mutations = max(0, min(value_len, int(value_len * (1.0 - FUZZY_MIN_SIM))))
+                            terms.append(filter_types[filter_type] % (possible_value, fuzzy_mutations))
+                        else:
+                            terms.append(filter_types[filter_type] % possible_value)
 
                     if len(terms) == 1:
                         query_frag = terms[0]
