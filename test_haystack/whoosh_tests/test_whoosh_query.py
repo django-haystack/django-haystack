@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import re
 
 from haystack import connections
 from haystack.inputs import Exact
@@ -101,7 +102,8 @@ class WhooshSearchQueryTestCase(WhooshTestCase):
     def test_build_query_fuzzy_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__fuzzy='haystack'))
-        self.assertEqual(self.sq.build_query(), u'((why) AND title:(haystack~))')
+        match = re.match(r'^\(\(why\) AND title:\(haystack~[0-8]\)\)$', self.sq.build_query())
+        self.assertTrue(match != None)
 
     def test_build_query_with_contains(self):
         self.sq.add_filter(SQ(content='circular'))
