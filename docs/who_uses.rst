@@ -365,3 +365,13 @@ provide search across users and lessons.
 Using: Solr
 
 * http://www.educreations.com/browse/
+
+
+Socialhome
+----------
+
+Decentralized and federated profile builder with social networking features. Haystack is used for searching other users and content.
+
+Using: Whoosh
+
+* https://socialhome.network/
