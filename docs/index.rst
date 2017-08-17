@@ -15,6 +15,7 @@ Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
     This documentation represents the current version of Haystack. For old versions of the documentation:
 
+    * v2.5.X: https://django-haystack.readthedocs.io/en/v2.5.1/
     * v2.4.X: https://django-haystack.readthedocs.io/en/v2.4.1/
     * v2.3.X: https://django-haystack.readthedocs.io/en/v2.3.0/
     * v2.2.X: https://django-haystack.readthedocs.io/en/v2.2.0/
