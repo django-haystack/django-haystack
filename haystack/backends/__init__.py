@@ -374,11 +374,14 @@ class SearchNode(tree.Node):
 
         for child in self.children:
             if hasattr(child, 'as_query_string'):
-                result.append(child.as_query_string(query_fragment_callback))
+                child_result = child.as_query_string(query_fragment_callback)
             else:
                 expression, value = child
                 field, filter_type = self.split_expression(expression)
-                result.append(query_fragment_callback(field, filter_type, value))
+                child_result = query_fragment_callback(field, filter_type, value)
+
+            if child_result:
+                result.append(child_result)
 
         conn = ' %s ' % self.connector
         query_string = conn.join(result)
