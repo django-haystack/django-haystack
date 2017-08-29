@@ -336,7 +336,8 @@ class SearchQuerySetTestCase(TestCase):
         self.ui = UnifiedIndex()
         self.bmmsi = BasicMockModelSearchIndex()
         self.cpkmmsi = CharPKMockModelSearchIndex()
-        self.ui.build(indexes=[self.bmmsi, self.cpkmmsi])
+        self.uuidmmsi = SimpleMockUUIDModelIndex()
+        self.ui.build(indexes=[self.bmmsi, self.cpkmmsi, self.uuidmmsi])
         connections['default']._index = self.ui
 
         # Update the "index".
@@ -402,6 +403,8 @@ class SearchQuerySetTestCase(TestCase):
         # Test to ensure we properly fill the cache, even if we get fewer
         # results back (not a handled model) than the hit count indicates.
         # This will hang indefinitely if broken.
+
+        # CharPK testing
         old_ui = self.ui
         self.ui.build(indexes=[self.cpkmmsi])
         connections['default']._index = self.ui
@@ -410,6 +413,16 @@ class SearchQuerySetTestCase(TestCase):
         results = self.msqs.all()
         loaded = [result.pk for result in results._manual_iter()]
         self.assertEqual(loaded, [u'sometext', u'1234'])
+        self.assertEqual(len(connections['default'].queries), 1)
+
+        #UUID testing
+        self.ui.build(indexes=[self.uuidmmsi])
+        connections['default']._index = self.ui
+        self.uuidmmsi.update()
+
+        results = self.msqs.all()
+        loaded = [result.pk for result in results._manual_iter()]
+        self.assertEqual(loaded, [u'53554c58-7051-4350-bcc9-dad75eb248a9', u'77554c58-7051-4350-bcc9-dad75eb24888'])
         self.assertEqual(len(connections['default'].queries), 1)
 
         connections['default']._index = old_ui
@@ -519,6 +532,14 @@ class SearchQuerySetTestCase(TestCase):
         # Models with character primary keys.
         sqs = SearchQuerySet()
         sqs.query.backend = CharPKMockSearchBackend('charpk')
+        results = sqs.load_all().all()
+        self.assertEqual(len(results._result_cache), 0)
+        results._fill_cache(0, 2)
+        self.assertEqual(len([result for result in results._result_cache if result is not None]), 2)
+
+        # Models with uuid primary keys.
+        sqs = SearchQuerySet()
+        sqs.query.backend = UUIDMockSearchBackend('uuid')
         results = sqs.load_all().all()
         self.assertEqual(len(results._result_cache), 0)
         results._fill_cache(0, 2)
