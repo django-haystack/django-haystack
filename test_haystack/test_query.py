@@ -6,7 +6,7 @@ import unittest
 
 from django.test import TestCase
 from django.test.utils import override_settings
-from test_haystack.core.models import AnotherMockModel, CharPKMockModel, MockModel
+from test_haystack.core.models import AnotherMockModel, CharPKMockModel, MockModel, UUIDMockModel
 
 from haystack import connections, indexes, reset_search_queries
 from haystack.backends import SQ, BaseSearchQuery
@@ -16,7 +16,7 @@ from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearch
 from haystack.utils.loading import UnifiedIndex
 
 from .mocks import (MOCK_SEARCH_RESULTS, CharPKMockSearchBackend, MockSearchBackend, MockSearchQuery,
-                    ReadQuerySetMockSearchBackend)
+                    ReadQuerySetMockSearchBackend, UUIDMockSearchBackend)
 from .test_indexes import GhettoAFifthMockModelSearchIndex, TextReadQuerySetTestSearchIndex
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
 
@@ -323,6 +323,11 @@ class CharPKMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def get_model(self):
         return CharPKMockModel
 
+class SimpleMockUUIDModelIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, model_attr="characteristics")
+
+    def get_model(self):
+        return UUIDMockModel
 
 @override_settings(DEBUG=True)
 class SearchQuerySetTestCase(TestCase):
@@ -423,7 +428,6 @@ class SearchQuerySetTestCase(TestCase):
         results = self.msqs.all()
         loaded = [result.pk for result in results._manual_iter()]
         self.assertEqual(loaded, [u'53554c58-7051-4350-bcc9-dad75eb248a9', u'77554c58-7051-4350-bcc9-dad75eb24888'])
-        self.assertEqual(len(connections['default'].queries), 1)
 
         connections['default']._index = old_ui
 
