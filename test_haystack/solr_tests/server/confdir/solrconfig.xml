@@ -1436,7 +1436,7 @@
      <transformer name="qecBooster" class="org.apache.solr.response.transform.EditorialMarkerFactory" />
     -->
 
-    <!-- Extras noted by users of DJangoHaystack -->
+    <!-- Extras noted by users of django-haystack -->
     <requestHandler name="/analysis/field"
                   startup="lazy"
                   class="solr.FieldAnalysisRequestHandler" />
