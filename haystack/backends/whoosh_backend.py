@@ -41,7 +41,7 @@ from whoosh.fields import BOOLEAN, DATETIME, IDLIST, KEYWORD, NGRAM, NGRAMWORDS,
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.highlight import ContextFragmenter, HtmlFormatter
-from whoosh.qparser import QueryParser
+from whoosh.qparser import QueryParser, FuzzyTermPlugin
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
 
@@ -118,6 +118,7 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         self.content_field_name, self.schema = self.build_schema(connections[self.connection_alias].get_unified_index().all_searchfields())
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
+        self.parser.add_plugin(FuzzyTermPlugin())
 
         if new_index is True:
             self.index = self.storage.create_index(self.schema)
