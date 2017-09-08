@@ -299,8 +299,6 @@ class Command(BaseCommand):
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset().values_list('pk', flat=True)
                     database_pks = set(smart_bytes(pk) for pk in qs)
-
-                    total = len(database_pks)
                 else:
                     database_pks = set(smart_bytes(pk) for pk in qs.values_list('pk', flat=True))
 
