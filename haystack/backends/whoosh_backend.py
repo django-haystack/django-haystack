@@ -277,7 +277,7 @@ class WhooshSearchBackend(BaseSearchBackend):
     def calculate_page(self, start_offset=0, end_offset=None):
         # Prevent against Whoosh throwing an error. Requires an end_offset
         # greater than 0.
-        if not end_offset is None and end_offset <= 0:
+        if end_offset is not None and end_offset <= 0:
             end_offset = 1
 
         # Determine the page.
@@ -404,7 +404,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
-                   narrowed_results = recent_narrowed_results
+                    narrowed_results = recent_narrowed_results
 
         self.index = self.index.refresh()
 
@@ -533,7 +533,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
-                   narrowed_results = recent_narrowed_results
+                    narrowed_results = recent_narrowed_results
 
         page_num, page_length = self.calculate_page(start_offset, end_offset)
 
