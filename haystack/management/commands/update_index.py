@@ -112,7 +112,6 @@ def do_update(backend, index, qs, start_pk, end_pk, verbosity=1, commit=True,
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
-    return max_pk
 
 class Command(BaseCommand):
     help = "Freshens the index for the given app(s)."
