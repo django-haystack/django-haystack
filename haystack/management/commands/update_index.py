@@ -69,9 +69,9 @@ def do_update(backend, index, qs, start_pk, end_pk, verbosity=1, commit=True,
 
     if verbosity >= 2:
         if is_parent_process:
-            print(u"  indexing %s - %s." % (start_pk, end_pk))
+            print("  indexing %s - %s." % (start_pk, end_pk))
         else:
-            print(u"  indexing %s - %s (worker PID: %s)." % (start_pk, end_pk, os.getpid()))
+            print("  indexing %s - %s (worker PID: %s)." % (start_pk, end_pk, os.getpid()))
 
     retries = 0
     while retries < max_retries:
@@ -112,6 +112,7 @@ def do_update(backend, index, qs, start_pk, end_pk, verbosity=1, commit=True,
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
+
 
 class Command(BaseCommand):
     help = "Freshens the index for the given app(s)."
@@ -233,7 +234,7 @@ class Command(BaseCommand):
                                       end_date=self.end_date)
 
             if self.verbosity >= 1:
-                self.stdout.write(u"Indexing %s" % (force_text(model._meta.verbose_name_plural)))
+                self.stdout.write("Indexing %s" % (force_text(model._meta.verbose_name_plural)))
 
             batch_size = self.batchsize or backend.batch_size
 
@@ -251,7 +252,7 @@ class Command(BaseCommand):
                         start_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gt=end_pk)[0], model._meta.pk.name)
                 except IndexError:
                     if self.verbosity >= 1:
-                        self.stdout.write(u"  indexing %s" % start)  # i.e. actual total
+                        self.stdout.write("  indexing %s" % start)  # i.e. actual total
                     break  # all done
                 try:
                     end_pk = getattr(qs.only(model._meta.pk.name).filter(pk__gte=start_pk)[offset], model._meta.pk.name)
