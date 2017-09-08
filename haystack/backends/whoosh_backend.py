@@ -484,10 +484,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
-        # Deferred models will have a different class ("RealClass_Deferred_fieldname")
-        # which won't be in our registry:
-        model_klass = model_instance._meta.concrete_model
-
         field_name = self.content_field_name
         narrow_queries = set()
         narrowed_results = None
@@ -898,13 +894,6 @@ class WhooshSearchQuery(BaseSearchQuery):
                 query_frag = "(%s)" % query_frag
 
         return u"%s%s" % (index_fieldname, query_frag)
-
-
-        # if not filter_type in ('in', 'range'):
-        #     # 'in' is a bit of a special case, as we don't want to
-        #     # convert a valid list/tuple to string. Defer handling it
-        #     # until later...
-        #     value = self.backend._from_python(value)
 
 
 class WhooshEngine(BaseEngine):
