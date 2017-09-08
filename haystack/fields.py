@@ -244,6 +244,8 @@ class LocationField(SearchField):
         elif isinstance(value, dict):
             lat = value.get('lat', 0)
             lng = value.get('lon', 0)
+        else:
+            raise TypeError('Unable to extract coordinates from %r' % value)
 
         value = Point(float(lng), float(lat))
         return value
