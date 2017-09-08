@@ -536,6 +536,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         self.index = self.index.refresh()
         raw_results = EmptyResults()
 
+        searcher = None
         if self.index.doc_count():
             query = "%s:%s" % (ID, get_identifier(model_instance))
             searcher = self.index.searcher()
@@ -571,7 +572,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             }
 
         results = self._process_results(raw_page, result_class=result_class)
-        searcher.close()
+
+        if searcher:
+            searcher.close()
 
         if hasattr(narrow_searcher, 'close'):
             narrow_searcher.close()
