@@ -172,26 +172,32 @@ class SearchQuerySet(object):
 
         for result in results:
             if self._load_all:
-                
+
                 model_objects = loaded_objects.get(result.model, {})
                 # Try to coerce a primary key object that matches the models pk
                 # We have to deal with semi-arbitrary keys being cast from strings (UUID, int, etc)
-                if result.pk not in model_objects:
-                    try:
-                        result_klass = type(next(iter(model_objects)))
-                        result.pk = result_klass(result.pk)
-                    except ValueError:
-                        pass
-                try:
-                    result._object = model_objects[result.pk]
-                except KeyError:
-                    # The object was either deleted since we indexed or should
-                    # be ignored; fail silently.
-                    self._ignored_result_count += 1
+                if model_objects:
+                    result_klass = type(next(iter(model_objects)))
+                    result.pk = result_klass(result.pk)
 
-                    # avoid an unfilled None at the end of the result cache
-                    self._result_cache.pop()
-                    continue
+                    try:
+                        result._object = model_objects[result.pk]
+                    except KeyError:
+                        # The object was either deleted since we indexed or should
+                        # be ignored for other reasons such as an overriden 'load_all_queryset';
+                        # fail silently.
+                        self._ignored_result_count += 1
+
+                        # avoid an unfilled None at the end of the result cache
+                        self._result_cache.pop()
+                        continue
+                else:
+                    # No objects were returned -- possible due to SQS nesting such as
+                    # XYZ.objects.filter(id__gt=10) where the amount ignored are
+                    # exactly equal to the ITERATOR_LOAD_PER_QUERY
+                    del self._result_cache[:len(results)]
+                    self._ignored_result_count += len(results)
+                    break
 
             to_cache.append(result)
 
