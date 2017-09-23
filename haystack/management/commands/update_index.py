@@ -134,6 +134,7 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
 
 class Command(BaseCommand):
     help = "Freshens the index for the given app(s)."
+    stealth_options = ('interactive', )
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -10,6 +10,7 @@ from haystack import connections
 
 class Command(BaseCommand):
     help = "Clears out the search index completely."
+    stealth_options = ('batchsize', 'workers')
 
     def add_arguments(self, parser):
         parser.add_argument(
