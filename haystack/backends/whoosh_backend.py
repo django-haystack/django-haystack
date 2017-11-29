@@ -353,7 +353,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     if len(sort_by_list) == 1:
                         reverse = False
 
-            sort_by = sort_by_list[0]
+            sort_by = sort_by_list
 
         if facets is not None:
             warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
