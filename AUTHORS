@@ -117,3 +117,4 @@ Thanks to
     * Morgan Aubert (@ellmetha) for Django 1.10 support
     * João Junior (@joaojunior) and Bruno Marques (@ElSaico) for Elasticsearch 2.x support
     * Alex Tomkins (@tomkins) for various patches
+    * Christopher Schäpers (@Kondou-ger) for Django 2.0a1 compatibility
