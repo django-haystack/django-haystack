@@ -344,13 +344,13 @@ class DecimalFieldTestCase(TestCase):
         mock.floaty = Decimal('12.5')
         floaty = DecimalField(model_attr='floaty')
 
-        self.assertEqual(floaty.prepare(mock), '12.5')
+        self.assertEqual(floaty.prepare(mock), Decimal('12.5'))
 
         # Simulate default=1.5.
         mock = MockModel()
         default = DecimalField(default='1.5')
 
-        self.assertEqual(default.prepare(mock), '1.5')
+        self.assertEqual(default.prepare(mock), Decimal('1.5'))
 
         # Simulate null=True.
         mock = MockModel()

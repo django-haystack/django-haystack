@@ -1360,7 +1360,7 @@ class LiveSolrRoundTripTestCase(TestCase):
         self.assertEqual(result.is_active, True)
         self.assertEqual(result.post_count, 25)
         self.assertEqual(result.average_rating, 3.6)
-        self.assertEqual(result.price, u'24.99')
+        self.assertEqual(result.price, Decimal('24.99'))
         self.assertEqual(result.pub_date, datetime.date(2009, 11, 21))
         self.assertEqual(result.created, datetime.datetime(2009, 11, 21, 21, 31, 00))
         self.assertEqual(result.tags, ['staff', 'outdoor', 'activist', 'scientist'])
