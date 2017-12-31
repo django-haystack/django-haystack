@@ -1,7 +1,7 @@
 # encoding: utf-8
-import copy
-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import copy
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
