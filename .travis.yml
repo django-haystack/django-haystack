@@ -65,6 +65,7 @@ env:
         - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.11,<1.12" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
 
 matrix:
     allow_failures:
