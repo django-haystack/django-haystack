@@ -107,5 +107,7 @@ class CoreManagementCommandsTestCase(TestCase):
             self.assertIn('commit', kwargs)
             self.assertEqual(False, kwargs['commit'])
 
-            self.assertIn('interactive', kwargs)
-            self.assertEqual(False, kwargs['interactive'])
+        args, kwargs = mocks[1].call_args
+
+        self.assertIn('interactive', kwargs)
+        self.assertEqual(False, kwargs['interactive'])
