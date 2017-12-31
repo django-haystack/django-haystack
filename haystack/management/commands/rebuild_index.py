@@ -38,7 +38,7 @@ class Command(BaseCommand):
         update_options = copy.copy(options)
         for key in ('batchsize', 'workers'):
             del clear_options[key]
-        for key in ():
+        for key in ('interactive', ):
             del update_options[key]
         call_command('clear_index', **clear_options)
         call_command('update_index', **update_options)
