@@ -89,7 +89,7 @@ class CoreManagementCommandsTestCase(TestCase):
 
     @patch('haystack.management.commands.clear_index.Command.handle')
     @patch('haystack.management.commands.update_index.Command.handle')
-    def test_rebuild_index_nocommit(self, *mocks):
+    def test_rebuild_index_nocommit(self, update_mock, clear_mock):
         """
         Confirm that command-line option parsing produces the same results as using call_command() directly,
         mostly as a sanity check for the logic in rebuild_index which combines the option_lists for its
@@ -99,7 +99,7 @@ class CoreManagementCommandsTestCase(TestCase):
 
         Command().run_from_argv(['django-admin.py', 'rebuild_index', '--noinput', '--nocommit'])
 
-        for m in mocks:
+        for m in (clear_mock, update_mock):
             self.assertEqual(m.call_count, 1)
 
             args, kwargs = m.call_args
@@ -107,7 +107,7 @@ class CoreManagementCommandsTestCase(TestCase):
             self.assertIn('commit', kwargs)
             self.assertEqual(False, kwargs['commit'])
 
-        args, kwargs = mocks[0].call_args
+        args, kwargs = clear_mock.call_args
 
         self.assertIn('interactive', kwargs)
         self.assertEqual(False, kwargs['interactive'])
