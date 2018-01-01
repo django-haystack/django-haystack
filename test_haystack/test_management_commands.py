@@ -87,8 +87,8 @@ class CoreManagementCommandsTestCase(TestCase):
             self.assertIn('commit', kwargs)
             self.assertEqual(False, kwargs['commit'])
 
-    @patch('haystack.management.commands.update_index.Command.handle')
     @patch('haystack.management.commands.clear_index.Command.handle')
+    @patch('haystack.management.commands.update_index.Command.handle')
     def test_rebuild_index_nocommit(self, *mocks):
         """
         Confirm that command-line option parsing produces the same results as using call_command() directly,
@@ -107,7 +107,7 @@ class CoreManagementCommandsTestCase(TestCase):
             self.assertIn('commit', kwargs)
             self.assertEqual(False, kwargs['commit'])
 
-        args, kwargs = mocks[1].call_args
+        args, kwargs = mocks[0].call_args
 
         self.assertIn('interactive', kwargs)
         self.assertEqual(False, kwargs['interactive'])
