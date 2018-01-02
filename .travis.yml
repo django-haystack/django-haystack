@@ -70,6 +70,8 @@ env:
 matrix:
     allow_failures:
         - python: 'pypy'
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
 
 notifications:
     irc: "irc.freenode.org#haystack"
