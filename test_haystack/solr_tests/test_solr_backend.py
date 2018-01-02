@@ -1458,7 +1458,7 @@ class SolrBoostBackendTestCase(TestCase):
         ])
 
 
-@unittest.skipIf(pysolr.__version__ < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
+@unittest.skipIf(tuple(pysolr.__version__.split('.')) < (3, 1, 1), 'content extraction requires pysolr > 3.1.0')
 class LiveSolrContentExtractionTestCase(TestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
