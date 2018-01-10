@@ -2,10 +2,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.test import TestCase
-from test_haystack.core.models import AnotherMockModel, MockModel
+from test_haystack.core.forms import CustomChoiceFacetedSearchForm
+from test_haystack.core.models import MockModel
 from test_haystack.test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
 
-from haystack import connection_router, connections
+from haystack import connections
 from haystack.forms import FacetedSearchForm, model_choices, ModelSearchForm, SearchForm
 from haystack.query import EmptySearchQuerySet, SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
@@ -94,6 +95,7 @@ class ModelSearchFormTestCase(TestCase):
 
 
 class FacetedSearchFormTestCase(TestCase):
+
     def setUp(self):
         super(FacetedSearchFormTestCase, self).setUp()
         # Stow.
@@ -119,37 +121,53 @@ class FacetedSearchFormTestCase(TestCase):
         sf = FacetedSearchForm({}, searchqueryset=self.sqs)
         self.assertEqual(sf.errors, {})
         self.assertEqual(sf.is_valid(), True)
-        self.assertEqual(sf.selected_facets, [])
+        self.assertEqual(sf.fields['facets'].choices, [])
+        self.assertEqual(sf.cleaned_data['facets'], [])
 
-        sf = FacetedSearchForm({}, selected_facets=[], searchqueryset=self.sqs)
+        sf = CustomChoiceFacetedSearchForm({}, searchqueryset=self.sqs)
         self.assertEqual(sf.errors, {})
         self.assertEqual(sf.is_valid(), True)
-        self.assertEqual(sf.selected_facets, [])
+        self.assertEqual(sf.fields['facets'].choices, [
+            ['author:daniel', 'author:daniel'],
+            ['author:chris', 'author:chris']
+        ])
 
-        sf = FacetedSearchForm({}, selected_facets=['author:daniel'], searchqueryset=self.sqs)
+        sf = CustomChoiceFacetedSearchForm(
+            {'facets': ['author:daniel']}, searchqueryset=self.sqs
+        )
         self.assertEqual(sf.errors, {})
         self.assertEqual(sf.is_valid(), True)
-        self.assertEqual(sf.selected_facets, ['author:daniel'])
+        self.assertEqual(sf.fields['facets'].choices, [
+            ['author:daniel', 'author:daniel'],
+            ['author:chris', 'author:chris']
+        ])
+        self.assertEqual(sf.cleaned_data['facets'], ['author:daniel'])
 
-        sf = FacetedSearchForm({}, selected_facets=['author:daniel', 'author:chris'], searchqueryset=self.sqs)
+        sf = CustomChoiceFacetedSearchForm(
+            {'facets': ['author:daniel', 'author:chris']}, searchqueryset=self.sqs
+        )
         self.assertEqual(sf.errors, {})
         self.assertEqual(sf.is_valid(), True)
-        self.assertEqual(sf.selected_facets, ['author:daniel', 'author:chris'])
+        self.assertEqual(sf.fields['facets'].choices, [
+            ['author:daniel', 'author:daniel'],
+            ['author:chris', 'author:chris']
+        ])
+        self.assertEqual(sf.cleaned_data['facets'], ['author:daniel', 'author:chris'])
 
     def test_search(self):
-        sf = FacetedSearchForm({'q': 'test'}, selected_facets=[], searchqueryset=self.sqs)
+        sf = FacetedSearchForm({'q': 'test'}, searchqueryset=self.sqs)
         sqs = sf.search()
         self.assertEqual(sqs.query.narrow_queries, set())
 
         # Test the "skip no-colon" bits.
-        sf = FacetedSearchForm({'q': 'test'}, selected_facets=['authordaniel'], searchqueryset=self.sqs)
+        sf = CustomChoiceFacetedSearchForm({'q': 'test', 'facets': ['authordaniel']}, searchqueryset=self.sqs)
         sqs = sf.search()
         self.assertEqual(sqs.query.narrow_queries, set())
 
-        sf = FacetedSearchForm({'q': 'test'}, selected_facets=['author:daniel'], searchqueryset=self.sqs)
+        sf = CustomChoiceFacetedSearchForm({'q': 'test', 'facets': ['author:daniel']}, searchqueryset=self.sqs)
         sqs = sf.search()
         self.assertEqual(sqs.query.narrow_queries, set([u'author:"daniel"']))
 
-        sf = FacetedSearchForm({'q': 'test'}, selected_facets=['author:daniel', 'author:chris'], searchqueryset=self.sqs)
+        sf = CustomChoiceFacetedSearchForm({'q': 'test', 'facets': ['author:daniel', 'author:chris']}, searchqueryset=self.sqs)
         sqs = sf.search()
         self.assertEqual(sqs.query.narrow_queries, set([u'author:"daniel"', u'author:"chris"']))

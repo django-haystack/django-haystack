@@ -80,9 +80,21 @@ the selected models.
 ``FacetedSearchForm``
 ---------------------
 
-Identical to the ``SearchForm`` except that it adds a hidden ``selected_facets``
-field onto the form, allowing the form to narrow the results based on the facets
-chosen by the user.
+Identical to the ``SearchForm`` except that it adds a hidden ``facets``
+``MultipleChoiceField`` onto the form, allowing the form to narrow the results 
+based on the facets chosen by the user.
+
+The form has a ``get_choices`` method that allows you to customize the choices
+that you can facet on, and a ``_facet_separator`` property that allows you to
+customize how the querystring will be sent back to the view.
+
+.. note::
+
+    The ``facets`` field was originally named ``selected_facets`` and was not an
+    actual field on the form, but was passed-in as a kwarg to the constructor by
+    the view.
+
+    The data would have been saved in a ``selected_facets`` property of the form.
 
 Creating Your Own Form
 ----------------------

@@ -10,6 +10,8 @@ from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.utils.six.moves import queue
+
+from test_haystack.core.forms import CustomChoiceFacetedSearchForm
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connections, indexes
@@ -239,16 +241,21 @@ class FacetedSearchViewTestCase(TestCase):
 
     def test_list_selected_facets(self):
         fsv = FacetedSearchView()
+        fsv.form_class = CustomChoiceFacetedSearchForm
         fsv.request = HttpRequest()
-        fsv.request.GET = QueryDict('')
-        fsv.form = fsv.build_form()
-        self.assertEqual(fsv.form.selected_facets, [])
 
-        fsv = FacetedSearchView()
-        fsv.request = HttpRequest()
-        fsv.request.GET = QueryDict('selected_facets=author:daniel&selected_facets=author:chris')
+        # If there's no `GET` data, the form will not be bound and therefore not valid
+        # due to the `build_form` method checking len(self.request.GET)
+        # to conditionally add the data
+        fsv.request.GET = QueryDict('q=""')
         fsv.form = fsv.build_form()
-        self.assertEqual(fsv.form.selected_facets, [u'author:daniel', u'author:chris'])
+        self.assertTrue(fsv.form.is_valid())
+        self.assertEqual(fsv.form.cleaned_data['facets'], [])
+
+        fsv.request.GET = QueryDict('facets=author:daniel&facets=author:chris')
+        fsv.form = fsv.build_form()
+        self.assertTrue(fsv.form.is_valid())
+        self.assertEqual(fsv.form.cleaned_data['facets'], [u'author:daniel', u'author:chris'])
 
 
 class BasicSearchViewTestCase(TestCase):

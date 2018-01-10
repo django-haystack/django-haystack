@@ -254,7 +254,7 @@ might look like this::
                     <dt>Author</dt>
                     {# Provide only the top 5 authors #}
                     {% for author in facets.fields.author|slice:":5" %}
-                        <dd><a href="{{ request.get_full_path }}&amp;selected_facets=author_exact:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
+                        <dd><a href="{{ request.get_full_path }}&amp;facets=author_exact:{{ author.0|urlencode }}">{{ author.0 }}</a> ({{ author.1 }})</dd>
                     {% endfor %}
                 {% else %}
                     <p>No author facets.</p>
@@ -283,7 +283,7 @@ and the ``author.1`` is the facet count.
 -----------------------
 
 We've also set ourselves up for the last bit, the drill-down aspect. By
-appending on the ``selected_facets`` to the URLs, we're informing the
+appending on the ``facets`` to the URLs, we're informing the
 ``FacetedSearchForm`` that we want to narrow our results to only those
 containing the author we provided.
 
@@ -305,16 +305,16 @@ For a concrete example, if the facets on author come back as::
 You should present a list similar to::
 
     <ul>
-        <li><a href="/search/?q=Haystack&selected_facets=author_exact:john">john</a> (4)</li>
-        <li><a href="/search/?q=Haystack&selected_facets=author_exact:daniel">daniel</a> (2)</li>
-        <li><a href="/search/?q=Haystack&selected_facets=author_exact:sally">sally</a> (1)</li>
-        <li><a href="/search/?q=Haystack&selected_facets=author_exact:terry">terry</a> (1)</li>
+        <li><a href="/search/?q=Haystack&facets=author_exact:john">john</a> (4)</li>
+        <li><a href="/search/?q=Haystack&facets=author_exact:daniel">daniel</a> (2)</li>
+        <li><a href="/search/?q=Haystack&facets=author_exact:sally">sally</a> (1)</li>
+        <li><a href="/search/?q=Haystack&facets=author_exact:terry">terry</a> (1)</li>
     </ul>
 
 .. warning::
 
     Haystack can automatically handle most details around faceting. However,
-    since ``selected_facets`` is passed directly to narrow, it must use the
+    since ``facets`` is passed directly to narrow, it must use the
     duplicated field name. Improvements to this are planned but incomplete.
 
 This is simply the default behavior but it is possible to override or provide
