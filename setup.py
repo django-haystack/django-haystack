@@ -16,7 +16,7 @@ install_requires = [
 ]
 
 tests_require = [
-    'pysolr>=3.3.2',
+    'pysolr>=3.7.0',
     'whoosh>=2.5.4,<3.0',
     'python-dateutil',
     'geopy==0.95.1',
@@ -25,6 +25,7 @@ tests_require = [
     'mock',
     'coverage',
 
+    'requests',
 ]
 
 setup(
