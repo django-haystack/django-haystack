@@ -1,3 +1,7 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 from tempfile import mkdtemp
 
@@ -16,7 +20,6 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
 
     'haystack',
 
@@ -29,12 +32,38 @@ INSTALLED_APPS = [
     # which is common in some cases for things like admin extensions, reporting, etc.
     'test_haystack.test_app_without_models',
 
+    # Confirm that everything works with app labels which have more than one level of hierarchy
+    # as reported in https://github.com/django-haystack/django-haystack/issues/1152
+    'test_haystack.test_app_with_hierarchy.contrib.django.hierarchal_app_django',
+
+    'test_haystack.test_app_using_appconfig.apps.SimpleTestAppConfig',
 ]
 
-SITE_ID = 1
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+            ]
+        },
+    },
+]
+
+MIDDLEWARE_CLASSES = [
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+]
+
 ROOT_URLCONF = 'test_haystack.core.urls'
 
-HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter', 'test_haystack.multipleindex.routers.MultipleIndexRouter']
+HAYSTACK_ROUTERS = ['haystack.routers.DefaultRouter',
+    'test_haystack.multipleindex.routers.MultipleIndexRouter']
 
 HAYSTACK_CONNECTIONS = {
     'default': {
@@ -52,7 +81,7 @@ HAYSTACK_CONNECTIONS = {
     },
     'elasticsearch': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        'URL': '127.0.0.1:9200/',
+        'URL': os.environ.get('TEST_ELASTICSEARCH_1_URL', 'http://localhost:9200/'),
         'INDEX_NAME': 'test_default',
         'INCLUDE_SPELLING': True,
     },
@@ -61,15 +90,19 @@ HAYSTACK_CONNECTIONS = {
     },
     'solr': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://localhost:9001/solr/',
+        'URL': os.environ.get('TEST_SOLR_URL', 'http://localhost:9001/solr/collection1'),
+        'ADMIN_URL': os.environ.get('TEST_SOLR_ADMIN_URL', 'http://localhost:9001/solr/admin/cores'),
         'INCLUDE_SPELLING': True,
     },
 }
 
-SITE_ID = 1
+if 'elasticsearch' in HAYSTACK_CONNECTIONS:
+    try:
+        import elasticsearch
 
-MIDDLEWARE_CLASSES = ('django.middleware.common.CommonMiddleware',
-                      'django.contrib.sessions.middleware.SessionMiddleware',
-                      'django.middleware.csrf.CsrfViewMiddleware',
-                      'django.contrib.auth.middleware.AuthenticationMiddleware',
-                      'django.contrib.messages.middleware.MessageMiddleware')
+        if (2, ) <= elasticsearch.__version__ <= (3, ):
+            HAYSTACK_CONNECTIONS['elasticsearch'].update({
+                'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine'
+            })
+    except ImportError:
+        del HAYSTACK_CONNECTIONS['elasticsearch']

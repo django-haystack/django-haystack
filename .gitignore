@@ -11,7 +11,10 @@ MANIFEST
 env
 env3
 *.egg
+.eggs
 .coverage
+.idea
 
-test_haystack/solr_tests/server/solr-4.6.0.tgz
+# Build artifacts from test setup
+*.tgz
 test_haystack/solr_tests/server/solr4/

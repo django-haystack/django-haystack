@@ -1,12 +1,14 @@
-from django.conf import settings
-from django.test import TestCase
+# encoding: utf-8
 
-from haystack import connections, connection_router
-from haystack.query import SearchQuerySet
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+from django.test import TestCase
+from test_haystack.discovery.search_indexes import FooIndex
+
+from haystack import connections
 from haystack.utils.loading import UnifiedIndex
 
-from test_haystack.discovery.models import Foo
-from test_haystack.discovery.search_indexes import FooIndex, BarIndex
+EXPECTED_INDEX_MODEL_COUNT = 6
 
 
 class ManualDiscoveryTestCase(TestCase):
@@ -14,15 +16,16 @@ class ManualDiscoveryTestCase(TestCase):
         old_ui = connections['default'].get_unified_index()
         connections['default']._index = UnifiedIndex()
         ui = connections['default'].get_unified_index()
-        self.assertEqual(len(ui.get_indexed_models()), 5)
+        self.assertEqual(len(ui.get_indexed_models()), EXPECTED_INDEX_MODEL_COUNT)
 
         ui.build(indexes=[FooIndex()])
 
-        self.assertEqual(len(ui.get_indexed_models()), 1)
+        self.assertListEqual(['discovery.foo'],
+                             [str(i._meta) for i in ui.get_indexed_models()])
 
         ui.build(indexes=[])
 
-        self.assertEqual(len(ui.get_indexed_models()), 0)
+        self.assertListEqual([], ui.get_indexed_models())
         connections['default']._index = old_ui
 
 
@@ -31,16 +34,23 @@ class AutomaticDiscoveryTestCase(TestCase):
         old_ui = connections['default'].get_unified_index()
         connections['default']._index = UnifiedIndex()
         ui = connections['default'].get_unified_index()
-        self.assertEqual(len(ui.get_indexed_models()), 5)
+        self.assertEqual(len(ui.get_indexed_models()), EXPECTED_INDEX_MODEL_COUNT)
 
         # Test exclusions.
         ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex']
         ui.build()
 
-        self.assertEqual(len(ui.get_indexed_models()), 4)
+        indexed_model_names = [str(i._meta) for i in ui.get_indexed_models()]
+        self.assertIn('multipleindex.foo', indexed_model_names)
+        self.assertIn('multipleindex.bar', indexed_model_names)
+        self.assertNotIn('discovery.bar', indexed_model_names)
 
-        ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex', 'test_haystack.discovery.search_indexes.FooIndex']
+        ui.excluded_indexes = ['test_haystack.discovery.search_indexes.BarIndex',
+                               'test_haystack.discovery.search_indexes.FooIndex']
         ui.build()
 
-        self.assertEqual(len(ui.get_indexed_models()), 3)
+        indexed_model_names = [str(i._meta) for i in ui.get_indexed_models()]
+        self.assertIn('multipleindex.foo', indexed_model_names)
+        self.assertIn('multipleindex.bar', indexed_model_names)
+        self.assertListEqual([], [i for i in indexed_model_names if i.startswith('discovery')])
         connections['default']._index = old_ui

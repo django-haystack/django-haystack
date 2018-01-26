@@ -70,5 +70,19 @@
       "author": "sam2",
       "deleted": true
     }
+  },
+  {
+    "pk": "53554c58-7051-4350-bcc9-dad75eb248a9",
+    "model": "core.uuidmockmodel",
+    "fields": {
+      "characteristics": "some text that was indexed"
+    }
+  },
+  {
+    "pk": "77554c58-7051-4350-bcc9-dad75eb24888",
+    "model": "core.uuidmockmodel",
+    "fields": {
+      "characteristics": "more text that was indexed"
+    }
   }
 ]

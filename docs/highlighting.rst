@@ -29,11 +29,11 @@ that's designed for flexibility. If you use the ``{% highlight %}`` template
 tag, you'll be automatically using this class. You can also use it manually in
 your code. For example::
 
-    >>> from haystack.utils import Highlighter
-    
+    >>> from haystack.utils.highlighting import Highlighter
+
     >>> my_text = 'This is a sample block that would be more meaningful in real life.'
     >>> my_query = 'block meaningful'
-    
+
     >>> highlight = Highlighter(my_query)
     >>> highlight.highlight(my_text)
     u'...<span class="highlighted">block</span> that would be more <span class="highlighted">meaningful</span> in real life.'
@@ -42,11 +42,11 @@ The default implementation takes three optional kwargs: ``html_tag``,
 ``css_class`` and ``max_length``. These allow for basic customizations to the
 output, like so::
 
-    >>> from haystack.utils import Highlighter
-    
+    >>> from haystack.utils.highlighting import Highlighter
+
     >>> my_text = 'This is a sample block that would be more meaningful in real life.'
     >>> my_query = 'block meaningful'
-    
+
     >>> highlight = Highlighter(my_query, html_tag='div', css_class='found', max_length=35)
     >>> highlight.highlight(my_text)
     u'...<div class="found">block</div> that would be more <div class="found">meaningful</div>...'
@@ -56,15 +56,15 @@ custom highlighter class. As long as it implements the API you've just seen, it
 can highlight however you choose. For example::
 
     # In ``myapp/utils.py``...
-    from haystack.utils import Highlighter
-    
+    from haystack.utils.highlighting import Highlighter
+
     class BorkHighlighter(Highlighter):
         def render_html(self, highlight_locations=None, start_offset=None, end_offset=None):
             highlighted_chunk = self.text_block[start_offset:end_offset]
-            
+
             for word in self.query_words:
                 highlighted_chunk = highlighted_chunk.replace(word, 'Bork!')
-            
+
             return highlighted_chunk
 
 Then set the ``HAYSTACK_CUSTOM_HIGHLIGHTER`` setting to

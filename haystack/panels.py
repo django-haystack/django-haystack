@@ -1,10 +1,15 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
+
+from debug_toolbar.panels import DebugPanel
 from django.template.loader import render_to_string
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
+
 from haystack import connections
-from debug_toolbar.panels import DebugPanel
 
 
 class HaystackDebugPanel(DebugPanel):

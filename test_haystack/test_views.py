@@ -1,19 +1,22 @@
-from __future__ import print_function
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import time
 from threading import Thread
-from django.core.urlresolvers import reverse
-from django.conf import settings
+
 from django import forms
+from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils.six.moves import queue
-from haystack import connections, connection_router
-from haystack.forms import model_choices, SearchForm, ModelSearchForm, FacetedSearchForm
-from haystack import indexes
+from test_haystack.core.models import AnotherMockModel, MockModel
+
+from haystack import connections, indexes
+from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-from haystack.views import SearchView, FacetedSearchView, search_view_factory
-from test_haystack.core.models import MockModel, AnotherMockModel
+from haystack.views import FacetedSearchView, SearchView, search_view_factory
 
 
 class InitialedSearchForm(SearchForm):
@@ -31,6 +34,8 @@ class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexab
 
 
 class SearchViewTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SearchViewTestCase, self).setUp()
 
@@ -58,6 +63,8 @@ class SearchViewTestCase(TestCase):
     def test_search_query(self):
         response = self.client.get(reverse('haystack_search'), {'q': 'haystack'})
         self.assertEqual(response.status_code, 200)
+        self.assertIn('page', response.context)
+        self.assertNotIn('page_obj', response.context)
         self.assertEqual(len(response.context[-1]['page'].object_list), 3)
         self.assertEqual(response.context[-1]['page'].object_list[0].content_type(), u'core.mockmodel')
         self.assertEqual(response.context[-1]['page'].object_list[0].pk, '1')
@@ -95,9 +102,10 @@ class SearchViewTestCase(TestCase):
         exceptions = []
 
         def threaded_view(resp_queue, view, request):
-            import time; time.sleep(2)
+            time.sleep(2)
+
             try:
-                inst = view(request)
+                view(request)
                 resp_queue.put(request.GET['name'])
             except Exception as e:
                 exceptions.append(e)
@@ -132,11 +140,19 @@ class SearchViewTestCase(TestCase):
         from django.conf import settings
         old = settings.HAYSTACK_CONNECTIONS['default'].get('INCLUDE_SPELLING', None)
 
+        settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = True
+
         sv = SearchView()
         sv.query = 'Nothing'
         sv.results = []
         sv.build_page = lambda: (None, None)
-        output = sv.create_response()
+        sv.create_response()
+        context = sv.get_context()
+
+        self.assertIn('suggestion', context,
+                      msg='Spelling suggestions should be present even if'
+                          ' no results were returned')
+        self.assertEqual(context['suggestion'], None)
 
         # Restore
         settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING'] = old
@@ -145,8 +161,9 @@ class SearchViewTestCase(TestCase):
             del settings.HAYSTACK_CONNECTIONS['default']['INCLUDE_SPELLING']
 
 
+@override_settings(ROOT_URLCONF='test_haystack.results_per_page_urls')
 class ResultsPerPageTestCase(TestCase):
-    urls = 'test_haystack.results_per_page_urls'
+    fixtures = ['base_data']
 
     def setUp(self):
         super(ResultsPerPageTestCase, self).setUp()
@@ -235,6 +252,8 @@ class FacetedSearchViewTestCase(TestCase):
 
 
 class BasicSearchViewTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(BasicSearchViewTestCase, self).setUp()
 

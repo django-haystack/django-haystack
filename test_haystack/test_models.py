@@ -1,13 +1,18 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging as std_logging
 import pickle
-import django
+
 from django.test import TestCase
-from django.utils import unittest
+from test_haystack.core.models import MockModel
+
 from haystack import connections
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
-from test_haystack.core.models import MockModel, AFifthMockModel
+
 from .mocks import MockSearchResult
 from .test_indexes import ReadQuerySetTestSearchIndex
 
@@ -20,6 +25,8 @@ class CaptureHandler(std_logging.Handler):
 
 
 class SearchResultTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SearchResultTestCase, self).setUp()
         cap = CaptureHandler()
@@ -35,9 +42,12 @@ class SearchResultTestCase(TestCase):
             'stored': 'I am stored data. How fun.',
         }
 
-        self.no_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 2)
-        self.extra_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 3, **self.extra_data)
-        self.no_overwrite_data_sr = MockSearchResult('haystack', 'mockmodel', '1', 4, **self.no_overwrite_data)
+        # The str(1) bit might seem unnecessary but it avoids test_unicode needing to handle
+        # the differences between repr() output on Python 2 and 3 for a unicode literal:
+        self.no_data_sr = MockSearchResult('haystack', 'mockmodel', str(1), 2)
+        self.extra_data_sr = MockSearchResult('haystack', 'mockmodel', str(1), 3, **self.extra_data)
+        self.no_overwrite_data_sr = MockSearchResult('haystack', 'mockmodel', str(1), 4,
+                                                     **self.no_overwrite_data)
 
     def test_init(self):
         self.assertEqual(self.no_data_sr.app_label, 'haystack')
@@ -70,12 +80,16 @@ class SearchResultTestCase(TestCase):
     def test_get_additional_fields(self):
         self.assertEqual(self.no_data_sr.get_additional_fields(), {})
         self.assertEqual(self.extra_data_sr.get_additional_fields(), {'stored': 'I am stored data. How fun.'})
-        self.assertEqual(self.no_overwrite_data_sr.get_additional_fields(), {'django_ct': 'haystack.anothermockmodel', 'django_id': 2, 'stored': 'I am stored data. How fun.'})
+        self.assertEqual(self.no_overwrite_data_sr.get_additional_fields(),
+                         {'django_ct': 'haystack.anothermockmodel',
+                          'django_id': 2,
+                          'stored': 'I am stored data. How fun.'})
 
     def test_unicode(self):
         self.assertEqual(self.no_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
         self.assertEqual(self.extra_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
-        self.assertEqual(self.no_overwrite_data_sr.__unicode__(), u"<SearchResult: haystack.mockmodel (pk='1')>")
+        self.assertEqual(self.no_overwrite_data_sr.__unicode__(),
+                         u"<SearchResult: haystack.mockmodel (pk='1')>")
 
     def test_content_type(self):
         self.assertEqual(self.no_data_sr.content_type(), u'core.mockmodel')
@@ -108,7 +122,8 @@ class SearchResultTestCase(TestCase):
 
         self.assertEqual(self.no_data_sr.get_stored_fields(), {'stored': None})
         self.assertEqual(self.extra_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
-        self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(), {'stored': 'I am stored data. How fun.'})
+        self.assertEqual(self.no_overwrite_data_sr.get_stored_fields(),
+                         {'stored': 'I am stored data. How fun.'})
 
         # Restore.
         connections['default']._index = old_unified_index
@@ -142,10 +157,6 @@ class SearchResultTestCase(TestCase):
         self.assertEqual(awol2.verbose_name_plural, u'')
         self.assertEqual(awol2.stored, None)
         self.assertEqual(len(CaptureHandler.logs_seen), 12)
-
-    if django.get_version() == '1.7':
-        # FIXME: https://github.com/toastdriven/django-haystack/issues/1069
-        test_missing_object = unittest.expectedFailure(test_missing_object)
 
     def test_read_queryset(self):
         # The model is flagged deleted so not returned by the default manager.

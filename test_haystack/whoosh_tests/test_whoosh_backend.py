@@ -1,20 +1,24 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
+import unittest
 from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils import unittest
 from django.utils.datetime_safe import date, datetime
 from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
 from haystack import connections, indexes, reset_search_queries
-from haystack.exceptions import SearchBackendError
+from haystack.exceptions import SearchBackendError, SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet, SQ
+from haystack.query import SQ, SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
@@ -25,16 +29,24 @@ from .testcases import WhooshTestCase
 class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
 
 
+class WhooshMockSearchIndexWithSkipDocument(WhooshMockSearchIndex):
+
+    def prepare_text(self, obj):
+        if obj.author == 'daniel3':
+            raise SkipDocument
+        return obj.author
+
+
 class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return AnotherMockModel
@@ -46,7 +58,7 @@ class WhooshAnotherMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class AllTypesWhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='author', indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
     sites = indexes.MultiValueField()
     seen_count = indexes.IntegerField(indexed=False)
     is_active = indexes.BooleanField(default=True)
@@ -58,7 +70,7 @@ class AllTypesWhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class WhooshMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     month = indexes.CharField(indexed=False)
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return MockModel
@@ -77,7 +89,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     )
     author = indexes.CharField(model_attr='author', weight=2.0)
     editor = indexes.CharField(model_attr='editor')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
         return AFourthMockModel
@@ -94,7 +106,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class WhooshAutocompleteMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr='foo', document=True)
     name = indexes.CharField(model_attr='author')
-    pub_date = indexes.DateField(model_attr='pub_date')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
     text_auto = indexes.EdgeNgramField(model_attr='foo')
     name_auto = indexes.EdgeNgramField(model_attr='author')
 
@@ -111,6 +123,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.old_ui = connections['whoosh'].get_unified_index()
         self.ui = UnifiedIndex()
         self.wmmi = WhooshMockSearchIndex()
+        self.wmmidni = WhooshMockSearchIndexWithSkipDocument()
         self.wmtmmi = WhooshMaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.wmmi])
         self.sb = connections['whoosh'].get_backend()
@@ -167,6 +180,18 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         # Check what Whoosh thinks is there.
         self.assertEqual(len(self.whoosh_search(u'*')), 23)
         self.assertEqual([doc.fields()['id'] for doc in self.whoosh_search(u'*')], [u'core.mockmodel.%s' % i for i in range(1, 24)])
+
+    def test_update_with_SkipDocument_raised(self):
+        self.sb.update(self.wmmidni, self.sample_objs)
+
+        # Check what Whoosh thinks is there.
+        res = self.whoosh_search(u'*')
+        self.assertEqual(len(res), 14)
+        ids = [1, 2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 18, 20, 21]
+        self.assertListEqual(
+            [doc.fields()['id'] for doc in res],
+            [u'core.mockmodel.%s' % i for i in ids]
+        )
 
     def test_remove(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -320,7 +345,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         results = self.sb.search(u'*', sort_by=['-pub_date', '-id'])
         self.assertEqual([result.pk for result in results['results']],
                          [u'23', u'22', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12',
-                          u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'2', u'3', u'1' ])
+                          u'11', u'10', u'9', u'8', u'7', u'6', u'5', u'4', u'2', u'3', u'1'])
 
         self.assertRaises(SearchBackendError, self.sb.search, u'*', sort_by=['-pub_date', 'id'])
 
@@ -374,13 +399,17 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
 
         (content_field_name, schema) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, 'text')
-        self.assertEqual(len(schema.names()), 9)
-        self.assertEqual(schema.names(), ['django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count', 'sites', 'text'])
-        self.assertTrue(isinstance(schema._fields['text'], TEXT))
-        self.assertTrue(isinstance(schema._fields['pub_date'], DATETIME))
-        self.assertTrue(isinstance(schema._fields['seen_count'], NUMERIC))
-        self.assertTrue(isinstance(schema._fields['sites'], KEYWORD))
-        self.assertTrue(isinstance(schema._fields['is_active'], BOOLEAN))
+
+        schema_names = set(schema.names())
+        required_schema = {'django_ct', 'django_id', 'id', 'is_active', 'name', 'pub_date', 'seen_count',
+                           'sites', 'text'}
+        self.assertTrue(required_schema.issubset(schema_names))
+
+        self.assertIsInstance(schema._fields['text'], TEXT)
+        self.assertIsInstance(schema._fields['pub_date'], DATETIME)
+        self.assertIsInstance(schema._fields['seen_count'], NUMERIC)
+        self.assertIsInstance(schema._fields['sites'], KEYWORD)
+        self.assertIsInstance(schema._fields['is_active'], BOOLEAN)
 
     def test_verify_type(self):
         old_ui = connections['whoosh'].get_unified_index()
@@ -662,7 +691,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         reset_search_queries()
         self.assertEqual(len(connections['whoosh'].queries), 0)
         sqs = self.sqs.auto_query('Indexed!')
-        results = [int(result.pk) for result in sqs]
+        results = [int(result.pk) for result in iter(sqs)]
         self.assertEqual(sorted(results), [1, 2, 3])
         self.assertEqual(len(connections['whoosh'].queries), 1)
 
@@ -680,6 +709,29 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         results = self.sqs.auto_query('Indexed!')
         self.assertEqual(int(results[0].pk), 1)
         self.assertEqual(len(connections['whoosh'].queries), 1)
+
+    def test_values_slicing(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+
+        reset_search_queries()
+        self.assertEqual(len(connections['whoosh'].queries), 0)
+
+        # TODO: this would be a good candidate for refactoring into a TestCase subclass shared across backends
+
+        # The values will come back as strings because Hasytack doesn't assume PKs are integers.
+        # We'll prepare this set once since we're going to query the same results in multiple ways:
+        expected_pks = ['3', '2', '1']
+
+        results = self.sqs.all().order_by('pub_date').values('pk')
+        self.assertListEqual([i['pk'] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk')
+        self.assertListEqual([i[0] for i in results[1:11]], expected_pks)
+
+        results = self.sqs.all().order_by('pub_date').values_list('pk', flat=True)
+        self.assertListEqual(results[1:11], expected_pks)
+
+        self.assertEqual(len(connections['whoosh'].queries), 3)
 
     def test_manual_iter(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -713,7 +765,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         self.assertEqual(len(connections['whoosh'].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.auto_query('Indexed!')
-        [result for result in results]
+        result_list = [i for i in iter(results)]
         self.assertEqual(results._cache_is_full(), True)
         self.assertEqual(len(connections['whoosh'].queries), 1)
 
@@ -849,12 +901,11 @@ class LiveWhooshMoreLikeThisTestCase(WhooshTestCase):
 
         if hasattr(MockModel.objects, 'defer'):
             # Make sure MLT works with deferred bits.
-            mi = MockModel.objects.defer('foo').get(pk=21)
-            self.assertEqual(mi._deferred, True)
+            mi = MockModel.objects.defer('foo').get(pk=22)
             deferred = self.sqs.models(MockModel).more_like_this(mi)
-            self.assertEqual(deferred.count(), 0)
-            self.assertEqual([result.pk for result in deferred], [])
-            self.assertEqual(len([result.pk for result in deferred]), 0)
+            self.assertEqual(deferred.count(), 22)
+            self.assertEqual(sorted([result.pk for result in deferred]), sorted([u'9', u'8', u'7', u'6', u'5', u'4', u'3', u'2', u'1', u'21', u'20', u'19', u'18', u'17', u'16', u'15', u'14', u'13', u'12', u'11', u'10', u'23']))
+            self.assertEqual(len([result.pk for result in deferred]), 22)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.sqs.result_class(MockSearchResult).more_like_this(MockModel.objects.get(pk=21))[0], MockSearchResult))

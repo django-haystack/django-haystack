@@ -1,4 +1,8 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import json
 import os
 import re
 import shutil
@@ -7,50 +11,39 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.loading import get_model
 from django.utils import six
 from django.utils.datetime_safe import datetime
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, EmptyResults
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
-from haystack.exceptions import MissingDependency, SearchBackendError
-from haystack.inputs import PythonData, Clean, Exact, Raw
+from django.utils.encoding import force_text
+
+from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID
+from haystack.exceptions import MissingDependency, SearchBackendError, SkipDocument
+from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
-from haystack.utils import get_identifier
 from haystack.utils import log as logging
-from haystack.utils import get_model_ct
-
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        from django.utils import simplejson as json
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
+from haystack.utils import get_identifier, get_model_ct
+from haystack.utils.app_loading import haystack_get_model
 
 try:
     import whoosh
 except ImportError:
     raise MissingDependency("The 'whoosh' backend requires the installation of 'Whoosh'. Please refer to the documentation.")
 
+# Handle minimum requirement.
+if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
+    raise MissingDependency("The 'whoosh' backend requires version 2.5.0 or greater.")
+
 # Bubble up the correct error.
 from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
 from whoosh.fields import ID as WHOOSH_ID
-from whoosh.fields import Schema, IDLIST, TEXT, KEYWORD, NUMERIC, BOOLEAN, DATETIME, NGRAM, NGRAMWORDS
+from whoosh.fields import BOOLEAN, DATETIME, IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, Schema, TEXT
 from whoosh.filedb.filestore import FileStorage, RamStorage
+from whoosh.highlight import highlight as whoosh_highlight
+from whoosh.highlight import ContextFragmenter, HtmlFormatter
 from whoosh.qparser import QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
-from whoosh.highlight import HtmlFormatter, highlight as whoosh_highlight, ContextFragmenter
-
-# Handle minimum requirement.
-if not hasattr(whoosh, '__version__') or whoosh.__version__ < (2, 5, 0):
-    raise MissingDependency("The 'whoosh' backend requires version 2.5.0 or greater.")
 
 
 DATETIME_REGEX = re.compile('^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$')
@@ -118,7 +111,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         else:
             global LOCALS
 
-            if LOCALS.RAM_STORE is None:
+            if getattr(LOCALS, 'RAM_STORE', None) is None:
                 LOCALS.RAM_STORE = RamStorage()
 
             self.storage = LOCALS.RAM_STORE
@@ -188,32 +181,32 @@ class WhooshSearchBackend(BaseSearchBackend):
         writer = AsyncWriter(self.index)
 
         for obj in iterable:
-            doc = index.full_prepare(obj)
-
-            # Really make sure it's unicode, because Whoosh won't have it any
-            # other way.
-            for key in doc:
-                doc[key] = self._from_python(doc[key])
-
-            # Document boosts aren't supported in Whoosh 2.5.0+.
-            if 'boost' in doc:
-                del doc['boost']
-
             try:
-                writer.update_document(**doc)
-            except Exception as e:
-                if not self.silently_fail:
-                    raise
+                doc = index.full_prepare(obj)
+            except SkipDocument:
+                self.log.debug(u"Indexing for object `%s` skipped", obj)
+            else:
+                # Really make sure it's unicode, because Whoosh won't have it any
+                # other way.
+                for key in doc:
+                    doc[key] = self._from_python(doc[key])
 
-                # We'll log the object identifier but won't include the actual object
-                # to avoid the possibility of that generating encoding errors while
-                # processing the log message:
-                self.log.error(u"%s while preparing object for update" % e.__class__.__name__, exc_info=True, extra={
-                    "data": {
-                        "index": index,
-                        "object": get_identifier(obj)
-                    }
-                })
+                # Document boosts aren't supported in Whoosh 2.5.0+.
+                if 'boost' in doc:
+                    del doc['boost']
+
+                try:
+                    writer.update_document(**doc)
+                except Exception as e:
+                    if not self.silently_fail:
+                        raise
+
+                    # We'll log the object identifier but won't include the actual object
+                    # to avoid the possibility of that generating encoding errors while
+                    # processing the log message:
+                    self.log.error(u"%s while preparing object for update" % e.__class__.__name__,
+                                   exc_info=True, extra={"data": {"index": index,
+                                                                  "object": get_identifier(obj)}})
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
@@ -232,16 +225,19 @@ class WhooshSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e)
+            self.log.error("Failed to remove document '%s' from Whoosh: %s", whoosh_id, e, exc_info=True)
 
-    def clear(self, models=[], commit=True):
+    def clear(self, models=None, commit=True):
         if not self.setup_complete:
             self.setup()
 
         self.index = self.index.refresh()
 
+        if models is not None:
+            assert isinstance(models, (list, tuple))
+
         try:
-            if not models:
+            if models is None:
                 self.delete_index()
             else:
                 models_to_delete = []
@@ -254,7 +250,11 @@ class WhooshSearchBackend(BaseSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to clear documents from Whoosh: %s", e)
+            if models is not None:
+                self.log.error("Failed to clear Whoosh index of models '%s': %s", ','.join(models_to_delete),
+                               e, exc_info=True)
+            else:
+                self.log.error("Failed to clear Whoosh index: %s", e, exc_info=True)
 
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
@@ -277,7 +277,7 @@ class WhooshSearchBackend(BaseSearchBackend):
     def calculate_page(self, start_offset=0, end_offset=None):
         # Prevent against Whoosh throwing an error. Requires an end_offset
         # greater than 0.
-        if not end_offset is None and end_offset <= 0:
+        if end_offset is not None and end_offset <= 0:
             end_offset = 1
 
         # Determine the page.
@@ -353,7 +353,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     if len(sort_by_list) == 1:
                         reverse = False
 
-            sort_by = sort_by_list[0]
+            sort_by = sort_by_list
 
         if facets is not None:
             warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
@@ -404,7 +404,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
-                   narrowed_results = recent_narrowed_results
+                    narrowed_results = recent_narrowed_results
 
         self.index = self.index.refresh()
 
@@ -484,10 +484,6 @@ class WhooshSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
-        # Deferred models will have a different class ("RealClass_Deferred_fieldname")
-        # which won't be in our registry:
-        model_klass = model_instance._meta.concrete_model
-
         field_name = self.content_field_name
         narrow_queries = set()
         narrowed_results = None
@@ -533,13 +529,14 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if narrowed_results:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
-                   narrowed_results = recent_narrowed_results
+                    narrowed_results = recent_narrowed_results
 
         page_num, page_length = self.calculate_page(start_offset, end_offset)
 
         self.index = self.index.refresh()
         raw_results = EmptyResults()
 
+        searcher = None
         if self.index.doc_count():
             query = "%s:%s" % (ID, get_identifier(model_instance))
             searcher = self.index.searcher()
@@ -575,7 +572,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             }
 
         results = self._process_results(raw_page, result_class=result_class)
-        searcher.close()
+
+        if searcher:
+            searcher.close()
 
         if hasattr(narrow_searcher, 'close'):
             narrow_searcher.close()
@@ -602,7 +601,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             score = raw_page.score(doc_offset) or 0
             app_label, model_name = raw_result[DJANGO_CT].split('.')
             additional_fields = {}
-            model = get_model(app_label, model_name)
+            model = haystack_get_model(app_label, model_name)
 
             if model and model in indexed_models:
                 for key, value in raw_result.items():
@@ -813,19 +812,22 @@ class WhooshSearchQuery(BaseSearchQuery):
             index_fieldname = u'%s:' % connections[self._using].get_unified_index().get_index_fieldname(field)
 
         filter_types = {
-            'contains': '%s',
+            'content': '%s',
+            'contains': '*%s*',
+            'endswith': "*%s",
             'startswith': "%s*",
             'exact': '%s',
             'gt': "{%s to}",
             'gte': "[%s to]",
             'lt': "{to %s}",
             'lte': "[to %s]",
+            'fuzzy': u'%s~',
         }
 
         if value.post_process is False:
             query_frag = prepared_value
         else:
-            if filter_type in ['contains', 'startswith']:
+            if filter_type in ['content', 'contains', 'startswith', 'endswith', 'fuzzy']:
                 if value.input_type_name == 'exact':
                     query_frag = prepared_value
                 else:
@@ -895,13 +897,6 @@ class WhooshSearchQuery(BaseSearchQuery):
                 query_frag = "(%s)" % query_frag
 
         return u"%s%s" % (index_fieldname, query_frag)
-
-
-        # if not filter_type in ('in', 'range'):
-        #     # 'in' is a bit of a special case, as we don't want to
-        #     # convert a valid list/tuple to string. Defer handling it
-        #     # until later...
-        #     value = self.backend._from_python(value)
 
 
 class WhooshEngine(BaseEngine):

@@ -1,9 +1,12 @@
 # coding: utf-8
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from datetime import date
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
+
 from haystack import connection_router, connections, indexes
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
@@ -14,7 +17,7 @@ from .search_indexes import SimpleMockScoreIndex, SimpleMockSearchIndex
 
 
 class SimpleSearchBackendTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(SimpleSearchBackendTestCase, self).setUp()
@@ -101,7 +104,7 @@ class SimpleSearchBackendTestCase(TestCase):
 
 @override_settings(DEBUG=True)
 class LiveSimpleSearchQuerySetTestCase(TestCase):
-    fixtures = ['bulk_data.json']
+    fixtures = ['base_data.json', 'bulk_data.json']
 
     def setUp(self):
         super(LiveSimpleSearchQuerySetTestCase, self).setUp()

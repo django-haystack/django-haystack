@@ -8,7 +8,7 @@ Search is a topic of ever increasing importance. Users increasing rely on search
 to separate signal from noise and find what they're looking for quickly. In
 addition, search can provide insight into what things are popular (many
 searches), what things are difficult to find on the site and ways you can
-improve the site better.
+improve the site.
 
 To this end, Haystack tries to make integrating custom search as easy as
 possible while being flexible/powerful enough to handle more advanced use cases.
@@ -127,7 +127,7 @@ Example::
 Elasticsearch
 ~~~~~~~~~~~~~
 
-Example::
+Example (ElasticSearch 1.x)::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
@@ -137,6 +137,15 @@ Example::
         },
     }
 
+Example (ElasticSearch 2.x)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
 
 Whoosh
 ~~~~~~
@@ -284,7 +293,7 @@ Add The ``SearchView`` To Your URLconf
 
 Within your URLconf, add the following line::
 
-    (r'^search/', include('haystack.urls')),
+    url(r'^search/', include('haystack.urls')),
 
 This will pull in the default URLconf for Haystack. It consists of a single
 URLconf that points to a ``SearchView`` instance. You can change this class's

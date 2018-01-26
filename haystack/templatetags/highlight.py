@@ -1,9 +1,13 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django import template
-from django.utils import importlib
 from django.utils import six
+
+from haystack.utils import importlib
 
 
 register = template.Library()
@@ -51,7 +55,7 @@ class HighlightNode(template.Node):
             except (ImportError, AttributeError) as e:
                 raise ImproperlyConfigured("The highlighter '%s' could not be imported: %s" % (settings.HAYSTACK_CUSTOM_HIGHLIGHTER, e))
         else:
-            from haystack.utils import Highlighter
+            from haystack.utils.highlighting import Highlighter
             highlighter_class = Highlighter
 
         highlighter = highlighter_class(query, **kwargs)

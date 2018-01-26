@@ -248,11 +248,13 @@ methods to call an enqueuing method instead of directly calling
 
         # Add on a queuing method.
         def enqueue_save(self, sender, instance, **kwargs):
-            # Push the save & information onto queue du jour here...
+            # Push the save & information onto queue du jour here
+            ...
 
         # Add on a queuing method.
         def enqueue_delete(self, sender, instance, **kwargs):
-            # Push the delete & information onto queue du jour here...
+            # Push the delete & information onto queue du jour here
+            ...
 
 For the consumer, this is much more specific to the queue used and your desired
 setup. At a minimum, you will need to periodically consume the queue, fetch the

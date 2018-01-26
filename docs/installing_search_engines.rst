@@ -11,8 +11,28 @@ Official Download Location: http://www.apache.org/dyn/closer.cgi/lucene/solr/
 
 Solr is Java but comes in a pre-packaged form that requires very little other
 than the JRE and Jetty. It's very performant and has an advanced featureset.
-Haystack suggests using Solr 3.5+, though it's possible to get it working on
-Solr 1.4 with a little effort. Installation is relatively simple::
+Haystack suggests using Solr 6.x, though it's possible to get it working on
+Solr 4.x+ with a little effort. Installation is relatively simple:
+
+For Solr 6.X::
+
+    curl -LO https://archive.apache.org/dist/lucene/solr/x.Y.0/solr-X.Y.0.tgz
+    tar -C solr -xf solr-X.Y.0.tgz --strip-components=1
+    cd solr
+    ./bin/solr create -c tester -n basic_config
+
+By default this will create a core with a managed schema.  This setup is dynamic
+but not useful for haystack, and we'll need to configure solr to use a static
+(classic) schema.  Haystack can generate a viable schema.xml and solrconfig.xml
+for you from your application and reload the core for you (once Haystack is
+installed and setup).  To do this run:
+``./manage.py build_solr_schema --configure-directory=<CoreConfigDif>
+--reload-core``. In this example CoreConfigDir is something like
+``../solr-6.5.0/server/solr/tester/conf``, and ``--reload-core``
+is what triggers reloading of the core.  Please refer to ``build_solr_schema``
+in the :doc:`management-commands` for required configuration.
+
+For Solr 4.X::
 
     curl -LO https://archive.apache.org/dist/lucene/solr/4.10.2/solr-4.10.2.tgz
     tar xvzf solr-4.10.2.tgz
@@ -20,21 +40,17 @@ Solr 1.4 with a little effort. Installation is relatively simple::
     cd example
     java -jar start.jar
 
-You'll need to revise your schema. You can generate this from your application
+You’ll need to revise your schema. You can generate this from your application
 (once Haystack is installed and setup) by running
 ``./manage.py build_solr_schema``. Take the output from that command and place
-it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart Solr.
+it in ``solr-4.10.2/example/solr/collection1/conf/schema.xml``. Then restart
+Solr.
 
-.. note::
-    ``build_solr_schema`` uses a template to generate ``schema.xml``. Haystack
-    provides a default template using some sensible defaults. If you would like
-    to provide your own template, you will need to place it in
-    ``search_configuration/solr.xml``, inside a directory specified by your app's
-    ``TEMPLATE_DIRS`` setting. Examples::
-
-        /myproj/myapp/templates/search_configuration/solr.xml
-        # ...or...
-        /myproj/templates/search_configuration/solr.xml
+.. warning::
+    Please note; the template filename, the file YOU supply under
+    TEMPLATE_DIR/search_configuration has changed to schema.xml from solr.xml.
+    The previous template name solr.xml was a legacy holdover from older
+    versions of solr.
 
 You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
 distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
@@ -42,11 +58,9 @@ somewhere on your ``PYTHONPATH``.
 
 .. note::
 
-    ``pysolr`` has its own dependencies that aren't covered by Haystack. For
-    best results, you should have an ElementTree variant install (preferably the
-    ``lxml`` variant), ``httplib2`` for timeouts (though it will fall back to
-    ``httplib``) and either the ``json`` module that comes with Python 2.5+ or
-    ``simplejson``.
+    ``pysolr`` has its own dependencies that aren't covered by Haystack. See
+    https://pypi.python.org/pypi/pysolr for the latest documentation.  Simplest
+    approach is to install using ``pip install pysolr``
 
 More Like This
 --------------
@@ -82,27 +96,52 @@ Then, you enable it in Solr by adding the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
     <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
-
-        <str name="queryAnalyzerFieldType">textSpell</str>
-
-        <lst name="spellchecker">
-          <str name="name">default</str>
-          <str name="field">suggestions</str>
-          <str name="spellcheckIndexDir">./spellchecker1</str>
-          <str name="buildOnCommit">true</str>
-        </lst>
+    
+      <str name="queryAnalyzerFieldType">text_general</str>
+      <lst name="spellchecker">
+        <str name="name">default</str>
+        <str name="field">text</str>
+        <str name="classname">solr.DirectSolrSpellChecker</str>
+        <str name="distanceMeasure">internal</str>
+        <float name="accuracy">0.5</float>
+        <int name="maxEdits">2</int>
+        <int name="minPrefix">1</int>
+        <int name="maxInspections">5</int>
+        <int name="minQueryLength">4</int>
+        <float name="maxQueryFrequency">0.01</float>
+      </lst>
     </searchComponent>
 
 Then change your default handler from::
 
-    <requestHandler name="standard" class="solr.StandardRequestHandler" default="true" />
-
+    <requestHandler name="/select" class="solr.SearchHandler">
+      <lst name="defaults">
+        <str name="echoParams">explicit</str>
+        <int name="rows">10</int>
+      </lst>
+    </requestHandler>
+    
 ... to ...::
 
-    <requestHandler name="standard" class="solr.StandardRequestHandler" default="true">
-        <arr name="last-components">
-            <str>spellcheck</str>
-        </arr>
+    <requestHandler name="/select" class="solr.SearchHandler">
+      <lst name="defaults">
+        <str name="echoParams">explicit</str>
+        <int name="rows">10</int>
+      
+        <str name="spellcheck.dictionary">default</str>
+        <str name="spellcheck">on</str>
+        <str name="spellcheck.extendedResults">true</str>
+        <str name="spellcheck.count">10</str>
+        <str name="spellcheck.alternativeTermCount">5</str>
+        <str name="spellcheck.maxResultsForSuggest">5</str>
+        <str name="spellcheck.collate">true</str>
+        <str name="spellcheck.collateExtendedResults">true</str>
+        <str name="spellcheck.maxCollationTries">10</str>
+        <str name="spellcheck.maxCollations">5</str>
+       </lst>
+       <arr name="last-components">
+         <str>spellcheck</str>
+       </arr>
     </requestHandler>
 
 Be warned that the ``<str name="field">suggestions</str>`` portion will be specific to
@@ -117,7 +156,10 @@ Official Download Location: http://www.elasticsearch.org/download/
 
 Elasticsearch is Java but comes in a pre-packaged form that requires very
 little other than the JRE. It's also very performant, scales easily and has
-an advanced featureset. Haystack requires at least version 0.90.0+.
+an advanced featureset. Haystack currently only supports Elasticsearch 1.x and 2.x.
+Elasticsearch 5.x is not supported yet, if you would like to help, please see
+`#1383 <https://github.com/django-haystack/django-haystack/issues/1383>`_.
+
 Installation is best done using a package manager::
 
     # On Mac OS X...
@@ -152,18 +194,11 @@ locally. Modifications should be done in a YAML file, the stock one being
       logs: /usr/local/var/log
       data: /usr/local/var/data
 
-You'll also need an Elasticsearch binding: elasticsearch-py_ (**NOT**
+You'll also need an Elasticsearch binding: elasticsearch_ (**NOT**
 ``pyes``). Place ``elasticsearch`` somewhere on your ``PYTHONPATH``
 (usually ``python setup.py install`` or ``pip install elasticsearch``).
 
-.. _elasticsearch-py: http://pypi.python.org/pypi/elasticsearch/
-
-.. note::
- 
-  Elasticsearch 1.0 is slightly backwards incompatible so you need to make sure
-  you have the proper version of `elasticsearch-py` installed - releases with
-  major version 1 (1.X.Y) are to be used with Elasticsearch 1.0 and later, 0.4
-  releases are meant to work with Elasticsearch 0.90.X.
+.. _elasticsearch: http://pypi.python.org/pypi/elasticsearch/
 
 .. note::
 

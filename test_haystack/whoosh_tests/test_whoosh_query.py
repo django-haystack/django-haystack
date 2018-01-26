@@ -1,9 +1,13 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
 
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SQ
+from haystack.query import SearchQuerySet, SQ
 
 from ..core.models import AnotherMockModel, MockModel
 from .testcases import WhooshTestCase
@@ -94,6 +98,21 @@ class WhooshSearchQueryTestCase(WhooshTestCase):
         self.sq.add_filter(SQ(title__startswith='haystack'))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:(haystack*))')
 
+    def test_build_query_fuzzy_filter_types(self):
+        self.sq.add_filter(SQ(content='why'))
+        self.sq.add_filter(SQ(title__fuzzy='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((why) AND title:(haystack~))')
+
+    def test_build_query_with_contains(self):
+        self.sq.add_filter(SQ(content='circular'))
+        self.sq.add_filter(SQ(title__contains='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((circular) AND title:(*haystack*))')
+
+    def test_build_query_with_endswith(self):
+        self.sq.add_filter(SQ(content='circular'))
+        self.sq.add_filter(SQ(title__endswith='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((circular) AND title:(*haystack))')
+
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
         self.assertEqual(self.sq.clean('hello AND world'), 'hello and world')
@@ -135,3 +154,9 @@ class WhooshSearchQueryTestCase(WhooshTestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:(1 OR 2 OR 3))')
+
+    def test_narrow_sq(self):
+        sqs = SearchQuerySet(using='whoosh').narrow(SQ(foo='moof'))
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
+        self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')

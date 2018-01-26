@@ -1,12 +1,14 @@
-from __future__ import unicode_literals
-from django.conf import settings
-from django.core.paginator import Paginator, InvalidPage
-from django.http import Http404
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from haystack.forms import ModelSearchForm, FacetedSearchForm
-from haystack.query import EmptySearchQuerySet
+# encoding: utf-8
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+from django.conf import settings
+from django.core.paginator import InvalidPage, Paginator
+from django.http import Http404
+from django.shortcuts import render
+
+from haystack.forms import FacetedSearchForm, ModelSearchForm
+from haystack.query import EmptySearchQuerySet
 
 RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 
@@ -20,10 +22,9 @@ class SearchView(object):
     form = None
     results_per_page = RESULTS_PER_PAGE
 
-    def __init__(self, template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None):
+    def __init__(self, template=None, load_all=True, form_class=None, searchqueryset=None, results_per_page=None):
         self.load_all = load_all
         self.form_class = form_class
-        self.context_class = context_class
         self.searchqueryset = searchqueryset
 
         if form_class is None:
@@ -123,10 +124,7 @@ class SearchView(object):
         """
         return {}
 
-    def create_response(self):
-        """
-        Generates the actual HttpResponse to send back to the user.
-        """
+    def get_context(self):
         (paginator, page) = self.build_page()
 
         context = {
@@ -137,11 +135,21 @@ class SearchView(object):
             'suggestion': None,
         }
 
-        if self.results and hasattr(self.results, 'query') and self.results.query.backend.include_spelling:
+        if hasattr(self.results, 'query') and self.results.query.backend.include_spelling:
             context['suggestion'] = self.form.get_suggestion()
 
         context.update(self.extra_context())
-        return render_to_response(self.template, context, context_instance=self.context_class(self.request))
+
+        return context
+
+    def create_response(self):
+        """
+        Generates the actual HttpResponse to send back to the user.
+        """
+
+        context = self.get_context()
+
+        return render(self.request, self.template, context)
 
 
 def search_view_factory(view_class=SearchView, *args, **kwargs):
@@ -175,7 +183,7 @@ class FacetedSearchView(SearchView):
         return extra
 
 
-def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None):
+def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, extra_context=None, results_per_page=None):
     """
     A more traditional view that also demonstrate an alternative
     way to use Haystack.
@@ -229,4 +237,4 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
     if extra_context:
         context.update(extra_context)
 
-    return render_to_response(template, context, context_instance=context_class(request))
+    return render(request, template, context)

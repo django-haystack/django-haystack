@@ -1,4 +1,7 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from django.utils.html import strip_tags
 
 

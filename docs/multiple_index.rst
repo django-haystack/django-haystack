@@ -69,7 +69,15 @@ Automatic Routing
 
 To make the selection of the correct index easier, Haystack (like Django) has
 the concept of "routers". All provided routers are checked whenever a read or
-write happens, stopping at the first router that knows how to handle it.
+write happens, in the order in which they are defined.
+
+For read operations (when a search query is executed), the ``for_read`` method
+of each router is called, until one of them returns an index, which is used for
+the read operation.
+
+For write operations (when a delete or update is executed), the ``for_write``
+method of each router is called, and the results are aggregated. All of the
+indexes that were returned are then updated.
 
 Haystack ships with a ``DefaultRouter`` enabled. It looks like::
 
@@ -80,13 +88,18 @@ Haystack ships with a ``DefaultRouter`` enabled. It looks like::
         def for_write(self, **hints):
             return DEFAULT_ALIAS
 
-On a read (when a search query is executed), the ``DefaultRouter.for_read``
-method is checked & returns the ``DEFAULT_ALIAS`` (which is ``default``),
-telling whatever requested it that it should perform the query against the
-``default`` connection. The same process is followed for writes.
+This means that the default index is used for all read and write operations.
 
-If the ``for_read`` or ``for_write`` method returns ``None``, that indicates
-that the current router can't handle the data. The next router is then checked.
+If the ``for_read`` or ``for_write`` method doesn't exist or returns ``None``,
+that indicates that the current router can't handle the data. The next router
+is then checked.
+
+The ``for_write`` method can return either a single string representing an
+index name, or an iterable of such index names. For example::
+
+    class UpdateEverythingRouter(BaseRouter):
+        def for_write(self, **hints):
+            return ('myindex1', 'myindex2')
 
 The ``hints`` passed can be anything that helps the router make a decision. This
 data should always be considered optional & be guarded against. At current,
@@ -98,7 +111,6 @@ You may provide as many routers as you like by overriding the
 ``HAYSTACK_ROUTERS`` setting. For example::
 
     HAYSTACK_ROUTERS = ['myapp.routers.MasterRouter', 'myapp.routers.SlaveRouter', 'haystack.routers.DefaultRouter']
-
 
 Master-Slave Example
 --------------------

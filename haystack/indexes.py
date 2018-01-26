@@ -1,10 +1,13 @@
-from __future__ import unicode_literals
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import copy
 import threading
 import warnings
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.encoding import force_text
 from django.utils.six import with_metaclass
 
 from haystack import connection_router, connections
@@ -12,11 +15,6 @@ from haystack.constants import DEFAULT_ALIAS, DJANGO_CT, DJANGO_ID, ID, Indexabl
 from haystack.fields import *
 from haystack.manager import SearchIndexManager
 from haystack.utils import get_facet_field_name, get_identifier, get_model_ct
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 class DeclarativeMetaclass(type):
@@ -105,7 +103,10 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         self.prepared_data = None
         content_fields = []
 
+        self.field_map = dict()
         for field_name, field in self.fields.items():
+            #form field map
+            self.field_map[field.index_fieldname] = field_name
             if field.document is True:
                 content_fields.append(field_name)
 
@@ -119,7 +120,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
 
         This method is required & you must override it to return the correct class.
         """
-        raise NotImplementedError("You must provide a 'model' method for the '%r' index." % self)
+        raise NotImplementedError("You must provide a 'get_model' method for the '%r' index." % self)
 
     def index_queryset(self, using=None):
         """
@@ -238,6 +239,11 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         return weights
 
     def _get_backend(self, using):
+        warnings.warn('SearchIndex._get_backend is deprecated; use SearchIndex.get_backend instead',
+                      DeprecationWarning)
+        return self.get_backend(using)
+
+    def get_backend(self, using=None):
         if using is None:
             try:
                 using = connection_router.for_write(index=self)[0]
@@ -255,7 +261,8 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        backend = self._get_backend(using)
+
+        backend = self.get_backend(using)
 
         if backend is not None:
             backend.update(self, self.index_queryset(using=using))
@@ -271,7 +278,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         """
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
-            backend = self._get_backend(using)
+            backend = self.get_backend(using)
 
             if backend is not None:
                 backend.update(self, [instance])
@@ -285,7 +292,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        backend = self._get_backend(using)
+        backend = self.get_backend(using)
 
         if backend is not None:
             backend.remove(instance, **kwargs)
@@ -298,7 +305,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         used. Default relies on the routers to decide which backend should
         be used.
         """
-        backend = self._get_backend(using)
+        backend = self.get_backend(using)
 
         if backend is not None:
             backend.clear(models=[self.get_model()])
@@ -398,6 +405,8 @@ class ModelSearchIndex(SearchIndex):
     fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, 'content', 'text')
 
     def __init__(self, extra_field_kwargs=None):
+        super(ModelSearchIndex, self).__init__()
+
         self.model = None
 
         self.prepared_data = None

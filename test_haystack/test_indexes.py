@@ -1,13 +1,19 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import datetime
-from threading import Thread
 import time
+from threading import Thread
+
 from django.test import TestCase
 from django.utils.six.moves import queue
-from haystack import connections, connection_router
+from test_haystack.core.models import (AFifthMockModel, AThirdMockModel, ManyToManyLeftSideModel,
+                                       ManyToManyRightSideModel, MockModel)
+
+from haystack import connection_router, connections, indexes
 from haystack.exceptions import SearchFieldError
-from haystack import indexes
 from haystack.utils.loading import UnifiedIndex
-from test_haystack.core.models import MockModel, AThirdMockModel, AFifthMockModel
 
 
 class BadSearchIndex1(indexes.SearchIndex, indexes.Indexable):
@@ -129,7 +135,17 @@ class MROFieldsSearchChild(MROFieldsSearchIndexA, MROFieldsSearchIndexB):
     pass
 
 
+class ModelWithManyToManyFieldAndAttributeLookupSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True)
+    related_models = indexes.MultiValueField(model_attr='related_models__name')
+
+    def get_model(self):
+        return ManyToManyLeftSideModel
+
+
 class SearchIndexTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SearchIndexTestCase, self).setUp()
         self.sb = connections['default'].get_backend()
@@ -254,7 +270,6 @@ class SearchIndexTestCase(TestCase):
 
         # Restore the original attribute
         self.mi.__class__.get_updated_field = old_guf
-
 
     def test_prepare(self):
         mock = MockModel()
@@ -643,3 +658,27 @@ class ModelSearchIndexTestCase(TestCase):
         self.assertTrue(isinstance(self.yabmsi.fields['average_delay'], indexes.FloatField))
         self.assertEqual(self.yabmsi.fields['average_delay'].null, False)
         self.assertEqual(self.yabmsi.fields['average_delay'].index_fieldname, 'average_delay')
+
+
+class ModelWithManyToManyFieldAndAttributeLookupSearchIndexTestCase(TestCase):
+    def test_full_prepare(self):
+        index = ModelWithManyToManyFieldAndAttributeLookupSearchIndex()
+
+        left_model = ManyToManyLeftSideModel.objects.create()
+        right_model_1 = ManyToManyRightSideModel.objects.create(name='Right side 1')
+        right_model_2 = ManyToManyRightSideModel.objects.create()
+        left_model.related_models.add(right_model_1)
+        left_model.related_models.add(right_model_2)
+
+        result = index.full_prepare(left_model)
+
+        self.assertDictEqual(
+            result,
+            {
+                'django_ct': 'core.manytomanyleftsidemodel',
+                'django_id': '1',
+                'text': None,
+                'id': 'core.manytomanyleftsidemodel.1',
+                'related_models': ['Right side 1', 'Default name'],
+            }
+        )

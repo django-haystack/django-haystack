@@ -1,5 +1,11 @@
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from haystack import indexes
-from .models import Foo, Bar
+from haystack.indexes import Indexable, SearchIndex
+
+from .models import Bar, Foo
 
 
 # To test additional ignores...
@@ -19,7 +25,6 @@ class FooIndex(BaseIndex, indexes.Indexable):
 
 
 # Import the old way & make sure things don't explode.
-from haystack.indexes import SearchIndex, Indexable
 
 
 class BarIndex(SearchIndex, Indexable):

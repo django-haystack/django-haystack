@@ -1,21 +1,17 @@
-from django.core.exceptions import ImproperlyConfigured
-from django.test import TestCase
-from haystack.exceptions import SearchFieldError, NotHandled
-from haystack import indexes
-from haystack.utils import loading
-from test_haystack.core.models import MockModel, AnotherMockModel
+# encoding: utf-8
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import unittest
 
-if not hasattr(unittest, "skipIf"):
-    # We're dealing with Python < 2.7 and we need unittest2, which might be available from Django:
-    try:
-        from django.utils import unittest
-    except ImportError:
-        try:
-            import unittest2 as unittest
-        except ImportError:
-            raise RuntimeError("Tests require unittest2. If you use Django 1.2, install unittest2")
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.test import TestCase, override_settings
+from test_haystack.core.models import AnotherMockModel, MockModel
+
+from haystack import indexes
+from haystack.exceptions import NotHandled, SearchFieldError
+from haystack.utils import loading
 
 try:
     import pysolr
@@ -27,7 +23,6 @@ class ConnectionHandlerTestCase(TestCase):
     def test_init(self):
         ch = loading.ConnectionHandler({})
         self.assertEqual(ch.connections_info, {})
-        self.assertEqual(ch._connections, {})
 
         ch = loading.ConnectionHandler({
             'default': {
@@ -41,7 +36,6 @@ class ConnectionHandlerTestCase(TestCase):
                 'URL': 'http://localhost:9001/solr/test_default',
             },
         })
-        self.assertEqual(ch._connections, {})
 
     @unittest.skipIf(pysolr is False, "pysolr required")
     def test_get_item(self):
@@ -92,48 +86,56 @@ class ConnectionHandlerTestCase(TestCase):
 
 
 class ConnectionRouterTestCase(TestCase):
+    @override_settings()
     def test_init(self):
+        del settings.HAYSTACK_ROUTERS
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.routers_list, ['haystack.routers.DefaultRouter'])
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
-        cr = loading.ConnectionRouter(routers_list=['haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.routers_list, ['haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['haystack.routers.DefaultRouter'])
+    def test_router_override1(self):
+        cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
 
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.routers_list, ['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=[])
+    def test_router_override2(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
+
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    def test_router_override3(self):
+        cr = loading.ConnectionRouter()
         self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'test_haystack.mocks.MockMasterSlaveRouter'>", "<class 'haystack.routers.DefaultRouter'>"])
 
-    def test_for_read(self):
+    @override_settings()
+    def test_actions1(self):
+        del settings.HAYSTACK_ROUTERS
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.for_read(), ['default'])
-
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
-
-        # Demonstrate pass-through.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
-
-        # Demonstrate that hinting can change routing.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(pass_through=False), ['pass', 'slave', 'default'])
-
-    def test_for_write(self):
-        cr = loading.ConnectionRouter()
+        self.assertEqual(cr.for_read(), 'default')
         self.assertEqual(cr.for_write(), ['default'])
 
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    def test_actions2(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual(cr.for_read(), 'slave')
         self.assertEqual(cr.for_write(), ['master', 'default'])
 
-        # Demonstrate pass-through.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+    def test_actions3(self):
+        cr = loading.ConnectionRouter()
+        # Demonstrate pass-through
+        self.assertEqual(cr.for_read(), 'slave')
         self.assertEqual(cr.for_write(), ['master', 'default'])
-
         # Demonstrate that hinting can change routing.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
+        self.assertEqual(cr.for_read(pass_through=False), 'pass')
         self.assertEqual(cr.for_write(pass_through=False), ['pass', 'master', 'default'])
+
+    @override_settings(HAYSTACK_ROUTERS=['test_haystack.mocks.MockMultiRouter', 'haystack.routers.DefaultRouter'])
+    def test_actions4(self):
+        cr = loading.ConnectionRouter()
+        # Demonstrate that a router can return multiple backends in the "for_write" method
+        self.assertEqual(cr.for_read(), 'default')
+        self.assertEqual(cr.for_write(), ['multi1', 'multi2', 'default'])
 
 
 class MockNotAModel(object):
@@ -220,6 +222,10 @@ class UnifiedIndexTestCase(TestCase):
 
     def test_get_index(self):
         self.assertRaises(NotHandled, self.ui.get_index, MockModel)
+        try:
+            self.ui.get_index(MockModel)
+        except NotHandled as e:
+            self.assertTrue(MockModel.__name__ in str(e))
 
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
         self.assertTrue(isinstance(self.ui.get_index(MockModel), indexes.BasicSearchIndex))
@@ -231,6 +237,17 @@ class UnifiedIndexTestCase(TestCase):
         indexed_models = self.ui.get_indexed_models()
         self.assertEqual(len(indexed_models), 1)
         self.assertTrue(MockModel in indexed_models)
+
+    def test_get_indexes(self):
+        self.assertEqual(self.ui.get_indexes(), {})
+
+        index = ValidSearchIndex()
+        self.ui.build(indexes=[index])
+
+        results = self.ui.get_indexes()
+        self.assertEqual(len(results), 1)
+        self.assertTrue(MockModel in results)
+        self.assertEqual(results[MockModel], index)
 
     def test_all_searchfields(self):
         self.ui.build(indexes=[BasicMockModelSearchIndex()])

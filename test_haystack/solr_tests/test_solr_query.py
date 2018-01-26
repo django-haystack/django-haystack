@@ -1,13 +1,21 @@
-import datetime
-from django.test import TestCase
-from haystack import connections
-from haystack.inputs import Exact, AltParser
-from haystack.models import SearchResult
-from haystack.query import SQ
-from ..core.models import MockModel, AnotherMockModel
+# encoding: utf-8
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import datetime
+
+from django.test import TestCase
+
+from haystack import connections
+from haystack.inputs import AltParser, Exact
+from haystack.models import SearchResult
+from haystack.query import SearchQuerySet, SQ
+
+from ..core.models import AnotherMockModel, MockModel
 
 class SolrSearchQueryTestCase(TestCase):
+    fixtures = ['base_data']
+
     def setUp(self):
         super(SolrSearchQueryTestCase, self).setUp()
         self.sq = connections['solr'].get_query()
@@ -123,10 +131,25 @@ class SolrSearchQueryTestCase(TestCase):
         else:
             self.assertTrue(u'title:("An Infamous Article" OR "A Famous Paper")' in query)
 
+    def test_build_query_with_contains(self):
+        self.sq.add_filter(SQ(content='circular'))
+        self.sq.add_filter(SQ(title__contains='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((circular) AND title:(*haystack*))')
+
+    def test_build_query_with_endswith(self):
+        self.sq.add_filter(SQ(content='circular'))
+        self.sq.add_filter(SQ(title__endswith='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((circular) AND title:(*haystack))')
+
     def test_build_query_wildcard_filter_types(self):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__startswith='haystack'))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:(haystack*))')
+
+    def test_build_query_fuzzy_filter_types(self):
+        self.sq.add_filter(SQ(content='why'))
+        self.sq.add_filter(SQ(title__fuzzy='haystack'))
+        self.assertEqual(self.sq.build_query(), u'((why) AND title:(haystack~))')
 
     def test_clean(self):
         self.assertEqual(self.sq.clean('hello world'), 'hello world')
@@ -161,3 +184,18 @@ class SolrSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content='why'))
         self.sq.add_filter(SQ(title__in=MockModel.objects.values_list('id', flat=True)))
         self.assertEqual(self.sq.build_query(), u'((why) AND title:("1" OR "2" OR "3"))')
+
+    def test_narrow_sq(self):
+        sqs = SearchQuerySet(using='solr').narrow(SQ(foo='moof'))
+        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertEqual(len(sqs.query.narrow_queries), 1)
+        self.assertEqual(sqs.query.narrow_queries.pop(), 'foo:(moof)')
+
+    def test_query__in(self):
+        sqs = SearchQuerySet(using='solr').filter(id__in=[1,2,3])
+        self.assertEqual(sqs.query.build_query(), u'id:("1" OR "2" OR "3")')
+
+    def test_query__in_empty_list(self):
+        """Confirm that an empty list avoids a Solr exception"""
+        sqs = SearchQuerySet(using='solr').filter(id__in=[])
+        self.assertEqual(sqs.query.build_query(), u'id:(!*:*)')
