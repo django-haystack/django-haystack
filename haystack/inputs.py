@@ -21,7 +21,7 @@ class BaseInput(object):
         self.kwargs = kwargs
 
     def __repr__(self):
-        return u"<%s '%s'>" % (self.__class__.__name__, self.__unicode__().encode('utf8'))
+        return u"<%s '%s'>" % (self.__class__.__name__, self.__str__())
 
     def __str__(self):
         return force_text(self.query_string)
