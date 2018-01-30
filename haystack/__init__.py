@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from pkg_resources import DistributionNotFound, get_distribution
+from pkg_resources import DistributionNotFound, get_distribution, parse_version
 
 from haystack import signals
 from haystack.constants import DEFAULT_ALIAS
@@ -13,9 +13,12 @@ from haystack.utils import loading
 __author__ = 'Daniel Lindsley'
 
 try:
-    __version__ = get_distribution(__name__).version
+    pkg_distribution = get_distribution(__name__)
+    __version__ = pkg_distribution.version
+    version_info = pkg_distribution.parsed_version
 except DistributionNotFound:
-    __version__ = (0, 0, 'dev0')
+    __version__ = '0.0.dev0'
+    version_info = parse_version(__version__)
 
 default_app_config = 'haystack.apps.HaystackConfig'
 

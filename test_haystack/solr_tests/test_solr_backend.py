@@ -6,6 +6,7 @@ import logging as std_logging
 import os
 import unittest
 from decimal import Decimal
+from pkg_resources import parse_version
 
 import pysolr
 from django.conf import settings
@@ -1458,6 +1459,8 @@ class SolrBoostBackendTestCase(TestCase):
         ])
 
 
+@unittest.skipIf(parse_version(pysolr.__version__) < parse_version('3.1.1'),
+                 'content extraction requires pysolr > 3.1.1')
 class LiveSolrContentExtractionTestCase(TestCase):
     def setUp(self):
         super(LiveSolrContentExtractionTestCase, self).setUp()
