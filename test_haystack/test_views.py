@@ -10,10 +10,7 @@ from django import forms
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.utils.six.moves import queue
-if django.VERSION < (1, 10):
-    from django.core.urlresolvers import reverse
-else:
-    from django.urls import reverse
+from django.urls import reverse
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connections, indexes
