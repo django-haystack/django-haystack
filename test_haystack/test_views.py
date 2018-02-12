@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import time
 from threading import Thread
 
-import django
 from django import forms
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings

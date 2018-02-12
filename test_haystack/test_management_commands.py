@@ -66,12 +66,9 @@ class CoreManagementCommandsTestCase(TestCase):
         m2.assert_called_with("eng")
         m1.assert_any_call("core", "eng")
 
-    @patch('haystack.management.commands.update_index.Command.handle')
-    @patch('haystack.management.commands.clear_index.Command.handle')
+    @patch('haystack.management.commands.update_index.Command.handle', return_value='')
+    @patch('haystack.management.commands.clear_index.Command.handle', return_value='')
     def test_rebuild_index(self, mock_handle_clear, mock_handle_update):
-        mock_handle_clear.return_value = ''
-        mock_handle_update.return_value = ''
-
         call_command('rebuild_index', interactive=False)
 
         self.assertTrue(mock_handle_clear.called)
@@ -90,8 +87,8 @@ class CoreManagementCommandsTestCase(TestCase):
             self.assertIn('commit', kwargs)
             self.assertEqual(False, kwargs['commit'])
 
-    @patch('haystack.management.commands.clear_index.Command.handle')
-    @patch('haystack.management.commands.update_index.Command.handle')
+    @patch('haystack.management.commands.clear_index.Command.handle', return_value='')
+    @patch('haystack.management.commands.update_index.Command.handle', return_value='')
     def test_rebuild_index_nocommit(self, update_mock, clear_mock):
         """
         Confirm that command-line option parsing produces the same results as using call_command() directly,
@@ -99,9 +96,6 @@ class CoreManagementCommandsTestCase(TestCase):
         component commands.
         """
         from haystack.management.commands.rebuild_index import Command
-
-        update_mock.return_value = ''
-        clear_mock.return_value = ''
 
         Command().run_from_argv(['django-admin.py', 'rebuild_index', '--noinput', '--nocommit'])
 
@@ -116,4 +110,4 @@ class CoreManagementCommandsTestCase(TestCase):
         args, kwargs = clear_mock.call_args
 
         self.assertIn('interactive', kwargs)
-        self.assertEqual(False, kwargs['interactive'])
+        self.assertIs(kwargs['interactive'], False)

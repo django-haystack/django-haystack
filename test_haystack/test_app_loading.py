@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from types import GeneratorType, ModuleType
 
-import django
 from django.urls import reverse
 from django.test import TestCase
 

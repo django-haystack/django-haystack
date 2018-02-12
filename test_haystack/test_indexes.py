@@ -629,7 +629,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.assertTrue(isinstance(self.emsi.fields['pub_date'], indexes.DateTimeField))
         self.assertTrue('text' in self.emsi.fields)
         self.assertTrue(isinstance(self.emsi.fields['text'], indexes.CharField))
-        self.assertFalse('related_models' in self.m2mmsi.fields)
+        self.assertNotIn('related_models', self.m2mmsi.fields)
 
     def test_fields_with_override(self):
         self.assertEqual(len(self.fwomsi.fields), 3)
