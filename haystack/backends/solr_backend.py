@@ -173,7 +173,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if sort_by is not None:
             if sort_by in ['distance asc', 'distance desc'] and distance_point:
                 # Do the geo-enabled sort.
-                lng, lat = distance_point['point'].get_coords()
+                lng, lat = distance_point['point'].coords
                 kwargs['sfield'] = distance_point['field']
                 kwargs['pt'] = '%s,%s' % (lat, lng)
 
@@ -290,7 +290,7 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if dwithin is not None:
             kwargs.setdefault('fq', [])
-            lng, lat = dwithin['point'].get_coords()
+            lng, lat = dwithin['point'].coords
             geofilt = '{!geofilt pt=%s,%s sfield=%s d=%s}' % (lat, lng, dwithin['field'], dwithin['distance'].km)
             kwargs['fq'].append(geofilt)
 
