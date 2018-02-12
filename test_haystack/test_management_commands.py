@@ -69,6 +69,9 @@ class CoreManagementCommandsTestCase(TestCase):
     @patch('haystack.management.commands.update_index.Command.handle')
     @patch('haystack.management.commands.clear_index.Command.handle')
     def test_rebuild_index(self, mock_handle_clear, mock_handle_update):
+        mock_handle_clear.return_value = ''
+        mock_handle_update.return_value = ''
+
         call_command('rebuild_index', interactive=False)
 
         self.assertTrue(mock_handle_clear.called)
@@ -96,6 +99,9 @@ class CoreManagementCommandsTestCase(TestCase):
         component commands.
         """
         from haystack.management.commands.rebuild_index import Command
+
+        update_mock.return_value = ''
+        clear_mock.return_value = ''
 
         Command().run_from_argv(['django-admin.py', 'rebuild_index', '--noinput', '--nocommit'])
 
