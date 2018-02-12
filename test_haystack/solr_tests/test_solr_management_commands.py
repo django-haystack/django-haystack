@@ -194,7 +194,7 @@ class ManagementCommandTestCase(TestCase):
                                                    'PATH': mkdtemp(prefix='dummy-path-'), }
 
         connections['whoosh']._index = self.ui
-        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema', using='whoosh', interactive=False)
+        self.assertRaises(ImproperlyConfigured, call_command, 'build_solr_schema', using='whoosh')
 
     def test_build_schema(self):
 
@@ -276,38 +276,38 @@ class AppModelManagementCommandTestCase(TestCase):
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('update_index', 'core', interactive=False, verbosity=0)
+        call_command('update_index', 'core', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 25)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         with self.assertRaises(ImproperlyConfigured):
-            call_command('update_index', 'fake_app_thats_not_there', interactive=False)
+            call_command('update_index', 'fake_app_thats_not_there')
 
-        call_command('update_index', 'core', 'discovery', interactive=False, verbosity=0)
+        call_command('update_index', 'core', 'discovery', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 25)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('update_index', 'discovery', interactive=False, verbosity=0)
+        call_command('update_index', 'discovery', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('update_index', 'core.MockModel', interactive=False, verbosity=0)
+        call_command('update_index', 'core.MockModel', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 23)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('update_index', 'core.MockTag', interactive=False, verbosity=0)
+        call_command('update_index', 'core.MockTag', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 2)
 
         call_command('clear_index', interactive=False, verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 0)
 
-        call_command('update_index', 'core.MockTag', 'core.MockModel', interactive=False, verbosity=0)
+        call_command('update_index', 'core.MockTag', 'core.MockModel', verbosity=0)
         self.assertEqual(self.solr.search('*:*').hits, 25)
