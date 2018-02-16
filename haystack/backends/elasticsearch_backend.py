@@ -625,8 +625,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             model = haystack_get_model(app_label, model_name)
 
             if model and model in indexed_models:
+                index = source and unified_index.get_index(model)
                 for key, value in source.items():
-                    index = unified_index.get_index(model)
                     string_key = str(key)
 
                     if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):

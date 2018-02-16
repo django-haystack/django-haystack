@@ -5,6 +5,7 @@ import datetime
 import logging as std_logging
 import operator
 import unittest
+from contextlib import contextmanager
 from decimal import Decimal
 
 import elasticsearch
@@ -229,6 +230,24 @@ class TestSettings(TestCase):
         self.assertEqual(backend.conn.transport.max_retries, 42)
 
 
+class ElasticSearchMockUnifiedIndex(UnifiedIndex):
+
+    spy_args = None
+
+    def get_index(self, model_klass):
+        if self.spy_args is not None:
+            self.spy_args.setdefault('get_index', []).append(model_klass)
+        return super(ElasticSearchMockUnifiedIndex, self).get_index(model_klass)
+
+    @contextmanager
+    def spy(self):
+        try:
+            self.spy_args = {}
+            yield self.spy_args
+        finally:
+            self.spy_args = None
+
+
 class ElasticsearchSearchBackendTestCase(TestCase):
     def setUp(self):
         super(ElasticsearchSearchBackendTestCase, self).setUp()
@@ -239,7 +258,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Stow.
         self.old_ui = connections['elasticsearch'].get_unified_index()
-        self.ui = UnifiedIndex()
+        self.ui = ElasticSearchMockUnifiedIndex()
         self.smmi = ElasticsearchMockSearchIndex()
         self.smmidni = ElasticsearchMockSearchIndexWithSkipDocument()
         self.smtmmi = ElasticsearchMaintainTypeMockSearchIndex()
@@ -411,6 +430,13 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_search('*:*').get('hits', {}).get('total', 0), 0)
+
+    def test_results_ask_for_index_per_entry(self):
+        # Test that index class is obtained per result entry, not per every entry field
+        self.sb.update(self.smmi, self.sample_objs)
+        with self.ui.spy() as spy:
+            self.sb.search('*:*', limit_to_registered_models=False)
+            self.assertEqual(len(spy.get('get_index', [])), len(self.sample_objs))
 
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
