@@ -435,8 +435,14 @@ class SolrSearchBackend(BaseSearchBackend):
                     if string_key in index_field_map:
                         string_key = index_field_map[key]
 
-                    if string_key in index.fields and hasattr(index.fields[string_key], 'convert'):
-                        additional_fields[string_key] = index.fields[string_key].convert(value)
+                    # respect field.index_fieldname
+                    if string_key in unified_index.fields:
+                        instance_name = unified_index.fields[string_key].instance_name
+                    else:
+                        instance_name = string_key
+
+                    if instance_name in index.fields and hasattr(index.fields[instance_name], 'convert'):
+                        additional_fields[string_key] = index.fields[instance_name].convert(value)
                     else:
                         additional_fields[string_key] = self.conn._to_python(value)
 
