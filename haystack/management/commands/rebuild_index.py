@@ -1,5 +1,4 @@
 # encoding: utf-8
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.core.management import call_command
@@ -33,5 +32,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        call_command('clear_index', **options)
-        call_command('update_index', **options)
+        clear_options = options.copy()
+        update_options = options.copy()
+        for key in ('batchsize', 'workers'):
+            del clear_options[key]
+        for key in ('interactive', ):
+            del update_options[key]
+        call_command('clear_index', **clear_options)
+        call_command('update_index', **update_options)

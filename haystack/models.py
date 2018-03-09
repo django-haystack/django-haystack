@@ -133,7 +133,7 @@ class SearchResult(object):
             if location_field is None:
                 return None
 
-            lf_lng, lf_lat = location_field.get_coords()
+            lf_lng, lf_lat = location_field.coords
             self._distance = Distance(km=geopy_distance.distance((po_lat, po_lng), (lf_lat, lf_lng)).km)
 
         # We've either already calculated it or the backend returned it, so

@@ -43,7 +43,7 @@ def ensure_wgs84(point):
 
     if not new_point.srid:
         # It has no spatial reference id. Assume WGS-84.
-        new_point.set_srid(WGS_84_SRID)
+        new_point.srid = WGS_84_SRID
     elif new_point.srid != WGS_84_SRID:
         # Transform it to get to the right system.
         new_point.transform(WGS_84_SRID)
@@ -72,7 +72,7 @@ def generate_bounding_box(bottom_left, top_right):
 
     The two-tuple is in the form ``((min_lat, min_lng), (max_lat, max_lng))``.
     """
-    west, lat_1 = bottom_left.get_coords()
-    east, lat_2 = top_right.get_coords()
+    west, lat_1 = bottom_left.coords
+    east, lat_2 = top_right.coords
     min_lat, max_lat = min(lat_1, lat_2), max(lat_1, lat_2)
     return ((min_lat, west), (max_lat, east))

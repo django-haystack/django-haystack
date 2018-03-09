@@ -5,6 +5,7 @@ python:
     - 2.7
     - 3.4
     - 3.5
+    - 3.6
     - pypy
 
 cache:
@@ -58,17 +59,19 @@ script:
 
 env:
     matrix:
-        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=1.0.0,<2.0.0"
-        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=1.0.0,<2.0.0"
-        - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=1.0.0,<2.0.0"
-        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=2.0.0,<3.0.0"
-        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=2.0.0,<3.0.0"
-        - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=2.0.0,<3.0.0"
-        - DJANGO_VERSION=">=1.11,<1.12" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
 
 matrix:
     allow_failures:
         - python: 'pypy'
+    exclude:
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
 
 notifications:
     irc: "irc.freenode.org#haystack"

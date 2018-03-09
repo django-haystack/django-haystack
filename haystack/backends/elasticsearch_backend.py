@@ -296,7 +296,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             for field, direction in sort_by:
                 if field == 'distance' and distance_point:
                     # Do the geo-enabled sort.
-                    lng, lat = distance_point['point'].get_coords()
+                    lng, lat = distance_point['point'].coords
                     sort_kwargs = {
                         "_geo_distance": {
                             distance_point['field']: [lng, lat],
@@ -455,7 +455,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             filters.append(within_filter)
 
         if dwithin is not None:
-            lng, lat = dwithin['point'].get_coords()
+            lng, lat = dwithin['point'].coords
 
             # NB: the 1.0.0 release of elasticsearch introduce an
             #     incompatible change on the distance filter formating

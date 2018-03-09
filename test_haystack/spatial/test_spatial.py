@@ -37,7 +37,7 @@ class SpatialUtilitiesTestCase(TestCase):
         self.assertEqual(std_pnt.y, 38.97127105172941)
 
         orig_pnt = Point(-95.23592948913574, 38.97127105172941)
-        orig_pnt.set_srid(2805)
+        orig_pnt.srid = 2805
         std_pnt = ensure_wgs84(orig_pnt)
         self.assertEqual(orig_pnt.srid, 2805)
         self.assertEqual(std_pnt.srid, 4326)
@@ -96,8 +96,8 @@ class SpatialSolrTestCase(TestCase):
         self.assertEqual(sqs.count(), 1)
         self.assertEqual(sqs[0].username, first.username)
         # Make sure we've got a proper ``Point`` object.
-        self.assertAlmostEqual(sqs[0].location.get_coords()[0], first.longitude)
-        self.assertAlmostEqual(sqs[0].location.get_coords()[1], first.latitude)
+        self.assertAlmostEqual(sqs[0].location.coords[0], first.longitude)
+        self.assertAlmostEqual(sqs[0].location.coords[1], first.latitude)
 
         # Double-check, to make sure there was nothing accidentally copied
         # between instances.
@@ -106,8 +106,8 @@ class SpatialSolrTestCase(TestCase):
         sqs = self.sqs.models(Checkin).filter(django_id=second.pk)
         self.assertEqual(sqs.count(), 1)
         self.assertEqual(sqs[0].username, second.username)
-        self.assertAlmostEqual(sqs[0].location.get_coords()[0], second.longitude)
-        self.assertAlmostEqual(sqs[0].location.get_coords()[1], second.latitude)
+        self.assertAlmostEqual(sqs[0].location.coords[0], second.longitude)
+        self.assertAlmostEqual(sqs[0].location.coords[1], second.latitude)
 
     def test_within(self):
         self.assertEqual(self.sqs.all().count(), 10)

@@ -443,7 +443,7 @@ class ModelSearchIndex(SearchIndex):
             return True
 
         # Ignore certain fields (AutoField, related fields).
-        if field.primary_key or getattr(field, 'rel'):
+        if field.primary_key or field.is_relation:
             return True
 
         return False

@@ -13,7 +13,7 @@ admin.autodiscover()
 
 
 urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
 
     url(r'^$', SearchView(load_all=False), name='haystack_search'),
     url(r'^faceted/$',
@@ -23,5 +23,5 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    url(r'', include('test_haystack.test_app_without_models.urls', namespace='app-without-models')),
+    url(r'', include(('test_haystack.test_app_without_models.urls', 'app-without-models'))),
 ]

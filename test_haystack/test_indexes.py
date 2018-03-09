@@ -581,6 +581,11 @@ class TextReadQuerySetTestSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return self.get_model().objects.complete_set()
 
 
+class ModelWithManyToManyFieldModelSearchIndex(indexes.ModelSearchIndex):
+    def get_model(self):
+        return ManyToManyLeftSideModel
+
+
 class ModelSearchIndexTestCase(TestCase):
     def setUp(self):
         super(ModelSearchIndexTestCase, self).setUp()
@@ -590,6 +595,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.emsi = ExcludesModelSearchIndex()
         self.fwomsi = FieldsWithOverrideModelSearchIndex()
         self.yabmsi = YetAnotherBasicModelSearchIndex()
+        self.m2mmsi = ModelWithManyToManyFieldModelSearchIndex()
 
     def test_basic(self):
         self.assertEqual(len(self.bmsi.fields), 4)
@@ -623,6 +629,7 @@ class ModelSearchIndexTestCase(TestCase):
         self.assertTrue(isinstance(self.emsi.fields['pub_date'], indexes.DateTimeField))
         self.assertTrue('text' in self.emsi.fields)
         self.assertTrue(isinstance(self.emsi.fields['text'], indexes.CharField))
+        self.assertNotIn('related_models', self.m2mmsi.fields)
 
     def test_fields_with_override(self):
         self.assertEqual(len(self.fwomsi.fields), 3)

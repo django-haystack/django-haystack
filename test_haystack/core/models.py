@@ -17,7 +17,7 @@ class MockModel(models.Model):
     author = models.CharField(max_length=255)
     foo = models.CharField(max_length=255, blank=True)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
-    tag = models.ForeignKey(MockTag)
+    tag = models.ForeignKey(MockTag, models.CASCADE)
 
     def __unicode__(self):
         return self.author
@@ -108,4 +108,4 @@ class OneToManyLeftSideModel(models.Model):
 
 
 class OneToManyRightSideModel(models.Model):
-    left_side = models.ForeignKey(OneToManyLeftSideModel, related_name='right_side')
+    left_side = models.ForeignKey(OneToManyLeftSideModel, models.CASCADE, related_name='right_side')

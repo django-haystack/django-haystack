@@ -6,10 +6,10 @@ import time
 from threading import Thread
 
 from django import forms
-from django.core.urlresolvers import reverse
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.utils.six.moves import queue
+from django.urls import reverse
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connections, indexes
