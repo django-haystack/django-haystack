@@ -112,6 +112,8 @@ Thanks to
     * Chris Brooke (@chrisbrooke) for patching around a backwards-incompatible change in ElasticSearch 2
     * Gilad Beeri (@giladbeeri) for adding retries when updating a backend
     * Arjen Verstoep (@terr) for a patch that allows attribute lookups through Django ManyToManyField relationships
+    * Wyatt Baldwin (@wylee) for ammendments to the patch by @terr that allows
+      attribute lookups through Django ManyToManyField relationships
     * Tim Babych (@tymofij) for enabling backend-specific parameters in ``.highlight()``
     * Antony Raj (@antonyr) for adding endswith input type and fixing contains input type
     * Morgan Aubert (@ellmetha) for Django 1.10 support

@@ -109,3 +109,6 @@ class OneToManyLeftSideModel(models.Model):
 
 class OneToManyRightSideModel(models.Model):
     left_side = models.ForeignKey(OneToManyLeftSideModel, related_name='right_side')
+
+    attr = models.IntegerField(default=1)
+    nullable_attr = models.IntegerField(null=True)
