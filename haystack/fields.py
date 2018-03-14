@@ -112,7 +112,8 @@ class SearchField(object):
 
             if len(attributes) > 1:
                 current_objects_in_attr = self.get_iterable_objects(getattr(current_object, attributes[0]))
-                return self.resolve_attributes_lookup(current_objects_in_attr, attributes[1:])
+                values.extend(self.resolve_attributes_lookup(current_objects_in_attr, attributes[1:]))
+                continue
 
             current_object = getattr(current_object, attributes[0])
 
