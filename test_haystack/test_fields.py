@@ -85,6 +85,26 @@ class SearchFieldTestCase(TestCase):
 
         self.assertEqual([1, 1], field.resolve_attributes_lookup([obj], ['related', 'related', 'value']))
 
+    def test_resolve_attributes_lookup_with_deep_relationship_through_m2m(self):
+        # obj.related2m:
+        #   - related1
+        #        .deep1
+        #            .value = 1
+        #   - related2
+        #        .deep2
+        #            .value = 2
+        #   - related3
+        #        .deep3
+        #            .value = 3
+        values = [1, 2, 3]
+        deep1, deep2, deep3 = (Mock(spec=['value'], value=x) for x in values)
+        related1, related2, related3 = (Mock(spec=['related'], related=x) for x in (deep1, deep2, deep3))
+        m2m_rel = Mock(spec=['__iter__'], __iter__=lambda self: iter([related1, related2, related3]))
+        obj = Mock(spec=['related_m2m'], related_m2m=m2m_rel)
+        field = SearchField()
+        self.assertEqual(values, field.resolve_attributes_lookup([obj], ['related_m2m', 'related', 'value']))
+
+
     def test_prepare_with_null_django_onetomany_rel(self):
         left_model = OneToManyLeftSideModel.objects.create()
 
