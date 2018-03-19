@@ -154,7 +154,7 @@ class SearchField(object):
             return []
 
         try:
-            current_objects = [obj for obj in current_objects]
+            _ = [obj for obj in current_objects]
         except:
             current_objects = [current_objects]
 
