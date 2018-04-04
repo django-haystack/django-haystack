@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
+from .update_index import DEFAULT_MAX_RETRIES
+
 
 class Command(BaseCommand):
     help = "Completely rebuilds the search index by removing the old data and then updating."
@@ -30,11 +32,16 @@ class Command(BaseCommand):
             '-b', '--batch-size', dest='batchsize', type=int,
             help='Number of items to index at once.'
         )
+        parser.add_argument(
+            '-t', '--max-retries', action='store', dest='max_retries',
+            type=int, default=DEFAULT_MAX_RETRIES,
+            help='Maximum number of attempts to write to the backend when an error occurs.'
+        )
 
     def handle(self, **options):
         clear_options = options.copy()
         update_options = options.copy()
-        for key in ('batchsize', 'workers'):
+        for key in ('batchsize', 'workers', 'max_retries'):
             del clear_options[key]
         for key in ('interactive', ):
             del update_options[key]
