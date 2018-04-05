@@ -212,6 +212,48 @@ class CharField(SearchField):
         return six.text_type(value)
 
 
+class ShapeField(SearchField):
+    field_type = 'shape'
+
+    def prepare(self, obj):
+        from haystack.utils.geo import ensure_polygon
+
+        # Value is the actual value of the Python model's attribute
+        value = super(ShapeField, self).prepare(obj)
+
+        if value is None:
+            return None
+        polygon = ensure_polygon(value)
+        coords = [[list(x) for x in y] for y in polygon.coords]
+        return {'type': 'polygon', 'coordinates': coords}
+
+    def convert(self, value):
+        from haystack.utils.geo import ensure_polygon, Polygon
+
+        if value is None:
+            return None
+
+        if hasattr(value, 'geom_type'):
+            value = ensure_polygon(value)
+            return value
+
+        if isinstance(value, six.string_types):
+            coords = eval(value)
+            if coords != list:
+                return None
+        elif isinstance(value, (list, tuple)):
+            coords = value
+        elif isinstance(value, dict):
+            geom_type = value['type']
+            coords = []
+            if value['coordinates']:
+                coords = value['coordinates'][0]
+            else:
+                return None
+        value = Polygon(coords)
+        return value
+
+
 class LocationField(SearchField):
     field_type = 'location'
 

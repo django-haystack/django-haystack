@@ -2,10 +2,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D, Distance
 
-from haystack.constants import WGS_84_SRID
+from haystack.constants import WGS_84_SRID, VALID_RELATIONS
 from haystack.exceptions import SpatialError
 
 
@@ -27,6 +27,18 @@ def ensure_point(geom):
 
     if geom.geom_type != 'Point':
         raise SpatialError("Provided geometry '%s' is not a 'Point'." % geom)
+
+    return geom
+
+
+def ensure_polygon(geom):
+    """
+    Makes sure the parameter passed in looks like a GEOS ``Polygon``.
+    """
+    ensure_geometry(geom)
+
+    if geom.geom_type != 'Polygon':
+        raise SpatialError("Provided geometry '%s' is not a 'Polygon'." % geom)
 
     return geom
 
@@ -63,6 +75,13 @@ def ensure_distance(dist):
         raise SpatialError("'%s' does not appear to be a 'Distance' object." % dist)
 
     return dist
+
+
+def ensure_relation(relation):
+    if relation not in VALID_RELATIONS:
+        raise SpatialError("'{}' must be one of {}".format(relation,
+                                                           VALID_RELATIONS))
+    return relation
 
 
 def generate_bounding_box(bottom_left, top_right):

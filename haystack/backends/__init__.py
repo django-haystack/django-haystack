@@ -130,6 +130,7 @@ class BaseSearchBackend(object):
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
+                            shape=None,
                             models=None, limit_to_registered_models=None,
                             result_class=None, **extra_kwargs):
         # A convenience method most backends should include in order to make
@@ -454,6 +455,7 @@ class BaseSearchQuery(object):
         self.within = {}
         self.dwithin = {}
         self.distance_point = {}
+        self.shape = {}
         # Internal.
         self._raw_query = None
         self._raw_query_params = {}
@@ -533,6 +535,9 @@ class BaseSearchQuery(object):
 
         if self.distance_point:
             kwargs['distance_point'] = self.distance_point
+
+        if self.shape:
+            kwargs['shape'] = self.shape
 
         if self.result_class:
             kwargs['result_class'] = self.result_class
@@ -886,6 +891,16 @@ class BaseSearchQuery(object):
             'point': ensure_point(point),
         }
 
+    def add_shape(self, field, shape, relation):
+        """Adds geo-shape filter to search query."""
+        from haystack.utils.geo import ensure_polygon, ensure_relation
+        coords = [[list(x) for x in y] for y in ensure_polygon(shape).coords]
+        self.shape = {
+            'field': field,
+            'shape': coords,
+            'relation': ensure_relation(relation),
+        }
+
     def add_field_facet(self, field, **options):
         """Adds a regular facet on a field."""
         from haystack import connections
@@ -997,6 +1012,7 @@ class BaseSearchQuery(object):
         clone.within = self.within.copy()
         clone.dwithin = self.dwithin.copy()
         clone.distance_point = self.distance_point.copy()
+        clone.shape = self.shape.copy()
         clone._raw_query = self._raw_query
         clone._raw_query_params = self._raw_query_params
         clone.spelling_query = self.spelling_query
