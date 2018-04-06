@@ -12,6 +12,9 @@ from django.db import models
 class MockTag(models.Model):
     name = models.CharField(max_length=32)
 
+    def __unicode__(self):
+        return self.name
+
 
 class MockModel(models.Model):
     author = models.CharField(max_length=255)

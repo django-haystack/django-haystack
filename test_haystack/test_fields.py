@@ -152,6 +152,16 @@ class CharFieldTestCase(TestCase):
 
         self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
 
+        # Simulate failed lookups and ensure we don't get a UnicodeDecodeError
+        # in the error message.
+        mock_tag = MockTag.objects.create(name=u'básico')
+
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_slug = CharField(model_attr='tag__slug')
+
+        self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
+
         # Simulate default='foo'.
         mock = MockModel()
         default = CharField(default='foo')
