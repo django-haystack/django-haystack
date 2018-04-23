@@ -13,6 +13,7 @@ except ImportError:
 
 install_requires = [
     'Django>=1.11',
+    'setuptools_scm',
 ]
 
 tests_require = [
@@ -68,5 +69,4 @@ setup(
     install_requires=install_requires,
     tests_require=tests_require,
     test_suite="test_haystack.run_tests.run_all",
-    setup_requires=['setuptools_scm'],
 )
