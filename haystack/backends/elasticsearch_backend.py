@@ -187,10 +187,36 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                                extra={"data": {"index": index,
                                                "object": get_identifier(obj)}})
 
-        bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
+        try:
+            bulk(self.conn, prepped_docs, index=self.index_name, doc_type='modelresult')
+        except elasticsearch.TransportError as e:
+            if not self.silently_fail:
+                raise
+            self.log.error(
+                u'{} while bulk updating Elasticsearch'.format(e.__class__.__name__),
+                exc_info=True,
+                extra={
+                    'data': {
+                        'index': index,
+                    },
+                },
+            )
 
         if commit:
-            self.conn.indices.refresh(index=self.index_name)
+            try:
+                self.conn.indices.refresh(index=self.index_name)
+            except elasticsearch.TransportError as e:
+                if not self.silently_fail:
+                    raise
+                self.log.error(
+                    u'{} while committing bulk update to Elasticsearch'.format(e.__class__.__name__),
+                    exc_info=True,
+                    extra={
+                        'data': {
+                            'index': index,
+                        },
+                    },
+                )
 
     def remove(self, obj_or_string, commit=True):
         doc_id = get_identifier(obj_or_string)
