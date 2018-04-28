@@ -171,18 +171,19 @@ class SolrSearchBackend(BaseSearchBackend):
             kwargs['fl'] = fields
 
         if sort_by is not None:
-            if sort_by in ['distance asc', 'distance desc'] and distance_point:
+            if 'distance ' in sort_by and distance_point:
                 # Do the geo-enabled sort.
                 lng, lat = distance_point['point'].coords
                 kwargs['sfield'] = distance_point['field']
                 kwargs['pt'] = '%s,%s' % (lat, lng)
 
-                if sort_by == 'distance asc':
+                if 'distance asc' in sort_by:
                     kwargs['sort'] = 'geodist() asc'
                 else:
                     kwargs['sort'] = 'geodist() desc'
             else:
-                if sort_by.startswith('distance '):
+                # here they want to sort by distance, but haven't given a reference point
+                if 'distance ' in sort_by:
                     warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
 
                 # Regular sorting.
