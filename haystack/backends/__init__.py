@@ -195,6 +195,12 @@ class BaseSearchBackend(object):
 
         return models
 
+    def smoketest(self):
+        """
+        Return ``True`` if connection to backend is OK.
+        """
+        raise NotImplementedError()
+
 
 # Alias for easy loading within SearchQuery objects.
 SearchBackend = BaseSearchBackend

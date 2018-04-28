@@ -748,6 +748,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return value
 
+    def smoketest(self):
+        """
+        Returns ``True`` if server is reachable and up, ``False`` otherwise.
+        """
+        return self.conn.ping()
+
+
 # DRL_FIXME: Perhaps move to something where, if none of these
 #            match, call a custom method on the form that returns, per-backend,
 #            the right type of storage?
