@@ -456,7 +456,7 @@ class SolrSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields['_distance'] = None
 
-                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], **additional_fields)
+                result = result_class(app_label, model_name, raw_result[DJANGO_ID], raw_result['score'], self.connection_alias, **additional_fields)
                 results.append(result)
             else:
                 hits -= 1
