@@ -88,7 +88,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         template_name='search/indexes/core/mockmodel_template.txt'
     )
     author = indexes.CharField(model_attr='author', weight=2.0)
-    editor = indexes.CharField(model_attr='editor')
+    editor = indexes.CharField(model_attr='editor', weight=3.0)
     pub_date = indexes.DateTimeField(model_attr='pub_date')
 
     def get_model(self):
@@ -97,8 +97,8 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     def prepare(self, obj):
         data = super(WhooshBoostMockSearchIndex, self).prepare(obj)
 
-        if obj.pk % 2 == 0:
-            data['boost'] = 2.0
+        if obj.pk <= 2:
+            data['boost'] = 4.0
 
         return data
 
@@ -503,20 +503,30 @@ class WhooshBoostBackendTestCase(WhooshTestCase):
         connections['whoosh']._index = self.ui
         super(WhooshBoostBackendTestCase, self).tearDown()
 
-    @unittest.expectedFailure
     def test_boost(self):
         self.sb.update(self.wmmi, self.sample_objs)
         self.raw_whoosh = self.raw_whoosh.refresh()
         searcher = self.raw_whoosh.searcher()
-        self.assertEqual(len(searcher.search(self.parser.parse(u'*'), limit=1000)), 2)
+
+        self.assertEqual(len(searcher.search(self.parser.parse(u'*'), limit=1000)), 4)
 
         results = SearchQuerySet('whoosh').filter(SQ(author='daniel') | SQ(editor='daniel'))
 
+        """
+field boost:  2.0       3.0
+        pk    author    editor      docboost    docboost*fieldboost
+        1     daniel    david       4.0         8
+        2     david     daniel      4.0         12
+        3     daniel    david       1.0         2
+        4     david     daniel      1.0         3
+        """
+
         self.assertEqual([result.id for result in results], [
+            'core.afourthmockmodel.2',
             'core.afourthmockmodel.1',
+            'core.afourthmockmodel.4',
             'core.afourthmockmodel.3',
         ])
-        self.assertEqual(results[0].boost, 1.1)
 
 
 class LiveWhooshSearchQueryTestCase(WhooshTestCase):
