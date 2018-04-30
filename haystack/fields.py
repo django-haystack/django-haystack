@@ -107,7 +107,7 @@ class SearchField(object):
         for current_object in current_objects:
             if not hasattr(current_object, attributes[0]):
                 raise SearchFieldError(
-                    "The model '%s' does not have a model_attr '%s'." % (repr(current_object), attributes[0])
+                    "The model '%r' does not have a model_attr '%s'." % (repr(current_object), attributes[0])
                 )
 
             if len(attributes) > 1:
