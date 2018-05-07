@@ -784,6 +784,8 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if isinstance(value, six.string_types):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
+            elif isinstance(value, bool):
+                value = Clean(str(value).lower())
             else:
                 value = PythonData(value)
 
@@ -791,7 +793,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         prepared_value = value.prepare(self)
 
         if not isinstance(prepared_value, (set, list, tuple)):
-            # Then convert whatever we get back to what pysolr wants if needed.
+            # Then convert whatever we get back to what Elasticsearch wants if needed.
             prepared_value = self.backend._from_python(prepared_value)
 
         # 'content' is a special reserved word, much like 'pk' in
