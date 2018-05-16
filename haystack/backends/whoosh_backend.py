@@ -82,6 +82,11 @@ class WhooshSearchBackend(BaseSearchBackend):
         self.use_file_storage = True
         self.post_limit = getattr(connection_options, 'POST_LIMIT', 128 * 1024 * 1024)
         self.path = connection_options.get('PATH')
+        analyzer_class = connection_options.get('ANALYZER')
+        try:
+            self.analyzer = __import__(analyzer_class)
+        except ImportError:
+            self.analyzer = StemmingAnalyzer
 
         if connection_options.get('STORAGE', 'file') != 'file':
             self.use_file_storage = False
@@ -160,7 +165,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             elif field_class.field_type == 'edge_ngram':
                 schema_fields[field_class.index_fieldname] = NGRAMWORDS(minsize=2, maxsize=15, at='start', stored=field_class.stored, field_boost=field_class.boost)
             else:
-                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=StemmingAnalyzer(), field_boost=field_class.boost, sortable=True)
+                schema_fields[field_class.index_fieldname] = TEXT(stored=True, analyzer=self.analyzer(), field_boost=field_class.boost, sortable=True)
 
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
