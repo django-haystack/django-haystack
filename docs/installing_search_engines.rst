@@ -65,7 +65,8 @@ somewhere on your ``PYTHONPATH``.
 More Like This
 --------------
 
-To enable the "More Like This" functionality in Haystack, you'll need
+On Solr 6.X+ "More Like This" functionality is enabled by default. To enable 
+the "More Like This" functionality on earlier versions of Solr, you'll need
 to enable the ``MoreLikeThisHandler``. Add the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
