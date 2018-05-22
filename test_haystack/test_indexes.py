@@ -9,7 +9,7 @@ from threading import Thread
 from django.test import TestCase
 from django.utils.six.moves import queue
 from test_haystack.core.models import (AFifthMockModel, AThirdMockModel, ManyToManyLeftSideModel,
-                                       ManyToManyRightSideModel, MockModel)
+                                       ManyToManyRightSideModel, MockModel, AnotherMockModel)
 
 from haystack import connection_router, connections, indexes
 from haystack.exceptions import SearchFieldError
@@ -547,6 +547,26 @@ class YetAnotherBasicModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexabl
         model = AThirdMockModel
 
 
+class PolymorphicModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True)
+
+    author = indexes.CharField(model_attr='author')
+    pub_date = indexes.DateTimeField(model_attr='pub_date')
+    average_delay = indexes.FloatField(null=True)
+
+    def get_model(self):
+        return AnotherMockModel
+
+    def prepare(self, obj):
+        self.prepared_data = super(PolymorphicModelSearchIndex, self).prepare(obj)
+        if isinstance(obj, AThirdMockModel):
+            self.prepared_data['average_delay'] = obj.average_delay
+        return self.prepared_data
+
+    def index_queryset(self, using=None):
+        return self.get_model().objects.all()
+
+
 class GhettoAFifthMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
 
@@ -689,3 +709,31 @@ class ModelWithManyToManyFieldAndAttributeLookupSearchIndexTestCase(TestCase):
                 'related_models': ['Right side 1', 'Default name'],
             }
         )
+
+
+class PolymorphicModelTestCase(TestCase):
+    def test_prepare_with_polymorphic(self):
+        index = PolymorphicModelSearchIndex()
+
+        parent_model = AnotherMockModel()
+        parent_model.author = "Paul"
+        parent_model.pub_date = datetime.datetime(2018, 5, 23, 13, 57)
+        parent_model.save()
+
+        child_model = AThirdMockModel()
+        child_model.author = "Paula"
+        child_model.pub_date = datetime.datetime(2018, 5, 23, 13, 58)
+        child_model.average_delay = 0.5
+        child_model.save()
+
+        prepared_data = index.prepare(parent_model)
+        self.assertEqual(len(prepared_data), 7)
+        self.assertEqual(sorted(prepared_data.keys()), ['author', 'average_delay', 'django_ct', 'django_id', 'id', 'pub_date', 'text'])
+        self.assertEqual(prepared_data['django_ct'], u'core.anothermockmodel')
+        self.assertEqual(prepared_data['average_delay'], None)
+
+        prepared_data = index.prepare(child_model)
+        self.assertEqual(len(prepared_data), 7)
+        self.assertEqual(sorted(prepared_data.keys()), ['author', 'average_delay', 'django_ct', 'django_id', 'id', 'pub_date', 'text'])
+        self.assertEqual(prepared_data['django_ct'], u'core.anothermockmodel')
+        self.assertEqual(prepared_data['average_delay'], 0.5)
