@@ -154,7 +154,9 @@ class SearchField(object):
                 return current_objects.all()
             return []
 
-        elif not hasattr(current_objects, '__iter__'):
+        try:
+            _ = [obj for obj in current_objects]
+        except:
             current_objects = [current_objects]
 
         return current_objects
