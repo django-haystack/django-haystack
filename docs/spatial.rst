@@ -121,6 +121,21 @@ more intelligent, have a well-defined unit system attached & are consistent
 with GeoDjango's use.
 
 
+``Polygons``
+----------
+
+Haystack prefers to work with ``Polygon`` objects, which are located in
+``django.contrib.gis.geos.Polygon`` but conviently importable out of
+``haystack.utils.geo.Polygon``.
+
+``Polygon`` objects use sequence of **LONGITUDE, LATITUDE** for their construction.
+
+Examples::
+
+    from haystack.utils.geo import Polygon
+    pln = Polygon((-95.23592948913574, 38.97127105172941), (-95.23362278938293, 38.973081081164715))
+
+
 ``WGS-84``
 ----------
 
@@ -348,6 +363,28 @@ position::
     a broad mix of models. Additionally, accessing ``Model`` information is a
     couple hops away, so Haystack favors the explicit (if slightly more typing)
     approach.
+
+
+``polygon``
+----------
+
+.. method:: SearchQuerySet.polygon(self, field, point_1, point_2)
+
+``polygon`` is a bounding box comparison. A bounding box is a rectangular area
+within which to search. It's composed of a bottom-left point & a top-right
+point. It is faster but slighty sloppier than its counterpart.
+
+Examples::
+
+    from haystack.query import SearchQuerySet
+    from haystack.utils.geo import Polygon
+
+    polygon = Polygon((-95.23947, 38.9637903), (-95.23362278938293, 38.973081081164715))
+
+    # 'location' is the fieldname from our ``SearchIndex``...
+
+    # Do the polygon query.
+    sqs = SearchQuerySet().polygon('location', polygon)
 
 
 Ordering

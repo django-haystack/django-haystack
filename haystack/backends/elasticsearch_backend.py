@@ -256,7 +256,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                             date_facets=None, query_facets=None,
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
-                            models=None, limit_to_registered_models=None,
+                            polygon=None, models=None, limit_to_registered_models=None,
                             result_class=None, **extra_kwargs):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
@@ -485,6 +485,28 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 kwargs['query']['filtered']["filter"] = filters[0]
             else:
                 kwargs['query']['filtered']["filter"] = {"bool": {"must": filters}}
+
+        if polygon is not None:
+            points = map(lambda x: {"lat": x[1], "lon": x[0]},
+                         polygon['polygon'].coords[0])
+            polygon_filter = {
+                "geo_polygon": {
+                    polygon['field']: {
+                        "points": points
+                    }
+                },
+            }
+
+            if kwargs.get('query', {}).get('filtered', {}).get('filter', None):
+                compound_filter = {
+                    "and": [
+                        kwargs['query']['filtered']['filter'],
+                        polygon_filter,
+                    ]
+                }
+                kwargs['query']['filtered']['filter'] = compound_filter
+            else:
+                kwargs['query']['filtered']['filter'] = polygon_filter
 
         if extra_kwargs:
             kwargs.update(extra_kwargs)
@@ -932,6 +954,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         if self.within:
             search_kwargs['within'] = self.within
+
+        if self.polygon:
+            search_kwargs['polygon'] = self.polygon
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
