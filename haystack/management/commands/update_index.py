@@ -66,7 +66,8 @@ def do_update(backend, index, qs, start, end, total, verbosity=1, commit=True,
 
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
-    small_cache_qs = qs.all()
+    # the query must be ordered by PK in order to get the max PK in each batch
+    small_cache_qs = qs.all().order_by('pk')
 
     # If we got the max seen PK from last batch, use it to restrict the qs
     # to values above; this optimises the query for Postgres as not to
