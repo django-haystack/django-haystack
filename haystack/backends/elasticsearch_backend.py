@@ -706,6 +706,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         elif isinstance(value, six.binary_type):
             # TODO: Be stricter.
             return six.text_type(value, errors='replace')
+        elif isinstance(value, bool):
+            return str(value).lower()
         elif isinstance(value, set):
             return list(value)
         return value
@@ -791,7 +793,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         prepared_value = value.prepare(self)
 
         if not isinstance(prepared_value, (set, list, tuple)):
-            # Then convert whatever we get back to what pysolr wants if needed.
+            # Then convert whatever we get back to what Elasticsearch wants if needed.
             prepared_value = self.backend._from_python(prepared_value)
 
         # 'content' is a special reserved word, much like 'pk' in
