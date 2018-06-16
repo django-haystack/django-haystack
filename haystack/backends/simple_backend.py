@@ -76,7 +76,7 @@ class SimpleSearchBackend(BaseSearchBackend):
 
                             queries.append(Q(**{'%s__icontains' % field.name: term}))
 
-                        qs = model.objects.filter(six.moves.reduce(lambda x, y: x | y, queries))
+                        qs = model.objects.filter(six.moves.reduce(lambda x, y: x | y, queries)) if queries else []
 
                 hits += len(qs)
 

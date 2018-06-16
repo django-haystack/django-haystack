@@ -11,7 +11,7 @@ from haystack import connection_router, connections, indexes
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
-from ..core.models import MockModel, ScoreMockModel
+from ..core.models import MockModel, ScoreMockModel, OneToManyRightSideModel
 from ..mocks import MockSearchResult
 from .search_indexes import SimpleMockScoreIndex, SimpleMockSearchIndex
 
@@ -78,6 +78,10 @@ class SimpleSearchBackendTestCase(TestCase):
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(isinstance(self.backend.search(u'index document', result_class=MockSearchResult)['results'][0], MockSearchResult))
+
+        # Ensure empty queries does not raise.
+        self.assertEqual(self.backend.search(u'foo', models=[OneToManyRightSideModel]), {'hits': 0, 'results': []})
+
 
     def test_filter_models(self):
         self.backend.update(self.index, self.sample_objs)
