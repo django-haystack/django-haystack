@@ -33,15 +33,9 @@ Documentation
 =============
 
 * Development version: http://docs.haystacksearch.org/
+* v2.8.X: https://django-haystack.readthedocs.io/en/v2.8.1/
+* v2.7.X: https://django-haystack.readthedocs.io/en/v2.7.0/
 * v2.6.X: https://django-haystack.readthedocs.io/en/v2.6.0/
-* v2.5.X: https://django-haystack.readthedocs.io/en/v2.5.0/
-* v2.4.X: https://django-haystack.readthedocs.io/en/v2.4.1/
-* v2.3.X: https://django-haystack.readthedocs.io/en/v2.3.0/
-* v2.2.X: https://django-haystack.readthedocs.io/en/v2.2.0/
-* v2.1.X: https://django-haystack.readthedocs.io/en/v2.1.0/
-* v2.0.X: https://django-haystack.readthedocs.io/en/v2.0.0/
-* v1.2.X: https://django-haystack.readthedocs.io/en/v1.2.7/
-* v1.1.X: https://django-haystack.readthedocs.io/en/v1.1/
 
 See the `changelog <docs/changelog.rst>`_
 

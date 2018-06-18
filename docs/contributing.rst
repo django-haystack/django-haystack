@@ -79,7 +79,8 @@ In order to be merged into Haystack, contributions must have the following:
 
   * is clear.
   * works across all supported versions of Python/Django.
-  * follows the existing style of the code base (mostly PEP-8).
+  * follows the existing style of the code base formatted with
+    isort_ and Black_ using the provided configuration in the repo
   * comments included as needed.
 
 * A test case that demonstrates the previous flaw that now passes
@@ -93,6 +94,8 @@ If your contribution lacks any of these things, they will have to be added
 by a core contributor before being merged into Haystack proper, which may take
 substantial time for the all-volunteer team to get to.
 
+.. _isort: https://pypi.org/project/isort/
+.. _Black: https://pypi.org/project/black/
 
 Guidelines For Core Contributors
 ================================
