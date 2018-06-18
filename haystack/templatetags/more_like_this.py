@@ -2,6 +2,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import logging
+
 from django import template
 
 from haystack.query import SearchQuerySet
@@ -44,8 +46,10 @@ class MoreLikeThisNode(template.Node):
                 sqs = sqs[: self.limit]
 
             context[self.varname] = sqs
-        except:
-            pass
+        except Exception as exc:
+            logging.warning(
+                "Unhandled exception rendering %r: %s", self, exc, exc_info=True
+            )
 
         return ""
 
