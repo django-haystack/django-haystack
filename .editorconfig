@@ -1,0 +1,21 @@
+# See http://editorconfig.org for format details and
+# http://editorconfig.org/#download for editor / IDE integration
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+charset = utf-8
+
+# Makefiles always use tabs for indentation
+[Makefile]
+indent_style = tab
+
+# We don't want to apply our defaults to third-party code or minified bundles:
+[**/{external,vendor}/**,**.min.{js,css}]
+indent_style = ignore
+indent_size = ignore
