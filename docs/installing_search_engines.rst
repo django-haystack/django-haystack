@@ -153,58 +153,21 @@ your ``SearchIndex`` classes (in this case, assuming the main field is called
 Elasticsearch
 =============
 
-Official Download Location: http://www.elasticsearch.org/download/
+Elasticsearch is similar to Solr — another Java application using Lucene — but
+focused on ease of deployment and clustering. See
+https://www.elastic.co/products/elasticsearch for more information.
 
-Elasticsearch is Java but comes in a pre-packaged form that requires very
-little other than the JRE. It's also very performant, scales easily and has
-an advanced featureset. Haystack currently only supports Elasticsearch 1.x and 2.x.
-Elasticsearch 5.x is not supported yet, if you would like to help, please see
-`#1383 <https://github.com/django-haystack/django-haystack/issues/1383>`_.
+Haystack currently supports Elasticsearch 1.x, 2.x, and 5.x.
 
-Installation is best done using a package manager::
+Follow the instructions on https://www.elastic.co/downloads/elasticsearch to
+download and install Elasticsearch and configure it for your environment.
 
-    # On Mac OS X...
-    brew install elasticsearch
+You'll also need to install the Elasticsearch binding: elasticsearch_ for the
+appropriate backend version — for example::
 
-    # On Ubuntu...
-    apt-get install elasticsearch
+    $ pip install "elasticsearch>=5,<6"
 
-    # Then start via:
-    elasticsearch -f -D es.config=<path to YAML config>
-
-    # Example:
-    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.90.0/config/elasticsearch.yml
-
-You may have to alter the configuration to run on ``localhost`` when developing
-locally. Modifications should be done in a YAML file, the stock one being
-``config/elasticsearch.yml``::
-
-    # Unicast Discovery (disable multicast)
-    discovery.zen.ping.multicast.enabled: false
-    discovery.zen.ping.unicast.hosts: ["127.0.0.1"]
-
-    # Name your cluster here to whatever.
-    # My machine is called "Venus", so...
-    cluster:
-      name: venus
-
-    network:
-      host: 127.0.0.1
-
-    path:
-      logs: /usr/local/var/log
-      data: /usr/local/var/data
-
-You'll also need an Elasticsearch binding: elasticsearch_ (**NOT**
-``pyes``). Place ``elasticsearch`` somewhere on your ``PYTHONPATH``
-(usually ``python setup.py install`` or ``pip install elasticsearch``).
-
-.. _elasticsearch: http://pypi.python.org/pypi/elasticsearch/
-
-.. note::
-
-    ``elasticsearch`` has its own dependencies that aren't covered by
-    Haystack. You'll also need ``urllib3``.
+.. _elasticsearch: https://pypi.python.org/pypi/elasticsearch/
 
 
 Whoosh
