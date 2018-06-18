@@ -52,15 +52,9 @@ Solr.
     The previous template name solr.xml was a legacy holdover from older
     versions of solr.
 
-You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
-distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
-somewhere on your ``PYTHONPATH``.
+You'll also need to install the ``pysolr`` client library from PyPI::
 
-.. note::
-
-    ``pysolr`` has its own dependencies that aren't covered by Haystack. See
-    https://pypi.python.org/pypi/pysolr for the latest documentation.  Simplest
-    approach is to install using ``pip install pysolr``
+    $ pip install pysolr
 
 More Like This
 --------------
