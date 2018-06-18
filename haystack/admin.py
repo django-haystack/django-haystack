@@ -128,7 +128,7 @@ class SearchModelAdminMixin(object):
             kwargs["list_max_show_all"] = self.list_max_show_all
 
         changelist = SearchChangeList(**kwargs)
-        formset = changelist.formset = None
+        changelist.formset = None
         media = self.media
 
         # Build the action form and populate it with available actions.

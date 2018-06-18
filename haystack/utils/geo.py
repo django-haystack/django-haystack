@@ -58,7 +58,7 @@ def ensure_distance(dist):
     try:
         # Since we mostly only care about the ``.km`` attribute, make sure
         # it's there.
-        km = dist.km
+        dist.km
     except AttributeError:
         raise SpatialError("'%s' does not appear to be a 'Distance' object." % dist)
 
