@@ -5,12 +5,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 from decimal import Decimal
 
-from mock import Mock
-
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from test_haystack.core.models import MockModel, MockTag, ManyToManyLeftSideModel, ManyToManyRightSideModel, \
-    OneToManyLeftSideModel, OneToManyRightSideModel
+from mock import Mock
+from test_haystack.core.models import (ManyToManyLeftSideModel,
+                                       ManyToManyRightSideModel, MockModel, MockTag,
+                                       OneToManyLeftSideModel, OneToManyRightSideModel)
 
 from haystack.fields import *
 

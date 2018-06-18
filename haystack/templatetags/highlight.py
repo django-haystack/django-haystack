@@ -9,7 +9,6 @@ from django.utils import six
 
 from haystack.utils import importlib
 
-
 register = template.Library()
 
 

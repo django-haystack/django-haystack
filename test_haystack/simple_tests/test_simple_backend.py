@@ -11,7 +11,7 @@ from haystack import connection_router, connections, indexes
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
-from ..core.models import MockModel, ScoreMockModel, OneToManyRightSideModel
+from ..core.models import MockModel, OneToManyRightSideModel, ScoreMockModel
 from ..mocks import MockSearchResult
 from .search_indexes import SimpleMockScoreIndex, SimpleMockSearchIndex
 

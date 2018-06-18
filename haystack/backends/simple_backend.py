@@ -12,7 +12,8 @@ from django.db.models import Q
 from django.utils import six
 
 from haystack import connections
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query, SearchNode
+from haystack.backends import (BaseEngine, BaseSearchBackend, BaseSearchQuery,
+                               SearchNode, log_query)
 from haystack.inputs import PythonData
 from haystack.models import SearchResult
 from haystack.utils import get_model_ct_tuple

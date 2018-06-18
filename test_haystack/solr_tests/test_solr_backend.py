@@ -6,13 +6,13 @@ import logging as std_logging
 import os
 import unittest
 from decimal import Decimal
-from pkg_resources import parse_version
 
 import pysolr
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from mock import patch
+from pkg_resources import parse_version
 
 from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SkipDocument

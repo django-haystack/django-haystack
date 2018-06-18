@@ -9,8 +9,9 @@ from django.test import TestCase
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet, SQ
+from haystack.query import SQ, SearchQuerySet
 from haystack.utils.geo import D, Point
+
 from ..core.models import AnotherMockModel, MockModel
 
 

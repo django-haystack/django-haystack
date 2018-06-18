@@ -6,18 +6,22 @@ import unittest
 
 from django.test import TestCase
 from django.test.utils import override_settings
-from test_haystack.core.models import AnotherMockModel, CharPKMockModel, MockModel, UUIDMockModel
+from test_haystack.core.models import (AnotherMockModel, CharPKMockModel, MockModel,
+                                       UUIDMockModel)
 
 from haystack import connections, indexes, reset_search_queries
 from haystack.backends import SQ, BaseSearchQuery
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
-from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
+from haystack.query import (EmptySearchQuerySet, SearchQuerySet,
+                            ValuesListSearchQuerySet, ValuesSearchQuerySet)
 from haystack.utils.loading import UnifiedIndex
 
-from .mocks import (MOCK_SEARCH_RESULTS, CharPKMockSearchBackend, MockSearchBackend, MockSearchQuery,
-                    ReadQuerySetMockSearchBackend, UUIDMockSearchBackend)
-from .test_indexes import GhettoAFifthMockModelSearchIndex, TextReadQuerySetTestSearchIndex
+from .mocks import (MOCK_SEARCH_RESULTS, CharPKMockSearchBackend, MockSearchBackend,
+                    MockSearchQuery, ReadQuerySetMockSearchBackend,
+                    UUIDMockSearchBackend)
+from .test_indexes import (GhettoAFifthMockModelSearchIndex,
+                           TextReadQuerySetTestSearchIndex)
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
 
 test_pickling = True

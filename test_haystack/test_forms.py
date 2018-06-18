@@ -3,10 +3,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from django.test import TestCase
 from test_haystack.core.models import AnotherMockModel, MockModel
-from test_haystack.test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
+from test_haystack.test_views import (BasicAnotherMockModelSearchIndex,
+                                      BasicMockModelSearchIndex)
 
 from haystack import connection_router, connections
-from haystack.forms import FacetedSearchForm, model_choices, ModelSearchForm, SearchForm
+from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm, model_choices
 from haystack.query import EmptySearchQuerySet, SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 

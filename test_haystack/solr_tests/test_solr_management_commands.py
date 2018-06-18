@@ -5,10 +5,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 import os
 from tempfile import mkdtemp
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
 import pysolr
 from django.conf import settings
@@ -22,6 +18,11 @@ from haystack import connections, constants, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):

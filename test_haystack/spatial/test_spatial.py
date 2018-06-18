@@ -8,8 +8,8 @@ from django.test import TestCase
 from haystack import connections
 from haystack.exceptions import SpatialError
 from haystack.query import SearchQuerySet
-from haystack.utils.geo import (D, ensure_distance, ensure_geometry, ensure_point, ensure_wgs84,
-                                generate_bounding_box, Point)
+from haystack.utils.geo import (D, Point, ensure_distance, ensure_geometry,
+                                ensure_point, ensure_wgs84, generate_bounding_box)
 
 from .models import Checkin
 

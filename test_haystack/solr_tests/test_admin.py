@@ -12,7 +12,7 @@ from haystack import connections, reset_search_queries
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel
-from .test_solr_backend import clear_solr_index, SolrMockModelSearchIndex
+from .test_solr_backend import SolrMockModelSearchIndex, clear_solr_index
 
 
 @override_settings(DEBUG=True)

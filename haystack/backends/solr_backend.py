@@ -9,13 +9,14 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 
 import haystack
-from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, EmptyResults, log_query
+from haystack.backends import (BaseEngine, BaseSearchBackend, BaseSearchQuery,
+                               EmptyResults, log_query)
 from haystack.constants import DJANGO_CT, DJANGO_ID, ID
 from haystack.exceptions import MissingDependency, MoreLikeThisError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
-from haystack.utils import log as logging
 from haystack.utils import get_identifier, get_model_ct
+from haystack.utils import log as logging
 from haystack.utils.app_loading import haystack_get_model
 
 try:

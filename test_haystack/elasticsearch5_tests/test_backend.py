@@ -17,10 +17,11 @@ from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SkipDocument
 from haystack.inputs import AutoQuery
 from haystack.models import SearchResult
-from haystack.query import RelatedSearchQuerySet, SearchQuerySet, SQ
+from haystack.query import SQ, RelatedSearchQuerySet, SearchQuerySet
 from haystack.utils import log as logging
 from haystack.utils.geo import Point
 from haystack.utils.loading import UnifiedIndex
+
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
 

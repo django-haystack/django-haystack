@@ -3,8 +3,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from itertools import chain
 import sys
+from itertools import chain
 
 import requests
 

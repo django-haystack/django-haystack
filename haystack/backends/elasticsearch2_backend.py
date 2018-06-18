@@ -6,7 +6,8 @@ import datetime
 from django.conf import settings
 
 from haystack.backends import BaseEngine
-from haystack.backends.elasticsearch_backend import ElasticsearchSearchBackend, ElasticsearchSearchQuery
+from haystack.backends.elasticsearch_backend import (ElasticsearchSearchBackend,
+                                                     ElasticsearchSearchQuery)
 from haystack.constants import DJANGO_CT
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct

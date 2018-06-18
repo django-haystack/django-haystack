@@ -10,7 +10,8 @@ from test_haystack.core.models import MockModel
 from haystack import connections
 from haystack.manager import SearchIndexManager
 from haystack.models import SearchResult
-from haystack.query import EmptySearchQuerySet, SearchQuerySet, ValuesListSearchQuerySet, ValuesSearchQuerySet
+from haystack.query import (EmptySearchQuerySet, SearchQuerySet,
+                            ValuesListSearchQuerySet, ValuesSearchQuerySet)
 from haystack.utils.geo import D, Point
 
 from .mocks import CharPKMockSearchBackend

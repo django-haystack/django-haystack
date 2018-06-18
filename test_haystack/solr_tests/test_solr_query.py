@@ -9,9 +9,10 @@ from django.test import TestCase
 from haystack import connections
 from haystack.inputs import AltParser, Exact
 from haystack.models import SearchResult
-from haystack.query import SearchQuerySet, SQ
+from haystack.query import SQ, SearchQuerySet
 
 from ..core.models import AnotherMockModel, MockModel
+
 
 class SolrSearchQueryTestCase(TestCase):
     fixtures = ['base_data']
