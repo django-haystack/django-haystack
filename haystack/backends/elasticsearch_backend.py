@@ -123,13 +123,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             connection_alias, **connection_options
         )
 
-        if not "URL" in connection_options:
+        if "URL" not in connection_options:
             raise ImproperlyConfigured(
                 "You must specify a 'URL' in your settings for connection '%s'."
                 % connection_alias
             )
 
-        if not "INDEX_NAME" in connection_options:
+        if "INDEX_NAME" not in connection_options:
             raise ImproperlyConfigured(
                 "You must specify a 'INDEX_NAME' in your settings for connection '%s'."
                 % connection_alias

@@ -37,7 +37,7 @@ class SearchView(object):
         if form_class is None:
             self.form_class = ModelSearchForm
 
-        if not results_per_page is None:
+        if results_per_page is not None:
             self.results_per_page = results_per_page
 
         if template:

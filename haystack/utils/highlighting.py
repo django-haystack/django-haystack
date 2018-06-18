@@ -42,7 +42,7 @@ class Highlighter(object):
         lower_text_block = self.text_block.lower()
 
         for word in self.query_words:
-            if not word in word_positions:
+            if word not in word_positions:
                 word_positions[word] = []
 
             start_offset = 0

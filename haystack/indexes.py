@@ -41,7 +41,7 @@ class DeclarativeMetaclass(type):
         for field_name, obj in attrs.items():
             # Only need to check the FacetFields.
             if hasattr(obj, "facet_for"):
-                if not obj.facet_for in facet_fields:
+                if obj.facet_for not in facet_fields:
                     facet_fields[obj.facet_for] = []
 
                 facet_fields[obj.facet_for].append(field_name)
@@ -59,7 +59,7 @@ class DeclarativeMetaclass(type):
                     if field.faceted == True:
                         # If no other field is claiming this field as
                         # ``facet_for``, create a shadow ``FacetField``.
-                        if not field_name in facet_fields:
+                        if field_name not in facet_fields:
                             shadow_facet_name = get_facet_field_name(field_name)
                             shadow_facet_field = field.facet_class(facet_for=field_name)
                             shadow_facet_field.set_instance_name(shadow_facet_name)
@@ -68,7 +68,7 @@ class DeclarativeMetaclass(type):
         attrs["fields"].update(built_fields)
 
         # Assigning default 'objects' query manager if it does not already exist
-        if not "objects" in attrs:
+        if "objects" not in attrs:
             try:
                 attrs["objects"] = SearchIndexManager(attrs["Meta"].index_label)
             except (KeyError, AttributeError):
