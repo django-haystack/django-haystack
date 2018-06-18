@@ -38,7 +38,8 @@ if hasattr(settings, "HAYSTACK_ENABLE_REGISTRATIONS"):
     )
 if hasattr(settings, "HAYSTACK_INCLUDE_SPELLING"):
     raise ImproperlyConfigured(
-        "The HAYSTACK_INCLUDE_SPELLING setting is now a per-backend setting & belongs in HAYSTACK_CONNECTIONS."
+        "The HAYSTACK_INCLUDE_SPELLING setting is now a per-backend setting"
+        " & belongs in HAYSTACK_CONNECTIONS."
     )
 
 

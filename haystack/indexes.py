@@ -179,7 +179,8 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
 
         if hasattr(self, "get_queryset"):
             warnings.warn(
-                "'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'."
+                "'SearchIndex.get_queryset' was deprecated in Haystack v2."
+                " Please rename the method 'index_queryset'."
             )
             index_qs = self.get_queryset()
         else:
