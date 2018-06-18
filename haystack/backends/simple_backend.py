@@ -7,7 +7,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from warnings import warn
 
-from django.conf import settings
 from django.db.models import Q
 from django.utils import six
 
@@ -22,26 +21,6 @@ from haystack.backends import (
 from haystack.inputs import PythonData
 from haystack.models import SearchResult
 from haystack.utils import get_model_ct_tuple
-
-if settings.DEBUG:
-    import logging
-
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.WARNING)
-    ch.setFormatter(
-        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    )
-
-    logger = logging.getLogger("haystack.simple_backend")
-    logger.setLevel(logging.WARNING)
-    logger.addHandler(NullHandler())
-    logger.addHandler(ch)
-else:
-    logger = None
 
 
 class SimpleSearchBackend(BaseSearchBackend):
