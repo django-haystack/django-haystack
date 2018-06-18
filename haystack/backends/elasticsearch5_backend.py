@@ -149,7 +149,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
             for field, direction in sort_by:
                 if field == "distance" and distance_point:
                     # Do the geo-enabled sort.
-                    lng, lat = distance_point["point"].get_coords()
+                    lng, lat = distance_point["point"].coords
                     sort_kwargs = {
                         "_geo_distance": {
                             distance_point["field"]: [lng, lat],
@@ -286,7 +286,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
         return kwargs
 
     def _build_search_query_dwithin(self, dwithin):
-        lng, lat = dwithin["point"].get_coords()
+        lng, lat = dwithin["point"].coords
         distance = "%(dist).6f%(unit)s" % {"dist": dwithin["distance"].km, "unit": "km"}
         return {
             "geo_distance": {
