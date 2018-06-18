@@ -7,11 +7,11 @@ import datetime
 from django.db import models
 
 BREED_CHOICES = [
-    ('collie', 'Collie'),
-    ('labrador', 'Labrador'),
-    ('pembroke', 'Pembroke Corgi'),
-    ('shetland', 'Shetland Sheepdog'),
-    ('border', 'Border Collie'),
+    ("collie", "Collie"),
+    ("labrador", "Labrador"),
+    ("pembroke", "Pembroke Corgi"),
+    ("shetland", "Shetland Sheepdog"),
+    ("border", "Border Collie"),
 ]
 
 
@@ -30,18 +30,18 @@ class Dog(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('dog_detail', [], {'id': self.id})
+        return ("dog_detail", [], {"id": self.id})
 
     def full_name(self):
         if self.owner_last_name:
-            return u"%s %s" % (self.name, self.owner_last_name)
+            return "%s %s" % (self.name, self.owner_last_name)
 
         return self.name
 
 
 class Toy(models.Model):
-    dog = models.ForeignKey(Dog, related_name='toys')
+    dog = models.ForeignKey(Dog, related_name="toys")
     name = models.CharField(max_length=60)
 
     def __unicode__(self):
-        return u"%s's %s" % (self.dog.name, self.name)
+        return "%s's %s" % (self.dog.name, self.name)

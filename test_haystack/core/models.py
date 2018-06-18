@@ -26,7 +26,7 @@ class MockModel(models.Model):
         return self.author
 
     def hello(self):
-        return 'World!'
+        return "World!"
 
 
 class UUIDMockModel(models.Model):
@@ -98,11 +98,11 @@ class ScoreMockModel(models.Model):
 
 
 class ManyToManyLeftSideModel(models.Model):
-    related_models = models.ManyToManyField('ManyToManyRightSideModel')
+    related_models = models.ManyToManyField("ManyToManyRightSideModel")
 
 
 class ManyToManyRightSideModel(models.Model):
-    name = models.CharField(max_length=32, default='Default name')
+    name = models.CharField(max_length=32, default="Default name")
 
     def __unicode__(self):
         return self.name
@@ -113,4 +113,6 @@ class OneToManyLeftSideModel(models.Model):
 
 
 class OneToManyRightSideModel(models.Model):
-    left_side = models.ForeignKey(OneToManyLeftSideModel, models.CASCADE, related_name='right_side')
+    left_side = models.ForeignKey(
+        OneToManyLeftSideModel, models.CASCADE, related_name="right_side"
+    )

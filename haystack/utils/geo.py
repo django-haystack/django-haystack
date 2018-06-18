@@ -13,7 +13,7 @@ def ensure_geometry(geom):
     """
     Makes sure the parameter passed in looks like a GEOS ``GEOSGeometry``.
     """
-    if not hasattr(geom, 'geom_type'):
+    if not hasattr(geom, "geom_type"):
         raise SpatialError("Point '%s' doesn't appear to be a GEOS geometry." % geom)
 
     return geom
@@ -25,7 +25,7 @@ def ensure_point(geom):
     """
     ensure_geometry(geom)
 
-    if geom.geom_type != 'Point':
+    if geom.geom_type != "Point":
         raise SpatialError("Provided geometry '%s' is not a 'Point'." % geom)
 
     return geom

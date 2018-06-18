@@ -14,6 +14,7 @@ class BaseSignalProcessor(object):
 
     By default, does nothing with signals but provides underlying functionality.
     """
+
     def __init__(self, connections, connection_router):
         self.connections = connections
         self.connection_router = connection_router
@@ -75,6 +76,7 @@ class RealtimeSignalProcessor(BaseSignalProcessor):
     Allows for observing when saves/deletes fire & automatically updates the
     search engine appropriately.
     """
+
     def setup(self):
         # Naive (listen to all model saves).
         models.signals.post_save.connect(self.handle_save)
