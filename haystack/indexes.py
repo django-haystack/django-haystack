@@ -56,7 +56,7 @@ class DeclarativeMetaclass(type):
 
                 # Only check non-faceted fields for the following info.
                 if not hasattr(field, "facet_for"):
-                    if field.faceted == True:
+                    if field.faceted:
                         # If no other field is claiming this field as
                         # ``facet_for``, create a shadow ``FacetField``.
                         if field_name not in facet_fields:
