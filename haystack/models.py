@@ -123,7 +123,7 @@ class SearchResult(object):
     model = property(_get_model, _set_model)
 
     def _get_distance(self):
-        from haystack.utils.geo import Distance
+        from django.contrib.gis.measure import Distance
 
         if self._distance is None:
             # We didn't get it from the backend & we haven't tried calculating

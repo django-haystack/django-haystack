@@ -29,7 +29,7 @@ class Checkin(models.Model):
     def get_location(self):
         # Nothing special about this Point, but ensure that's we don't have to worry
         # about import paths.
-        from haystack.utils.geo import Point
+        from django.contrib.gis.geos import Point
 
         pnt = Point(self.longitude, self.latitude)
         return pnt

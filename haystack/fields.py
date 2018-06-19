@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import re
 from inspect import ismethod
 
+from django.contrib.gis.geos import Point
 from django.template import loader
 from django.utils import datetime_safe, six
 
@@ -259,7 +260,7 @@ class LocationField(SearchField):
         return "%s,%s" % (pnt_lat, pnt_lng)
 
     def convert(self, value):
-        from haystack.utils.geo import ensure_point, Point
+        from haystack.utils.geo import ensure_point
 
         if value is None:
             return None

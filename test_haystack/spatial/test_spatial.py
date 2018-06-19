@@ -2,15 +2,14 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, Point
+from django.contrib.gis.measure import D
 from django.test import TestCase
 
 from haystack import connections
 from haystack.exceptions import SpatialError
 from haystack.query import SearchQuerySet
 from haystack.utils.geo import (
-    D,
-    Point,
     ensure_distance,
     ensure_geometry,
     ensure_point,

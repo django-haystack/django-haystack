@@ -735,7 +735,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     additional_fields["_point_of_origin"] = distance_point
 
                     if geo_sort and raw_result.get("sort"):
-                        from haystack.utils.geo import Distance
+                        from django.contrib.gis.measure import Distance
 
                         additional_fields["_distance"] = Distance(
                             km=float(raw_result["sort"][0])

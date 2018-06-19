@@ -5,13 +5,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 
 import elasticsearch
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
 from django.test import TestCase
 
 from haystack import connections
 from haystack.inputs import Exact
 from haystack.models import SearchResult
 from haystack.query import SQ, SearchQuerySet
-from haystack.utils.geo import D, Point
 
 from ..core.models import AnotherMockModel, MockModel
 
