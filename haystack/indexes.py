@@ -11,8 +11,25 @@ from django.utils.encoding import force_text
 from django.utils.six import with_metaclass
 
 from haystack import connection_router, connections
-from haystack.constants import DEFAULT_ALIAS, DJANGO_CT, DJANGO_ID, ID, Indexable
-from haystack.fields import *
+from haystack.constants import Indexable  # NOQA — exposed as a public export
+from haystack.constants import DEFAULT_ALIAS, DJANGO_CT, DJANGO_ID, ID
+from haystack.fields import (  # NOQA — exposed as a public export
+    BooleanField,
+    CharField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    EdgeNgramField,
+    FacetCharField,
+    FacetDateTimeField,
+    FacetIntegerField,
+    FloatField,
+    IntegerField,
+    LocationField,
+    MultiValueField,
+    SearchField,
+    SearchFieldError,
+)
 from haystack.manager import SearchIndexManager
 from haystack.utils import get_facet_field_name, get_identifier, get_model_ct
 
