@@ -44,7 +44,6 @@ class SearchMixin(MultipleObjectMixin, FormMixin):
     template_name = "search/search.html"
     load_all = True
     form_class = ModelSearchForm
-    queryset = SearchQuerySet()
     context_object_name = None
     paginate_by = RESULTS_PER_PAGE
     paginate_orphans = 0
@@ -53,6 +52,11 @@ class SearchMixin(MultipleObjectMixin, FormMixin):
     form_name = "form"
     search_field = "q"
     object_list = None
+
+    def get_queryset(self):
+        if self.queryset is None:
+            self.queryset = SearchQuerySet()
+        return self.queryset
 
     def get_form_kwargs(self):
         """
