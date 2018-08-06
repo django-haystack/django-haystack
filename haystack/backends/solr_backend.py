@@ -656,9 +656,14 @@ class SolrSearchBackend(BaseSearchBackend):
         schema_fields = []
 
         for field_name, field_class in fields.items():
+            # check field_type_raw to allow specification of custom string fields (not-standard tokenization, stemming etc)
+            if hasattr(field_class, 'field_type_raw'):
+                field_type = field_class.field_type_raw
+            else:
+                field_type = 'text_en'
             field_data = {
                 "field_name": field_class.index_fieldname,
-                "type": "text_en",
+                "type": field_type,
                 "indexed": "true",
                 "stored": "true",
                 "multi_valued": "false",
