@@ -93,6 +93,8 @@ Changelog
 
   Add max-retries argument to rebuild_index managment command. This is useful for debug at development time
 
+  Add Django 2.1 compatibility. [Tim Graham]
+
 
 v2.8.1 (2018-03-16)
 -------------------
@@ -4112,5 +4114,3 @@ v1.1 (2010-11-23)
   [Daniel Lindsley]
 - Initial commit. Basic IndexSite implementation complete. Needs tests.
   [Daniel Lindsley]
-
-
