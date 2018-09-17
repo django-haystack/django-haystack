@@ -15,21 +15,6 @@ from haystack.query import SearchQuerySet
 from haystack.utils import get_model_ct_tuple
 
 
-def list_max_show_all(changelist):
-    """
-    Returns the maximum amount of results a changelist can have for the
-    "Show all" link to be displayed in a manner compatible with both Django
-    1.4 and 1.3. See Django ticket #15997 for details.
-    """
-    try:
-        # This import is available in Django 1.3 and below
-        from django.contrib.admin.views.main import MAX_SHOW_ALL_ALLOWED
-
-        return MAX_SHOW_ALL_ALLOWED
-    except ImportError:
-        return changelist.list_max_show_all
-
-
 class SearchChangeList(ChangeList):
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", "default")
@@ -54,7 +39,7 @@ class SearchChangeList(ChangeList):
             SearchQuerySet(self.haystack_connection).models(self.model).all().count()
         )
 
-        can_show_all = result_count <= list_max_show_all(self)
+        can_show_all = result_count <= self.list_max_show_all
         multi_page = result_count > self.list_per_page
 
         # Get the list of objects to display on this page.
@@ -120,13 +105,9 @@ class SearchModelAdminMixin(object):
             "list_select_related": self.list_select_related,
             "list_per_page": self.list_per_page,
             "list_editable": self.list_editable,
+            "list_max_show_all": self.list_max_show_all,
             "model_admin": self,
         }
-
-        # Django 1.4 compatibility.
-        if hasattr(self, "list_max_show_all"):
-            kwargs["list_max_show_all"] = self.list_max_show_all
-
         changelist = SearchChangeList(**kwargs)
         changelist.formset = None
         media = self.media
@@ -161,8 +142,6 @@ class SearchModelAdminMixin(object):
             "cl": changelist,
             "media": media,
             "has_add_permission": self.has_add_permission(request),
-            # More Django 1.4 compatibility
-            "root_path": getattr(self.admin_site, "root_path", None),
             "app_label": self.model._meta.app_label,
             "action_form": action_form,
             "actions_on_top": self.actions_on_top,
