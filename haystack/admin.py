@@ -108,6 +108,8 @@ class SearchModelAdminMixin(object):
             "list_max_show_all": self.list_max_show_all,
             "model_admin": self,
         }
+        if hasattr(self, 'get_sortable_by'):  # Django 2.1+
+            kwargs["sortable_by"] = self.get_sortable_by(request)
         changelist = SearchChangeList(**kwargs)
         changelist.formset = None
         media = self.media
@@ -142,6 +144,7 @@ class SearchModelAdminMixin(object):
             "cl": changelist,
             "media": media,
             "has_add_permission": self.has_add_permission(request),
+            "opts": changelist.opts,
             "app_label": self.model._meta.app_label,
             "action_form": action_form,
             "actions_on_top": self.actions_on_top,

@@ -65,10 +65,13 @@ env:
     matrix:
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=5.0.0,<6.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
+        - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
 matrix:
     allow_failures:
         - python: 'pypy'
@@ -79,6 +82,24 @@ matrix:
           env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
         - python: 2.7
           env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: 3.4
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: 3.4
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: 3.4
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
 
 notifications:
     irc: "irc.freenode.org#haystack"
