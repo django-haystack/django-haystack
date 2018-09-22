@@ -42,5 +42,6 @@ HAYSTACK_CONNECTIONS = {
     #     # For Xapian (requires the third-party install):
     #     'ENGINE': 'xapian_backend.XapianEngine',
     #     'PATH': os.path.join(os.path.dirname(__file__), 'xapian_index'),
+    #hahahahha
     # }
 }
