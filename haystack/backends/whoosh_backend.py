@@ -22,7 +22,13 @@ from haystack.backends import (
     EmptyResults,
     log_query,
 )
-from haystack.constants import DJANGO_CT, DJANGO_ID, ID
+from haystack.constants import (
+    DJANGO_CT,
+    DJANGO_ID,
+    FUZZY_WHOOSH_MAX_EDITS,
+    FUZZY_WHOOSH_MIN_PREFIX,
+    ID,
+)
 from haystack.exceptions import MissingDependency, SearchBackendError, SkipDocument
 from haystack.inputs import Clean, Exact, PythonData, Raw
 from haystack.models import SearchResult
@@ -59,7 +65,7 @@ from whoosh.fields import (
 from whoosh.filedb.filestore import FileStorage, RamStorage
 from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.highlight import ContextFragmenter, HtmlFormatter
-from whoosh.qparser import QueryParser
+from whoosh.qparser import QueryParser, FuzzyTermPlugin
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
 
@@ -162,6 +168,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             connections[self.connection_alias].get_unified_index().all_searchfields()
         )
         self.parser = QueryParser(self.content_field_name, schema=self.schema)
+        self.parser.add_plugins([FuzzyTermPlugin])
 
         if new_index is True:
             self.index = self.storage.create_index(self.schema)
@@ -959,7 +966,7 @@ class WhooshSearchQuery(BaseSearchQuery):
             "gte": "[%s to]",
             "lt": "{to %s}",
             "lte": "[to %s]",
-            "fuzzy": "%s~",
+            'fuzzy': "%s~{}/{}".format(FUZZY_WHOOSH_MAX_EDITS, FUZZY_WHOOSH_MIN_PREFIX),
         }
 
         if value.post_process is False:
