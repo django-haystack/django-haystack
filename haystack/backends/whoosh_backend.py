@@ -966,7 +966,7 @@ class WhooshSearchQuery(BaseSearchQuery):
             "gte": "[%s to]",
             "lt": "{to %s}",
             "lte": "[to %s]",
-            'fuzzy': "%s~{}/{}".format(FUZZY_WHOOSH_MAX_EDITS, FUZZY_WHOOSH_MIN_PREFIX),
+            "fuzzy": "%s~{}/%d".format(FUZZY_WHOOSH_MAX_EDITS),
         }
 
         if value.post_process is False:
@@ -994,10 +994,23 @@ class WhooshSearchQuery(BaseSearchQuery):
                         possible_values = [prepared_value]
 
                     for possible_value in possible_values:
-                        terms.append(
-                            filter_types[filter_type]
-                            % self.backend._from_python(possible_value)
+                        possible_value_str = self.backend._from_python(
+                            possible_value
                         )
+                        if filter_type == "fuzzy":
+                            terms.append(
+                                filter_types[filter_type] % (
+                                    possible_value_str,
+                                    min(
+                                        FUZZY_WHOOSH_MIN_PREFIX,
+                                        len(possible_value_str)
+                                    )
+                                )
+                            )
+                        else:
+                            terms.append(
+                                filter_types[filter_type] % possible_value_str
+                            )
 
                     if len(terms) == 1:
                         query_frag = terms[0]
