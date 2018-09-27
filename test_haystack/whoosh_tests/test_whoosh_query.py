@@ -115,7 +115,7 @@ class WhooshSearchQueryTestCase(WhooshTestCase):
     def test_build_query_fuzzy_filter_types(self):
         self.sq.add_filter(SQ(content="why"))
         self.sq.add_filter(SQ(title__fuzzy="haystack"))
-        self.assertEqual(self.sq.build_query(), "((why) AND title:(haystack~))")
+        self.assertEqual(self.sq.build_query(), "((why) AND title:(haystack~2/3))")
 
     def test_build_query_with_contains(self):
         self.sq.add_filter(SQ(content="circular"))
