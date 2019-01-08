@@ -4,7 +4,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import datetime
 
-from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.test import TestCase
 from test_haystack.core.models import MockModel
@@ -86,6 +85,8 @@ class ManagerTestCase(TestCase):
         self.assertTrue("foo" in sqs.query.order_by)
 
     def test_order_by_distance(self):
+        from django.contrib.gis.geos import Point
+
         p = Point(1.23, 4.56)
         sqs = self.search_index.objects.distance("location", p).order_by("distance")
         self.assertTrue(isinstance(sqs, SearchQuerySet))
@@ -115,6 +116,8 @@ class ManagerTestCase(TestCase):
         self.assertEqual(len(sqs.query.facets), 1)
 
     def test_within(self):
+        from django.contrib.gis.geos import Point
+
         # This is a meaningless query but we're just confirming that the manager updates the parameters here:
         p1 = Point(-90, -90)
         p2 = Point(90, 90)
@@ -129,6 +132,8 @@ class ManagerTestCase(TestCase):
         )
 
     def test_dwithin(self):
+        from django.contrib.gis.geos import Point
+
         p = Point(0, 0)
         distance = D(mi=500)
         sqs = self.search_index.objects.dwithin("location", p, distance)
@@ -142,6 +147,8 @@ class ManagerTestCase(TestCase):
         )
 
     def test_distance(self):
+        from django.contrib.gis.geos import Point
+
         p = Point(0, 0)
         sqs = self.search_index.objects.distance("location", p)
         self.assertTrue(isinstance(sqs, SearchQuerySet))

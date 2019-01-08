@@ -11,7 +11,6 @@ from decimal import Decimal
 import elasticsearch
 from django.apps import apps
 from django.conf import settings
-from django.contrib.gis.geos import Point
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -622,6 +621,8 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         settings.HAYSTACK_LIMIT_TO_REGISTERED_MODELS = old_limit_to_registered_models
 
     def test_spatial_search_parameters(self):
+        from django.contrib.gis.geos import Point
+
         p1 = Point(1.23, 4.56)
         kwargs = self.sb.build_search_kwargs(
             "*:*",
