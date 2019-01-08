@@ -27,6 +27,7 @@ from haystack.fields import (  # NOQA — exposed as a public export
     IntegerField,
     LocationField,
     MultiValueField,
+    NgramField,
     SearchField,
     SearchFieldError,
 )
