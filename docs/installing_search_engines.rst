@@ -17,9 +17,11 @@ Solr 4.x+ with a little effort. Installation is relatively simple:
 For Solr 6.X::
 
     curl -LO https://archive.apache.org/dist/lucene/solr/x.Y.0/solr-X.Y.0.tgz
+    mkdir solr
     tar -C solr -xf solr-X.Y.0.tgz --strip-components=1
     cd solr
-    ./bin/solr create -c tester -n basic_config
+    ./bin/solr start                                    # start solr
+    ./bin/solr create -c tester -n basic_config         # create core named 'tester'
 
 By default this will create a core with a managed schema.  This setup is dynamic
 but not useful for haystack, and we'll need to configure solr to use a static
@@ -52,20 +54,15 @@ Solr.
     The previous template name solr.xml was a legacy holdover from older
     versions of solr.
 
-You'll also need a Solr binding, ``pysolr``. The official ``pysolr`` package,
-distributed via PyPI, is the best version to use (2.1.0+). Place ``pysolr.py``
-somewhere on your ``PYTHONPATH``.
+You'll also need to install the ``pysolr`` client library from PyPI::
 
-.. note::
-
-    ``pysolr`` has its own dependencies that aren't covered by Haystack. See
-    https://pypi.python.org/pypi/pysolr for the latest documentation.  Simplest
-    approach is to install using ``pip install pysolr``
+    $ pip install pysolr
 
 More Like This
 --------------
 
-To enable the "More Like This" functionality in Haystack, you'll need
+On Solr 6.X+ "More Like This" functionality is enabled by default. To enable 
+the "More Like This" functionality on earlier versions of Solr, you'll need
 to enable the ``MoreLikeThisHandler``. Add the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
@@ -152,58 +149,21 @@ your ``SearchIndex`` classes (in this case, assuming the main field is called
 Elasticsearch
 =============
 
-Official Download Location: http://www.elasticsearch.org/download/
+Elasticsearch is similar to Solr — another Java application using Lucene — but
+focused on ease of deployment and clustering. See
+https://www.elastic.co/products/elasticsearch for more information.
 
-Elasticsearch is Java but comes in a pre-packaged form that requires very
-little other than the JRE. It's also very performant, scales easily and has
-an advanced featureset. Haystack currently only supports Elasticsearch 1.x and 2.x.
-Elasticsearch 5.x is not supported yet, if you would like to help, please see
-`#1383 <https://github.com/django-haystack/django-haystack/issues/1383>`_.
+Haystack currently supports Elasticsearch 1.x, 2.x, and 5.x.
 
-Installation is best done using a package manager::
+Follow the instructions on https://www.elastic.co/downloads/elasticsearch to
+download and install Elasticsearch and configure it for your environment.
 
-    # On Mac OS X...
-    brew install elasticsearch
+You'll also need to install the Elasticsearch binding: elasticsearch_ for the
+appropriate backend version — for example::
 
-    # On Ubuntu...
-    apt-get install elasticsearch
+    $ pip install "elasticsearch>=5,<6"
 
-    # Then start via:
-    elasticsearch -f -D es.config=<path to YAML config>
-
-    # Example:
-    elasticsearch -f -D es.config=/usr/local/Cellar/elasticsearch/0.90.0/config/elasticsearch.yml
-
-You may have to alter the configuration to run on ``localhost`` when developing
-locally. Modifications should be done in a YAML file, the stock one being
-``config/elasticsearch.yml``::
-
-    # Unicast Discovery (disable multicast)
-    discovery.zen.ping.multicast.enabled: false
-    discovery.zen.ping.unicast.hosts: ["127.0.0.1"]
-
-    # Name your cluster here to whatever.
-    # My machine is called "Venus", so...
-    cluster:
-      name: venus
-
-    network:
-      host: 127.0.0.1
-
-    path:
-      logs: /usr/local/var/log
-      data: /usr/local/var/data
-
-You'll also need an Elasticsearch binding: elasticsearch_ (**NOT**
-``pyes``). Place ``elasticsearch`` somewhere on your ``PYTHONPATH``
-(usually ``python setup.py install`` or ``pip install elasticsearch``).
-
-.. _elasticsearch: http://pypi.python.org/pypi/elasticsearch/
-
-.. note::
-
-    ``elasticsearch`` has its own dependencies that aren't covered by
-    Haystack. You'll also need ``urllib3``.
+.. _elasticsearch: https://pypi.python.org/pypi/elasticsearch/
 
 
 Whoosh

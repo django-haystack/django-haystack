@@ -16,7 +16,7 @@ from haystack.models import SearchResult
 from haystack.utils.loading import UnifiedIndex
 from haystack.utils import get_model_ct
 
-VALID_GAPS = ['year', 'month', 'day', 'hour', 'minute', 'second']
+VALID_GAPS = ["year", "month", "day", "hour", "minute", "second"]
 
 SPELLING_SUGGESTION_HAS_NOT_RUN = object()
 
@@ -26,6 +26,7 @@ def log_query(func):
     A decorator for pseudo-logging search queries. Used in the ``SearchBackend``
     to wrap the ``search`` method.
     """
+
     def wrapper(obj, query_string, *args, **kwargs):
         start = time()
 
@@ -36,14 +37,17 @@ def log_query(func):
 
             if settings.DEBUG:
                 from haystack import connections
-                connections[obj.connection_alias].queries.append({
-                    'query_string': query_string,
-                    'additional_args': args,
-                    'additional_kwargs': kwargs,
-                    'time': "%.3f" % (stop - start),
-                    'start': start,
-                    'stop': stop,
-                })
+
+                connections[obj.connection_alias].queries.append(
+                    {
+                        "query_string": query_string,
+                        "additional_args": args,
+                        "additional_kwargs": kwargs,
+                        "time": "%.3f" % (stop - start),
+                        "start": start,
+                        "stop": stop,
+                    }
+                )
 
     return wrapper
 
@@ -66,17 +70,18 @@ class BaseSearchBackend(object):
     """
     Abstract search engine base class.
     """
+
     # Backends should include their own reserved words/characters.
     RESERVED_WORDS = []
     RESERVED_CHARACTERS = []
 
     def __init__(self, connection_alias, **connection_options):
         self.connection_alias = connection_alias
-        self.timeout = connection_options.get('TIMEOUT', 10)
-        self.include_spelling = connection_options.get('INCLUDE_SPELLING', False)
-        self.batch_size = connection_options.get('BATCH_SIZE', 1000)
-        self.silently_fail = connection_options.get('SILENTLY_FAIL', True)
-        self.distance_available = connection_options.get('DISTANCE_AVAILABLE', False)
+        self.timeout = connection_options.get("TIMEOUT", 10)
+        self.include_spelling = connection_options.get("INCLUDE_SPELLING", False)
+        self.batch_size = connection_options.get("BATCH_SIZE", 1000)
+        self.silently_fail = connection_options.get("SILENTLY_FAIL", True)
+        self.distance_available = connection_options.get("DISTANCE_AVAILABLE", False)
 
     def update(self, index, iterable, commit=True):
         """
@@ -125,13 +130,27 @@ class BaseSearchBackend(object):
         """
         raise NotImplementedError
 
-    def build_search_kwargs(self, query_string, sort_by=None, start_offset=0, end_offset=None,
-                            fields='', highlight=False, facets=None,
-                            date_facets=None, query_facets=None,
-                            narrow_queries=None, spelling_query=None,
-                            within=None, dwithin=None, distance_point=None,
-                            models=None, limit_to_registered_models=None,
-                            result_class=None, **extra_kwargs):
+    def build_search_kwargs(
+        self,
+        query_string,
+        sort_by=None,
+        start_offset=0,
+        end_offset=None,
+        fields="",
+        highlight=False,
+        facets=None,
+        date_facets=None,
+        query_facets=None,
+        narrow_queries=None,
+        spelling_query=None,
+        within=None,
+        dwithin=None,
+        distance_point=None,
+        models=None,
+        limit_to_registered_models=None,
+        result_class=None,
+        **extra_kwargs
+    ):
         # A convenience method most backends should include in order to make
         # extension easier.
         raise NotImplementedError
@@ -143,14 +162,18 @@ class BaseSearchBackend(object):
         """
         return force_text(value)
 
-    def more_like_this(self, model_instance, additional_query_string=None, result_class=None):
+    def more_like_this(
+        self, model_instance, additional_query_string=None, result_class=None
+    ):
         """
         Takes a model object and returns results the backend thinks are similar.
 
         This method MUST be implemented by each backend, as it will be highly
         specific to each one.
         """
-        raise NotImplementedError("Subclasses must provide a way to fetch similar record via the 'more_like_this' method if supported by the backend.")
+        raise NotImplementedError(
+            "Subclasses must provide a way to fetch similar record via the 'more_like_this' method if supported by the backend."
+        )
 
     def extract_file_contents(self, file_obj):
         """
@@ -167,7 +190,9 @@ class BaseSearchBackend(object):
                         key:value pairs of text strings
         """
 
-        raise NotImplementedError("Subclasses must provide a way to extract metadata via the 'extract' method if supported by the backend.")
+        raise NotImplementedError(
+            "Subclasses must provide a way to extract metadata via the 'extract' method if supported by the backend."
+        )
 
     def build_schema(self, fields):
         """
@@ -176,7 +201,9 @@ class BaseSearchBackend(object):
         This method MUST be implemented by each backend, as it will be highly
         specific to each one.
         """
-        raise NotImplementedError("Subclasses must provide a way to build their schema.")
+        raise NotImplementedError(
+            "Subclasses must provide a way to build their schema."
+        )
 
     def build_models_list(self):
         """
@@ -188,9 +215,12 @@ class BaseSearchBackend(object):
         consistent caching.
         """
         from haystack import connections
+
         models = []
 
-        for model in connections[self.connection_alias].get_unified_index().get_indexed_models():
+        for model in (
+            connections[self.connection_alias].get_unified_index().get_indexed_models()
+        ):
             models.append(get_model_ct(model))
 
         return models
@@ -211,8 +241,9 @@ class SearchNode(tree.Node):
     This object creates a tree, with children being a list of either more
     ``SQ`` objects or the expressions/values themselves.
     """
-    AND = 'AND'
-    OR = 'OR'
+
+    AND = "AND"
+    OR = "OR"
     default = AND
 
     # Start compat. Django 1.6 changed how ``tree.Node`` works, so we're going
@@ -248,12 +279,16 @@ class SearchNode(tree.Node):
         obj = SearchNode(children, connector, negated)
         obj.__class__ = cls
         return obj
+
     _new_instance = classmethod(_new_instance)
 
     def __str__(self):
         if self.negated:
-            return '(NOT (%s: %s))' % (self.connector, ', '.join([str(c) for c in self.children]))
-        return '(%s: %s)' % (self.connector, ', '.join([str(c) for c in self.children]))
+            return "(NOT (%s: %s))" % (
+                self.connector,
+                ", ".join([str(c) for c in self.children]),
+            )
+        return "(%s: %s)" % (self.connector, ", ".join([str(c) for c in self.children]))
 
     def __deepcopy__(self, memodict):
         """
@@ -277,7 +312,7 @@ class SearchNode(tree.Node):
         """
         return bool(self.children)
 
-    def __nonzero__(self):      # Python 2 compatibility
+    def __nonzero__(self):  # Python 2 compatibility
         return type(self).__bool__(self)
 
     def __contains__(self, other):
@@ -298,7 +333,9 @@ class SearchNode(tree.Node):
         if len(self.children) < 2:
             self.connector = conn_type
         if self.connector == conn_type:
-            if isinstance(node, SearchNode) and (node.connector == conn_type or len(node) == 1):
+            if isinstance(node, SearchNode) and (
+                node.connector == conn_type or len(node) == 1
+            ):
                 self.children.extend(node.children)
             else:
                 self.children.append(node)
@@ -317,7 +354,9 @@ class SearchNode(tree.Node):
         Interpreting the meaning of this negate is up to client code. This
         method is useful for implementing "not" arrangements.
         """
-        self.children = [self._new_instance(self.children, self.connector, not self.negated)]
+        self.children = [
+            self._new_instance(self.children, self.connector, not self.negated)
+        ]
         self.connector = self.default
 
     def start_subtree(self, conn_type):
@@ -329,11 +368,15 @@ class SearchNode(tree.Node):
         if len(self.children) == 1:
             self.connector = conn_type
         elif self.connector != conn_type:
-            self.children = [self._new_instance(self.children, self.connector, self.negated)]
+            self.children = [
+                self._new_instance(self.children, self.connector, self.negated)
+            ]
             self.connector = conn_type
             self.negated = False
 
-        self.subtree_parents.append(self.__class__(self.children, self.connector, self.negated))
+        self.subtree_parents.append(
+            self.__class__(self.children, self.connector, self.negated)
+        )
         self.connector = self.default
         self.negated = False
         self.children = []
@@ -355,13 +398,16 @@ class SearchNode(tree.Node):
     # End compat.
 
     def __repr__(self):
-        return '<SQ: %s %s>' % (self.connector, self.as_query_string(self._repr_query_fragment_callback))
+        return "<SQ: %s %s>" % (
+            self.connector,
+            self.as_query_string(self._repr_query_fragment_callback),
+        )
 
     def _repr_query_fragment_callback(self, field, filter_type, value):
         if six.PY3:
             value = force_text(value)
         else:
-            value = force_text(value).encode('utf8')
+            value = force_text(value).encode("utf8")
 
         return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, value)
 
@@ -373,21 +419,21 @@ class SearchNode(tree.Node):
         result = []
 
         for child in self.children:
-            if hasattr(child, 'as_query_string'):
+            if hasattr(child, "as_query_string"):
                 result.append(child.as_query_string(query_fragment_callback))
             else:
                 expression, value = child
                 field, filter_type = self.split_expression(expression)
                 result.append(query_fragment_callback(field, filter_type, value))
 
-        conn = ' %s ' % self.connector
+        conn = " %s " % self.connector
         query_string = conn.join(result)
 
         if query_string:
             if self.negated:
-                query_string = 'NOT (%s)' % query_string
+                query_string = "NOT (%s)" % query_string
             elif len(self.children) != 1:
-                query_string = '(%s)' % query_string
+                query_string = "(%s)" % query_string
 
         return query_string
 
@@ -396,7 +442,7 @@ class SearchNode(tree.Node):
         parts = expression.split(FILTER_SEPARATOR)
         field = parts[0]
         if len(parts) == 1 or parts[-1] not in VALID_FILTERS:
-            filter_type = 'content'
+            filter_type = "content"
         else:
             filter_type = parts.pop()
 
@@ -411,6 +457,7 @@ class SQ(Q, SearchNode):
     appears in the documents being indexed. However, it also supports filtering
     types (such as 'lt', 'gt', 'in' and others) for more complex lookups.
     """
+
     pass
 
 
@@ -468,6 +515,7 @@ class BaseSearchQuery(object):
         self.result_class = SearchResult
         self.stats = {}
         from haystack import connections
+
         self._using = using
         self.backend = connections[self._using].get_backend()
 
@@ -477,12 +525,13 @@ class BaseSearchQuery(object):
     def __getstate__(self):
         """For pickling."""
         obj_dict = self.__dict__.copy()
-        del(obj_dict['backend'])
+        del (obj_dict["backend"])
         return obj_dict
 
     def __setstate__(self, obj_dict):
         """For unpickling."""
         from haystack import connections
+
         self.__dict__.update(obj_dict)
         self.backend = connections[self._using].get_backend()
 
@@ -492,56 +541,54 @@ class BaseSearchQuery(object):
 
     def build_params(self, spelling_query=None):
         """Generates a list of params to use when searching."""
-        kwargs = {
-            'start_offset': self.start_offset,
-        }
+        kwargs = {"start_offset": self.start_offset}
 
         if self.order_by:
-            kwargs['sort_by'] = self.order_by
+            kwargs["sort_by"] = self.order_by
 
         if self.end_offset is not None:
-            kwargs['end_offset'] = self.end_offset
+            kwargs["end_offset"] = self.end_offset
 
         if self.highlight:
-            kwargs['highlight'] = self.highlight
+            kwargs["highlight"] = self.highlight
 
         if self.facets:
-            kwargs['facets'] = self.facets
+            kwargs["facets"] = self.facets
 
         if self.date_facets:
-            kwargs['date_facets'] = self.date_facets
+            kwargs["date_facets"] = self.date_facets
 
         if self.query_facets:
-            kwargs['query_facets'] = self.query_facets
+            kwargs["query_facets"] = self.query_facets
 
         if self.narrow_queries:
-            kwargs['narrow_queries'] = self.narrow_queries
+            kwargs["narrow_queries"] = self.narrow_queries
 
         if spelling_query:
-            kwargs['spelling_query'] = spelling_query
+            kwargs["spelling_query"] = spelling_query
         elif self.spelling_query:
-            kwargs['spelling_query'] = self.spelling_query
+            kwargs["spelling_query"] = self.spelling_query
 
         if self.boost:
-            kwargs['boost'] = self.boost
+            kwargs["boost"] = self.boost
 
         if self.within:
-            kwargs['within'] = self.within
+            kwargs["within"] = self.within
 
         if self.dwithin:
-            kwargs['dwithin'] = self.dwithin
+            kwargs["dwithin"] = self.dwithin
 
         if self.distance_point:
-            kwargs['distance_point'] = self.distance_point
+            kwargs["distance_point"] = self.distance_point
 
         if self.result_class:
-            kwargs['result_class'] = self.result_class
+            kwargs["result_class"] = self.result_class
 
         if self.fields:
-            kwargs['fields'] = self.fields
+            kwargs["fields"] = self.fields
 
         if self.models:
-            kwargs['models'] = self.models
+            kwargs["models"] = self.models
 
         return kwargs
 
@@ -554,10 +601,10 @@ class BaseSearchQuery(object):
             search_kwargs.update(kwargs)
 
         results = self.backend.search(final_query, **search_kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
+        self._results = results.get("results", [])
+        self._hit_count = results.get("hits", 0)
         self._facet_counts = self.post_process_facets(results)
-        self._spelling_suggestion = results.get('spelling_suggestion', None)
+        self._spelling_suggestion = results.get("spelling_suggestion", None)
 
     def run_mlt(self, **kwargs):
         """
@@ -565,22 +612,24 @@ class BaseSearchQuery(object):
         to the provided document (and optionally query).
         """
         if self._more_like_this is False or self._mlt_instance is None:
-            raise MoreLikeThisError("No instance was provided to determine 'More Like This' results.")
+            raise MoreLikeThisError(
+                "No instance was provided to determine 'More Like This' results."
+            )
 
-        search_kwargs = {
-            'result_class': self.result_class,
-        }
+        search_kwargs = {"result_class": self.result_class}
 
         if self.models:
-            search_kwargs['models'] = self.models
+            search_kwargs["models"] = self.models
 
         if kwargs:
             search_kwargs.update(kwargs)
 
         additional_query_string = self.build_query()
-        results = self.backend.more_like_this(self._mlt_instance, additional_query_string, **search_kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
+        results = self.backend.more_like_this(
+            self._mlt_instance, additional_query_string, **search_kwargs
+        )
+        self._results = results.get("results", [])
+        self._hit_count = results.get("hits", 0)
 
     def run_raw(self, **kwargs):
         """Executes a raw query. Returns a list of search results."""
@@ -591,10 +640,10 @@ class BaseSearchQuery(object):
             search_kwargs.update(kwargs)
 
         results = self.backend.search(self._raw_query, **search_kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
-        self._facet_counts = results.get('facets', {})
-        self._spelling_suggestion = results.get('spelling_suggestion', None)
+        self._results = results.get("results", [])
+        self._hit_count = results.get("hits", 0)
+        self._facet_counts = results.get("facets", {})
+        self._spelling_suggestion = results.get("spelling_suggestion", None)
 
     def get_count(self):
         """
@@ -683,7 +732,7 @@ class BaseSearchQuery(object):
 
     def matching_all_fragment(self):
         """Generates the query that matches all documents."""
-        return '*'
+        return "*"
 
     def build_query(self):
         """
@@ -720,7 +769,9 @@ class BaseSearchQuery(object):
 
         Must be implemented in backends as this will be highly backend specific.
         """
-        raise NotImplementedError("Subclasses must provide a way to generate query fragments via the 'build_query_fragment' method.")
+        raise NotImplementedError(
+            "Subclasses must provide a way to generate query fragments via the 'build_query_fragment' method."
+        )
 
     # Standard methods to alter the query.
 
@@ -742,20 +793,20 @@ class BaseSearchQuery(object):
                 word = word.replace(word, word.lower())
 
             for char in self.backend.RESERVED_CHARACTERS:
-                word = word.replace(char, '\\%s' % char)
+                word = word.replace(char, "\\%s" % char)
 
             cleaned_words.append(word)
 
-        return ' '.join(cleaned_words)
+        return " ".join(cleaned_words)
 
     def build_not_query(self, query_string):
-        if ' ' in query_string:
+        if " " in query_string:
             query_string = "(%s)" % query_string
 
-        return u"NOT %s" % query_string
+        return "NOT %s" % query_string
 
     def build_exact_query(self, query_string):
-        return u'"%s"' % query_string
+        return '"%s"' % query_string
 
     def add_filter(self, query_filter, use_or=False):
         """
@@ -766,7 +817,11 @@ class BaseSearchQuery(object):
         else:
             connector = SQ.AND
 
-        if self.query_filter and query_filter.connector != connector and len(query_filter) > 1:
+        if (
+            self.query_filter
+            and query_filter.connector != connector
+            and len(query_filter) > 1
+        ):
             self.query_filter.start_subtree(connector)
             subtree = True
         else:
@@ -808,7 +863,9 @@ class BaseSearchQuery(object):
         by chaining this method several times.
         """
         if not isinstance(model, ModelBase):
-            raise AttributeError('The model being added to the query must derive from Model.')
+            raise AttributeError(
+                "The model being added to the query must derive from Model."
+            )
 
         self.models.add(model)
 
@@ -860,19 +917,21 @@ class BaseSearchQuery(object):
     def add_within(self, field, point_1, point_2):
         """Adds bounding box parameters to search query."""
         from haystack.utils.geo import ensure_point
+
         self.within = {
-            'field': field,
-            'point_1': ensure_point(point_1),
-            'point_2': ensure_point(point_2),
+            "field": field,
+            "point_1": ensure_point(point_1),
+            "point_2": ensure_point(point_2),
         }
 
     def add_dwithin(self, field, point, distance):
         """Adds radius-based parameters to search query."""
         from haystack.utils.geo import ensure_point, ensure_distance
+
         self.dwithin = {
-            'field': field,
-            'point': ensure_point(point),
-            'distance': ensure_distance(distance),
+            "field": field,
+            "point": ensure_point(point),
+            "distance": ensure_distance(distance),
         }
 
     def add_distance(self, field, point):
@@ -881,35 +940,48 @@ class BaseSearchQuery(object):
         point passed in.
         """
         from haystack.utils.geo import ensure_point
-        self.distance_point = {
-            'field': field,
-            'point': ensure_point(point),
-        }
+
+        self.distance_point = {"field": field, "point": ensure_point(point)}
 
     def add_field_facet(self, field, **options):
         """Adds a regular facet on a field."""
         from haystack import connections
-        field_name = connections[self._using].get_unified_index().get_facet_fieldname(field)
+
+        field_name = (
+            connections[self._using].get_unified_index().get_facet_fieldname(field)
+        )
         self.facets[field_name] = options.copy()
 
     def add_date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds a date-based facet on a field."""
         from haystack import connections
+
         if gap_by not in VALID_GAPS:
-            raise FacetingError("The gap_by ('%s') must be one of the following: %s." % (gap_by, ', '.join(VALID_GAPS)))
+            raise FacetingError(
+                "The gap_by ('%s') must be one of the following: %s."
+                % (gap_by, ", ".join(VALID_GAPS))
+            )
 
         details = {
-            'start_date': start_date,
-            'end_date': end_date,
-            'gap_by': gap_by,
-            'gap_amount': gap_amount,
+            "start_date": start_date,
+            "end_date": end_date,
+            "gap_by": gap_by,
+            "gap_amount": gap_amount,
         }
-        self.date_facets[connections[self._using].get_unified_index().get_facet_fieldname(field)] = details
+        self.date_facets[
+            connections[self._using].get_unified_index().get_facet_fieldname(field)
+        ] = details
 
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
         from haystack import connections
-        self.query_facets.append((connections[self._using].get_unified_index().get_facet_fieldname(field), query))
+
+        self.query_facets.append(
+            (
+                connections[self._using].get_unified_index().get_facet_fieldname(field),
+                query,
+            )
+        )
 
     def add_narrow_query(self, query):
         """
@@ -934,15 +1006,18 @@ class BaseSearchQuery(object):
     def post_process_facets(self, results):
         # Handle renaming the facet fields. Undecorate and all that.
         from haystack import connections
+
         revised_facets = {}
         field_data = connections[self._using].get_unified_index().all_searchfields()
 
-        for facet_type, field_details in results.get('facets', {}).items():
+        for facet_type, field_details in results.get("facets", {}).items():
             temp_facets = {}
 
             for field, field_facets in field_details.items():
                 fieldname = field
-                if field in field_data and hasattr(field_data[field], 'get_facet_for_name'):
+                if field in field_data and hasattr(
+                    field_data[field], "get_facet_for_name"
+                ):
                     fieldname = field_data[field].get_facet_for_name()
 
                 temp_facets[fieldname] = field_facets
@@ -975,6 +1050,7 @@ class BaseSearchQuery(object):
             using = self._using
         else:
             from haystack import connections
+
             klass = connections[using].query
 
         if klass is None:
@@ -1038,6 +1114,6 @@ class BaseEngine(object):
 
     def get_unified_index(self):
         if self._index is None:
-            self._index = self.unified_index(self.options.get('EXCLUDED_INDEXES', []))
+            self._index = self.unified_index(self.options.get("EXCLUDED_INDEXES", []))
 
         return self._index

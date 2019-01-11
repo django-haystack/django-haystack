@@ -11,15 +11,33 @@ from django.utils.encoding import force_text
 from django.utils.six import with_metaclass
 
 from haystack import connection_router, connections
-from haystack.constants import DEFAULT_ALIAS, DJANGO_CT, DJANGO_ID, ID, Indexable
-from haystack.fields import *
+from haystack.constants import Indexable  # NOQA — exposed as a public export
+from haystack.constants import DEFAULT_ALIAS, DJANGO_CT, DJANGO_ID, ID
+from haystack.fields import (  # NOQA — exposed as a public export
+    BooleanField,
+    CharField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    EdgeNgramField,
+    FacetCharField,
+    FacetDateTimeField,
+    FacetIntegerField,
+    FloatField,
+    IntegerField,
+    LocationField,
+    MultiValueField,
+    NgramField,
+    SearchField,
+    SearchFieldError,
+)
 from haystack.manager import SearchIndexManager
 from haystack.utils import get_facet_field_name, get_identifier, get_model_ct
 
 
 class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
-        attrs['fields'] = {}
+        attrs["fields"] = {}
 
         # Inherit any fields from parent(s).
         try:
@@ -28,10 +46,10 @@ class DeclarativeMetaclass(type):
             parents.reverse()
 
             for p in parents:
-                fields = getattr(p, 'fields', None)
+                fields = getattr(p, "fields", None)
 
                 if fields:
-                    attrs['fields'].update(fields)
+                    attrs["fields"].update(fields)
         except NameError:
             pass
 
@@ -40,8 +58,8 @@ class DeclarativeMetaclass(type):
 
         for field_name, obj in attrs.items():
             # Only need to check the FacetFields.
-            if hasattr(obj, 'facet_for'):
-                if not obj.facet_for in facet_fields:
+            if hasattr(obj, "facet_for"):
+                if obj.facet_for not in facet_fields:
                     facet_fields[obj.facet_for] = []
 
                 facet_fields[obj.facet_for].append(field_name)
@@ -55,24 +73,24 @@ class DeclarativeMetaclass(type):
                 built_fields[field_name] = field
 
                 # Only check non-faceted fields for the following info.
-                if not hasattr(field, 'facet_for'):
-                    if field.faceted == True:
+                if not hasattr(field, "facet_for"):
+                    if field.faceted:
                         # If no other field is claiming this field as
                         # ``facet_for``, create a shadow ``FacetField``.
-                        if not field_name in facet_fields:
+                        if field_name not in facet_fields:
                             shadow_facet_name = get_facet_field_name(field_name)
                             shadow_facet_field = field.facet_class(facet_for=field_name)
                             shadow_facet_field.set_instance_name(shadow_facet_name)
                             built_fields[shadow_facet_name] = shadow_facet_field
 
-        attrs['fields'].update(built_fields)
+        attrs["fields"].update(built_fields)
 
         # Assigning default 'objects' query manager if it does not already exist
-        if not 'objects' in attrs:
+        if "objects" not in attrs:
             try:
-                attrs['objects'] = SearchIndexManager(attrs['Meta'].index_label)
+                attrs["objects"] = SearchIndexManager(attrs["Meta"].index_label)
             except (KeyError, AttributeError):
-                attrs['objects'] = SearchIndexManager(DEFAULT_ALIAS)
+                attrs["objects"] = SearchIndexManager(DEFAULT_ALIAS)
 
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
@@ -99,19 +117,23 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
                 return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
     """
+
     def __init__(self):
         self.prepared_data = None
         content_fields = []
 
         self.field_map = dict()
         for field_name, field in self.fields.items():
-            #form field map
+            # form field map
             self.field_map[field.index_fieldname] = field_name
             if field.document is True:
                 content_fields.append(field_name)
 
         if not len(content_fields) == 1:
-            raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
+            raise SearchFieldError(
+                "The index '%s' must have one (and only one) SearchField with document=True."
+                % self.__class__.__name__
+            )
 
     def get_model(self):
         """
@@ -120,7 +142,9 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
 
         This method is required & you must override it to return the correct class.
         """
-        raise NotImplementedError("You must provide a 'get_model' method for the '%r' index." % self)
+        raise NotImplementedError(
+            "You must provide a 'get_model' method for the '%r' index." % self
+        )
 
     def index_queryset(self, using=None):
         """
@@ -153,31 +177,38 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         model = self.get_model()
         updated_field = self.get_updated_field()
 
-        update_field_msg = ("No updated date field found for '%s' "
-                            "- not restricting by age.") % model.__name__
+        update_field_msg = (
+            "No updated date field found for '%s' " "- not restricting by age."
+        ) % model.__name__
 
         if start_date:
             if updated_field:
-                extra_lookup_kwargs['%s__gte' % updated_field] = start_date
+                extra_lookup_kwargs["%s__gte" % updated_field] = start_date
             else:
                 warnings.warn(update_field_msg)
 
         if end_date:
             if updated_field:
-                extra_lookup_kwargs['%s__lte' % updated_field] = end_date
+                extra_lookup_kwargs["%s__lte" % updated_field] = end_date
             else:
                 warnings.warn(update_field_msg)
 
         index_qs = None
 
-        if hasattr(self, 'get_queryset'):
-            warnings.warn("'SearchIndex.get_queryset' was deprecated in Haystack v2. Please rename the method 'index_queryset'.")
+        if hasattr(self, "get_queryset"):
+            warnings.warn(
+                "'SearchIndex.get_queryset' was deprecated in Haystack v2."
+                " Please rename the method 'index_queryset'."
+            )
             index_qs = self.get_queryset()
         else:
             index_qs = self.index_queryset(using=using)
 
-        if not hasattr(index_qs, 'filter'):
-            raise ImproperlyConfigured("The '%r' class must return a 'QuerySet' in the 'index_queryset' method." % self)
+        if not hasattr(index_qs, "filter"):
+            raise ImproperlyConfigured(
+                "The '%r' class must return a 'QuerySet' in the 'index_queryset' method."
+                % self
+            )
 
         # `.select_related()` seems like a good idea here but can fail on
         # nullable `ForeignKey` as well as what seems like other cases.
@@ -189,7 +220,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         """
         self.prepared_data = {
             ID: get_identifier(obj),
-            DJANGO_CT: get_model_ct(obj),
+            DJANGO_CT: get_model_ct(self.get_model()),
             DJANGO_ID: force_text(obj.pk),
         }
 
@@ -209,18 +240,23 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
 
         for field_name, field in self.fields.items():
             # Duplicate data for faceted fields.
-            if getattr(field, 'facet_for', None):
+            if getattr(field, "facet_for", None):
                 source_field_name = self.fields[field.facet_for].index_fieldname
 
                 # If there's data there, leave it alone. Otherwise, populate it
                 # with whatever the related field has.
-                if self.prepared_data[field_name] is None and source_field_name in self.prepared_data:
-                    self.prepared_data[field.index_fieldname] = self.prepared_data[source_field_name]
+                if (
+                    self.prepared_data[field_name] is None
+                    and source_field_name in self.prepared_data
+                ):
+                    self.prepared_data[field.index_fieldname] = self.prepared_data[
+                        source_field_name
+                    ]
 
             # Remove any fields that lack a value and are ``null=True``.
             if field.null is True:
                 if self.prepared_data[field.index_fieldname] is None:
-                    del(self.prepared_data[field.index_fieldname])
+                    del (self.prepared_data[field.index_fieldname])
 
         return self.prepared_data
 
@@ -239,8 +275,10 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         return weights
 
     def _get_backend(self, using):
-        warnings.warn('SearchIndex._get_backend is deprecated; use SearchIndex.get_backend instead',
-                      DeprecationWarning)
+        warnings.warn(
+            "SearchIndex._get_backend is deprecated; use SearchIndex.get_backend instead",
+            DeprecationWarning,
+        )
         return self.get_backend(using)
 
     def get_backend(self, using=None):
@@ -372,15 +410,20 @@ def index_field_from_django_field(f, default=CharField):
     """
     result = default
 
-    if f.get_internal_type() in ('DateField', 'DateTimeField'):
+    if f.get_internal_type() in ("DateField", "DateTimeField"):
         result = DateTimeField
-    elif f.get_internal_type() in ('BooleanField', 'NullBooleanField'):
+    elif f.get_internal_type() in ("BooleanField", "NullBooleanField"):
         result = BooleanField
-    elif f.get_internal_type() in ('CommaSeparatedIntegerField',):
+    elif f.get_internal_type() in ("CommaSeparatedIntegerField",):
         result = MultiValueField
-    elif f.get_internal_type() in ('DecimalField', 'FloatField'):
+    elif f.get_internal_type() in ("DecimalField", "FloatField"):
         result = FloatField
-    elif f.get_internal_type() in ('IntegerField', 'PositiveIntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField'):
+    elif f.get_internal_type() in (
+        "IntegerField",
+        "PositiveIntegerField",
+        "PositiveSmallIntegerField",
+        "SmallIntegerField",
+    ):
         result = IntegerField
 
     return result
@@ -400,9 +443,10 @@ class ModelSearchIndex(SearchIndex):
 
     At this time, it does not handle related fields.
     """
+
     text = CharField(document=True, use_template=True)
     # list of reserved field names
-    fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, 'content', 'text')
+    fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, "content", "text")
 
     def __init__(self, extra_field_kwargs=None):
         super(ModelSearchIndex, self).__init__()
@@ -416,12 +460,12 @@ class ModelSearchIndex(SearchIndex):
         # Introspect the model, adding/removing fields as needed.
         # Adds/Excludes should happen only if the fields are not already
         # defined in `self.fields`.
-        self._meta = getattr(self, 'Meta', None)
+        self._meta = getattr(self, "Meta", None)
 
         if self._meta:
-            self.model = getattr(self._meta, 'model', None)
-            fields = getattr(self._meta, 'fields', [])
-            excludes = getattr(self._meta, 'excludes', [])
+            self.model = getattr(self._meta, "model", None)
+            fields = getattr(self._meta, "fields", [])
+            excludes = getattr(self._meta, "excludes", [])
 
             # Add in the new fields.
             self.fields.update(self.get_fields(fields, excludes))
@@ -431,7 +475,10 @@ class ModelSearchIndex(SearchIndex):
                 content_fields.append(field_name)
 
         if not len(content_fields) == 1:
-            raise SearchFieldError("The index '%s' must have one (and only one) SearchField with document=True." % self.__class__.__name__)
+            raise SearchFieldError(
+                "The index '%s' must have one (and only one) SearchField with document=True."
+                % self.__class__.__name__
+            )
 
     def should_skip_field(self, field):
         """
@@ -443,7 +490,7 @@ class ModelSearchIndex(SearchIndex):
             return True
 
         # Ignore certain fields (AutoField, related fields).
-        if field.primary_key or getattr(field, 'rel'):
+        if field.primary_key or field.is_relation:
             return True
 
         return False
@@ -485,15 +532,13 @@ class ModelSearchIndex(SearchIndex):
             index_field_class = index_field_from_django_field(f)
 
             kwargs = copy.copy(self.extra_field_kwargs)
-            kwargs.update({
-                'model_attr': f.name,
-            })
+            kwargs.update({"model_attr": f.name})
 
             if f.null is True:
-                kwargs['null'] = True
+                kwargs["null"] = True
 
             if f.has_default():
-                kwargs['default'] = f.default
+                kwargs["default"] = f.default
 
             final_fields[f.name] = index_field_class(**kwargs)
             final_fields[f.name].set_instance_name(self.get_index_fieldname(f))

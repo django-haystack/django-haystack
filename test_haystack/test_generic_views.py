@@ -14,10 +14,8 @@ class GenericSearchViewsTestCase(TestCase):
 
     def setUp(self):
         super(GenericSearchViewsTestCase, self).setUp()
-        self.query = 'haystack'
-        self.request = self.get_request(
-            url='/some/random/url?q={0}'.format(self.query)
-        )
+        self.query = "haystack"
+        self.request = self.get_request(url="/some/random/url?q={0}".format(self.query))
 
     def test_get_form_kwargs(self):
         """Test getting the search view form kwargs."""
@@ -25,21 +23,21 @@ class GenericSearchViewsTestCase(TestCase):
         v.request = self.request
 
         form_kwargs = v.get_form_kwargs()
-        self.assertEqual(form_kwargs.get('data').get('q'), self.query)
-        self.assertEqual(form_kwargs.get('initial'), {})
-        self.assertTrue('searchqueryset' in form_kwargs)
-        self.assertTrue('load_all' in form_kwargs)
+        self.assertEqual(form_kwargs.get("data").get("q"), self.query)
+        self.assertEqual(form_kwargs.get("initial"), {})
+        self.assertTrue("searchqueryset" in form_kwargs)
+        self.assertTrue("load_all" in form_kwargs)
 
     def test_search_view_response(self):
         """Test the generic SearchView response."""
         response = SearchView.as_view()(request=self.request)
 
         context = response.context_data
-        self.assertEqual(context['query'], self.query)
-        self.assertEqual(context.get('view').__class__, SearchView)
-        self.assertEqual(context.get('form').__class__, ModelSearchForm)
-        self.assertIn('page_obj', context)
-        self.assertNotIn('page', context)
+        self.assertEqual(context["query"], self.query)
+        self.assertEqual(context.get("view").__class__, SearchView)
+        self.assertEqual(context.get("form").__class__, ModelSearchForm)
+        self.assertIn("page_obj", context)
+        self.assertNotIn("page", context)
 
     def test_search_view_form_valid(self):
         """Test the generic SearchView form is valid."""
@@ -51,7 +49,7 @@ class GenericSearchViewsTestCase(TestCase):
         response = v.form_valid(form)
         context = response.context_data
 
-        self.assertEqual(context['query'], self.query)
+        self.assertEqual(context["query"], self.query)
 
     def test_search_view_form_invalid(self):
         """Test the generic SearchView form is invalid."""
@@ -63,9 +61,9 @@ class GenericSearchViewsTestCase(TestCase):
         response = v.form_invalid(form)
         context = response.context_data
 
-        self.assertTrue('query' not in context)
+        self.assertTrue("query" not in context)
 
-    def get_request(self, url, method='get', data=None, **kwargs):
+    def get_request(self, url, method="get", data=None, **kwargs):
         """Gets the request object for the view.
 
         :param url: a mock url to use for the request

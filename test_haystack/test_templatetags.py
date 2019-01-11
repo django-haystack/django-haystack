@@ -14,7 +14,7 @@ class BorkHighlighter(Highlighter):
         highlighted_chunk = self.text_block[start_offset:end_offset]
 
         for word in self.query_words:
-            highlighted_chunk = highlighted_chunk.replace(word, 'Bork!')
+            highlighted_chunk = highlighted_chunk.replace(word, "Bork!")
 
         return highlighted_chunk
 
@@ -54,50 +54,52 @@ the attribute of the object to populate that field with.
 
     def test_simple(self):
         template = """{% load highlight %}{% highlight entry with query %}"""
-        context = {
-            'entry': self.sample_entry,
-            'query': 'index',
-        }
-        self.assertEqual(self.render(template, context), u'...<span class="highlighted">index</span>ing behavior for your model you can specify your own Search<span class="highlighted">Index</span> class.\nThis is useful for ensuring that future-dated or non-live content is not <span class="highlighted">index</span>ed\nand searchable.\n\nEvery custom Search<span class="highlighted">Index</span> ...')
+        context = {"entry": self.sample_entry, "query": "index"}
+        self.assertEqual(
+            self.render(template, context),
+            '...<span class="highlighted">index</span>ing behavior for your model you can specify your own Search<span class="highlighted">Index</span> class.\nThis is useful for ensuring that future-dated or non-live content is not <span class="highlighted">index</span>ed\nand searchable.\n\nEvery custom Search<span class="highlighted">Index</span> ...',
+        )
 
         template = """{% load highlight %}{% highlight entry with query html_tag "div" css_class "foo" max_length 100 %}"""
-        context = {
-            'entry': self.sample_entry,
-            'query': 'field',
-        }
-        self.assertEqual(self.render(template, context), u'...<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing...')
+        context = {"entry": self.sample_entry, "query": "field"}
+        self.assertEqual(
+            self.render(template, context),
+            '...<div class="foo">field</div> with\ndocument=True. This is the primary <div class="foo">field</div> that will get passed to the backend\nfor indexing...',
+        )
 
         template = """{% load highlight %}{% highlight entry with query html_tag "div" css_class "foo" max_length 100 %}"""
-        context = {
-            'entry': self.sample_entry,
-            'query': 'Haystack',
-        }
-        self.assertEqual(self.render(template, context), u'...<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y...')
+        context = {"entry": self.sample_entry, "query": "Haystack"}
+        self.assertEqual(
+            self.render(template, context),
+            '...<div class="foo">Haystack</div> is very similar to registering models and\nModelAdmin classes in the Django admin site. If y...',
+        )
 
         template = """{% load highlight %}{% highlight "xxxxxxxxxxxxx foo bbxxxxx foo" with "foo" max_length 5 html_tag "span" %}"""
         context = {}
-        self.assertEqual(self.render(template, context), u'...<span class="highlighted">foo</span> b...')
+        self.assertEqual(
+            self.render(template, context),
+            '...<span class="highlighted">foo</span> b...',
+        )
 
     def test_custom(self):
         # Stow.
-        old_custom_highlighter = getattr(settings, 'HAYSTACK_CUSTOM_HIGHLIGHTER', None)
-        settings.HAYSTACK_CUSTOM_HIGHLIGHTER = 'not.here.FooHighlighter'
+        old_custom_highlighter = getattr(settings, "HAYSTACK_CUSTOM_HIGHLIGHTER", None)
+        settings.HAYSTACK_CUSTOM_HIGHLIGHTER = "not.here.FooHighlighter"
 
         template = """{% load highlight %}{% highlight entry with query %}"""
-        context = {
-            'entry': self.sample_entry,
-            'query': 'index',
-        }
+        context = {"entry": self.sample_entry, "query": "index"}
         self.assertRaises(ImproperlyConfigured, self.render, template, context)
 
-        settings.HAYSTACK_CUSTOM_HIGHLIGHTER = 'test_haystack.test_templatetags.BorkHighlighter'
+        settings.HAYSTACK_CUSTOM_HIGHLIGHTER = (
+            "test_haystack.test_templatetags.BorkHighlighter"
+        )
 
         template = """{% load highlight %}{% highlight entry with query %}"""
-        context = {
-            'entry': self.sample_entry,
-            'query': 'index',
-        }
-        self.assertEqual(self.render(template, context), u'Bork!ing behavior for your model you can specify your own SearchIndex class.\nThis is useful for ensuring that future-dated or non-live content is not Bork!ed\nand searchable.\n\nEvery custom SearchIndex ')
+        context = {"entry": self.sample_entry, "query": "index"}
+        self.assertEqual(
+            self.render(template, context),
+            "Bork!ing behavior for your model you can specify your own SearchIndex class.\nThis is useful for ensuring that future-dated or non-live content is not Bork!ed\nand searchable.\n\nEvery custom SearchIndex ",
+        )
 
         # Restore.
         settings.HAYSTACK_CUSTOM_HIGHLIGHTER = old_custom_highlighter

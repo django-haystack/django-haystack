@@ -2,7 +2,7 @@
 
 set -e
 
-SOLR_VERSION=6.5.0
+SOLR_VERSION=6.6.4
 SOLR_DIR=solr
 
 
@@ -28,11 +28,16 @@ if [ ! -f ${SOLR_ARCHIVE} ]; then
     curl -Lo $SOLR_ARCHIVE ${SOLR_DOWNLOAD_URL} || (echo "Unable to download ${SOLR_DOWNLOAD_URL}"; exit 2)
 fi
 
-echo "Extracting Solr ${SOLR_ARCHIVE} to `pwd`/${SOLR_DIR}"
+echo "Extracting Solr ${SOLR_ARCHIVE} to ${TEST_ROOT}/${SOLR_DIR}"
 rm -rf ${SOLR_DIR}
 mkdir ${SOLR_DIR}
 FULL_SOLR_DIR=$(readlink -f ./${SOLR_DIR})
 tar -C ${SOLR_DIR} -xf ${SOLR_ARCHIVE} --strip-components=1
+
+# These tuning options will break on Java 10 and for testing we don't care about
+# production server optimizations:
+export GC_LOG_OPTS=""
+export GC_TUNE=""
 
 export SOLR_LOGS_DIR="${FULL_SOLR_DIR}/logs"
 

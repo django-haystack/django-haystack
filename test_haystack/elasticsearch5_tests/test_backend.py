@@ -5,7 +5,6 @@ import datetime
 import logging as std_logging
 import operator
 import unittest
-from contextlib import contextmanager
 from decimal import Decimal
 
 import elasticsearch
@@ -54,7 +53,7 @@ def clear_elasticsearch_index():
     connections["elasticsearch"].get_backend().setup_complete = False
 
 
-class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5MockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr="author", faceted=True)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -63,14 +62,14 @@ class ElasticsearchMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
-class ElasticsearchMockSearchIndexWithSkipDocument(ElasticsearchMockSearchIndex):
+class Elasticsearch5MockSearchIndexWithSkipDocument(Elasticsearch5MockSearchIndex):
     def prepare_text(self, obj):
         if obj.author == "daniel3":
             raise SkipDocument
         return "Indexed!\n%s" % obj.id
 
 
-class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5MockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr="author", faceted=True)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -82,7 +81,7 @@ class ElasticsearchMockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
         return obj.foo
 
 
-class ElasticsearchMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5MaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -94,7 +93,7 @@ class ElasticsearchMaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Inde
         return MockModel
 
 
-class ElasticsearchMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr="foo", document=True)
     name = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -103,7 +102,7 @@ class ElasticsearchMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
-class ElasticsearchAnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5AnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -115,7 +114,7 @@ class ElasticsearchAnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Inde
         return "You might be searching for the user %s" % obj.author
 
 
-class ElasticsearchBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5BoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(
         document=True,
         use_template=True,
@@ -129,7 +128,7 @@ class ElasticsearchBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return AFourthMockModel
 
     def prepare(self, obj):
-        data = super(ElasticsearchBoostMockSearchIndex, self).prepare(obj)
+        data = super(Elasticsearch5BoostMockSearchIndex, self).prepare(obj)
 
         if obj.pk == 4:
             data["boost"] = 5.0
@@ -137,7 +136,7 @@ class ElasticsearchBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return data
 
 
-class ElasticsearchFacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5FacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.CharField(model_attr="author", faceted=True)
     editor = indexes.CharField(model_attr="editor", faceted=True)
@@ -151,7 +150,7 @@ class ElasticsearchFacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexabl
         return AFourthMockModel
 
 
-class ElasticsearchRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5RoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default="")
     name = indexes.CharField()
     is_active = indexes.BooleanField()
@@ -167,7 +166,7 @@ class ElasticsearchRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
     def prepare(self, obj):
-        prepped = super(ElasticsearchRoundTripSearchIndex, self).prepare(obj)
+        prepped = super(Elasticsearch5RoundTripSearchIndex, self).prepare(obj)
         prepped.update(
             {
                 "text": "This is some example text.",
@@ -185,7 +184,9 @@ class ElasticsearchRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return prepped
 
 
-class ElasticsearchComplexFacetsMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5ComplexFacetsMockSearchIndex(
+    indexes.SearchIndex, indexes.Indexable
+):
     text = indexes.CharField(document=True, default="")
     name = indexes.CharField(faceted=True)
     is_active = indexes.BooleanField(faceted=True)
@@ -200,7 +201,7 @@ class ElasticsearchComplexFacetsMockSearchIndex(indexes.SearchIndex, indexes.Ind
         return MockModel
 
 
-class ElasticsearchAutocompleteMockModelSearchIndex(
+class Elasticsearch5AutocompleteMockModelSearchIndex(
     indexes.SearchIndex, indexes.Indexable
 ):
     text = indexes.CharField(model_attr="foo", document=True)
@@ -213,7 +214,7 @@ class ElasticsearchAutocompleteMockModelSearchIndex(
         return MockModel
 
 
-class ElasticsearchSpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch5SpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr="name", document=True)
     location = indexes.LocationField()
 
@@ -240,27 +241,9 @@ class TestSettings(TestCase):
         self.assertEqual(backend.conn.transport.max_retries, 42)
 
 
-class ElasticSearchMockUnifiedIndex(UnifiedIndex):
-
-    spy_args = None
-
-    def get_index(self, model_klass):
-        if self.spy_args is not None:
-            self.spy_args.setdefault("get_index", []).append(model_klass)
-        return super(ElasticSearchMockUnifiedIndex, self).get_index(model_klass)
-
-    @contextmanager
-    def spy(self):
-        try:
-            self.spy_args = {}
-            yield self.spy_args
-        finally:
-            self.spy_args = None
-
-
-class ElasticsearchSearchBackendTestCase(TestCase):
+class Elasticsearch5SearchBackendTestCase(TestCase):
     def setUp(self):
-        super(ElasticsearchSearchBackendTestCase, self).setUp()
+        super(Elasticsearch5SearchBackendTestCase, self).setUp()
 
         # Wipe it clean.
         self.raw_es = elasticsearch.Elasticsearch(
@@ -270,10 +253,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
-        self.ui = ElasticSearchMockUnifiedIndex()
-        self.smmi = ElasticsearchMockSearchIndex()
-        self.smmidni = ElasticsearchMockSearchIndexWithSkipDocument()
-        self.smtmmi = ElasticsearchMaintainTypeMockSearchIndex()
+        self.ui = UnifiedIndex()
+        self.smmi = Elasticsearch5MockSearchIndex()
+        self.smmidni = Elasticsearch5MockSearchIndexWithSkipDocument()
+        self.smtmmi = Elasticsearch5MaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -293,7 +276,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(ElasticsearchSearchBackendTestCase, self).tearDown()
+        super(Elasticsearch5SearchBackendTestCase, self).tearDown()
         self.sb.silently_fail = True
 
     def raw_search(self, query):
@@ -467,13 +450,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 0)
 
-    def test_results_ask_for_index_per_entry(self):
-        # Test that index class is obtained per result entry, not per every entry field
-        self.sb.update(self.smmi, self.sample_objs)
-        with self.ui.spy() as spy:
-            self.sb.search("*:*", limit_to_registered_models=False)
-            self.assertEqual(len(spy.get("get_index", [])), len(self.sample_objs))
-
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
         self.assertEqual(self.raw_search("*:*")["hits"]["total"], 3)
@@ -482,7 +458,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(self.sb.search("*:*")["hits"], 3)
         self.assertEqual(
             set([result.pk for result in self.sb.search("*:*")["results"]]),
-            set(["2", "1", "3"]),
+            {"2", "1", "3"},
         )
 
         self.assertEqual(self.sb.search("", highlight=True), {"hits": 0, "results": []})
@@ -495,22 +471,6 @@ class ElasticsearchSearchBackendTestCase(TestCase):
                 ]
             ),
             ["<em>Indexed</em>!\n1", "<em>Indexed</em>!\n2", "<em>Indexed</em>!\n3"],
-        )
-        self.assertEqual(
-            sorted(
-                [
-                    result.highlighted[0]
-                    for result in self.sb.search(
-                        "Index",
-                        highlight={"pre_tags": ["<start>"], "post_tags": ["</end>"]},
-                    )["results"]
-                ]
-            ),
-            [
-                "<start>Indexed</end>!\n1",
-                "<start>Indexed</end>!\n2",
-                "<start>Indexed</end>!\n3",
-            ],
         )
 
         self.assertEqual(self.sb.search("Indx")["hits"], 0)
@@ -525,9 +485,9 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         )
         results = self.sb.search("Index", facets={"name": {}})
         self.assertEqual(results["hits"], 3)
-        self.assertEqual(
-            results["facets"]["fields"]["name"],
-            [("daniel3", 1), ("daniel2", 1), ("daniel1", 1)],
+        self.assertSetEqual(
+            set(results["facets"]["fields"]["name"]),
+            {("daniel3", 1), ("daniel2", 1), ("daniel1", 1)},
         )
 
         self.assertEqual(
@@ -570,10 +530,10 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(results["facets"]["queries"], {"name": 3})
 
         self.assertEqual(
-            self.sb.search("", narrow_queries=set(["name:daniel1"])),
+            self.sb.search("", narrow_queries={"name:daniel1"}),
             {"hits": 0, "results": []},
         )
-        results = self.sb.search("Index", narrow_queries=set(["name:daniel1"]))
+        results = self.sb.search("Index", narrow_queries={"name:daniel1"})
         self.assertEqual(results["hits"], 1)
 
         # Ensure that swapping the ``result_class`` works.
@@ -684,7 +644,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
         )
 
         ui = UnifiedIndex()
-        ui.build(indexes=[ElasticsearchComplexFacetsMockSearchIndex()])
+        ui.build(indexes=[Elasticsearch5ComplexFacetsMockSearchIndex()])
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(mapping), 15 + 2)  # +2 management fields
@@ -722,7 +682,7 @@ class ElasticsearchSearchBackendTestCase(TestCase):
     def test_verify_type(self):
         old_ui = connections["elasticsearch"].get_unified_index()
         ui = UnifiedIndex()
-        smtmmi = ElasticsearchMaintainTypeMockSearchIndex()
+        smtmmi = Elasticsearch5MaintainTypeMockSearchIndex()
         ui.build(indexes=[smtmmi])
         connections["elasticsearch"]._index = ui
         sb = connections["elasticsearch"].get_backend()
@@ -742,7 +702,7 @@ class CaptureHandler(std_logging.Handler):
         CaptureHandler.logs_seen.append(record)
 
 
-class FailedElasticsearchSearchBackendTestCase(TestCase):
+class FailedElasticsearch5SearchBackendTestCase(TestCase):
     def setUp(self):
         self.sample_objs = []
 
@@ -768,7 +728,7 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
         # Setup the rest of the bits.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         ui = UnifiedIndex()
-        self.smmi = ElasticsearchMockSearchIndex()
+        self.smmi = Elasticsearch5MockSearchIndex()
         ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -805,11 +765,11 @@ class FailedElasticsearchSearchBackendTestCase(TestCase):
         self.assertEqual(len(CaptureHandler.logs_seen), 6)
 
 
-class LiveElasticsearchSearchQueryTestCase(TestCase):
+class LiveElasticsearch5SearchQueryTestCase(TestCase):
     fixtures = ["base_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearchSearchQueryTestCase, self).setUp()
+        super(LiveElasticsearch5SearchQueryTestCase, self).setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -817,7 +777,7 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchMockSearchIndex()
+        self.smmi = Elasticsearch5MockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -828,7 +788,7 @@ class LiveElasticsearchSearchQueryTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchSearchQueryTestCase, self).tearDown()
+        super(LiveElasticsearch5SearchQueryTestCase, self).tearDown()
 
     def test_log_query(self):
         reset_search_queries()
@@ -867,18 +827,18 @@ lssqstc_all_loaded = None
 
 
 @override_settings(DEBUG=True)
-class LiveElasticsearchSearchQuerySetTestCase(TestCase):
+class LiveElasticsearch5SearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
 
-    fixtures = ["base_data.json", "bulk_data.json"]
+    fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearchSearchQuerySetTestCase, self).setUp()
+        super(LiveElasticsearch5SearchQuerySetTestCase, self).setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchMockSearchIndex()
+        self.smmi = Elasticsearch5MockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
 
@@ -900,7 +860,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchSearchQuerySetTestCase, self).tearDown()
+        super(LiveElasticsearch5SearchQuerySetTestCase, self).tearDown()
 
     def test_load_all(self):
         sqs = self.sqs.order_by("pub_date").load_all()
@@ -915,9 +875,9 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         reset_search_queries()
         self.assertEqual(len(connections["elasticsearch"].queries), 0)
         sqs = self.sqs.all()
-        results = sorted([int(result.pk) for result in list(sqs)])
+        results = sorted([int(result.pk) for result in sqs])
         self.assertEqual(results, list(range(1, 24)))
-        self.assertEqual(len(connections["elasticsearch"].queries), 4)
+        self.assertEqual(len(connections["elasticsearch"].queries), 3)
 
     def test_slice(self):
         reset_search_queries()
@@ -967,17 +927,6 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         # Should only execute one query to count the length of the result set.
         self.assertEqual(len(connections["elasticsearch"].queries), 1)
 
-    def test_highlight(self):
-        reset_search_queries()
-        results = self.sqs.filter(content="index").highlight()
-        self.assertEqual(results[0].highlighted, ["<em>Indexed</em>!\n1"])
-
-    def test_highlight_options(self):
-        reset_search_queries()
-        results = self.sqs.filter(content="index")
-        results = results.highlight(pre_tags=["<i>"], post_tags=["</i>"])
-        self.assertEqual(results[0].highlighted, ["<i>Indexed</i>!\n1"])
-
     def test_manual_iter(self):
         results = self.sqs.all()
 
@@ -986,33 +935,31 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         results = set([int(result.pk) for result in results._manual_iter()])
         self.assertEqual(
             results,
-            set(
-                [
-                    2,
-                    7,
-                    12,
-                    17,
-                    1,
-                    6,
-                    11,
-                    16,
-                    23,
-                    5,
-                    10,
-                    15,
-                    22,
-                    4,
-                    9,
-                    14,
-                    19,
-                    21,
-                    3,
-                    8,
-                    13,
-                    18,
-                    20,
-                ]
-            ),
+            {
+                2,
+                7,
+                12,
+                17,
+                1,
+                6,
+                11,
+                16,
+                23,
+                5,
+                10,
+                15,
+                22,
+                4,
+                9,
+                14,
+                19,
+                21,
+                3,
+                8,
+                13,
+                18,
+                20,
+            },
         )
         self.assertEqual(len(connections["elasticsearch"].queries), 3)
 
@@ -1038,10 +985,9 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections["elasticsearch"].queries), 0)
         self.assertEqual(self.sqs._cache_is_full(), False)
         results = self.sqs.all()
-        fire_the_iterator_and_fill_cache = list(results)
-        self.assertEqual(23, len(fire_the_iterator_and_fill_cache))
+        fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections["elasticsearch"].queries), 4)
+        self.assertEqual(len(connections["elasticsearch"].queries), 3)
 
     def test___and__(self):
         sqs1 = self.sqs.filter(content="foo")
@@ -1100,17 +1046,6 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(sqs.query.build_query(), '("pants\\:rule")')
         self.assertEqual(len(sqs), 0)
 
-    def test_query__in(self):
-        self.assertGreater(len(self.sqs), 0)
-        sqs = self.sqs.filter(django_ct="core.mockmodel", django_id__in=[1, 2])
-        self.assertEqual(len(sqs), 2)
-
-    def test_query__in_empty_list(self):
-        """Confirm that an empty list avoids a Elasticsearch exception"""
-        self.assertGreater(len(self.sqs), 0)
-        sqs = self.sqs.filter(id__in=[])
-        self.assertEqual(len(sqs), 0)
-
     # Regressions
 
     def test_regression_proper_start_offsets(self):
@@ -1167,46 +1102,44 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs._load_all_querysets), 1)
         self.assertEqual(
             set([obj.object.id for obj in sqs]),
-            set([12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20]),
+            {12, 17, 11, 16, 23, 15, 22, 14, 19, 21, 13, 18, 20},
         )
-        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), set([21, 22, 23]))
+        self.assertEqual(set([obj.object.id for obj in sqs[10:20]]), {21, 22, 23})
 
     def test_related_iter(self):
         reset_search_queries()
         self.assertEqual(len(connections["elasticsearch"].queries), 0)
         sqs = self.rsqs.all()
-        results = set([int(result.pk) for result in list(sqs)])
+        results = set([int(result.pk) for result in sqs])
         self.assertEqual(
             results,
-            set(
-                [
-                    2,
-                    7,
-                    12,
-                    17,
-                    1,
-                    6,
-                    11,
-                    16,
-                    23,
-                    5,
-                    10,
-                    15,
-                    22,
-                    4,
-                    9,
-                    14,
-                    19,
-                    21,
-                    3,
-                    8,
-                    13,
-                    18,
-                    20,
-                ]
-            ),
+            {
+                2,
+                7,
+                12,
+                17,
+                1,
+                6,
+                11,
+                16,
+                23,
+                5,
+                10,
+                15,
+                22,
+                4,
+                9,
+                14,
+                19,
+                21,
+                3,
+                8,
+                13,
+                18,
+                20,
+            },
         )
-        self.assertEqual(len(connections["elasticsearch"].queries), 4)
+        self.assertEqual(len(connections["elasticsearch"].queries), 3)
 
     def test_related_slice(self):
         reset_search_queries()
@@ -1228,7 +1161,7 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections["elasticsearch"].queries), 0)
         results = self.rsqs.all().order_by("pub_date")
         self.assertEqual(
-            set([int(result.pk) for result in results[20:30]]), set([21, 22, 23])
+            set([int(result.pk) for result in results[20:30]]), {21, 22, 23}
         )
         self.assertEqual(len(connections["elasticsearch"].queries), 1)
 
@@ -1263,10 +1196,9 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(connections["elasticsearch"].queries), 0)
         self.assertEqual(self.rsqs._cache_is_full(), False)
         results = self.rsqs.all()
-        fire_the_iterator_and_fill_cache = list(results)
-        self.assertEqual(23, len(fire_the_iterator_and_fill_cache))
+        fire_the_iterator_and_fill_cache = [result for result in results]
         self.assertEqual(results._cache_is_full(), True)
-        self.assertEqual(len(connections["elasticsearch"].queries), 4)
+        self.assertEqual(len(connections["elasticsearch"].queries), 3)
 
     def test_quotes_regression(self):
         sqs = self.sqs.auto_query("44°48'40''N 20°28'32''E")
@@ -1338,18 +1270,18 @@ class LiveElasticsearchSearchQuerySetTestCase(TestCase):
 
 
 @override_settings(DEBUG=True)
-class LiveElasticsearchSpellingTestCase(TestCase):
+class LiveElasticsearch5SpellingTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
 
-    fixtures = ["base_data.json", "bulk_data.json"]
+    fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearchSpellingTestCase, self).setUp()
+        super(LiveElasticsearch5SpellingTestCase, self).setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchMockSpellingIndex()
+        self.smmi = Elasticsearch5MockSpellingIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1367,7 +1299,7 @@ class LiveElasticsearchSpellingTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchSpellingTestCase, self).tearDown()
+        super(LiveElasticsearch5SpellingTestCase, self).tearDown()
 
     def test_spelling(self):
         self.assertEqual(
@@ -1382,25 +1314,20 @@ class LiveElasticsearchSpellingTestCase(TestCase):
             self.sqs.spelling_suggestion("srchindex instanc"), "searchindex instance"
         )
 
-        sqs = self.sqs.auto_query("something completely different").set_spelling_query(
-            "structurd"
-        )
-        self.assertEqual(sqs.spelling_suggestion(), "structured")
 
-
-class LiveElasticsearchMoreLikeThisTestCase(TestCase):
-    fixtures = ["base_data.json", "bulk_data.json"]
+class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
+    fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearchMoreLikeThisTestCase, self).setUp()
+        super(LiveElasticsearch5MoreLikeThisTestCase, self).setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
 
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchMockModelSearchIndex()
-        self.sammi = ElasticsearchAnotherMockModelSearchIndex()
+        self.smmi = Elasticsearch5MockModelSearchIndex()
+        self.sammi = Elasticsearch5AnotherMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi, self.sammi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1412,45 +1339,48 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchMoreLikeThisTestCase, self).tearDown()
+        super(LiveElasticsearch5MoreLikeThisTestCase, self).tearDown()
 
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
-        self.assertEqual(mlt.count(), 4)
+        results = [result.pk for result in mlt]
+        self.assertEqual(mlt.count(), 11)
         self.assertEqual(
-            set([result.pk for result in mlt]), set(["2", "6", "16", "23"])
+            set(results), {"10", "5", "2", "21", "4", "6", "16", "9", "14"}
         )
-        self.assertEqual(len([result.pk for result in mlt]), 4)
+        self.assertEqual(len(results), 10)
 
         alt_mlt = self.sqs.filter(name="daniel3").more_like_this(
             MockModel.objects.get(pk=2)
         )
-        self.assertEqual(alt_mlt.count(), 6)
+        results = [result.pk for result in alt_mlt]
+        self.assertEqual(alt_mlt.count(), 9)
         self.assertEqual(
-            set([result.pk for result in alt_mlt]),
-            set(["2", "6", "16", "23", "1", "11"]),
+            set(results), {"2", "16", "3", "19", "4", "17", "10", "22", "23"}
         )
-        self.assertEqual(len([result.pk for result in alt_mlt]), 6)
+        self.assertEqual(len(results), 9)
 
         alt_mlt_with_models = self.sqs.models(MockModel).more_like_this(
             MockModel.objects.get(pk=1)
         )
-        self.assertEqual(alt_mlt_with_models.count(), 4)
+        results = [result.pk for result in alt_mlt_with_models]
+        self.assertEqual(alt_mlt_with_models.count(), 10)
         self.assertEqual(
-            set([result.pk for result in alt_mlt_with_models]),
-            set(["2", "6", "16", "23"]),
+            set(results), {"10", "5", "21", "2", "4", "6", "23", "9", "14", "16"}
         )
-        self.assertEqual(len([result.pk for result in alt_mlt_with_models]), 4)
+        self.assertEqual(len(results), 10)
 
         if hasattr(MockModel.objects, "defer"):
             # Make sure MLT works with deferred bits.
-            mi = MockModel.objects.defer("foo").get(pk=1)
-            deferred = self.sqs.models(MockModel).more_like_this(mi)
-            self.assertEqual(deferred.count(), 4)
+            qs = MockModel.objects.defer("foo")
+            self.assertEqual(qs.query.deferred_loading[1], True)
+            deferred = self.sqs.models(MockModel).more_like_this(qs.get(pk=1))
+            self.assertEqual(deferred.count(), 10)
             self.assertEqual(
-                set([result.pk for result in deferred]), set(["2", "6", "16", "23"])
+                {result.pk for result in deferred},
+                {"10", "5", "21", "2", "4", "6", "23", "9", "14", "16"},
             )
-            self.assertEqual(len([result.pk for result in deferred]), 4)
+            self.assertEqual(len([result.pk for result in deferred]), 10)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(
@@ -1463,16 +1393,16 @@ class LiveElasticsearchMoreLikeThisTestCase(TestCase):
         )
 
 
-class LiveElasticsearchAutocompleteTestCase(TestCase):
-    fixtures = ["base_data.json", "bulk_data.json"]
+class LiveElasticsearch5AutocompleteTestCase(TestCase):
+    fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearchAutocompleteTestCase, self).setUp()
+        super(LiveElasticsearch5AutocompleteTestCase, self).setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchAutocompleteMockModelSearchIndex()
+        self.smmi = Elasticsearch5AutocompleteMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1490,7 +1420,7 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchAutocompleteTestCase, self).tearDown()
+        super(LiveElasticsearch5AutocompleteTestCase, self).tearDown()
 
     def test_build_schema(self):
         self.sb = connections["elasticsearch"].get_backend()
@@ -1521,32 +1451,30 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         self.assertEqual(autocomplete.count(), 16)
         self.assertEqual(
             set([result.pk for result in autocomplete]),
-            set(
-                [
-                    "1",
-                    "12",
-                    "6",
-                    "14",
-                    "7",
-                    "4",
-                    "23",
-                    "17",
-                    "13",
-                    "18",
-                    "20",
-                    "22",
-                    "19",
-                    "15",
-                    "10",
-                    "2",
-                ]
-            ),
+            {
+                "1",
+                "12",
+                "6",
+                "14",
+                "7",
+                "4",
+                "23",
+                "17",
+                "13",
+                "18",
+                "20",
+                "22",
+                "19",
+                "15",
+                "10",
+                "2",
+            },
         )
         self.assertTrue("mod" in autocomplete[0].text.lower())
         self.assertTrue("mod" in autocomplete[1].text.lower())
-        self.assertTrue("mod" in autocomplete[2].text.lower())
-        self.assertTrue("mod" in autocomplete[3].text.lower())
-        self.assertTrue("mod" in autocomplete[4].text.lower())
+        self.assertTrue("mod" in autocomplete[6].text.lower())
+        self.assertTrue("mod" in autocomplete[9].text.lower())
+        self.assertTrue("mod" in autocomplete[13].text.lower())
         self.assertEqual(len([result.pk for result in autocomplete]), 16)
 
         # Test multiple words.
@@ -1554,53 +1482,38 @@ class LiveElasticsearchAutocompleteTestCase(TestCase):
         self.assertEqual(autocomplete_2.count(), 13)
         self.assertEqual(
             set([result.pk for result in autocomplete_2]),
-            set(
-                [
-                    "1",
-                    "6",
-                    "2",
-                    "14",
-                    "12",
-                    "13",
-                    "10",
-                    "19",
-                    "4",
-                    "20",
-                    "23",
-                    "22",
-                    "15",
-                ]
-            ),
+            {"1", "6", "2", "14", "12", "13", "10", "19", "4", "20", "23", "22", "15"},
         )
-        self.assertTrue("your" in autocomplete_2[0].text.lower())
-        self.assertTrue("mod" in autocomplete_2[0].text.lower())
-        self.assertTrue("your" in autocomplete_2[1].text.lower())
-        self.assertTrue("mod" in autocomplete_2[1].text.lower())
-        self.assertTrue("your" in autocomplete_2[2].text.lower())
+        map_results = {result.pk: result for result in autocomplete_2}
+        self.assertTrue("your" in map_results["1"].text.lower())
+        self.assertTrue("mod" in map_results["1"].text.lower())
+        self.assertTrue("your" in map_results["6"].text.lower())
+        self.assertTrue("mod" in map_results["6"].text.lower())
+        self.assertTrue("your" in map_results["2"].text.lower())
         self.assertEqual(len([result.pk for result in autocomplete_2]), 13)
 
         # Test multiple fields.
         autocomplete_3 = self.sqs.autocomplete(text_auto="Django", name_auto="dan")
         self.assertEqual(autocomplete_3.count(), 4)
         self.assertEqual(
-            set([result.pk for result in autocomplete_3]), set(["12", "1", "22", "14"])
+            set([result.pk for result in autocomplete_3]), {"12", "1", "22", "14"}
         )
         self.assertEqual(len([result.pk for result in autocomplete_3]), 4)
 
         # Test numbers in phrases
         autocomplete_4 = self.sqs.autocomplete(text_auto="Jen 867")
         self.assertEqual(autocomplete_4.count(), 1)
-        self.assertEqual(set([result.pk for result in autocomplete_4]), set(["20"]))
+        self.assertEqual(set([result.pk for result in autocomplete_4]), {"20"})
 
         # Test numbers alone
         autocomplete_4 = self.sqs.autocomplete(text_auto="867")
         self.assertEqual(autocomplete_4.count(), 1)
-        self.assertEqual(set([result.pk for result in autocomplete_4]), set(["20"]))
+        self.assertEqual(set([result.pk for result in autocomplete_4]), {"20"})
 
 
-class LiveElasticsearchRoundTripTestCase(TestCase):
+class LiveElasticsearch5RoundTripTestCase(TestCase):
     def setUp(self):
-        super(LiveElasticsearchRoundTripTestCase, self).setUp()
+        super(LiveElasticsearch5RoundTripTestCase, self).setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1608,7 +1521,7 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.srtsi = ElasticsearchRoundTripSearchIndex()
+        self.srtsi = Elasticsearch5RoundTripSearchIndex()
         self.ui.build(indexes=[self.srtsi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -1623,7 +1536,7 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchRoundTripTestCase, self).tearDown()
+        super(LiveElasticsearch5RoundTripTestCase, self).tearDown()
 
     def test_round_trip(self):
         results = self.sqs.filter(id="core.mockmodel.1")
@@ -1647,11 +1560,11 @@ class LiveElasticsearchRoundTripTestCase(TestCase):
 
 
 @unittest.skipUnless(test_pickling, "Skipping pickling tests")
-class LiveElasticsearchPickleTestCase(TestCase):
-    fixtures = ["base_data.json", "bulk_data.json"]
+class LiveElasticsearch5PickleTestCase(TestCase):
+    fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearchPickleTestCase, self).setUp()
+        super(LiveElasticsearch5PickleTestCase, self).setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1659,8 +1572,8 @@ class LiveElasticsearchPickleTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchMockModelSearchIndex()
-        self.sammi = ElasticsearchAnotherMockModelSearchIndex()
+        self.smmi = Elasticsearch5MockModelSearchIndex()
+        self.sammi = Elasticsearch5AnotherMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi, self.sammi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1672,7 +1585,7 @@ class LiveElasticsearchPickleTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearchPickleTestCase, self).tearDown()
+        super(LiveElasticsearch5PickleTestCase, self).tearDown()
 
     def test_pickling(self):
         results = self.sqs.all()
@@ -1687,9 +1600,9 @@ class LiveElasticsearchPickleTestCase(TestCase):
         self.assertEqual(like_a_cuke[0].id, results[0].id)
 
 
-class ElasticsearchBoostBackendTestCase(TestCase):
+class Elasticsearch5BoostBackendTestCase(TestCase):
     def setUp(self):
-        super(ElasticsearchBoostBackendTestCase, self).setUp()
+        super(Elasticsearch5BoostBackendTestCase, self).setUp()
 
         # Wipe it clean.
         self.raw_es = elasticsearch.Elasticsearch(
@@ -1700,7 +1613,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchBoostMockSearchIndex()
+        self.smmi = Elasticsearch5BoostMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -1723,7 +1636,7 @@ class ElasticsearchBoostBackendTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(ElasticsearchBoostBackendTestCase, self).tearDown()
+        super(Elasticsearch5BoostBackendTestCase, self).tearDown()
 
     def raw_search(self, query):
         return self.raw_es.search(
@@ -1740,14 +1653,12 @@ class ElasticsearchBoostBackendTestCase(TestCase):
 
         self.assertEqual(
             set([result.id for result in results]),
-            set(
-                [
-                    "core.afourthmockmodel.4",
-                    "core.afourthmockmodel.3",
-                    "core.afourthmockmodel.1",
-                    "core.afourthmockmodel.2",
-                ]
-            ),
+            {
+                "core.afourthmockmodel.4",
+                "core.afourthmockmodel.3",
+                "core.afourthmockmodel.1",
+                "core.afourthmockmodel.2",
+            },
         )
 
     def test__to_python(self):
@@ -1800,9 +1711,9 @@ class RecreateIndexTestCase(TestCase):
         )
 
 
-class ElasticsearchFacetingTestCase(TestCase):
+class Elasticsearch5FacetingTestCase(TestCase):
     def setUp(self):
-        super(ElasticsearchFacetingTestCase, self).setUp()
+        super(Elasticsearch5FacetingTestCase, self).setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1810,7 +1721,7 @@ class ElasticsearchFacetingTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = ElasticsearchFacetingMockSearchIndex()
+        self.smmi = Elasticsearch5FacetingMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -1837,7 +1748,7 @@ class ElasticsearchFacetingTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(ElasticsearchFacetingTestCase, self).tearDown()
+        super(Elasticsearch5FacetingTestCase, self).tearDown()
 
     def test_facet(self):
         self.sb.update(self.smmi, self.sample_objs)

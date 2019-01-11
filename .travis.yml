@@ -5,6 +5,7 @@ python:
     - 2.7
     - 3.4
     - 3.5
+    - 3.6
     - pypy
 
 cache:
@@ -12,8 +13,6 @@ cache:
     pip: true
     directories:
         - $HOME/download-cache
-jdk:
-    - oraclejdk8
 
 addons:
     apt_packages:
@@ -28,24 +27,31 @@ addons:
         - wajig
 
 before_install:
+    - sudo apt-get install -qy default-jre
     - mkdir -p $HOME/download-cache
     # See https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo
     - wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
     - >
-      if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
-      then
-        echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
-        sudo apt-get update
-        sudo apt-get -y --allow-downgrades install elasticsearch=2.4.5
-      else
-        echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
-        sudo apt-get update
-        sudo apt-get -y --allow-downgrades install elasticsearch=1.7.6
-      fi
+        if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
+        then
+          echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
+          sudo apt-get update
+          sudo apt-get -qy --allow-downgrades install elasticsearch=2.4.6
+        elif [[ $VERSION_ES == '>=5.0.0,<6.0.0' ]];
+        then
+          echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-5.x.list
+          sudo apt-get update -qy
+          sudo apt-get -y --allow-downgrades install elasticsearch=5.6.10
+        else
+          echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
+          sudo apt-get update -qy
+          sudo apt-get -qy --allow-downgrades install elasticsearch=1.7.6
+        fi
     - sudo service elasticsearch restart
 
 install:
     - pip install --upgrade setuptools
+    - pip install codecov coverage
     - pip install requests "Django${DJANGO_VERSION}" "elasticsearch${VERSION_ES}"
     - python setup.py clean build install
 
@@ -54,22 +60,57 @@ before_script:
 
 script:
     - python test_haystack/solr_tests/server/wait-for-solr
-    - python setup.py test
+    - coverage run setup.py test
+
+after_success:
+    - codecov
 
 env:
     matrix:
-        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=1.0.0,<2.0.0"
-        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=1.0.0,<2.0.0"
-        - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=1.0.0,<2.0.0"
-        - DJANGO_VERSION=">=1.8,<1.9" VERSION_ES=">=2.0.0,<3.0.0"
-        - DJANGO_VERSION=">=1.9,<1.10" VERSION_ES=">=2.0.0,<3.0.0"
-        - DJANGO_VERSION=">=1.10,<1.11" VERSION_ES=">=2.0.0,<3.0.0"
-        - DJANGO_VERSION=">=1.11,<1.12" VERSION_ES=">=2.0.0,<3.0.0"
-
+        - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
+        - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=5.0.0,<6.0.0"
+        - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
+        - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
 matrix:
     allow_failures:
         - python: 'pypy'
+    exclude:
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: 2.7
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: 3.4
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: 3.4
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: 3.4
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
+        - python: pypy
+          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
 
 notifications:
-    irc: "irc.freenode.org#haystack"
+    irc: 'irc.freenode.org#haystack'
     email: false
