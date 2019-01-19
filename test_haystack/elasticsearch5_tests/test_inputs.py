@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -7,10 +7,10 @@ from django.test import TestCase
 from haystack import connections, inputs
 
 
-class WhooshInputTestCase(TestCase):
+class Elasticsearch5InputTestCase(TestCase):
     def setUp(self):
-        super(WhooshInputTestCase, self).setUp()
-        self.query_obj = connections["whoosh"].get_query()
+        super(Elasticsearch5InputTestCase, self).setUp()
+        self.query_obj = connections["elasticsearch"].get_query()
 
     def test_raw_init(self):
         raw = inputs.Raw("hello OR there, :you")
@@ -34,7 +34,7 @@ class WhooshInputTestCase(TestCase):
 
     def test_clean_prepare(self):
         clean = inputs.Clean("hello OR there, :you")
-        self.assertEqual(clean.prepare(self.query_obj), "hello or there, ':you'")
+        self.assertEqual(clean.prepare(self.query_obj), "hello or there, \\:you")
 
     def test_exact_init(self):
         exact = inputs.Exact("hello OR there, :you")
@@ -45,6 +45,9 @@ class WhooshInputTestCase(TestCase):
         exact = inputs.Exact("hello OR there, :you")
         self.assertEqual(exact.prepare(self.query_obj), '"hello OR there, :you"')
 
+        exact = inputs.Exact("hello OR there, :you", clean=True)
+        self.assertEqual(exact.prepare(self.query_obj), '"hello or there, \\:you"')
+
     def test_not_init(self):
         not_it = inputs.Not("hello OR there, :you")
         self.assertEqual(not_it.query_string, "hello OR there, :you")
@@ -52,7 +55,7 @@ class WhooshInputTestCase(TestCase):
 
     def test_not_prepare(self):
         not_it = inputs.Not("hello OR there, :you")
-        self.assertEqual(not_it.prepare(self.query_obj), "NOT (hello or there, ':you')")
+        self.assertEqual(not_it.prepare(self.query_obj), "NOT (hello or there, \\:you)")
 
     def test_autoquery_init(self):
         autoquery = inputs.AutoQuery('panic -don\'t "froody dude"')
@@ -79,6 +82,8 @@ class WhooshInputTestCase(TestCase):
         self.assertEqual(altparser.post_process, False)
 
     def test_altparser_prepare(self):
-        altparser = inputs.AltParser("hello OR there, :you")
-        # Not supported on that backend.
-        self.assertEqual(altparser.prepare(self.query_obj), "")
+        altparser = inputs.AltParser("dismax", "douglas adams", qf="author", mm=1)
+        self.assertEqual(
+            altparser.prepare(self.query_obj),
+            """{!dismax mm=1 qf=author v='douglas adams'}""",
+        )

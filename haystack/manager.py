@@ -59,7 +59,9 @@ class SearchIndexManager(object):
         return self.get_search_queryset().distance(field, point)
 
     def date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
-        return self.get_search_queryset().date_facet(field, start_date, end_date, gap_by, gap_amount=1)
+        return self.get_search_queryset().date_facet(
+            field, start_date, end_date, gap_by, gap_amount=1
+        )
 
     def query_facet(self, field, query):
         return self.get_search_queryset().query_facet(field, query)
@@ -68,12 +70,12 @@ class SearchIndexManager(object):
         return self.get_search_queryset().narrow(query)
 
     def raw_search(self, query_string, **kwargs):
-        return self.get_search_queryset().raw_search(query_string,  **kwargs)
+        return self.get_search_queryset().raw_search(query_string, **kwargs)
 
     def load_all(self):
         return self.get_search_queryset().load_all()
 
-    def auto_query(self, query_string, fieldname='content'):
+    def auto_query(self, query_string, fieldname="content"):
         return self.get_search_queryset().auto_query(query_string, fieldname=fieldname)
 
     def autocomplete(self, **kwargs):

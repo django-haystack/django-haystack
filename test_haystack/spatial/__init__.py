@@ -4,5 +4,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from ..utils import check_solr
 
+
 def setup():
     check_solr()

@@ -12,6 +12,9 @@ from django.db import models
 class MockTag(models.Model):
     name = models.CharField(max_length=32)
 
+    def __unicode__(self):
+        return self.name
+
 
 class MockModel(models.Model):
     author = models.CharField(max_length=255)
@@ -23,7 +26,8 @@ class MockModel(models.Model):
         return self.author
 
     def hello(self):
-        return 'World!'
+        return "World!"
+
 
 class UUIDMockModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -31,6 +35,7 @@ class UUIDMockModel(models.Model):
 
     def __unicode__(self):
         return str(self.id)
+
 
 class AnotherMockModel(models.Model):
     author = models.CharField(max_length=255)
@@ -93,11 +98,11 @@ class ScoreMockModel(models.Model):
 
 
 class ManyToManyLeftSideModel(models.Model):
-    related_models = models.ManyToManyField('ManyToManyRightSideModel')
+    related_models = models.ManyToManyField("ManyToManyRightSideModel")
 
 
 class ManyToManyRightSideModel(models.Model):
-    name = models.CharField(max_length=32, default='Default name')
+    name = models.CharField(max_length=32, default="Default name")
 
     def __unicode__(self):
         return self.name
@@ -108,4 +113,6 @@ class OneToManyLeftSideModel(models.Model):
 
 
 class OneToManyRightSideModel(models.Model):
-    left_side = models.ForeignKey(OneToManyLeftSideModel, models.CASCADE, related_name='right_side')
+    left_side = models.ForeignKey(
+        OneToManyLeftSideModel, models.CASCADE, related_name="right_side"
+    )

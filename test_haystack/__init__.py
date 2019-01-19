@@ -6,10 +6,11 @@ import os
 test_runner = None
 old_config = None
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'test_haystack.settings'
+os.environ["DJANGO_SETTINGS_MODULE"] = "test_haystack.settings"
 
 
 import django
+
 django.setup()
 
 
@@ -27,5 +28,3 @@ def setup():
 def teardown():
     test_runner.teardown_databases(old_config)
     test_runner.teardown_test_environment()
-
-

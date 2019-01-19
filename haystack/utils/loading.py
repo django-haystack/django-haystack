@@ -20,14 +20,16 @@ from haystack.utils.app_loading import haystack_get_app_modules
 
 
 def import_class(path):
-    path_bits = path.split('.')
+    path_bits = path.split(".")
     # Cut off the class name at the end.
     class_name = path_bits.pop()
-    module_path = '.'.join(path_bits)
+    module_path = ".".join(path_bits)
     module_itself = importlib.import_module(module_path)
 
     if not hasattr(module_itself, class_name):
-        raise ImportError("The Python module '%s' has no '%s' class." % (module_path, class_name))
+        raise ImportError(
+            "The Python module '%s' has no '%s' class." % (module_path, class_name)
+        )
 
     return getattr(module_itself, class_name)
 
@@ -52,10 +54,13 @@ def load_backend(full_backend_path):
       ``myapp.search_backends.CustomSolrEngine``
 
     """
-    path_bits = full_backend_path.split('.')
+    path_bits = full_backend_path.split(".")
 
     if len(path_bits) < 2:
-        raise ImproperlyConfigured("The provided backend '%s' is not a complete Python path to a BaseEngine subclass." % full_backend_path)
+        raise ImproperlyConfigured(
+            "The provided backend '%s' is not a complete Python path to a BaseEngine subclass."
+            % full_backend_path
+        )
 
     return import_class(full_backend_path)
 
@@ -76,10 +81,13 @@ def load_router(full_router_path):
       ``myapp.search_routers.MasterSlaveRouter``
 
     """
-    path_bits = full_router_path.split('.')
+    path_bits = full_router_path.split(".")
 
     if len(path_bits) < 2:
-        raise ImproperlyConfigured("The provided router '%s' is not a complete Python path to a BaseRouter subclass." % full_router_path)
+        raise ImproperlyConfigured(
+            "The provided router '%s' is not a complete Python path to a BaseRouter subclass."
+            % full_router_path
+        )
 
     return import_class(full_router_path)
 
@@ -94,23 +102,27 @@ class ConnectionHandler(object):
         try:
             conn = self.connections_info[alias]
         except KeyError:
-            raise ImproperlyConfigured("The key '%s' isn't an available connection." % alias)
+            raise ImproperlyConfigured(
+                "The key '%s' isn't an available connection." % alias
+            )
 
-        if not conn.get('ENGINE'):
-            conn['ENGINE'] = 'haystack.backends.simple_backend.SimpleEngine'
+        if not conn.get("ENGINE"):
+            conn["ENGINE"] = "haystack.backends.simple_backend.SimpleEngine"
 
     def __getitem__(self, key):
-        if not hasattr(self.thread_local, 'connections'):
+        if not hasattr(self.thread_local, "connections"):
             self.thread_local.connections = {}
         elif key in self.thread_local.connections:
             return self.thread_local.connections[key]
 
         self.ensure_defaults(key)
-        self.thread_local.connections[key] = load_backend(self.connections_info[key]['ENGINE'])(using=key)
+        self.thread_local.connections[key] = load_backend(
+            self.connections_info[key]["ENGINE"]
+        )(using=key)
         return self.thread_local.connections[key]
 
     def reload(self, key):
-        if not hasattr(self.thread_local, 'connections'):
+        if not hasattr(self.thread_local, "connections"):
             self.thread_local.connections = {}
         try:
             del self.thread_local.connections[key]
@@ -130,8 +142,8 @@ class ConnectionRouter(object):
     @property
     def routers(self):
         if self._routers is None:
-            default_routers = ['haystack.routers.DefaultRouter']
-            router_list = getattr(settings, 'HAYSTACK_ROUTERS', default_routers)
+            default_routers = ["haystack.routers.DefaultRouter"]
+            router_list = getattr(settings, "HAYSTACK_ROUTERS", default_routers)
             # in case HAYSTACK_ROUTERS is empty, fallback to default routers
             if not len(router_list):
                 router_list = default_routers
@@ -161,10 +173,10 @@ class ConnectionRouter(object):
         return conns
 
     def for_write(self, **hints):
-        return self._for_action('for_write', True, **hints)
+        return self._for_action("for_write", True, **hints)
 
     def for_read(self, **hints):
-        return self._for_action('for_read', False, **hints)[0]
+        return self._for_action("for_read", False, **hints)[0]
 
 
 class UnifiedIndex(object):
@@ -181,7 +193,9 @@ class UnifiedIndex(object):
 
     @property
     def indexes(self):
-        warnings.warn("'UnifiedIndex.indexes' was deprecated in Haystack v2.3.0. Please use UnifiedIndex.get_indexes().")
+        warnings.warn(
+            "'UnifiedIndex.indexes' was deprecated in Haystack v2.3.0. Please use UnifiedIndex.get_indexes()."
+        )
         return self._indexes
 
     def collect_indexes(self):
@@ -189,19 +203,29 @@ class UnifiedIndex(object):
 
         for app_mod in haystack_get_app_modules():
             try:
-                search_index_module = importlib.import_module("%s.search_indexes" % app_mod.__name__)
+                search_index_module = importlib.import_module(
+                    "%s.search_indexes" % app_mod.__name__
+                )
             except ImportError:
-                if module_has_submodule(app_mod, 'search_indexes'):
+                if module_has_submodule(app_mod, "search_indexes"):
                     raise
 
                 continue
 
-            for item_name, item in inspect.getmembers(search_index_module, inspect.isclass):
-                if getattr(item, 'haystack_use_for_indexing', False) and getattr(item, 'get_model', None):
+            for item_name, item in inspect.getmembers(
+                search_index_module, inspect.isclass
+            ):
+                if getattr(item, "haystack_use_for_indexing", False) and getattr(
+                    item, "get_model", None
+                ):
                     # We've got an index. Check if we should be ignoring it.
                     class_path = "%s.search_indexes.%s" % (app_mod.__name__, item_name)
 
-                    if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(item_name) == id(item):
+                    if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(
+                        item_name
+                    ) == id(
+                        item
+                    ):
                         self.excluded_indexes_ids[str(item_name)] = id(item)
                         continue
 
@@ -229,9 +253,8 @@ class UnifiedIndex(object):
                 raise ImproperlyConfigured(
                     "Model '%s' has more than one 'SearchIndex`` handling it. "
                     "Please exclude either '%s' or '%s' using the 'EXCLUDED_INDEXES' "
-                    "setting defined in 'settings.HAYSTACK_CONNECTIONS'." % (
-                        model, self._indexes[model], index
-                    )
+                    "setting defined in 'settings.HAYSTACK_CONNECTIONS'."
+                    % (model, self._indexes[model], index)
                 )
 
             self._indexes[model] = index
@@ -243,17 +266,26 @@ class UnifiedIndex(object):
         for fieldname, field_object in index.fields.items():
             if field_object.document is True:
                 if field_object.index_fieldname != self.document_field:
-                    raise SearchFieldError("All 'SearchIndex' classes must use the same '%s' fieldname for the 'document=True' field. Offending index is '%s'." % (self.document_field, index))
+                    raise SearchFieldError(
+                        "All 'SearchIndex' classes must use the same '%s' fieldname for the 'document=True' field. Offending index is '%s'."
+                        % (self.document_field, index)
+                    )
 
             # Stow the index_fieldname so we don't have to get it the hard way again.
-            if fieldname in self._fieldnames and field_object.index_fieldname != self._fieldnames[fieldname]:
+            if (
+                fieldname in self._fieldnames
+                and field_object.index_fieldname != self._fieldnames[fieldname]
+            ):
                 # We've already seen this field in the list. Raise an exception if index_fieldname differs.
-                raise SearchFieldError("All uses of the '%s' field need to use the same 'index_fieldname' attribute." % fieldname)
+                raise SearchFieldError(
+                    "All uses of the '%s' field need to use the same 'index_fieldname' attribute."
+                    % fieldname
+                )
 
             self._fieldnames[fieldname] = field_object.index_fieldname
 
             # Stow the facet_fieldname so we don't have to look that up either.
-            if hasattr(field_object, 'facet_for'):
+            if hasattr(field_object, "facet_for"):
                 if field_object.facet_for:
                     self._facet_fieldnames[field_object.facet_for] = fieldname
                 else:
@@ -316,7 +348,7 @@ class UnifiedIndex(object):
         indexes = self.get_indexes()
 
         if model_klass not in indexes:
-            raise NotHandled('The model %s is not registered' % model_klass)
+            raise NotHandled("The model %s is not registered" % model_klass)
 
         return indexes[model_klass]
 
@@ -328,7 +360,7 @@ class UnifiedIndex(object):
             if fieldname != field:
                 continue
 
-            if hasattr(field_object, 'facet_for'):
+            if hasattr(field_object, "facet_for"):
                 if field_object.facet_for:
                     return field_object.facet_for
                 else:

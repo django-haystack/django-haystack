@@ -112,7 +112,7 @@ the following:
 Solr
 ~~~~
 
-Example::
+Example (Solr 4.X)::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
@@ -123,6 +123,17 @@ Example::
         },
     }
 
+Example (Solr 6.X)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+            'URL': 'http://127.0.0.1:8983/solr/tester',                 # Assuming you created a core named 'tester' as described in installing search engines.
+            'ADMIN_URL': 'http://127.0.0.1:8983/solr/admin/cores'
+            # ...or for multicore...
+            # 'URL': 'http://127.0.0.1:8983/solr/mysite',
+        },
+    }
 
 Elasticsearch
 ~~~~~~~~~~~~~
@@ -146,6 +157,7 @@ Example (ElasticSearch 2.x)::
             'INDEX_NAME': 'haystack',
         },
     }
+
 
 Whoosh
 ~~~~~~

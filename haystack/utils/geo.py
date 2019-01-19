@@ -2,9 +2,6 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D, Distance
-
 from haystack.constants import WGS_84_SRID
 from haystack.exceptions import SpatialError
 
@@ -13,7 +10,7 @@ def ensure_geometry(geom):
     """
     Makes sure the parameter passed in looks like a GEOS ``GEOSGeometry``.
     """
-    if not hasattr(geom, 'geom_type'):
+    if not hasattr(geom, "geom_type"):
         raise SpatialError("Point '%s' doesn't appear to be a GEOS geometry." % geom)
 
     return geom
@@ -25,7 +22,7 @@ def ensure_point(geom):
     """
     ensure_geometry(geom)
 
-    if geom.geom_type != 'Point':
+    if geom.geom_type != "Point":
         raise SpatialError("Provided geometry '%s' is not a 'Point'." % geom)
 
     return geom
@@ -58,7 +55,7 @@ def ensure_distance(dist):
     try:
         # Since we mostly only care about the ``.km`` attribute, make sure
         # it's there.
-        km = dist.km
+        dist.km
     except AttributeError:
         raise SpatialError("'%s' does not appear to be a 'Distance' object." % dist)
 

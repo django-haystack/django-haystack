@@ -19,4 +19,4 @@ class Cat(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('cat_detail', [], {'id': self.id})
+        return ("cat_detail", [], {"id": self.id})

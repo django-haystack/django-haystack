@@ -65,8 +65,7 @@ Geospatial Assumptions
 ----------
 
 Haystack prefers to work with ``Point`` objects, which are located in
-``django.contrib.gis.geos.Point`` but conviently importable out of
-``haystack.utils.geo.Point``.
+``django.contrib.gis.geos.Point``.
 
 ``Point`` objects use **LONGITUDE, LATITUDE** for their construction, regardless
 if you use the parameters to instantiate them or WKT_/``GEOSGeometry``.
@@ -76,7 +75,7 @@ if you use the parameters to instantiate them or WKT_/``GEOSGeometry``.
 Examples::
 
     # Using positional arguments.
-    from haystack.utils.geo import Point
+    from django.contrib.gis.geos import Point
     pnt = Point(-95.23592948913574, 38.97127105172941)
 
     # Using WKT.
@@ -92,8 +91,7 @@ with GeoDjango's use.
 ------------
 
 Haystack also uses the ``D`` (or ``Distance``) objects from GeoDjango,
-implemented in ``django.contrib.gis.measure.Distance`` but conveniently
-importable out of ``haystack.utils.geo.D`` (or ``haystack.utils.geo.Distance``).
+implemented in ``django.contrib.gis.measure.Distance``.
 
 ``Distance`` objects accept a very flexible set of measurements during
 instantiaton and can convert amongst them freely. This is important, because
@@ -102,7 +100,7 @@ whatever units you want.
 
 Examples::
 
-    from haystack.utils.geo import D
+    from django.contrib.gis.measure import D
 
     # Start at 5 miles.
     imperial_d = D(mi=5)
@@ -223,7 +221,7 @@ point. It is faster but slighty sloppier than its counterpart.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from haystack.utils.geo import Point
+    from django.contrib.gis.geos import Point
 
     downtown_bottom_left = Point(-95.23947, 38.9637903)
     downtown_top_right = Point(-95.23362278938293, 38.973081081164715)
@@ -263,7 +261,7 @@ calculations on your part.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from haystack.utils.geo import Point, D
+    from django.contrib.gis.geos import Point, D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     # Within a two miles.
@@ -306,7 +304,7 @@ include these calculated distances on results.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from haystack.utils.geo import Point, D
+    from django.contrib.gis.geos import Point, D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
 
@@ -324,7 +322,7 @@ key, well-cached hotspots in town but want distances from the user's current
 position::
 
     from haystack.query import SearchQuerySet
-    from haystack.utils.geo import Point, D
+    from django.contrib.gis.geos import Point, D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     user_loc = Point(-95.23455619812012, 38.97240128290697)
@@ -365,7 +363,7 @@ distance information on the results & nothing to sort by.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from haystack.utils.geo import Point, D
+    from django.contrib.gis.geos import Point, D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     downtown_bottom_left = Point(-95.23947, 38.9637903)
