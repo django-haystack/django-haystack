@@ -93,7 +93,7 @@ Changelog
 
   Add max-retries argument to rebuild_index managment command. This is useful for debug at development time
 
-  Add Django 2.1 compatibility. [Tim Graham]
+  Add Django 2.1 and 2.2 compatibility. [Tim Graham]
 
 
 v2.8.1 (2018-03-16)
