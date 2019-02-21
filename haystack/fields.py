@@ -180,7 +180,9 @@ class SearchField(object):
                 return current_objects.all()
             return []
 
-        elif not hasattr(current_objects, "__iter__"):
+        try:
+            iter(current_objects)
+        except TypeError:
             current_objects = [current_objects]
 
         return current_objects
