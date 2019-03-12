@@ -365,3 +365,15 @@ provide search across users and lessons.
 Using: Solr
 
 * http://www.educreations.com/browse/
+
+
+EnergySage
+----------
+
+EnergySage is an unbiased solar matchmaker,
+connecting homeowners with a network of pre-screened solar installers.
+
+Using: Solr
+
+* https://www.energysage.com/supplier/search
+
