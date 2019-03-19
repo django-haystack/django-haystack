@@ -12,6 +12,7 @@ from django.db import close_old_connections, reset_queries
 from django.utils.encoding import force_text, smart_bytes
 from django.utils.timezone import now
 
+from haystack.constants import ID
 from haystack import connections as haystack_connections
 from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
@@ -387,7 +388,7 @@ class Command(BaseCommand):
                 # full list obtained from the database, and the id field, which will be used to delete the
                 # record should it be found to be stale.
                 index_pks = SearchQuerySet(using=backend.connection_alias).models(model)
-                index_pks = index_pks.values_list("pk", "id")
+                index_pks = index_pks.values_list("pk", ID)
 
                 # We'll collect all of the record IDs which are no longer present in the database and delete
                 # them after walking the entire index. This uses more memory than the incremental approach but
