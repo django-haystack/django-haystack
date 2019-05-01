@@ -272,6 +272,23 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
         if dwithin is not None:
             filters.append(self._build_search_query_dwithin(dwithin))
 
+        if limit_to_registered_models is None:
+            limit_to_registered_models = getattr(
+                settings, "HAYSTACK_LIMIT_TO_REGISTERED_MODELS", True
+            )
+
+        if models and len(models):
+            model_choices = sorted(get_model_ct(model) for model in models)
+        elif limit_to_registered_models:
+            # Using narrow queries, limit the results to only models handled
+            # with the current routers.
+            model_choices = self.build_models_list()
+        else:
+            model_choices = []
+
+        if len(model_choices) > 0:
+            filters.append({"terms": {DJANGO_CT: model_choices}})
+
         # if we want to filter, change the query type to bool
         if filters:
             kwargs["query"] = {"bool": {"must": kwargs.pop("query")}}

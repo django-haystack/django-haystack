@@ -153,7 +153,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         # during the ``update`` & if it doesn't match, we'll put the new
         # mapping.
         try:
-            self.existing_mapping = self.conn.indices.get_mapping(index=self.index_name)
+            mapping_from_server = self.conn.indices.get_mapping(index=self.index_name)
+
+            # The mapping that comes back from elasticsearch is nested 2 levels deeper than the
+            # mapping we create for comparison. Strip those levels off here (the topmost level is the ACTUAL name of
+            # the index, even if the request was made using an alias, so we have to get the first value using iter/next
+            # instead of doing something like self.existing_mapping[self.index_name]
+            self.existing_mapping = next(iter(mapping_from_server.values()))['mappings']
+
+            # elasticsearch adds this to the response but haystack never includes it, so remove for comparison
+            if 'modelresult' in self.existing_mapping:
+                self.existing_mapping['modelresult']['properties'].pop('id', None)
         except NotFoundError:
             pass
         except Exception:
@@ -165,6 +175,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             unified_index.all_searchfields()
         )
         current_mapping = {"modelresult": {"properties": field_mapping}}
+
+        explicit_dynamic_setting = haystack.connections[self.connection_alias].options.get('DYNAMIC', None)
+        if explicit_dynamic_setting is not None:
+            current_mapping['modelresult']['dynamic'] = explicit_dynamic_setting
 
         if current_mapping != self.existing_mapping:
             try:
