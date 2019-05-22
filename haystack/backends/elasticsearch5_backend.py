@@ -138,12 +138,6 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
 
         filters = []
 
-        if fields:
-            if isinstance(fields, (list, set)):
-                fields = " ".join(fields)
-
-            kwargs["stored_fields"] = fields
-
         if sort_by is not None:
             order_list = []
             for field, direction in sort_by:

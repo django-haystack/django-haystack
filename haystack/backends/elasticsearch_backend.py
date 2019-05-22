@@ -572,12 +572,33 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if end_offset is not None and end_offset > start_offset:
             search_kwargs["size"] = end_offset - start_offset
 
+        extra_source_kwargs = {}
+        fields = kwargs.get('fields', [])
+
+        if fields:
+            include_fields = []
+            exclude_fields = []
+            for field in fields:
+                if field.startswith('-'):
+                    exclude_fields.append(field.replace('-', ''))
+                else:
+                    include_fields.append(field)
+
+            if include_fields:
+                # process_results always needs these fields to be present
+                include_fields.extend(["id", "django_ct", "django_id", "score"])
+                extra_source_kwargs['_source_include'] = ','.join(include_fields)
+
+            if exclude_fields:
+                extra_source_kwargs['_source_exclude'] = ','.join(exclude_fields)
+
         try:
             raw_results = self.conn.search(
                 body=search_kwargs,
                 index=self.index_name,
                 doc_type="modelresult",
                 _source=True,
+                **extra_source_kwargs,
             )
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
