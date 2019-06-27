@@ -580,7 +580,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             exclude_fields = []
             for field in fields:
                 if field.startswith('-'):
-                    exclude_fields.append(field.replace('-', ''))
+                    exclude_fields.append(field.replace('-', '', 1))
                 else:
                     include_fields.append(field)
 
