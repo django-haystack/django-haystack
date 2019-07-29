@@ -242,11 +242,10 @@ class SearchQuerySet(object):
             return False
 
         # Setup the full cache now that we know how many results there are.
-        # We need the ``None``s as placeholders to know what parts of the
-        # cache we have/haven't filled.
-        # Using ``None`` like this takes up very little memory. In testing,
-        # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
-        # to be an acceptable loss for consistent and more efficient caching.
+        # Since the total count of the queryset is in general much bigger
+        # than the set of elements that are actually going to be retrieved,
+        # we use a SparseList to cache the retrieved results without allocating
+        # a huge array.
         if len(self._result_cache) == 0:
             self._result_cache = SparseList(self.query.get_count())
 
@@ -259,9 +258,7 @@ class SearchQuerySet(object):
             to_cache = self.post_process_results(results)
 
             # Assign by slice.
-            # FIXME: replace this when https://github.com/johnsyweb/python_sparse_list/pull/5 lands:
-            for i, j in enumerate(to_cache):
-                self._result_cache[cache_start + i] = j
+            self._result_cache[cache_start:cache_start + len(to_cache)] = to_cache
 
             if None in self._result_cache[start:end]:
                 fill_start = fill_end
