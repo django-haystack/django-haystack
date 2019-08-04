@@ -319,7 +319,7 @@ class SearchQuerySet(object):
 
         # Cache should be full enough for our needs.
         if is_slice:
-            return self._result_cache[start:bound]
+            return list(self._result_cache[start:bound])
         else:
             return self._result_cache[start]
 
