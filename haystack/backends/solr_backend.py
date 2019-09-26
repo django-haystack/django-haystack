@@ -658,7 +658,7 @@ class SolrSearchBackend(BaseSearchBackend):
         for field_name, field_class in fields.items():
             field_data = {
                 "field_name": field_class.index_fieldname,
-                "type": "text_en",
+                "type": field_class.field_type,
                 "indexed": "true",
                 "stored": "true",
                 "multi_valued": "false",
@@ -697,13 +697,13 @@ class SolrSearchBackend(BaseSearchBackend):
 
                 # If it's text and not being indexed, we probably don't want
                 # to do the normal lowercase/tokenize/stemming/etc. dance.
-                if field_data["type"] == "text_en":
+                if field_data['type'].startswith("text"):
                     field_data["type"] = "string"
 
             # If it's a ``FacetField``, make sure we don't postprocess it.
             if hasattr(field_class, "facet_for"):
                 # If it's text, it ought to be a string.
-                if field_data["type"] == "text_en":
+                if field_data['type'].startswith("text"):
                     field_data["type"] = "string"
 
             schema_fields.append(field_data)
