@@ -48,6 +48,7 @@ class SearchField(object):
         facet_class=None,
         boost=1.0,
         weight=None,
+        field_type="text_en"
     ):
         # Track what the index thinks this field is called.
         self.instance_name = None
@@ -63,6 +64,7 @@ class SearchField(object):
         self.index_fieldname = index_fieldname
         self.boost = weight or boost
         self.is_multivalued = False
+        self.field_type = field_type
 
         # We supply the facet_class for making it easy to create a faceted
         # field based off of this field.
