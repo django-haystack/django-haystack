@@ -656,9 +656,14 @@ class SolrSearchBackend(BaseSearchBackend):
         schema_fields = []
 
         for field_name, field_class in fields.items():
+            if hasattr(field_class, "field_type"):
+                field_type = field_class.field_type
+            else:
+               field_type = "text_en"
+            
             field_data = {
                 "field_name": field_class.index_fieldname,
-                "type": field_class.field_type,
+                "type": field_type,
                 "indexed": "true",
                 "stored": "true",
                 "multi_valued": "false",
