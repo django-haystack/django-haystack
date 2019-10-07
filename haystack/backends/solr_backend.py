@@ -409,7 +409,11 @@ class SolrSearchBackend(BaseSearchBackend):
             .get_unified_index()
             .get_index(model_klass)
         )
-        field_name = index.get_content_field()
+        # if you have suggestions field in your indexer it will try to query based on it for more results
+        if index.fields.get("suggestions"):
+            field_name = "suggestions" #index.get_content_field()
+        else:
+            field_name = index.get_content_field()
         params = {"fl": "*,score"}
 
         if start_offset is not None:
