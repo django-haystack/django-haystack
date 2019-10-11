@@ -7,7 +7,7 @@ import time
 from threading import Thread
 
 from django.test import TestCase
-from django.utils.six.moves import queue
+from six.moves import queue
 from test_haystack.core.models import (
     AFifthMockModel,
     AnotherMockModel,
@@ -17,7 +17,7 @@ from test_haystack.core.models import (
     MockModel,
 )
 
-from haystack import connection_router, connections, indexes
+from haystack import connections, indexes
 from haystack.exceptions import SearchFieldError
 from haystack.utils.loading import UnifiedIndex
 

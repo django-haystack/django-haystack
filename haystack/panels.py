@@ -4,9 +4,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import datetime
 
+import six
 from debug_toolbar.panels import DebugPanel
 from django.template.loader import render_to_string
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from haystack import connections
