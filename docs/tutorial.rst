@@ -157,7 +157,16 @@ Example (ElasticSearch 2.x)::
             'INDEX_NAME': 'haystack',
         },
     }
+    
+Example (ElasticSearch 5.x)::
 
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
 
 Whoosh
 ~~~~~~
