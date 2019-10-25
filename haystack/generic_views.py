@@ -111,6 +111,10 @@ class FacetedSearchMixin(SearchMixin):
         qs = super(FacetedSearchMixin, self).get_queryset()
         for field in self.facet_fields:
             qs = qs.facet(field)
+
+        for field in self.date_facet_fields:
+            qs = qs.date_facet(**field)
+
         return qs
 
 
