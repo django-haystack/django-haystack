@@ -71,6 +71,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
         self.collate = connection_options.get("COLLATE_SPELLING", True)
 
+        # Support to `date_facet` on Solr >= 6.6. Olders set `date`
+        self.date_facet_field = connection_options.get("DATE_FACET_FIELD", "range")
+
         self.conn = Solr(
             connection_options["URL"],
             timeout=self.timeout,
@@ -281,21 +284,16 @@ class SolrSearchBackend(BaseSearchBackend):
                         "f.%s.facet.%s" % (facet_field, key)
                     ] = self.conn._from_python(value)
 
-        # Support to `date_facet` on Solr >= 6.6. Olders set `date`
-        date_facet_field = getattr(
-            settings, "HAYSTACK_DATE_FACET_FIELD", "range"
-        )
-
         if date_facets is not None:
             kwargs["facet"] = "on"
-            kwargs["facet.%s" % date_facet_field ] = date_facets.keys()
-            kwargs["facet.%s.other" % date_facet_field ] = "none"
+            kwargs["facet.%s" % self.date_facet_field ] = date_facets.keys()
+            kwargs["facet.%s.other" % self.date_facet_field ] = "none"
 
             for key, value in date_facets.items():
-                kwargs["f.%s.facet.%s.start" % (key, date_facet_field)] = self.conn._from_python(
+                kwargs["f.%s.facet.%s.start" % (key, self.date_facet_field)] = self.conn._from_python(
                     value.get("start_date")
                 )
-                kwargs["f.%s.facet.%s.end" % (key, date_facet_field)] = self.conn._from_python(
+                kwargs["f.%s.facet.%s.end" % (key, self.date_facet_field)] = self.conn._from_python(
                     value.get("end_date")
                 )
                 gap_by_string = value.get("gap_by").upper()
@@ -304,7 +302,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 if value.get("gap_amount") != 1:
                     gap_string += "S"
 
-                kwargs["f.%s.facet.%s.gap" % (key, date_facet_field)] = "+%s/%s" % (
+                kwargs["f.%s.facet.%s.gap" % (key, self.date_facet_field)] = "+%s/%s" % (
                     gap_string,
                     gap_by_string,
                 )
