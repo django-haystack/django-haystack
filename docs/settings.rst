@@ -81,6 +81,8 @@ Additionally, each backend may have additional options it requires:
   * ``URL`` - The URL to the Solr core. e.g. http://localhost:9001/solr/collection1
   * ``ADMIN_URL`` - The URL to the administrative functions. e.g.
     http://localhost:9001/solr/admin/cores
+  * ``DATE_FACET_FIELD`` - Support to `date_facet` on Solr >= 6.6. Olders set `date`.
+    Default is `range`
 
 * Whoosh
 
