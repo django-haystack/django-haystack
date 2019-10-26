@@ -81,8 +81,6 @@ Additionally, each backend may have additional options it requires:
   * ``URL`` - The URL to the Solr core. e.g. http://localhost:9001/solr/collection1
   * ``ADMIN_URL`` - The URL to the administrative functions. e.g.
     http://localhost:9001/solr/admin/cores
-  * ``DATE_FACET_FIELD`` - Support to `date_facet` on Solr >= 6.6. Olders set `date`.
-    Default is `range`
 
 * Whoosh
 
@@ -109,6 +107,8 @@ The following options are optional:
   don't want indexed or for when you want to replace an index.
 * ``KWARGS`` - (Solr and ElasticSearch) Any additional keyword arguments that
   should be passed on to the underlying client library.
+* ``DATE_FACET_FIELD`` - (Solr-only) Support to ``date_facet`` on Solr >= 6.6.
+  Olders set ``date``. Default is ``range``.
 
 
 ``HAYSTACK_ROUTERS``
