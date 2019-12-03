@@ -1,5 +1,5 @@
 sudo: required
-dist: xenial
+dist: bionic
 language: python
 python:
     - 3.4
@@ -17,7 +17,7 @@ cache:
 addons:
     apt_packages:
         - binutils
-        - default-jdk
+        - openjdk11
         - gdal-bin
         - libgdal1i
         - libgeos-c1v5
