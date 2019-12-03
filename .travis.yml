@@ -19,10 +19,10 @@ addons:
         - binutils
         - default-jdk
         - gdal-bin
-        - libgdal1h
-        - libgeos-c1
+        - libgdal1i
+        - libgeos-c1v5
         - libproj-dev
-        - libxapian22
+        - libxapian22v5
         - python-xapian
         - wajig
 
