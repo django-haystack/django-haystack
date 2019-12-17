@@ -2,8 +2,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import six
 from django.core.management.base import BaseCommand
-from django.utils import six
 
 from haystack import connections
 

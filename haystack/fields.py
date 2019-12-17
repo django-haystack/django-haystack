@@ -4,8 +4,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import re
 from inspect import ismethod
 
+import six
 from django.template import loader
-from django.utils import datetime_safe, six
+from django.utils import datetime_safe
 
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
