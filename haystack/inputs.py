@@ -5,10 +5,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import re
 import warnings
 
-from django.utils.encoding import force_text, python_2_unicode_compatible
+from django.utils.encoding import force_text
 
 
-@python_2_unicode_compatible
 class BaseInput(object):
     """
     The base input type. Doesn't do much. You want ``Raw`` instead.

@@ -8,10 +8,10 @@ import re
 import shutil
 import threading
 import warnings
+import six
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_text
 

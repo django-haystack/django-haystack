@@ -3,16 +3,15 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
-
-from debug_toolbar.panels import DebugPanel
+import six
+from debug_toolbar.panels import Panel
 from django.template.loader import render_to_string
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from haystack import connections
 
 
-class HaystackDebugPanel(DebugPanel):
+class HaystackDebugPanel(Panel):
     """
     Panel that displays information about the Haystack queries run while
     processing the request.

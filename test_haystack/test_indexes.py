@@ -5,9 +5,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import datetime
 import time
 from threading import Thread
+from six.moves import queue
 
 from django.test import TestCase
-from django.utils.six.moves import queue
 from test_haystack.core.models import (
     AFifthMockModel,
     AnotherMockModel,

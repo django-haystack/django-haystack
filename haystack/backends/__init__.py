@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import copy
+import six
 from copy import deepcopy
 from time import time
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase
-from django.utils import six
 from django.utils import tree
 from django.utils.encoding import force_text
 

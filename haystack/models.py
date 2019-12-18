@@ -3,9 +3,9 @@
 # "Hey, Django! Look at me, I'm an app! For Serious!"
 
 from __future__ import absolute_import, division, print_function, unicode_literals
+import six
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import six
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 
