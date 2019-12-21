@@ -10,7 +10,7 @@ from .models import Bar, Foo
 
 # To test additional ignores...
 class BaseIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, model_attr='body')
+    text = indexes.CharField(document=True, model_attr="body")
 
     def get_model(self):
         return Foo
@@ -34,4 +34,4 @@ class BarIndex(SearchIndex, Indexable):
         return Bar
 
     def prepare_text(self, obj):
-        return u"%s\n%s" % (obj.author, obj.content)
+        return "%s\n%s" % (obj.author, obj.content)

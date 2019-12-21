@@ -21,6 +21,7 @@ class SearchQuerySet(object):
 
     Supports chaining (a la QuerySet) to narrow the search.
     """
+
     def __init__(self, using=None, query=None):
         # ``_using`` should only ever be a value other than ``None`` if it's
         # been forced with the ``.using`` method.
@@ -38,7 +39,7 @@ class SearchQuerySet(object):
         self._cache_full = False
         self._load_all = False
         self._ignored_result_count = 0
-        self.log = logging.getLogger('haystack')
+        self.log = logging.getLogger("haystack")
 
     def _determine_backend(self):
         # A backend has been manually selected. Use it instead.
@@ -50,7 +51,7 @@ class SearchQuerySet(object):
         hints = {}
 
         if self.query:
-            hints['models'] = self.query.models
+            hints["models"] = self.query.models
 
         backend_alias = connection_router.for_read(**hints)
 
@@ -67,8 +68,8 @@ class SearchQuerySet(object):
         """
         len(self)
         obj_dict = self.__dict__.copy()
-        obj_dict['_iter'] = None
-        obj_dict['log'] = None
+        obj_dict["_iter"] = None
+        obj_dict["log"] = None
         return obj_dict
 
     def __setstate__(self, data_dict):
@@ -76,10 +77,10 @@ class SearchQuerySet(object):
         For unpickling.
         """
         self.__dict__ = data_dict
-        self.log = logging.getLogger('haystack')
+        self.log = logging.getLogger("haystack")
 
     def __repr__(self):
-        return u"<SearchQuerySet: query=%r, using=%r>" % (self.query, self._using)
+        return "<SearchQuerySet: query=%r, using=%r>" % (self.query, self._using)
 
     def __len__(self):
         if self._result_count is None:
@@ -147,12 +148,14 @@ class SearchQuerySet(object):
                 current_position += 1
 
             if self._cache_is_full():
-                raise StopIteration
+                return
 
             # We've run out of results and haven't hit our limit.
             # Fill more of the cache.
-            if not self._fill_cache(current_position, current_position + ITERATOR_LOAD_PER_QUERY):
-                raise StopIteration
+            if not self._fill_cache(
+                current_position, current_position + ITERATOR_LOAD_PER_QUERY
+            ):
+                return
 
     def post_process_results(self, results):
         to_cache = []
@@ -168,27 +171,38 @@ class SearchQuerySet(object):
 
             # Load the objects for each model in turn.
             for model in models_pks:
-                loaded_objects[model] = self._load_model_objects(model, models_pks[model])
+                loaded_objects[model] = self._load_model_objects(
+                    model, models_pks[model]
+                )
 
         for result in results:
             if self._load_all:
-                # We have to deal with integer keys being cast from strings
-                model_objects = loaded_objects.get(result.model, {})
-                if result.pk not in model_objects:
-                    try:
-                        result.pk = int(result.pk)
-                    except ValueError:
-                        pass
-                try:
-                    result._object = model_objects[result.pk]
-                except KeyError:
-                    # The object was either deleted since we indexed or should
-                    # be ignored; fail silently.
-                    self._ignored_result_count += 1
 
-                    # avoid an unfilled None at the end of the result cache
-                    self._result_cache.pop()
-                    continue
+                model_objects = loaded_objects.get(result.model, {})
+                # Try to coerce a primary key object that matches the models pk
+                # We have to deal with semi-arbitrary keys being cast from strings (UUID, int, etc)
+                if model_objects:
+                    result_klass = type(next(iter(model_objects)))
+                    result.pk = result_klass(result.pk)
+
+                    try:
+                        result._object = model_objects[result.pk]
+                    except KeyError:
+                        # The object was either deleted since we indexed or should
+                        # be ignored for other reasons such as an overriden 'load_all_queryset';
+                        # fail silently.
+                        self._ignored_result_count += 1
+
+                        # avoid an unfilled None at the end of the result cache
+                        self._result_cache.pop()
+                        continue
+                else:
+                    # No objects were returned -- possible due to SQS nesting such as
+                    # XYZ.objects.filter(id__gt=10) where the amount ignored are
+                    # exactly equal to the ITERATOR_LOAD_PER_QUERY
+                    del self._result_cache[: len(results)]
+                    self._ignored_result_count += len(results)
+                    break
 
             to_cache.append(result)
 
@@ -244,7 +258,7 @@ class SearchQuerySet(object):
             to_cache = self.post_process_results(results)
 
             # Assign by slice.
-            self._result_cache[cache_start:cache_start + len(to_cache)] = to_cache
+            self._result_cache[cache_start : cache_start + len(to_cache)] = to_cache
 
             if None in self._result_cache[start:end]:
                 fill_start = fill_end
@@ -271,10 +285,11 @@ class SearchQuerySet(object):
         """
         if not isinstance(k, (slice, six.integer_types)):
             raise TypeError
-        assert ((not isinstance(k, slice) and (k >= 0))
-                or (isinstance(k, slice) and (k.start is None or k.start >= 0)
-                    and (k.stop is None or k.stop >= 0))), \
-                "Negative indexing is not supported."
+        assert (not isinstance(k, slice) and (k >= 0)) or (
+            isinstance(k, slice)
+            and (k.start is None or k.start >= 0)
+            and (k.stop is None or k.stop >= 0)
+        ), "Negative indexing is not supported."
 
         # Remember if it's a slice or not. We're going to treat everything as
         # a slice to simply the logic and will `.pop()` at the end as needed.
@@ -292,8 +307,9 @@ class SearchQuerySet(object):
             bound = k + 1
 
         # We need check to see if we need to populate more of the cache.
-        if len(self._result_cache) <= 0 or (None in self._result_cache[start:bound]
-                                            and not self._cache_is_full()):
+        if len(self._result_cache) <= 0 or (
+            None in self._result_cache[start:bound] and not self._cache_is_full()
+        ):
             try:
                 self._fill_cache(start, bound)
             except StopIteration:
@@ -317,7 +333,7 @@ class SearchQuerySet(object):
 
     def filter(self, *args, **kwargs):
         """Narrows the search based on certain attributes and the default operator."""
-        if DEFAULT_OPERATOR == 'OR':
+        if DEFAULT_OPERATOR == "OR":
             return self.filter_or(*args, **kwargs)
         else:
             return self.filter_and(*args, **kwargs)
@@ -360,8 +376,13 @@ class SearchQuerySet(object):
         clone = self._clone()
 
         for model in models:
-            if model not in connections[self.query._using].get_unified_index().get_indexed_models():
-                warnings.warn('The model %r is not registered for search.' % (model,))
+            if (
+                model
+                not in connections[self.query._using]
+                .get_unified_index()
+                .get_indexed_models()
+            ):
+                warnings.warn("The model %r is not registered for search." % (model,))
 
             clone.query.add_model(model)
 
@@ -431,7 +452,9 @@ class SearchQuerySet(object):
     def date_facet(self, field, start_date, end_date, gap_by, gap_amount=1):
         """Adds faceting to a query for the provided field by date."""
         clone = self._clone()
-        clone.query.add_date_facet(field, start_date, end_date, gap_by, gap_amount=gap_amount)
+        clone.query.add_date_facet(
+            field, start_date, end_date, gap_by, gap_amount=gap_amount
+        )
         return clone
 
     def query_facet(self, field, query):
@@ -463,16 +486,14 @@ class SearchQuerySet(object):
         clone._load_all = True
         return clone
 
-    def auto_query(self, query_string, fieldname='content'):
+    def auto_query(self, query_string, fieldname="content"):
         """
         Performs a best guess constructing the search query.
 
         This method is somewhat naive but works well enough for the simple,
         common cases.
         """
-        kwargs = {
-            fieldname: AutoQuery(query_string)
-        }
+        kwargs = {fieldname: AutoQuery(query_string)}
         return self.filter(**kwargs)
 
     def autocomplete(self, **kwargs):
@@ -486,12 +507,10 @@ class SearchQuerySet(object):
         query_bits = []
 
         for field_name, query in kwargs.items():
-            for word in query.split(' '):
+            for word in query.split(" "):
                 bit = clone.query.clean(word.strip())
                 if bit:
-                    kwargs = {
-                        field_name: bit,
-                    }
+                    kwargs = {field_name: bit}
                     query_bits.append(SQ(**kwargs))
 
         return clone.filter(six.moves.reduce(operator.__and__, query_bits))
@@ -601,7 +620,9 @@ class SearchQuerySet(object):
         flat = kwargs.pop("flat", False)
 
         if flat and len(fields) > 1:
-            raise TypeError("'flat' is not valid when values_list is called with more than one field.")
+            raise TypeError(
+                "'flat' is not valid when values_list is called with more than one field."
+            )
 
         qs = self._clone(klass=ValuesListSearchQuerySet)
         qs._fields.extend(fields)
@@ -625,6 +646,7 @@ class EmptySearchQuerySet(SearchQuerySet):
     A stubbed SearchQuerySet that behaves as normal but always returns no
     results.
     """
+
     def __len__(self):
         return 0
 
@@ -649,6 +671,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
     A ``SearchQuerySet`` which returns a list of field values as tuples, exactly
     like Django's ``ValuesListQuerySet``.
     """
+
     def __init__(self, *args, **kwargs):
         super(ValuesListSearchQuerySet, self).__init__(*args, **kwargs)
         self._flat = False
@@ -657,7 +680,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         # Removing this dependency would require refactoring much of the backend
         # code (_process_results, etc.) and these aren't large enough to make it
         # an immediate priority:
-        self._internal_fields = ['id', 'django_ct', 'django_id', 'score']
+        self._internal_fields = ["id", "django_ct", "django_id", "score"]
 
     def _clone(self, klass=None):
         clone = super(ValuesListSearchQuerySet, self)._clone(klass=klass)
@@ -668,9 +691,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
     def _fill_cache(self, start, end):
         query_fields = set(self._internal_fields)
         query_fields.update(self._fields)
-        kwargs = {
-            'fields': query_fields
-        }
+        kwargs = {"fields": query_fields}
         return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
 
     def post_process_results(self, results):
@@ -693,12 +714,11 @@ class ValuesSearchQuerySet(ValuesListSearchQuerySet):
     the key/value pairs for the result, exactly like Django's
     ``ValuesQuerySet``.
     """
+
     def _fill_cache(self, start, end):
         query_fields = set(self._internal_fields)
         query_fields.update(self._fields)
-        kwargs = {
-            'fields': query_fields
-        }
+        kwargs = {"fields": query_fields}
         return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
 
     def post_process_results(self, results):

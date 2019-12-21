@@ -12,19 +12,19 @@ from haystack.query import SQ
 class SimpleSearchQueryTestCase(TestCase):
     def setUp(self):
         super(SimpleSearchQueryTestCase, self).setUp()
-        self.sq = connections['simple'].get_query()
+        self.sq = connections["simple"].get_query()
 
     def test_build_query_all(self):
-        self.assertEqual(self.sq.build_query(), '*')
+        self.assertEqual(self.sq.build_query(), "*")
 
     def test_build_query_single_word(self):
-        self.sq.add_filter(SQ(content='hello'))
-        self.assertEqual(self.sq.build_query(), 'hello')
+        self.sq.add_filter(SQ(content="hello"))
+        self.assertEqual(self.sq.build_query(), "hello")
 
     def test_build_query_multiple_word(self):
-        self.sq.add_filter(SQ(name='foo'))
-        self.sq.add_filter(SQ(name='bar'))
-        self.assertEqual(self.sq.build_query(), 'foo bar')
+        self.sq.add_filter(SQ(name="foo"))
+        self.sq.add_filter(SQ(name="bar"))
+        self.assertEqual(self.sq.build_query(), "foo bar")
 
     def test_set_result_class(self):
         # Assert that we're defaulting to ``SearchResult``.

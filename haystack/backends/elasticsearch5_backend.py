@@ -2,36 +2,37 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
+import warnings
 
 from django.conf import settings
 
+import haystack
 from haystack.backends import BaseEngine
 from haystack.backends.elasticsearch_backend import (
     ElasticsearchSearchBackend,
     ElasticsearchSearchQuery,
 )
-from haystack.constants import DJANGO_CT
+from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
-from haystack.utils import log as logging
 
 try:
     import elasticsearch
 
-    if not ((2, 0, 0) <= elasticsearch.__version__ < (3, 0, 0)):
+    if not ((5, 0, 0) <= elasticsearch.__version__ < (6, 0, 0)):
         raise ImportError
     from elasticsearch.helpers import bulk, scan
 except ImportError:
     raise MissingDependency(
-        "The 'elasticsearch2' backend requires the \
-                            installation of 'elasticsearch>=2.0.0,<3.0.0'. \
+        "The 'elasticsearch5' backend requires the \
+                            installation of 'elasticsearch>=5.0.0,<6.0.0'. \
                             Please refer to the documentation."
     )
 
 
-class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
+class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super(Elasticsearch2SearchBackend, self).__init__(
+        super(Elasticsearch5SearchBackend, self).__init__(
             connection_alias, **connection_options
         )
         self.content_field_name = None
@@ -114,29 +115,87 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
+        **extra_kwargs
     ):
-        kwargs = super(Elasticsearch2SearchBackend, self).build_search_kwargs(
-            query_string,
-            sort_by,
-            start_offset,
-            end_offset,
-            fields,
-            highlight,
-            spelling_query=spelling_query,
-            within=within,
-            dwithin=dwithin,
-            distance_point=distance_point,
-            models=models,
-            limit_to_registered_models=limit_to_registered_models,
-            result_class=result_class,
-        )
+        index = haystack.connections[self.connection_alias].get_unified_index()
+        content_field = index.document_field
+
+        if query_string == "*:*":
+            kwargs = {"query": {"match_all": {}}}
+        else:
+            kwargs = {
+                "query": {
+                    "query_string": {
+                        "default_field": content_field,
+                        "default_operator": DEFAULT_OPERATOR,
+                        "query": query_string,
+                        "analyze_wildcard": True,
+                        "auto_generate_phrase_queries": True,
+                        "fuzziness": FUZZINESS,
+                    }
+                }
+            }
 
         filters = []
-        if start_offset is not None:
-            kwargs["from"] = start_offset
 
-        if end_offset is not None:
-            kwargs["size"] = end_offset - start_offset
+        if fields:
+            if isinstance(fields, (list, set)):
+                fields = " ".join(fields)
+
+            kwargs["stored_fields"] = fields
+
+        if sort_by is not None:
+            order_list = []
+            for field, direction in sort_by:
+                if field == "distance" and distance_point:
+                    # Do the geo-enabled sort.
+                    lng, lat = distance_point["point"].coords
+                    sort_kwargs = {
+                        "_geo_distance": {
+                            distance_point["field"]: [lng, lat],
+                            "order": direction,
+                            "unit": "km",
+                        }
+                    }
+                else:
+                    if field == "distance":
+                        warnings.warn(
+                            "In order to sort by distance, you must call the '.distance(...)' method."
+                        )
+
+                    # Regular sorting.
+                    sort_kwargs = {field: {"order": direction}}
+
+                order_list.append(sort_kwargs)
+
+            kwargs["sort"] = order_list
+
+        # From/size offsets don't seem to work right in Elasticsearch's DSL. :/
+        # if start_offset is not None:
+        #     kwargs['from'] = start_offset
+
+        # if end_offset is not None:
+        #     kwargs['size'] = end_offset - start_offset
+
+        if highlight:
+            # `highlight` can either be True or a dictionary containing custom parameters
+            # which will be passed to the backend and may override our default settings:
+
+            kwargs["highlight"] = {"fields": {content_field: {}}}
+
+            if isinstance(highlight, dict):
+                kwargs["highlight"].update(highlight)
+
+        if self.include_spelling:
+            kwargs["suggest"] = {
+                "suggest": {
+                    "text": spelling_query or query_string,
+                    "term": {
+                        # Using content_field here will result in suggestions of stemmed words.
+                        "field": "_all"
+                    },
+                }
+            }
 
         if narrow_queries is None:
             narrow_queries = set()
@@ -147,7 +206,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
             for facet_fieldname, extra_options in facets.items():
                 facet_options = {
                     "meta": {"_type": "terms"},
-                    "terms": {"field": facet_fieldname},
+                    "terms": {"field": index.get_facet_fieldname(facet_fieldname)},
                 }
                 if "order" in extra_options:
                     facet_options["meta"]["order"] = extra_options.pop("order")
@@ -207,28 +266,49 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         for q in narrow_queries:
             filters.append({"query_string": {"query": q}})
 
-        # if we want to filter, change the query type to filteres
-        if filters:
-            kwargs["query"] = {"filtered": {"query": kwargs.pop("query")}}
-            filtered = kwargs["query"]["filtered"]
-            if "filter" in filtered:
-                if "bool" in filtered["filter"].keys():
-                    another_filters = kwargs["query"]["filtered"]["filter"]["bool"][
-                        "must"
-                    ]
-                else:
-                    another_filters = [kwargs["query"]["filtered"]["filter"]]
-            else:
-                another_filters = filters
+        if within is not None:
+            filters.append(self._build_search_query_within(within))
 
-            if len(another_filters) == 1:
-                kwargs["query"]["filtered"]["filter"] = another_filters[0]
+        if dwithin is not None:
+            filters.append(self._build_search_query_dwithin(dwithin))
+
+        # if we want to filter, change the query type to bool
+        if filters:
+            kwargs["query"] = {"bool": {"must": kwargs.pop("query")}}
+            if len(filters) == 1:
+                kwargs["query"]["bool"]["filter"] = filters[0]
             else:
-                kwargs["query"]["filtered"]["filter"] = {
-                    "bool": {"must": another_filters}
-                }
+                kwargs["query"]["bool"]["filter"] = {"bool": {"must": filters}}
+
+        if extra_kwargs:
+            kwargs.update(extra_kwargs)
 
         return kwargs
+
+    def _build_search_query_dwithin(self, dwithin):
+        lng, lat = dwithin["point"].coords
+        distance = "%(dist).6f%(unit)s" % {"dist": dwithin["distance"].km, "unit": "km"}
+        return {
+            "geo_distance": {
+                "distance": distance,
+                dwithin["field"]: {"lat": lat, "lon": lng},
+            }
+        }
+
+    def _build_search_query_within(self, within):
+        from haystack.utils.geo import generate_bounding_box
+
+        ((south, west), (north, east)) = generate_bounding_box(
+            within["point_1"], within["point_2"]
+        )
+        return {
+            "geo_bounding_box": {
+                within["field"]: {
+                    "top_left": {"lat": north, "lon": west},
+                    "bottom_right": {"lat": south, "lon": east},
+                }
+            }
+        }
 
     def more_like_this(
         self,
@@ -281,9 +361,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
             narrow_queries = []
 
             if additional_query_string and additional_query_string != "*:*":
-                additional_filter = {
-                    "query": {"query_string": {"query": additional_query_string}}
-                }
+                additional_filter = {"query_string": {"query": additional_query_string}}
                 narrow_queries.append(additional_filter)
 
             if limit_to_registered_models is None:
@@ -307,8 +385,8 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
             if len(narrow_queries) > 0:
                 mlt_query = {
                     "query": {
-                        "filtered": {
-                            "query": mlt_query["query"],
+                        "bool": {
+                            "must": mlt_query["query"],
                             "filter": {"bool": {"must": list(narrow_queries)}},
                         }
                     }
@@ -343,7 +421,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         distance_point=None,
         geo_sort=False,
     ):
-        results = super(Elasticsearch2SearchBackend, self)._process_results(
+        results = super(Elasticsearch5SearchBackend, self)._process_results(
             raw_results, highlight, result_class, distance_point, geo_sort
         )
         facets = {}
@@ -381,10 +459,13 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         return results
 
 
-class Elasticsearch2SearchQuery(ElasticsearchSearchQuery):
-    pass
+class Elasticsearch5SearchQuery(ElasticsearchSearchQuery):
+    def add_field_facet(self, field, **options):
+        """Adds a regular facet on a field."""
+        # to be renamed to the facet fieldname by build_search_kwargs later
+        self.facets[field] = options.copy()
 
 
-class Elasticsearch2SearchEngine(BaseEngine):
-    backend = Elasticsearch2SearchBackend
-    query = Elasticsearch2SearchQuery
+class Elasticsearch5SearchEngine(BaseEngine):
+    backend = Elasticsearch5SearchBackend
+    query = Elasticsearch5SearchQuery

@@ -12,53 +12,58 @@ from haystack.utils import get_identifier
 
 class MockMasterSlaveRouter(BaseRouter):
     def for_read(self, **hints):
-        return 'slave'
+        return "slave"
 
     def for_write(self, **hints):
-        return 'master'
+        return "master"
 
 
 class MockPassthroughRouter(BaseRouter):
     def for_read(self, **hints):
-        if hints.get('pass_through') is False:
-            return 'pass'
+        if hints.get("pass_through") is False:
+            return "pass"
 
         return None
 
     def for_write(self, **hints):
-        if hints.get('pass_through') is False:
-            return 'pass'
+        if hints.get("pass_through") is False:
+            return "pass"
 
         return None
 
 
 class MockMultiRouter(BaseRouter):
     def for_write(self, **hints):
-        return ['multi1', 'multi2']
+        return ["multi1", "multi2"]
 
 
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
-        super(MockSearchResult, self).__init__(app_label, model_name, pk, score, **kwargs)
-        self._model = apps.get_model('core', model_name)
+        super(MockSearchResult, self).__init__(
+            app_label, model_name, pk, score, **kwargs
+        )
+        self._model = apps.get_model("core", model_name)
 
-MOCK_SEARCH_RESULTS = [MockSearchResult('core', 'MockModel', i, 1 - (i / 100.0)) for i in range(1, 100)]
+
+MOCK_SEARCH_RESULTS = [
+    MockSearchResult("core", "MockModel", i, 1 - (i / 100.0)) for i in range(1, 100)
+]
 MOCK_INDEX_DATA = {}
 
 
 class MockSearchBackend(BaseSearchBackend):
-    model_name = 'mockmodel'
+    model_name = "mockmodel"
 
     def update(self, index, iterable, commit=True):
         global MOCK_INDEX_DATA
         for obj in iterable:
             doc = index.full_prepare(obj)
-            MOCK_INDEX_DATA[doc['id']] = doc
+            MOCK_INDEX_DATA[doc["id"]] = doc
 
     def remove(self, obj, commit=True):
         global MOCK_INDEX_DATA
         if commit:
-            del(MOCK_INDEX_DATA[get_identifier(obj)])
+            del (MOCK_INDEX_DATA[get_identifier(obj)])
 
     def clear(self, models=None, commit=True):
         global MOCK_INDEX_DATA
@@ -67,13 +72,14 @@ class MockSearchBackend(BaseSearchBackend):
     @log_query
     def search(self, query_string, **kwargs):
         from haystack import connections
+
         global MOCK_INDEX_DATA
         results = []
         hits = len(MOCK_INDEX_DATA)
-        indexed_models = connections['default'].get_unified_index().get_indexed_models()
+        indexed_models = connections["default"].get_unified_index().get_indexed_models()
 
         def junk_sort(key):
-            app, model, pk = key.split('.')
+            app, model, pk = key.split(".")
 
             if pk.isdigit():
                 return int(pk)
@@ -83,65 +89,85 @@ class MockSearchBackend(BaseSearchBackend):
         sliced = sorted(MOCK_INDEX_DATA, key=junk_sort)
 
         for i, result in enumerate(sliced):
-            app_label, model_name, pk = result.split('.')
+            app_label, model_name, pk = result.split(".")
             model = apps.get_model(app_label, model_name)
 
             if model:
                 if model in indexed_models:
-                    results.append(MockSearchResult(app_label, model_name, pk, 1 - (i / 100.0)))
+                    results.append(
+                        MockSearchResult(app_label, model_name, pk, 1 - (i / 100.0))
+                    )
                 else:
                     hits -= 1
             else:
                 hits -= 1
 
         return {
-            'results': results[kwargs.get('start_offset'):kwargs.get('end_offset')],
-            'hits': hits,
+            "results": results[kwargs.get("start_offset") : kwargs.get("end_offset")],
+            "hits": hits,
         }
 
-    def more_like_this(self, model_instance, additional_query_string=None, result_class=None):
-        return self.search(query_string='*')
+    def more_like_this(
+        self, model_instance, additional_query_string=None, result_class=None
+    ):
+        return self.search(query_string="*")
 
 
 class CharPKMockSearchBackend(MockSearchBackend):
-    model_name = 'charpkmockmodel'
-    mock_search_results = [MockSearchResult('core', 'CharPKMockModel', 'sometext', 0.5),
-                           MockSearchResult('core', 'CharPKMockModel', '1234', 0.3)]
+    model_name = "charpkmockmodel"
+    mock_search_results = [
+        MockSearchResult("core", "CharPKMockModel", "sometext", 0.5),
+        MockSearchResult("core", "CharPKMockModel", "1234", 0.3),
+    ]
+
+
+class UUIDMockSearchBackend(MockSearchBackend):
+    model_name = "uuidmockmodel"
+    mock_search_results = [
+        MockSearchResult(
+            "core", "UUIDMockModel", "53554c58-7051-4350-bcc9-dad75eb248a9", 0.5
+        ),
+        MockSearchResult(
+            "core", "UUIDMockModel", "77554c58-7051-4350-bcc9-dad75eb24888", 0.5
+        ),
+    ]
 
 
 class ReadQuerySetMockSearchBackend(MockSearchBackend):
-    model_name = 'afifthmockmodel'
-    mock_search_results = [MockSearchResult('core', 'afifthmockmodel', 1, 2),
-                           MockSearchResult('core', 'afifthmockmodel', 2, 2)]
+    model_name = "afifthmockmodel"
+    mock_search_results = [
+        MockSearchResult("core", "afifthmockmodel", 1, 2),
+        MockSearchResult("core", "afifthmockmodel", 2, 2),
+    ]
 
 
 class MixedMockSearchBackend(MockSearchBackend):
     @log_query
     def search(self, query_string, **kwargs):
-        if kwargs.get('end_offset') and kwargs['end_offset'] > 30:
-            kwargs['end_offset'] = 30
+        if kwargs.get("end_offset") and kwargs["end_offset"] > 30:
+            kwargs["end_offset"] = 30
 
         result_info = super(MixedMockSearchBackend, self).search(query_string, **kwargs)
-        result_info['hits'] = 30
+        result_info["hits"] = 30
 
         # Remove search results from other models.
         temp_results = []
 
-        for result in result_info['results']:
+        for result in result_info["results"]:
             if not int(result.pk) in (9, 13, 14):
                 # MockSearchResult('core', 'AnotherMockModel', 9, .1)
                 # MockSearchResult('core', 'AnotherMockModel', 13, .1)
                 # MockSearchResult('core', 'NonexistentMockModel', 14, .1)
                 temp_results.append(result)
 
-        result_info['results'] = temp_results
+        result_info["results"] = temp_results
 
         return result_info
 
 
 class MockSearchQuery(BaseSearchQuery):
     def build_query(self):
-        return ''
+        return ""
 
     def clean(self, query_fragment):
         return query_fragment

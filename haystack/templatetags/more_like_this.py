@@ -2,10 +2,12 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import logging
+
 from django import template
-from haystack.utils.app_loading import haystack_get_model
 
 from haystack.query import SearchQuerySet
+from haystack.utils.app_loading import haystack_get_model
 
 register = template.Library()
 
@@ -17,7 +19,7 @@ class MoreLikeThisNode(template.Node):
         self.for_types = for_types
         self.limit = limit
 
-        if not self.limit is None:
+        if self.limit is not None:
             self.limit = int(self.limit)
 
     def render(self, context):
@@ -25,13 +27,13 @@ class MoreLikeThisNode(template.Node):
             model_instance = self.model.resolve(context)
             sqs = SearchQuerySet()
 
-            if not self.for_types is None:
+            if self.for_types is not None:
                 intermediate = template.Variable(self.for_types)
-                for_types = intermediate.resolve(context).split(',')
+                for_types = intermediate.resolve(context).split(",")
                 search_models = []
 
                 for model in for_types:
-                    model_class = haystack_get_model(*model.split('.'))
+                    model_class = haystack_get_model(*model.split("."))
 
                     if model_class:
                         search_models.append(model_class)
@@ -40,14 +42,16 @@ class MoreLikeThisNode(template.Node):
 
             sqs = sqs.more_like_this(model_instance)
 
-            if not self.limit is None:
-                sqs = sqs[:self.limit]
+            if self.limit is not None:
+                sqs = sqs[: self.limit]
 
             context[self.varname] = sqs
-        except:
-            pass
+        except Exception as exc:
+            logging.warning(
+                "Unhandled exception rendering %r: %s", self, exc, exc_info=True
+            )
 
-        return ''
+        return ""
 
 
 @register.tag
@@ -74,34 +78,45 @@ def more_like_this(parser, token):
     bits = token.split_contents()
 
     if not len(bits) in (4, 6, 8):
-        raise template.TemplateSyntaxError(u"'%s' tag requires either 3, 5 or 7 arguments." % bits[0])
+        raise template.TemplateSyntaxError(
+            "'%s' tag requires either 3, 5 or 7 arguments." % bits[0]
+        )
 
     model = bits[1]
 
-    if bits[2] != 'as':
-        raise template.TemplateSyntaxError(u"'%s' tag's second argument should be 'as'." % bits[0])
+    if bits[2] != "as":
+        raise template.TemplateSyntaxError(
+            "'%s' tag's second argument should be 'as'." % bits[0]
+        )
 
     varname = bits[3]
     limit = None
     for_types = None
 
     if len(bits) == 6:
-        if bits[4] != 'limit' and bits[4] != 'for':
-            raise template.TemplateSyntaxError(u"'%s' tag's fourth argument should be either 'limit' or 'for'." % bits[0])
+        if bits[4] != "limit" and bits[4] != "for":
+            raise template.TemplateSyntaxError(
+                "'%s' tag's fourth argument should be either 'limit' or 'for'."
+                % bits[0]
+            )
 
-        if bits[4] == 'limit':
+        if bits[4] == "limit":
             limit = bits[5]
         else:
             for_types = bits[5]
 
     if len(bits) == 8:
-        if bits[4] != 'for':
-            raise template.TemplateSyntaxError(u"'%s' tag's fourth argument should be 'for'." % bits[0])
+        if bits[4] != "for":
+            raise template.TemplateSyntaxError(
+                "'%s' tag's fourth argument should be 'for'." % bits[0]
+            )
 
         for_types = bits[5]
 
-        if bits[6] != 'limit':
-            raise template.TemplateSyntaxError(u"'%s' tag's sixth argument should be 'limit'." % bits[0])
+        if bits[6] != "limit":
+            raise template.TemplateSyntaxError(
+                "'%s' tag's sixth argument should be 'limit'." % bits[0]
+            )
 
         limit = bits[7]
 

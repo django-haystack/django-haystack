@@ -1,10 +1,8 @@
-# encoding: utf-8
-
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 
-import elasticsearch
 from django.contrib.gis.measure import D
 from django.test import TestCase
 
@@ -16,11 +14,9 @@ from haystack.query import SQ, SearchQuerySet
 from ..core.models import AnotherMockModel, MockModel
 
 
-class ElasticsearchSearchQueryTestCase(TestCase):
-    fixtures = ["base_data"]
-
+class Elasticsearch5SearchQueryTestCase(TestCase):
     def setUp(self):
-        super(ElasticsearchSearchQueryTestCase, self).setUp()
+        super(Elasticsearch5SearchQueryTestCase, self).setUp()
         self.sq = connections["elasticsearch"].get_query()
 
     def test_build_query_all(self):
@@ -122,7 +118,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
 
     def test_build_query_in_with_set(self):
         self.sq.add_filter(SQ(content="why"))
-        self.sq.add_filter(SQ(title__in=set(["A Famous Paper", "An Infamous Article"])))
+        self.sq.add_filter(SQ(title__in={"A Famous Paper", "An Infamous Article"}))
         self.assertTrue("((why) AND title:(" in self.sq.build_query())
         self.assertTrue('"A Famous Paper"' in self.sq.build_query())
         self.assertTrue('"An Infamous Article"' in self.sq.build_query())
@@ -136,16 +132,6 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.sq.add_filter(SQ(content="why"))
         self.sq.add_filter(SQ(title__fuzzy="haystack"))
         self.assertEqual(self.sq.build_query(), "((why) AND title:(haystack~))")
-
-    def test_build_query_with_contains(self):
-        self.sq.add_filter(SQ(content="circular"))
-        self.sq.add_filter(SQ(title__contains="haystack"))
-        self.assertEqual(self.sq.build_query(), "((circular) AND title:(*haystack*))")
-
-    def test_build_query_with_endswith(self):
-        self.sq.add_filter(SQ(content="circular"))
-        self.sq.add_filter(SQ(title__endswith="haystack"))
-        self.assertEqual(self.sq.build_query(), "((circular) AND title:(*haystack))")
 
     def test_clean(self):
         self.assertEqual(self.sq.clean("hello world"), "hello world")
@@ -186,7 +172,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
 
     def test_in_filter_values_list(self):
         self.sq.add_filter(SQ(content="why"))
-        self.sq.add_filter(SQ(title__in=MockModel.objects.values_list("id", flat=True)))
+        self.sq.add_filter(SQ(title__in=[1, 2, 3]))
         self.assertEqual(self.sq.build_query(), '((why) AND title:("1" OR "2" OR "3"))')
 
     def test_narrow_sq(self):
@@ -195,33 +181,11 @@ class ElasticsearchSearchQueryTestCase(TestCase):
         self.assertEqual(len(sqs.query.narrow_queries), 1)
         self.assertEqual(sqs.query.narrow_queries.pop(), "foo:(moof)")
 
-    def test_query__in(self):
-        sqs = SearchQuerySet(using="elasticsearch").filter(id__in=[1, 2, 3])
-        self.assertEqual(sqs.query.build_query(), 'id:("1" OR "2" OR "3")')
-
-    def test_query__in_empty_list(self):
-        """Confirm that an empty list avoids a Elasticsearch exception"""
-        sqs = SearchQuerySet(using="elasticsearch").filter(id__in=[])
-        self.assertEqual(sqs.query.build_query(), "id:(!*:*)")
-
-
-class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
-    def setUp(self):
-        super(ElasticsearchSearchQuerySpatialBeforeReleaseTestCase, self).setUp()
-        self.backend = connections["elasticsearch"].get_backend()
-        self._elasticsearch_version = elasticsearch.VERSION
-        elasticsearch.VERSION = (0, 9, 9)
-
-    def tearDown(self):
-        elasticsearch.VERSION = self._elasticsearch_version
-
     def test_build_query_with_dwithin_range(self):
-        """
-        Test build_search_kwargs with dwithin range for Elasticsearch versions < 1.0.0
-        """
         from django.contrib.gis.geos import Point
 
-        search_kwargs = self.backend.build_search_kwargs(
+        backend = connections["elasticsearch"].get_backend()
+        search_kwargs = backend.build_search_kwargs(
             "where",
             dwithin={
                 "field": "location_field",
@@ -230,41 +194,7 @@ class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
             },
         )
         self.assertEqual(
-            search_kwargs["query"]["filtered"]["filter"]["bool"]["must"][1][
-                "geo_distance"
-            ],
-            {"distance": 0.5, "location_field": {"lat": 2.3456789, "lon": 1.2345678}},
-        )
-
-
-class ElasticsearchSearchQuerySpatialAfterReleaseTestCase(TestCase):
-    def setUp(self):
-        super(ElasticsearchSearchQuerySpatialAfterReleaseTestCase, self).setUp()
-        self.backend = connections["elasticsearch"].get_backend()
-        self._elasticsearch_version = elasticsearch.VERSION
-        elasticsearch.VERSION = (1, 0, 0)
-
-    def tearDown(self):
-        elasticsearch.VERSION = self._elasticsearch_version
-
-    def test_build_query_with_dwithin_range(self):
-        """
-        Test build_search_kwargs with dwithin range for Elasticsearch versions >= 1.0.0
-        """
-        from django.contrib.gis.geos import Point
-
-        search_kwargs = self.backend.build_search_kwargs(
-            "where",
-            dwithin={
-                "field": "location_field",
-                "point": Point(1.2345678, 2.3456789),
-                "distance": D(m=500),
-            },
-        )
-        self.assertEqual(
-            search_kwargs["query"]["filtered"]["filter"]["bool"]["must"][1][
-                "geo_distance"
-            ],
+            search_kwargs["query"]["bool"]["filter"]["geo_distance"],
             {
                 "distance": "0.500000km",
                 "location_field": {"lat": 2.3456789, "lon": 1.2345678},
