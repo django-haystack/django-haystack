@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 
 from haystack.utils import importlib
 
@@ -125,12 +124,12 @@ def highlight(parser, token):
 
     for bit in arg_bits:
         if bit == "css_class":
-            kwargs["css_class"] = six.next(arg_bits)
+            kwargs["css_class"] = next(arg_bits)
 
         if bit == "html_tag":
-            kwargs["html_tag"] = six.next(arg_bits)
+            kwargs["html_tag"] = next(arg_bits)
 
         if bit == "max_length":
-            kwargs["max_length"] = six.next(arg_bits)
+            kwargs["max_length"] = next(arg_bits)
 
     return HighlightNode(text_block, query, **kwargs)

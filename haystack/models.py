@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import six
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 
@@ -188,7 +187,7 @@ class SearchResult(object):
             self.log.error("Model could not be found for SearchResult '%s'.", self)
             return ""
 
-        return six.text_type(self.model._meta)
+        return str(self.model._meta)
 
     def get_additional_fields(self):
         """

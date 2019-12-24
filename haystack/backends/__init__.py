@@ -6,7 +6,6 @@ from time import time
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase
-from django.utils import six
 from django.utils import tree
 from django.utils.encoding import force_text
 
@@ -404,10 +403,7 @@ class SearchNode(tree.Node):
         )
 
     def _repr_query_fragment_callback(self, field, filter_type, value):
-        if six.PY3:
-            value = force_text(value)
-        else:
-            value = force_text(value).encode("utf8")
+        value = force_text(value)
 
         return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, value)
 
@@ -782,7 +778,7 @@ class BaseSearchQuery(object):
 
         A basic (override-able) implementation is provided.
         """
-        if not isinstance(query_fragment, six.string_types):
+        if not isinstance(query_fragment, str):
             return query_fragment
 
         words = query_fragment.split()

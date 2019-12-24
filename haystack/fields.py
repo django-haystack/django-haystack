@@ -5,7 +5,7 @@ import re
 from inspect import ismethod
 
 from django.template import loader
-from django.utils import datetime_safe, six
+from django.utils import datetime_safe
 
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
@@ -240,7 +240,7 @@ class CharField(SearchField):
         if value is None:
             return None
 
-        return six.text_type(value)
+        return str(value)
 
 
 class LocationField(SearchField):
@@ -269,7 +269,7 @@ class LocationField(SearchField):
             value = ensure_point(value)
             return value
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             lat, lng = value.split(",")
         elif isinstance(value, (list, tuple)):
             # GeoJSON-alike
@@ -352,7 +352,7 @@ class DecimalField(SearchField):
         if value is None:
             return None
 
-        return six.text_type(value)
+        return str(value)
 
 
 class BooleanField(SearchField):
@@ -390,7 +390,7 @@ class DateField(SearchField):
         if value is None:
             return None
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             match = DATE_REGEX.search(value)
 
             if match:
@@ -423,7 +423,7 @@ class DateTimeField(SearchField):
         if value is None:
             return None
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             match = DATETIME_REGEX.search(value)
 
             if match:
@@ -468,7 +468,7 @@ class MultiValueField(SearchField):
         if value is None:
             return None
 
-        if hasattr(value, "__iter__") and not isinstance(value, six.text_type):
+        if hasattr(value, "__iter__") and not isinstance(value, str):
             return value
 
         return [value]

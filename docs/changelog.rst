@@ -1,6 +1,10 @@
 Changelog
 =========
 
+%%version%% (Django3/Py3k compatible)
+
+- Docs: removed references to six, replaced usage with
+  Py3 native constructs. (searchindex_api.rst)
 
 %%version%% (unreleased)
 ------------------------

@@ -95,7 +95,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
+class SearchIndex(threading.local):
     """
     Base class for building indexes.
 
@@ -117,6 +117,8 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
                 return self.get_model().objects.filter(pub_date__lte=datetime.datetime.now())
 
     """
+
+    __metaclass__ = DeclarativeMetaclass
 
     def __init__(self):
         self.prepared_data = None

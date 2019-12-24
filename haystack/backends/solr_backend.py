@@ -6,7 +6,6 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 
 import haystack
 from haystack.backends import (
@@ -518,7 +517,7 @@ class SolrSearchBackend(BaseSearchBackend):
             if spelling_suggestions:
                 # Maintain compatibility with older versions of Haystack which returned a single suggestion:
                 spelling_suggestion = spelling_suggestions[-1]
-                assert isinstance(spelling_suggestion, six.string_types)
+                assert isinstance(spelling_suggestion, str)
             else:
                 spelling_suggestion = None
 
@@ -609,7 +608,7 @@ class SolrSearchBackend(BaseSearchBackend):
             if isinstance(collations, dict):
                 # Solr 6.5
                 collation_values = collations["collation"]
-                if isinstance(collation_values, six.string_types):
+                if isinstance(collation_values, str):
                     collation_values = [collation_values]
                 elif isinstance(collation_values, dict):
                     # spellcheck.collateExtendedResults changes the format to a dictionary:
@@ -634,7 +633,7 @@ class SolrSearchBackend(BaseSearchBackend):
                             spelling_suggestions.append(j["word"])
                         else:
                             spelling_suggestions.append(j)
-            elif isinstance(suggestions[0], six.string_types) and isinstance(
+            elif isinstance(suggestions[0], str) and isinstance(
                 suggestions[1], dict
             ):
                 # Solr 6.4 uses a list of paired (word, dictionary) pairs:
@@ -761,7 +760,7 @@ class SolrSearchQuery(BaseSearchQuery):
             if hasattr(value, "values_list"):
                 value = list(value)
 
-            if isinstance(value, six.string_types):
+            if isinstance(value, str):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
             else:
@@ -863,7 +862,7 @@ class SolrSearchQuery(BaseSearchQuery):
         kwarg_bits = []
 
         for key in sorted(kwargs.keys()):
-            if isinstance(kwargs[key], six.string_types) and " " in kwargs[key]:
+            if isinstance(kwargs[key], str) and " " in kwargs[key]:
                 kwarg_bits.append("%s='%s'" % (key, kwargs[key]))
             else:
                 kwarg_bits.append("%s=%s" % (key, kwargs[key]))
