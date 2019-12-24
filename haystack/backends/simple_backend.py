@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from warnings import warn
 
 from django.db.models import Q
-from django.utils import six
+import functools
 
 from haystack import connections
 from haystack.backends import (
@@ -71,7 +71,10 @@ class SimpleSearchBackend(BaseSearchBackend):
 
                         if queries:
                             qs = model.objects.filter(
-                                six.moves.reduce(lambda x, y: x | y, queries)
+                                # Python 2
+                                # six.moves.reduce(lambda x, y: x | y, queries)
+                                # Python 3
+                                functools.reduce(lambda x, y: x | y, queries)
                             )
                         else:
                             qs = []
@@ -128,7 +131,7 @@ class SimpleSearchQuery(BaseSearchQuery):
 
                 term_list.append(value.prepare(self))
 
-        return (" ").join(map(six.text_type, term_list))
+        return (" ").join(map(str, term_list))
 
 
 class SimpleEngine(BaseEngine):

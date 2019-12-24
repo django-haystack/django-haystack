@@ -11,7 +11,6 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 from django.utils.datetime_safe import datetime
 from django.utils.encoding import force_text
 
@@ -834,7 +833,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 value = "false"
         elif isinstance(value, (list, tuple)):
             value = ",".join([force_text(v) for v in value])
-        elif isinstance(value, (six.integer_types, float)):
+        elif isinstance(value, (int, float)):
             # Leave it alone.
             pass
         else:
@@ -852,7 +851,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         elif value == "false":
             return False
 
-        if value and isinstance(value, six.string_types):
+        if value and isinstance(value, str):
             possible_datetime = DATETIME_REGEX.search(value)
 
             if possible_datetime:
@@ -877,7 +876,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             # Try to handle most built-in types.
             if isinstance(
                 converted_value,
-                (list, tuple, set, dict, six.integer_types, float, complex),
+                (list, tuple, set, dict, int, float, complex),
             ):
                 return converted_value
         except:
@@ -934,7 +933,7 @@ class WhooshSearchQuery(BaseSearchQuery):
             if hasattr(value, "strftime"):
                 is_datetime = True
 
-            if isinstance(value, six.string_types) and value != " ":
+            if isinstance(value, str) and value != " ":
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
             else:
@@ -985,7 +984,7 @@ class WhooshSearchQuery(BaseSearchQuery):
                     # Iterate over terms & incorportate the converted form of each into the query.
                     terms = []
 
-                    if isinstance(prepared_value, six.string_types):
+                    if isinstance(prepared_value, str):
                         possible_values = prepared_value.split(" ")
                     else:
                         if is_datetime is True:
@@ -1030,7 +1029,7 @@ class WhooshSearchQuery(BaseSearchQuery):
                     if is_datetime is True:
                         pv = self._convert_datetime(pv)
 
-                    if isinstance(pv, six.string_types) and not is_datetime:
+                    if isinstance(pv, str) and not is_datetime:
                         in_options.append('"%s"' % pv)
                     else:
                         in_options.append("%s" % pv)
