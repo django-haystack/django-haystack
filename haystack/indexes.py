@@ -95,7 +95,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(threading.local)):
+class SearchIndex(threading.local):
     """
     Base class for building indexes.
 
