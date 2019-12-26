@@ -17,7 +17,7 @@ cache:
 addons:
     apt_packages:
         - binutils
-        - openjdk11
+        - openjdk-8-jdk
         - gdal-bin
         - libgdal1i
         - libgeos-c1v5
