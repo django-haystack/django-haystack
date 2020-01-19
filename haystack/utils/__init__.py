@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import importlib
+import six
 import re
 
 from django.conf import settings
@@ -21,7 +22,7 @@ def default_get_identifier(obj_or_string):
 
     If not overridden, uses <app_label>.<object_name>.<pk>.
     """
-    if type(obj_or_string) == str:
+    if isinstance(obj_or_string, six.string_types):
         if not IDENTIFIER_REGEX.match(obj_or_string):
             raise AttributeError(
                 "Provided string '%s' is not a valid identifier." % obj_or_string
