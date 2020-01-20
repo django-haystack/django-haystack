@@ -3,7 +3,10 @@
 
 from setuptools import setup
 
-install_requires = ["Django>=1.11"]
+install_requires = [
+    'Django>=1.11',
+    'sparse_list==0.9',
+]
 
 tests_require = [
     "pysolr>=3.7.0",

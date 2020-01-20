@@ -14,6 +14,7 @@ from haystack.exceptions import NotHandled
 from haystack.inputs import AutoQuery, Raw
 from haystack.utils import log as logging
 
+from sparse_list import SparseList
 
 class SearchQuerySet(object):
     """
@@ -237,17 +238,16 @@ class SearchQuerySet(object):
 
         if results is None or len(results) == 0:
             # trim missing stuff from the result cache
-            self._result_cache = self._result_cache[:start]
+            del self._result_cache[start:len(self._result_cache)]
             return False
 
         # Setup the full cache now that we know how many results there are.
-        # We need the ``None``s as placeholders to know what parts of the
-        # cache we have/haven't filled.
-        # Using ``None`` like this takes up very little memory. In testing,
-        # an array of 100,000 ``None``s consumed less than .5 Mb, which ought
-        # to be an acceptable loss for consistent and more efficient caching.
+        # Since the total count of the queryset is in general much bigger
+        # than the set of elements that are actually going to be retrieved,
+        # we use a SparseList to cache the retrieved results without allocating
+        # a huge array.
         if len(self._result_cache) == 0:
-            self._result_cache = [None] * self.query.get_count()
+            self._result_cache = SparseList(self.query.get_count())
 
         fill_start, fill_end = start, end
         if fill_end is None:
@@ -258,7 +258,7 @@ class SearchQuerySet(object):
             to_cache = self.post_process_results(results)
 
             # Assign by slice.
-            self._result_cache[cache_start : cache_start + len(to_cache)] = to_cache
+            self._result_cache[cache_start:cache_start + len(to_cache)] = to_cache
 
             if None in self._result_cache[start:end]:
                 fill_start = fill_end
@@ -268,11 +268,12 @@ class SearchQuerySet(object):
                 # Tell the query where to start from and how many we'd like.
                 self.query._reset()
                 self.query.set_limits(fill_start, fill_end)
+
                 results = self.query.get_results()
 
                 if results is None or len(results) == 0:
                     # No more results. Trim missing stuff from the result cache
-                    self._result_cache = self._result_cache[:cache_start]
+                    del self._result_cache[cache_start:len(self._result_cache)]
                     break
             else:
                 break
@@ -318,7 +319,7 @@ class SearchQuerySet(object):
 
         # Cache should be full enough for our needs.
         if is_slice:
-            return self._result_cache[start:bound]
+            return list(self._result_cache[start:bound])
         else:
             return self._result_cache[start]
 
