@@ -46,6 +46,8 @@ before_install:
           sudo apt-get -qy --allow-downgrades install elasticsearch=1.7.6
         fi
     - sudo service elasticsearch restart
+    - sudo systemctl status elasticsearch
+    - sudo journalctl --unit elasticsearch
 
 install:
     - pip install --upgrade setuptools
