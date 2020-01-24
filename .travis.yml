@@ -64,6 +64,8 @@ after_success:
     - codecov
 
 env:
+    global:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
     matrix:
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
