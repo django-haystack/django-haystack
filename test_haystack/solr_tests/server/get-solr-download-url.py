@@ -52,9 +52,12 @@ for base_url in chain(
     if not test_url.endswith(tarball):
         test_url = urljoin(test_url, dist_path)
 
-    if requests.head(test_url, allow_redirects=True).status_code == 200:
-        download_url = test_url
-        break
+    try:
+        if requests.head(test_url, allow_redirects=True).status_code == 200:
+            download_url = test_url
+            break
+    except requests.exceptions.ConnectionError:
+        continue
 else:
     print("None of the Apache mirrors have %s" % dist_path, file=sys.stderr)
     sys.exit(1)
