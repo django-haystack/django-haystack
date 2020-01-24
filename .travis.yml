@@ -1,4 +1,4 @@
-sudo: required
+os: linux
 dist: bionic
 language: python
 python:
@@ -58,7 +58,7 @@ after_success:
 env:
     global:
         - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-    matrix:
+    jobs:
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
@@ -68,7 +68,7 @@ env:
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=5.0.0,<6.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
         - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
-matrix:
+jobs:
     allow_failures:
         - python: 'pypy3'
     exclude:
