@@ -6,6 +6,8 @@ python:
     - 3.6
     - 3.7
     - pypy
+services:
+    - docker
 
 cache:
     apt: true
@@ -25,29 +27,17 @@ addons:
         - wajig
 
 before_install:
-    - sudo apt-get install -qy default-jre
     - mkdir -p $HOME/download-cache
-    # See https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo
-    - wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
     - >
         if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
         then
-          echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
-          sudo apt-get update
-          sudo apt-get -qy --allow-downgrades install elasticsearch=2.4.6
+          docker run -d -p 9200:9200 elasticsearch:2.4.6-alpine
         elif [[ $VERSION_ES == '>=5.0.0,<6.0.0' ]];
         then
-          echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-5.x.list
-          sudo apt-get update -qy
-          sudo apt-get -y --allow-downgrades install elasticsearch=5.6.10
+          docker run -d -p 9200:9200 elasticsearch:5.6.10-alpine
         else
-          echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
-          sudo apt-get update -qy
-          sudo apt-get -qy --allow-downgrades install elasticsearch=1.7.6
+          docker run -d -p 9200:9200 elasticsearch:1.7.6-alpine
         fi
-    - sudo service elasticsearch restart
-    - sudo systemctl status elasticsearch
-    - sudo journalctl --unit elasticsearch
 
 install:
     - pip install --upgrade setuptools
