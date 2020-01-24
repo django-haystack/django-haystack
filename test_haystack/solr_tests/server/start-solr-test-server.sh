@@ -10,4 +10,7 @@ else
     ARGS="-d"
 fi
 
-docker run ${ARGS} -p 9001:8983 -v $PWD/solr-setup.sh:/solr-setup.sh -v $PWD/confdir:/confdir:ro solr:${SOLR_VERSION}-slim bash -c "/solr-setup.sh"
+# https://stackoverflow.com/a/246128/540644
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+docker run ${ARGS} -p 9001:8983 -v $DIR/solr-setup.sh:/solr-setup.sh -v $DIR/confdir:/confdir:ro solr:${SOLR_VERSION}-slim bash -c "/solr-setup.sh"
