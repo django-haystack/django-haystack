@@ -17,12 +17,11 @@ cache:
 addons:
     apt_packages:
         - binutils
-        - openjdk11
+        - openjdk-11-jdk
         - gdal-bin
-        - libgdal1i
+        - libgdal20
         - libgeos-c1v5
         - libproj-dev
-        - libxapian22v5
         - python-xapian
         - wajig
 
