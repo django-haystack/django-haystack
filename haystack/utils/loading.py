@@ -163,7 +163,7 @@ class ConnectionRouter(object):
                 connection_to_use = action_callable(**hints)
 
                 if connection_to_use is not None:
-                    if isinstance(connection_to_use, six.string_types):
+                    if isinstance(connection_to_use, str):
                         conns.append(connection_to_use)
                     else:
                         conns.extend(connection_to_use)

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# n.b. we can't have unicode_literals here due to http://bugs.python.org/setuptools/issue152
-from __future__ import absolute_import, division, print_function
+from setuptools import setup
 
 try:
     from setuptools import setup
@@ -12,7 +11,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
-install_requires = ["Django>=1.11", "six==1.12.0"]
+install_requires = ["Django>=1.11", "six>=1.12.0"]
 
 tests_require = [
     "pysolr>=3.7.0",
@@ -63,5 +62,4 @@ setup(
     install_requires=install_requires,
     tests_require=tests_require,
     test_suite="test_haystack.run_tests.run_all",
-    setup_requires=["setuptools_scm"],
 )

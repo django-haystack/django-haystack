@@ -13,7 +13,7 @@ from haystack.utils import loading
 __author__ = "Daniel Lindsley"
 
 try:
-    pkg_distribution = get_distribution(__name__)
+    pkg_distribution = get_distribution("django-haystack")
     __version__ = pkg_distribution.version
     version_info = pkg_distribution.parsed_version
 except DistributionNotFound:
