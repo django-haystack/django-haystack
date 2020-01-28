@@ -1,12 +1,13 @@
-sudo: required
-dist: trusty
+os: linux
+dist: bionic
 language: python
 python:
-    - 3.4
     - 3.5
     - 3.6
     - 3.7
-    - pypy
+    - pypy3
+services:
+    - docker
 
 cache:
     apt: true
@@ -17,37 +18,26 @@ cache:
 addons:
     apt_packages:
         - binutils
-        - default-jdk
+        - openjdk-8-jdk
         - gdal-bin
-        - libgdal1h
-        - libgeos-c1
+        - libgdal20
+        - libgeos-c1v5
         - libproj-dev
-        - libxapian22
         - python-xapian
         - wajig
 
 before_install:
-    - sudo apt-get install -qy default-jre
     - mkdir -p $HOME/download-cache
-    # See https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo
-    - wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
     - >
         if [[ $VERSION_ES == '>=2.0.0,<3.0.0' ]];
         then
-          echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
-          sudo apt-get update
-          sudo apt-get -qy --allow-downgrades install elasticsearch=2.4.6
+          docker run -d -p 9200:9200 elasticsearch:2.4.6-alpine
         elif [[ $VERSION_ES == '>=5.0.0,<6.0.0' ]];
         then
-          echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-5.x.list
-          sudo apt-get update -qy
-          sudo apt-get -y --allow-downgrades install elasticsearch=5.6.10
+          docker run -d -p 9200:9200 elasticsearch:5.6.10-alpine
         else
-          echo "deb http://packages.elastic.co/elasticsearch/1.7/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-1.7.list
-          sudo apt-get update -qy
-          sudo apt-get -qy --allow-downgrades install elasticsearch=1.7.6
+          docker run -d -p 9200:9200 elasticsearch:1.7.6-alpine
         fi
-    - sudo service elasticsearch restart
 
 install:
     - pip install --upgrade setuptools
@@ -66,7 +56,9 @@ after_success:
     - codecov
 
 env:
-    matrix:
+    global:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    jobs:
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
         - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
@@ -76,39 +68,21 @@ env:
         - DJANGO_VERSION=">=1.11,<2.0" VERSION_ES=">=5.0.0,<6.0.0"
         - DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
         - DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
-matrix:
+jobs:
     allow_failures:
-        - python: 'pypy'
+        - python: 'pypy3'
     exclude:
-        - python: 2.7
+        - python: pypy3
           env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
-        - python: 2.7
+        - python: pypy3
           env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
-        - python: 2.7
+        - python: pypy3
           env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
-        - python: 2.7
+        - python: pypy3
           env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
-        - python: 2.7
+        - python: pypy3
           env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
-        - python: 2.7
-          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
-        - python: 3.4
-          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
-        - python: 3.4
-          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
-        - python: 3.4
-          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
-        - python: pypy
-          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=5.0.0,<6.0.0"
-        - python: pypy
-          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=2.0.0,<3.0.0"
-        - python: pypy
-          env: DJANGO_VERSION=">=2.0,<2.1" VERSION_ES=">=1.0.0,<2.0.0"
-        - python: pypy
-          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=5.0.0,<6.0.0"
-        - python: pypy
-          env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=2.0.0,<3.0.0"
-        - python: pypy
+        - python: pypy3
           env: DJANGO_VERSION=">=2.1,<2.2" VERSION_ES=">=1.0.0,<2.0.0"
 
 notifications:
