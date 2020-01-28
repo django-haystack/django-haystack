@@ -6,6 +6,7 @@ import importlib
 import six
 import re
 
+import six
 from django.conf import settings
 
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID

@@ -4,9 +4,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import warnings
 
+import six
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 
 import haystack
 from haystack.backends import (

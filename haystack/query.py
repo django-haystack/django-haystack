@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import operator
 import warnings
 
-from django.utils import six
+import six
 
 from haystack import connection_router, connections
 from haystack.backends import SQ
