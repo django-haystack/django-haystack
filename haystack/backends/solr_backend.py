@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import warnings
 import six
 
+import six
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 

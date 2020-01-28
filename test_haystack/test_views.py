@@ -10,6 +10,8 @@ from django import forms
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.urls import reverse
+
+from six.moves import queue
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connections, indexes

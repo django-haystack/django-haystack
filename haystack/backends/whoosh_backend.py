@@ -10,6 +10,7 @@ import threading
 import warnings
 import six
 
+import six
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.datetime_safe import datetime

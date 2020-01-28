@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 import copy
 import six
 from copy import deepcopy
 from time import time
+
+import six
+
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase

@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import operator
 import warnings
+
 import six
 
 from haystack import connection_router, connections

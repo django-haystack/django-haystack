@@ -7,6 +7,7 @@ import six
 import warnings
 from datetime import datetime, timedelta
 
+import six
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 

@@ -8,6 +8,9 @@ from threading import Thread
 from six.moves import queue
 
 from django.test import TestCase
+
+from six.moves import queue
+
 from test_haystack.core.models import (
     AFifthMockModel,
     AnotherMockModel,
@@ -17,7 +20,7 @@ from test_haystack.core.models import (
     MockModel,
 )
 
-from haystack import connection_router, connections, indexes
+from haystack import connections, indexes
 from haystack.exceptions import SearchFieldError
 from haystack.utils.loading import UnifiedIndex
 

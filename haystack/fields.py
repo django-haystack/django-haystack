@@ -5,6 +5,7 @@ import re
 import six
 from inspect import ismethod
 
+import six
 from django.template import loader
 from django.utils import datetime_safe
 

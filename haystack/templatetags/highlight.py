@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import six
 
+import six
 from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

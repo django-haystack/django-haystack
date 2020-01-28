@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import datetime
 import six
-from debug_toolbar.panels import Panel
+from debug_toolbar.panels import DebugPanel
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 

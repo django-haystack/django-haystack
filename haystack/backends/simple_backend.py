@@ -8,6 +8,7 @@ import six
 
 from warnings import warn
 
+import six
 from django.db.models import Q
 
 from haystack import connections
