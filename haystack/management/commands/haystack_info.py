@@ -2,6 +2,7 @@
 from django.core.management.base import BaseCommand
 
 from haystack import connections
+from haystack.constants import DEFAULT_ALIAS
 
 
 class Command(BaseCommand):
@@ -10,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         """Provides feedback about the current Haystack setup."""
 
-        unified_index = connections["default"].get_unified_index()
+        unified_index = connections[DEFAULT_ALIAS].get_unified_index()
         indexed = unified_index.get_indexed_models()
         index_count = len(indexed)
         self.stdout.write("Number of handled %s index(es)." % index_count)
