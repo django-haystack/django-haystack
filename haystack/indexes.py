@@ -1,14 +1,10 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import copy
 import threading
 import warnings
 
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import force_text
-from six import with_metaclass
+from django.utils.encoding import force_str
 
 from haystack import connection_router, connections
 from haystack.constants import Indexable  # NOQA — exposed as a public export
@@ -95,7 +91,7 @@ class DeclarativeMetaclass(type):
         return super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
+class SearchIndex(threading.local, metaclass=DeclarativeMetaclass):
     """
     Base class for building indexes.
 
@@ -221,7 +217,7 @@ class SearchIndex(with_metaclass(DeclarativeMetaclass, threading.local)):
         self.prepared_data = {
             ID: get_identifier(obj),
             DJANGO_CT: get_model_ct(self.get_model()),
-            DJANGO_ID: force_text(obj.pk),
+            DJANGO_ID: force_str(obj.pk),
         }
 
         for field_name, field in self.fields.items():

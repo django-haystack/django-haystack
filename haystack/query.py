@@ -1,11 +1,7 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+from functools import reduce
 import operator
 import warnings
-
-import six
 
 from haystack import connection_router, connections
 from haystack.backends import SQ
@@ -283,7 +279,7 @@ class SearchQuerySet(object):
         """
         Retrieves an item or slice from the set of results.
         """
-        if not isinstance(k, (slice, six.integer_types)):
+        if not isinstance(k, (slice, int)):
             raise TypeError
         assert (not isinstance(k, slice) and (k >= 0)) or (
             isinstance(k, slice)
@@ -513,7 +509,7 @@ class SearchQuerySet(object):
                     kwargs = {field_name: bit}
                     query_bits.append(SQ(**kwargs))
 
-        return clone.filter(six.moves.reduce(operator.__and__, query_bits))
+        return clone.filter(reduce(operator.__and__, query_bits))
 
     def using(self, connection_name):
         """

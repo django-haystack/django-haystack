@@ -1,11 +1,9 @@
 # encoding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import unittest
+from unittest.mock import call, patch
 
 from django.template import Context, Template
 from django.test import TestCase
-from mock import call, patch
 
 from ..core.models import MockModel
 
