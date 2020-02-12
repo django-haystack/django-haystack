@@ -1,7 +1,5 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+import queue
 import time
 from threading import Thread
 
@@ -9,7 +7,6 @@ from django import forms
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from six.moves import queue
 from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connections, indexes

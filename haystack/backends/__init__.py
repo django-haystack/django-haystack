@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import copy
 from copy import deepcopy
 from time import time
-
-import six
 
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR, DEFAULT_ALIAS
 from haystack.exceptions import MoreLikeThisError, FacetingError
@@ -163,7 +159,7 @@ class BaseSearchBackend(object):
         Hook to give the backend a chance to prep an attribute value before
         sending it to the search engine. By default, just force it to unicode.
         """
-        return force_text(value)
+        return force_str(value)
 
     def more_like_this(
         self, model_instance, additional_query_string=None, result_class=None
@@ -315,9 +311,6 @@ class SearchNode(tree.Node):
         """
         return bool(self.children)
 
-    def __nonzero__(self):  # Python 2 compatibility
-        return type(self).__bool__(self)
-
     def __contains__(self, other):
         """
         Returns True is 'other' is a direct child of this instance.
@@ -407,12 +400,7 @@ class SearchNode(tree.Node):
         )
 
     def _repr_query_fragment_callback(self, field, filter_type, value):
-        if six.PY3:
-            value = force_text(value)
-        else:
-            value = force_text(value).encode("utf8")
-
-        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, value)
+        return "%s%s%s=%s" % (field, FILTER_SEPARATOR, filter_type, force_str(value))
 
     def as_query_string(self, query_fragment_callback):
         """
@@ -785,7 +773,7 @@ class BaseSearchQuery(object):
 
         A basic (override-able) implementation is provided.
         """
-        if not isinstance(query_fragment, six.string_types):
+        if not isinstance(query_fragment, str):
             return query_fragment
 
         words = query_fragment.split()

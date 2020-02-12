@@ -1,12 +1,8 @@
 # encoding: utf-8
 
 # "Hey, Django! Look at me, I'm an app! For Serious!"
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import six
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.text import capfirst
 
 from haystack.exceptions import NotHandled, SpatialError
@@ -59,8 +55,8 @@ class SearchResult(object):
             self.pk,
         )
 
-    def __unicode__(self):
-        return force_text(self.__repr__())
+    def __str__(self):
+        return force_str(self.__repr__())
 
     def __getattr__(self, attr):
         if attr == "__getnewargs__":
@@ -169,7 +165,7 @@ class SearchResult(object):
             self.log.error("Model could not be found for SearchResult '%s'.", self)
             return ""
 
-        return force_text(capfirst(self.model._meta.verbose_name))
+        return force_str(capfirst(self.model._meta.verbose_name))
 
     verbose_name = property(_get_verbose_name)
 
@@ -178,7 +174,7 @@ class SearchResult(object):
             self.log.error("Model could not be found for SearchResult '%s'.", self)
             return ""
 
-        return force_text(capfirst(self.model._meta.verbose_name_plural))
+        return force_str(capfirst(self.model._meta.verbose_name_plural))
 
     verbose_name_plural = property(_get_verbose_name_plural)
 
@@ -188,7 +184,7 @@ class SearchResult(object):
             self.log.error("Model could not be found for SearchResult '%s'.", self)
             return ""
 
-        return six.text_type(self.model._meta)
+        return str(self.model._meta)
 
     def get_additional_fields(self):
         """

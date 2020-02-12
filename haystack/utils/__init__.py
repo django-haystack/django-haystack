@@ -1,12 +1,7 @@
 # encoding: utf-8
-
-from __future__ import unicode_literals
-
 import importlib
-import six
 import re
 
-import six
 from django.conf import settings
 
 from haystack.constants import ID, DJANGO_CT, DJANGO_ID
@@ -23,7 +18,7 @@ def default_get_identifier(obj_or_string):
 
     If not overridden, uses <app_label>.<object_name>.<pk>.
     """
-    if isinstance(obj_or_string, six.string_types):
+    if isinstance(obj_or_string, str):
         if not IDENTIFIER_REGEX.match(obj_or_string):
             raise AttributeError(
                 "Provided string '%s' is not a valid identifier." % obj_or_string

@@ -1,10 +1,6 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 
-import six
 from debug_toolbar.panels import DebugPanel
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -70,7 +66,7 @@ class HaystackDebugPanel(DebugPanel):
 
             if query.get("additional_kwargs"):
                 if query["additional_kwargs"].get("result_class"):
-                    query["additional_kwargs"]["result_class"] = six.text_type(
+                    query["additional_kwargs"]["result_class"] = str(
                         query["additional_kwargs"]["result_class"]
                     )
 

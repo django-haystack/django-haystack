@@ -1,13 +1,10 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 from decimal import Decimal
+from unittest.mock import Mock
 
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from mock import Mock
 from test_haystack.core.models import (
     ManyToManyLeftSideModel,
     ManyToManyRightSideModel,

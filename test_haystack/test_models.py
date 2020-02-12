@@ -1,7 +1,4 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging as std_logging
 import pickle
 
@@ -95,14 +92,14 @@ class SearchResultTestCase(TestCase):
 
     def test_unicode(self):
         self.assertEqual(
-            self.no_data_sr.__unicode__(), "<SearchResult: haystack.mockmodel (pk='1')>"
+            self.no_data_sr.__str__(), "<SearchResult: haystack.mockmodel (pk='1')>"
         )
         self.assertEqual(
-            self.extra_data_sr.__unicode__(),
+            self.extra_data_sr.__str__(),
             "<SearchResult: haystack.mockmodel (pk='1')>",
         )
         self.assertEqual(
-            self.no_overwrite_data_sr.__unicode__(),
+            self.no_overwrite_data_sr.__str__(),
             "<SearchResult: haystack.mockmodel (pk='1')>",
         )
 

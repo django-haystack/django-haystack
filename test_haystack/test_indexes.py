@@ -1,13 +1,10 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
+import queue
 import time
 from threading import Thread
 
 from django.test import TestCase
-from six.moves import queue
 from test_haystack.core.models import (
     AFifthMockModel,
     AnotherMockModel,

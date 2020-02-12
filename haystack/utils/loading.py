@@ -1,14 +1,10 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import copy
 import inspect
 import threading
 import warnings
 from collections import OrderedDict
 
-import six
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import module_has_submodule

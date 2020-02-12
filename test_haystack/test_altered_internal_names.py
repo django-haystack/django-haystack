@@ -1,7 +1,4 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.conf import settings
 from django.test import TestCase
 from test_haystack.core.models import AnotherMockModel, MockModel
