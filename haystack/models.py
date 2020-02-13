@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import force_str
 from django.utils.text import capfirst
 
+from haystack.constants import DEFAULT_ALIAS
 from haystack.exceptions import NotHandled, SpatialError
 from haystack.utils import log as logging
 from haystack.utils.app_loading import haystack_get_model
@@ -67,7 +68,7 @@ class SearchResult(object):
     def _get_searchindex(self):
         from haystack import connections
 
-        return connections["default"].get_unified_index().get_index(self.model)
+        return connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
 
     searchindex = property(_get_searchindex)
 
@@ -212,7 +213,7 @@ class SearchResult(object):
             from haystack import connections
 
             try:
-                index = connections["default"].get_unified_index().get_index(self.model)
+                index = connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
             except NotHandled:
                 # Not found? Return nothing.
                 return {}
