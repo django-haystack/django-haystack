@@ -33,7 +33,7 @@ Support
 =======
 
 You need the latest & greatest of either Solr or Elasticsearch. None of the
-other backends (specifially the engines) support this kind of search.
+other backends (specifically the engines) support this kind of search.
 
 For Solr_, you'll need at least **v3.5+**. In addition, if you have an existing
 install of Haystack & Solr, you'll need to upgrade the schema & reindex your
