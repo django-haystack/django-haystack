@@ -1,14 +1,10 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import re
 import warnings
 from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
@@ -813,9 +809,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         iso = self._iso_datetime(value)
         if iso:
             return iso
-        elif isinstance(value, six.binary_type):
+        elif isinstance(value, bytes):
             # TODO: Be stricter.
-            return six.text_type(value, errors="replace")
+            return str(value, errors="replace")
         elif isinstance(value, set):
             return list(value)
         return value
@@ -825,7 +821,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if isinstance(value, (int, float, complex, list, tuple, bool)):
             return value
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             possible_datetime = DATETIME_REGEX.search(value)
 
             if possible_datetime:
@@ -894,7 +890,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if hasattr(value, "values_list"):
                 value = list(value)
 
-            if isinstance(value, six.string_types):
+            if isinstance(value, str):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
             else:
@@ -945,7 +941,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                     # Iterate over terms & incorportate the converted form of each into the query.
                     terms = []
 
-                    if isinstance(prepared_value, six.string_types):
+                    if isinstance(prepared_value, str):
                         for possible_value in prepared_value.split(" "):
                             terms.append(
                                 filter_types[filter_type]
@@ -1002,7 +998,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         kwarg_bits = []
 
         for key in sorted(kwargs.keys()):
-            if isinstance(kwargs[key], six.string_types) and " " in kwargs[key]:
+            if isinstance(kwargs[key], str) and " " in kwargs[key]:
                 kwarg_bits.append("%s='%s'" % (key, kwargs[key]))
             else:
                 kwarg_bits.append("%s=%s" % (key, kwargs[key]))

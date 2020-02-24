@@ -1,7 +1,4 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 
 from django.db import models
@@ -25,7 +22,7 @@ class Dog(models.Model):
     created = models.DateTimeField(default=datetime.datetime.now)
     updated = models.DateTimeField(default=datetime.datetime.now)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.full_name()
 
     @models.permalink
@@ -43,5 +40,5 @@ class Toy(models.Model):
     dog = models.ForeignKey(Dog, related_name="toys")
     name = models.CharField(max_length=60)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s's %s" % (self.dog.name, self.name)

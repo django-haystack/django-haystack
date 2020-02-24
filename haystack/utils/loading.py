@@ -1,7 +1,4 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import copy
 import inspect
 import threading
@@ -10,7 +7,6 @@ from collections import OrderedDict
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 from django.utils.module_loading import module_has_submodule
 
 from haystack import constants
@@ -163,7 +159,7 @@ class ConnectionRouter(object):
                 connection_to_use = action_callable(**hints)
 
                 if connection_to_use is not None:
-                    if isinstance(connection_to_use, six.string_types):
+                    if isinstance(connection_to_use, str):
                         conns.append(connection_to_use)
                     else:
                         conns.extend(connection_to_use)

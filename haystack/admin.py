@@ -1,23 +1,21 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.contrib.admin.options import ModelAdmin, csrf_protect_m
 from django.contrib.admin.views.main import SEARCH_VAR, ChangeList
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import InvalidPage, Paginator
 from django.shortcuts import render
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.translation import ungettext
 
 from haystack import connections
+from haystack.constants import DEFAULT_ALIAS
 from haystack.query import SearchQuerySet
 from haystack.utils import get_model_ct_tuple
 
 
 class SearchChangeList(ChangeList):
     def __init__(self, **kwargs):
-        self.haystack_connection = kwargs.pop("haystack_connection", "default")
+        self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
         super(SearchChangeList, self).__init__(**kwargs)
 
     def get_results(self, request):
@@ -61,7 +59,7 @@ class SearchChangeList(ChangeList):
 
 class SearchModelAdminMixin(object):
     # haystack connection to use for searching
-    haystack_connection = "default"
+    haystack_connection = DEFAULT_ALIAS
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
@@ -135,7 +133,7 @@ class SearchModelAdminMixin(object):
         )
 
         context = {
-            "module_name": force_text(self.model._meta.verbose_name_plural),
+            "module_name": force_str(self.model._meta.verbose_name_plural),
             "selection_note": selection_note % {"count": len(changelist.result_list)},
             "selection_note_all": selection_note_all
             % {"total_count": changelist.result_count},
