@@ -9,7 +9,7 @@ support. This allows you to talk to several different engines at the same time.
 It enables things like master-slave setups, multiple language indexing,
 separate indexes for general search & autocomplete as well as other options.
 
-.. _`multiple database support`: http://docs.djangoproject.com/en/1.3/topics/db/multi-db/
+.. _`multiple database support`: http://docs.djangoproject.com/en/dev/topics/db/multi-db/
 
 
 Specifying Available Connections
