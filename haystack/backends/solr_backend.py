@@ -663,8 +663,7 @@ class SolrSearchBackend(BaseSearchBackend):
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
 
-            if (hasattr(field_class, "get_field_type") and 
-                    callable(getattr(field_class, "get_field_type"))):
+            if hasattr(field_class, "get_field_type"):
                 field_data["type"] = getattr(field_class, "get_field_type")()
             else:
                 if field_class.field_type in ["date", "datetime"]:
