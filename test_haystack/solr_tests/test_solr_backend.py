@@ -652,7 +652,7 @@ class SolrSearchBackendTestCase(TestCase):
 
         (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
-        self.assertEqual(len(fields), 4)
+        self.assertEqual(len(fields), 5)
         self.assertEqual(
             sorted(fields, key=lambda x: x["field_name"]),
             [
@@ -682,6 +682,13 @@ class SolrSearchBackendTestCase(TestCase):
                     "type": "text_en",
                     "stored": "true",
                     "field_name": "text",
+                    "multi_valued": "false",
+                },
+                {
+                    "indexed": "true",
+                    "type": "text_general",
+                    "stored": "true",
+                    "field_name": "general_text",
                     "multi_valued": "false",
                 },
             ],

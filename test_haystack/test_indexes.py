@@ -37,11 +37,17 @@ class BadSearchIndex2(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
+class TextGeneralField(indexes.CharField):
+    def get_field_type(self):
+        return 'text_general'
+
+
 class GoodMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     author = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
     extra = indexes.CharField(indexed=False, use_template=True)
+    general_text = TextGeneralField(model_attr="foo")
 
     def get_model(self):
         return MockModel
@@ -214,7 +220,7 @@ class SearchIndexTestCase(TestCase):
             self.fail()
 
     def test_proper_fields(self):
-        self.assertEqual(len(self.mi.fields), 4)
+        self.assertEqual(len(self.mi.fields), 5)
         self.assertTrue("text" in self.mi.fields)
         self.assertTrue(isinstance(self.mi.fields["text"], indexes.CharField))
         self.assertTrue("author" in self.mi.fields)
@@ -223,6 +229,8 @@ class SearchIndexTestCase(TestCase):
         self.assertTrue(isinstance(self.mi.fields["pub_date"], indexes.DateTimeField))
         self.assertTrue("extra" in self.mi.fields)
         self.assertTrue(isinstance(self.mi.fields["extra"], indexes.CharField))
+        self.assertTrue("general_text" in self.mi.fields)
+        self.assertTrue(isinstance(self.mi.fields["general_text"], TextGeneralField))
 
         self.assertEqual(len(self.cmi.fields), 7)
         self.assertTrue("text" in self.cmi.fields)
@@ -287,10 +295,10 @@ class SearchIndexTestCase(TestCase):
         mock.author = "daniel%s" % mock.id
         mock.pub_date = datetime.datetime(2009, 1, 31, 4, 19, 0)
 
-        self.assertEqual(len(self.mi.prepare(mock)), 7)
+        self.assertEqual(len(self.mi.prepare(mock)), 8)
         self.assertEqual(
             sorted(self.mi.prepare(mock).keys()),
-            ["author", "django_ct", "django_id", "extra", "id", "pub_date", "text"],
+            ["author", "django_ct", "django_id", "extra", "general_text", "id", "pub_date", "text"],
         )
 
     def test_custom_prepare(self):
@@ -572,7 +580,7 @@ class SearchIndexTestCase(TestCase):
         except:
             self.fail()
 
-        self.assertEqual(len(agmi.fields), 5)
+        self.assertEqual(len(agmi.fields), 6)
         self.assertTrue("text" in agmi.fields)
         self.assertTrue(isinstance(agmi.fields["text"], indexes.CharField))
         self.assertTrue("author" in agmi.fields)
@@ -581,6 +589,8 @@ class SearchIndexTestCase(TestCase):
         self.assertTrue(isinstance(agmi.fields["pub_date"], indexes.DateTimeField))
         self.assertTrue("extra" in agmi.fields)
         self.assertTrue(isinstance(agmi.fields["extra"], indexes.CharField))
+        self.assertTrue("general_text" in agmi.fields)
+        self.assertTrue(isinstance(agmi.fields["general_text"], TextGeneralField))
         self.assertTrue("additional" in agmi.fields)
         self.assertTrue(isinstance(agmi.fields["additional"], indexes.CharField))
 
