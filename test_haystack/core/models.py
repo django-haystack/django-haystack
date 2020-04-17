@@ -16,6 +16,7 @@ class MockModel(models.Model):
     author = models.CharField(max_length=255)
     foo = models.CharField(max_length=255, blank=True)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
+    price = models.DecimalField(default=0)
     tag = models.ForeignKey(MockTag, models.CASCADE)
 
     def __str__(self):
