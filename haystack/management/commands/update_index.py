@@ -56,7 +56,7 @@ def update_worker(args):
     index = unified_index.get_index(model)
     backend = haystack_connections[using].get_backend()
 
-    qs = index.build_queryset(start_date=start_date, end_date=end_date)
+    qs = index.build_queryset(using=using, start_date=start_date, end_date=end_date)
     do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
     return args
 
