@@ -17,6 +17,7 @@ from haystack.fields import (  # NOQA — exposed as a public export
     DecimalField,
     EdgeNgramField,
     FacetCharField,
+    FacetDateField,
     FacetDateTimeField,
     FacetIntegerField,
     FloatField,
