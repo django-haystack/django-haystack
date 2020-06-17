@@ -169,7 +169,7 @@ appropriate backend version — for example::
 Whoosh
 ======
 
-Official Download Location: http://bitbucket.org/mchaput/whoosh/
+Official Download Location: https://github.com/whoosh-community/whoosh
 
 Whoosh is pure Python, so it's a great option for getting started quickly and
 for development, though it does work for small scale live deployments. The
