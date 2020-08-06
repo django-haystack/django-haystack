@@ -204,7 +204,7 @@ Most search engines require you to set the language at the index level. For
 example, a multi-lingual site using Solr can use `multiple cores <http://wiki.apache.org/solr/CoreAdmin>`_ and corresponding Haystack
 backends using the language name. Under this scenario, queries are simple::
 
-    sqs = SearchQuerySet.using(lang).auto_query(…)
+    sqs = SearchQuerySet().using(lang).auto_query(…)
 
 During index updates, the Index's ``index_queryset`` method will need to filter
 the items to avoid sending the wrong content to the search engine::
