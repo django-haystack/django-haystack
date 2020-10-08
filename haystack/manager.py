@@ -3,7 +3,7 @@ from haystack.query import EmptySearchQuerySet, SearchQuerySet
 
 class SearchIndexManager(object):
     def __init__(self, using=None):
-        super(SearchIndexManager, self).__init__()
+        super().__init__()
         self.using = using
 
     def get_search_queryset(self):

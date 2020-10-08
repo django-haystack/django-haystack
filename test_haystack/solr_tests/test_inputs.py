@@ -5,7 +5,7 @@ from haystack import connections, inputs
 
 class SolrInputTestCase(TestCase):
     def setUp(self):
-        super(SolrInputTestCase, self).setUp()
+        super().setUp()
         self.query_obj = connections["solr"].get_query()
 
     def test_raw_init(self):

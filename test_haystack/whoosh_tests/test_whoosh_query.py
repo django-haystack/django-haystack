@@ -11,7 +11,7 @@ from .testcases import WhooshTestCase
 
 class WhooshSearchQueryTestCase(WhooshTestCase):
     def setUp(self):
-        super(WhooshSearchQueryTestCase, self).setUp()
+        super().setUp()
 
         self.sq = connections["whoosh"].get_query()
 

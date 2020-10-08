@@ -24,7 +24,7 @@ class SearchResultTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SearchResultTestCase, self).setUp()
+        super().setUp()
         cap = CaptureHandler()
         logging.getLogger("haystack").addHandler(cap)
 

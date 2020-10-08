@@ -15,11 +15,11 @@ from haystack.utils import get_model_ct_tuple
 class SearchChangeList(ChangeList):
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
-        super(SearchChangeList, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_results(self, request):
         if SEARCH_VAR not in request.GET:
-            return super(SearchChangeList, self).get_results(request)
+            return super().get_results(request)
 
         # Note that pagination is 0-based, not 1-based.
         sqs = (
@@ -67,9 +67,7 @@ class SearchModelAdminMixin(object):
 
         if SEARCH_VAR not in request.GET:
             # Do the usual song and dance.
-            return super(SearchModelAdminMixin, self).changelist_view(
-                request, extra_context
-            )
+            return super().changelist_view(request, extra_context)
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
@@ -82,9 +80,7 @@ class SearchModelAdminMixin(object):
         if self.model not in indexed_models:
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
-            return super(SearchModelAdminMixin, self).changelist_view(
-                request, extra_context
-            )
+            return super().changelist_view(request, extra_context)
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?

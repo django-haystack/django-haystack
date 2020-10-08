@@ -114,7 +114,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
     }
 
     def __init__(self, connection_alias, **connection_options):
-        super(ElasticsearchSearchBackend, self).__init__(
+        super().__init__(
             connection_alias, **connection_options
         )
 

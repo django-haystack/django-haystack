@@ -259,7 +259,7 @@ class MultiValueValidSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 class UnifiedIndexTestCase(TestCase):
     def setUp(self):
-        super(UnifiedIndexTestCase, self).setUp()
+        super().setUp()
         self.ui = loading.UnifiedIndex()
         self.ui.build([])
 

@@ -5,7 +5,7 @@ from haystack import connections, inputs
 
 class Elasticsearch5InputTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch5InputTestCase, self).setUp()
+        super().setUp()
         self.query_obj = connections["elasticsearch"].get_query()
 
     def test_raw_init(self):

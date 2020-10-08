@@ -14,7 +14,7 @@ from ..core.models import AnotherMockModel, MockModel
 
 class Elasticsearch2SearchQueryTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch2SearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["elasticsearch"].get_query()
 
     def test_build_query_all(self):
@@ -182,7 +182,7 @@ class Elasticsearch2SearchQueryTestCase(TestCase):
 
 class Elasticsearch2SearchQuerySpatialBeforeReleaseTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch2SearchQuerySpatialBeforeReleaseTestCase, self).setUp()
+        super().setUp()
         self.backend = connections["elasticsearch"].get_backend()
         self._elasticsearch_version = elasticsearch.VERSION
         elasticsearch.VERSION = (0, 9, 9)
@@ -214,7 +214,7 @@ class Elasticsearch2SearchQuerySpatialBeforeReleaseTestCase(TestCase):
 
 class Elasticsearch2SearchQuerySpatialAfterReleaseTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch2SearchQuerySpatialAfterReleaseTestCase, self).setUp()
+        super().setUp()
         self.backend = connections["elasticsearch"].get_backend()
         self._elasticsearch_version = elasticsearch.VERSION
         elasticsearch.VERSION = (1, 0, 0)

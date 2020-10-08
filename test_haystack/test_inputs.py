@@ -5,7 +5,7 @@ from haystack import connections, inputs
 
 class InputTestCase(TestCase):
     def setUp(self):
-        super(InputTestCase, self).setUp()
+        super().setUp()
         self.query_obj = connections["default"].get_query()
 
     def test_raw_init(self):

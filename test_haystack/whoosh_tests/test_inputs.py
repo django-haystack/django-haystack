@@ -5,7 +5,7 @@ from haystack import connections, inputs
 
 class WhooshInputTestCase(TestCase):
     def setUp(self):
-        super(WhooshInputTestCase, self).setUp()
+        super().setUp()
         self.query_obj = connections["whoosh"].get_query()
 
     def test_raw_init(self):

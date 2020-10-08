@@ -15,7 +15,7 @@ class SimpleSearchBackendTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(SimpleSearchBackendTestCase, self).setUp()
+        super().setUp()
 
         self.backend = connections["simple"].get_backend()
         ui = connections["simple"].get_unified_index()
@@ -220,7 +220,7 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(LiveSimpleSearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["simple"].get_unified_index()
@@ -235,7 +235,7 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["simple"]._index = self.old_ui
-        super(LiveSimpleSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_general_queries(self):
         # For now, just make sure these don't throw an exception.

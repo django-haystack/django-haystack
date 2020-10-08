@@ -88,7 +88,7 @@ class BaseSearchQueryTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(BaseSearchQueryTestCase, self).setUp()
+        super().setUp()
         self.bsq = BaseSearchQuery()
 
     def test_get_count(self):
@@ -402,7 +402,7 @@ class SearchQuerySetTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(SearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -426,7 +426,7 @@ class SearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["default"]._index = self.old_unified_index
-        super(SearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_len(self):
         self.assertEqual(len(self.msqs), 23)
@@ -991,7 +991,7 @@ class ValuesQuerySetTestCase(SearchQuerySetTestCase):
 
 class EmptySearchQuerySetTestCase(TestCase):
     def setUp(self):
-        super(EmptySearchQuerySetTestCase, self).setUp()
+        super().setUp()
         self.esqs = EmptySearchQuerySet()
 
     def test_get_count(self):
@@ -1033,7 +1033,7 @@ class PickleSearchQuerySetTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(PickleSearchQuerySetTestCase, self).setUp()
+        super().setUp()
         # Stow.
         self.old_unified_index = connections["default"]._index
         self.ui = UnifiedIndex()
@@ -1055,7 +1055,7 @@ class PickleSearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["default"]._index = self.old_unified_index
-        super(PickleSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_pickling(self):
         results = self.msqs.all()

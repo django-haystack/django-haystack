@@ -18,13 +18,13 @@ class SpellingSuggestionTestCase(LiveWhooshRoundTripTestCase):
         )
         settings.HAYSTACK_CONNECTIONS["whoosh"]["INCLUDE_SPELLING"] = True
 
-        super(SpellingSuggestionTestCase, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         settings.HAYSTACK_CONNECTIONS["whoosh"][
             "INCLUDE_SPELLING"
         ] = self.old_spelling_setting
-        super(SpellingSuggestionTestCase, self).tearDown()
+        super().tearDown()
 
     def test_form_suggestion(self):
         form = SearchForm({"q": "exampl"}, searchqueryset=SearchQuerySet("whoosh"))

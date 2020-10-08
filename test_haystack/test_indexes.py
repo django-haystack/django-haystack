@@ -62,7 +62,7 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     hello = indexes.CharField(model_attr="hello")
 
     def prepare(self, obj):
-        super(GoodCustomMockSearchIndex, self).prepare(obj)
+        super().prepare(obj)
         self.prepared_data["whee"] = "Custom preparation."
         return self.prepared_data
 
@@ -153,7 +153,7 @@ class SearchIndexTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SearchIndexTestCase, self).setUp()
+        super().setUp()
         self.sb = connections["default"].get_backend()
         self.mi = GoodMockSearchIndex()
         self.cmi = GoodCustomMockSearchIndex()
@@ -198,7 +198,7 @@ class SearchIndexTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(SearchIndexTestCase, self).tearDown()
+        super().tearDown()
 
     def test_no_contentfield_present(self):
         self.assertRaises(SearchFieldError, BadSearchIndex1)
@@ -709,7 +709,7 @@ class PolymorphicModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return AnotherMockModel
 
     def prepare(self, obj):
-        self.prepared_data = super(PolymorphicModelSearchIndex, self).prepare(obj)
+        self.prepared_data = super().prepare(obj)
         if isinstance(obj, AThirdMockModel):
             self.prepared_data["average_delay"] = obj.average_delay
         return self.prepared_data
@@ -759,7 +759,7 @@ class ModelWithManyToManyFieldModelSearchIndex(indexes.ModelSearchIndex):
 
 class ModelSearchIndexTestCase(TestCase):
     def setUp(self):
-        super(ModelSearchIndexTestCase, self).setUp()
+        super().setUp()
         self.sb = connections["default"].get_backend()
         self.bmsi = BasicModelSearchIndex()
         self.fmsi = FieldsModelSearchIndex()

@@ -12,7 +12,7 @@ from .search_indexes import BarIndex, FooIndex
 
 class MultipleIndexTestCase(WhooshTestCase):
     def setUp(self):
-        super(MultipleIndexTestCase, self).setUp()
+        super().setUp()
 
         self.ui = connections["solr"].get_unified_index()
         self.fi = self.ui.get_index(Foo)
@@ -43,7 +43,7 @@ class MultipleIndexTestCase(WhooshTestCase):
     def tearDown(self):
         self.fi.clear(using="solr")
         self.bi.clear(using="solr")
-        super(MultipleIndexTestCase, self).tearDown()
+        super().tearDown()
 
     def test_index_update_object_using(self):
         results = self.solr_backend.search("foo")
@@ -183,16 +183,16 @@ class MultipleIndexTestCase(WhooshTestCase):
 class TestSignalProcessor(BaseSignalProcessor):
     def setup(self):
         self.setup_ran = True
-        super(TestSignalProcessor, self).setup()
+        super().setup()
 
     def teardown(self):
         self.teardown_ran = True
-        super(TestSignalProcessor, self).teardown()
+        super().teardown()
 
 
 class SignalProcessorTestCase(WhooshTestCase):
     def setUp(self):
-        super(SignalProcessorTestCase, self).setUp()
+        super().setUp()
 
         # Blatantly wrong data, just for assertion purposes.
         self.fake_connections = {}
@@ -219,7 +219,7 @@ class SignalProcessorTestCase(WhooshTestCase):
     def tearDown(self):
         self.fi.clear(using="solr")
         self.bi.clear(using="solr")
-        super(SignalProcessorTestCase, self).tearDown()
+        super().tearDown()
 
     def test_init(self):
         tsp = TestSignalProcessor(self.fake_connections, self.fake_router)

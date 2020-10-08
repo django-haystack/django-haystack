@@ -32,7 +32,7 @@ class SearchForm(forms.Form):
         if self.searchqueryset is None:
             self.searchqueryset = SearchQuerySet()
 
-        super(SearchForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def no_query_found(self):
         """
@@ -68,16 +68,16 @@ class SearchForm(forms.Form):
 
 class HighlightedSearchForm(SearchForm):
     def search(self):
-        return super(HighlightedSearchForm, self).search().highlight()
+        return super().search().highlight()
 
 
 class FacetedSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
         self.selected_facets = kwargs.pop("selected_facets", [])
-        super(FacetedSearchForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def search(self):
-        sqs = super(FacetedSearchForm, self).search()
+        sqs = super().search()
 
         # We need to process each facet to ensure that the field name and the
         # value are quoted correctly and separately:
@@ -95,7 +95,7 @@ class FacetedSearchForm(SearchForm):
 
 class ModelSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
-        super(ModelSearchForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["models"] = forms.MultipleChoiceField(
             choices=model_choices(),
             required=False,
@@ -114,20 +114,20 @@ class ModelSearchForm(SearchForm):
         return search_models
 
     def search(self):
-        sqs = super(ModelSearchForm, self).search()
+        sqs = super().search()
         return sqs.models(*self.get_models())
 
 
 class HighlightedModelSearchForm(ModelSearchForm):
     def search(self):
-        return super(HighlightedModelSearchForm, self).search().highlight()
+        return super().search().highlight()
 
 
 class FacetedModelSearchForm(ModelSearchForm):
     selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def search(self):
-        sqs = super(FacetedModelSearchForm, self).search()
+        sqs = super().search()
 
         if hasattr(self, "cleaned_data") and self.cleaned_data["selected_facets"]:
             sqs = sqs.narrow(self.cleaned_data["selected_facets"])

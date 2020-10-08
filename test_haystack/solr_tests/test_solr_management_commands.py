@@ -49,7 +49,7 @@ class ManagementCommandTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(ManagementCommandTestCase, self).setUp()
+        super().setUp()
         self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS["solr"]["URL"])
 
         # Stow.
@@ -61,7 +61,7 @@ class ManagementCommandTestCase(TestCase):
 
     def tearDown(self):
         connections["solr"]._index = self.old_ui
-        super(ManagementCommandTestCase, self).tearDown()
+        super().tearDown()
 
     def verify_indexed_documents(self):
         """Confirm that the documents in the search index match the database"""
@@ -284,7 +284,7 @@ class AppModelManagementCommandTestCase(TestCase):
     fixtures = ["base_data", "bulk_data.json"]
 
     def setUp(self):
-        super(AppModelManagementCommandTestCase, self).setUp()
+        super().setUp()
         self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS["solr"]["URL"])
 
         # Stow.
@@ -297,7 +297,7 @@ class AppModelManagementCommandTestCase(TestCase):
 
     def tearDown(self):
         connections["solr"]._index = self.old_ui
-        super(AppModelManagementCommandTestCase, self).tearDown()
+        super().tearDown()
 
     def test_app_model_variations(self):
         call_command("clear_index", interactive=False, verbosity=0)

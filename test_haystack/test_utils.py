@@ -60,7 +60,7 @@ class GetFacetFieldNameTestCase(TestCase):
 
 class HighlighterTestCase(TestCase):
     def setUp(self):
-        super(HighlighterTestCase, self).setUp()
+        super().setUp()
         self.document_1 = "This is a test of the highlightable words detection. This is only a test. Were this an actual emergency, your text would have exploded in mid-air."
         self.document_2 = (
             "The content of words in no particular order causes nothing to occur."

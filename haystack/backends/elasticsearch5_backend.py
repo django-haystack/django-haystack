@@ -29,7 +29,7 @@ except ImportError:
 
 class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super(Elasticsearch5SearchBackend, self).__init__(
+        super().__init__(
             connection_alias, **connection_options
         )
         self.content_field_name = None
@@ -418,7 +418,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
         distance_point=None,
         geo_sort=False,
     ):
-        results = super(Elasticsearch5SearchBackend, self)._process_results(
+        results = super()._process_results(
             raw_results, highlight, result_class, distance_point, geo_sort
         )
         facets = {}

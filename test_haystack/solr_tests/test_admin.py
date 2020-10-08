@@ -16,7 +16,7 @@ class SearchModelAdminTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(SearchModelAdminTestCase, self).setUp()
+        super().setUp()
 
         # With the models setup, you get the proper bits.
         # Stow.
@@ -39,7 +39,7 @@ class SearchModelAdminTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["solr"]._index = self.old_ui
-        super(SearchModelAdminTestCase, self).tearDown()
+        super().tearDown()
 
     def test_usage(self):
         reset_search_queries()

@@ -94,17 +94,17 @@ class FacetedSearchMixin(SearchMixin):
     facet_fields = None
 
     def get_form_kwargs(self):
-        kwargs = super(FacetedSearchMixin, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs.update({"selected_facets": self.request.GET.getlist("selected_facets")})
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context = super(FacetedSearchMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context.update({"facets": self.queryset.facet_counts()})
         return context
 
     def get_queryset(self):
-        qs = super(FacetedSearchMixin, self).get_queryset()
+        qs = super().get_queryset()
         for field in self.facet_fields:
             qs = qs.facet(field)
         return qs

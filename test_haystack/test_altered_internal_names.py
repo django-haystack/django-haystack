@@ -21,7 +21,7 @@ class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class AlteredInternalNamesTestCase(TestCase):
     def setUp(self):
         check_solr()
-        super(AlteredInternalNamesTestCase, self).setUp()
+        super().setUp()
 
         self.old_ui = connections["solr"].get_unified_index()
         ui = UnifiedIndex()
@@ -37,7 +37,7 @@ class AlteredInternalNamesTestCase(TestCase):
         constants.DJANGO_CT = "django_ct"
         constants.DJANGO_ID = "django_id"
         connections["solr"]._index = self.old_ui
-        super(AlteredInternalNamesTestCase, self).tearDown()
+        super().tearDown()
 
     def test_altered_names(self):
         sq = connections["solr"].get_query()
