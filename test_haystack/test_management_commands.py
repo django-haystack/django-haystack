@@ -1,4 +1,3 @@
-# encoding: utf-8
 from unittest.mock import call, patch
 
 from django.conf import settings

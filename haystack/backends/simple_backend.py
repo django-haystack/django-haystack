@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 A very basic, ORM-based backend for simple search during tests.
 """

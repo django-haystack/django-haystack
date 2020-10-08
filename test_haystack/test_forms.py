@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.test import TestCase
 from test_haystack.core.models import AnotherMockModel, MockModel
 from test_haystack.test_views import (

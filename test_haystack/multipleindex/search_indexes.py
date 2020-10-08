@@ -1,4 +1,3 @@
-# encoding: utf-8
 from haystack import indexes
 from haystack.indexes import Indexable, SearchIndex
 

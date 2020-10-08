@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.test import TestCase
 
 from haystack import connections, inputs

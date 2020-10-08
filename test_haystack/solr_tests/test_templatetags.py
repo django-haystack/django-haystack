@@ -1,4 +1,3 @@
-# encoding: utf-8
 import unittest
 from unittest.mock import call, patch
 

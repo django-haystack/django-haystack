@@ -1,4 +1,3 @@
-# encoding: utf-8
 import datetime
 import os
 from tempfile import mkdtemp
@@ -16,10 +15,8 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+
+from io import StringIO
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):

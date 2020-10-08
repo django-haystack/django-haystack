@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.apps import apps
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query

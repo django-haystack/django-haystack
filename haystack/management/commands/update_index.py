@@ -1,4 +1,3 @@
-# encoding: utf-8
 import logging
 import multiprocessing
 import os

@@ -1,4 +1,3 @@
-# encoding: utf-8
 import queue
 import time
 from threading import Thread

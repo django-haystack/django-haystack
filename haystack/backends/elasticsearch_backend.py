@@ -1,4 +1,3 @@
-# encoding: utf-8
 import re
 import warnings
 from datetime import datetime, timedelta

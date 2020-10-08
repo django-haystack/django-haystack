@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # A couple models for Haystack to test with.
 import datetime
 import uuid

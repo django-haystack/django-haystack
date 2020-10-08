@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.conf import settings
 from django.test import TestCase
 from test_haystack.core.models import AnotherMockModel, MockModel

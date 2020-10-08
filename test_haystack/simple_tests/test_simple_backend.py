@@ -1,17 +1,14 @@
-# coding: utf-8
 from datetime import date
 
-from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from haystack import connection_router, connections, indexes
+from haystack import connections
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
-
+from .search_indexes import SimpleMockScoreIndex, SimpleMockSearchIndex
 from ..core.models import MockModel, OneToManyRightSideModel, ScoreMockModel
 from ..mocks import MockSearchResult
-from .search_indexes import SimpleMockScoreIndex, SimpleMockSearchIndex
 
 
 class SimpleSearchBackendTestCase(TestCase):

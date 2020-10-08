@@ -1,4 +1,3 @@
-# encoding: utf-8
 import warnings
 
 from django.core.exceptions import ImproperlyConfigured

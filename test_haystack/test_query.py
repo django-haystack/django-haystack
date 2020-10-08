@@ -1,18 +1,11 @@
-# -*- coding: utf-8 -*-
 import datetime
-import unittest
+import pickle
 
 from django.test import TestCase
 from django.test.utils import override_settings
-from test_haystack.core.models import (
-    AnotherMockModel,
-    CharPKMockModel,
-    MockModel,
-    UUIDMockModel,
-)
 
 from haystack import connections, indexes, reset_search_queries
-from haystack.backends import SQ, BaseSearchQuery
+from haystack.backends import BaseSearchQuery, SQ
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
 from haystack.query import (
@@ -22,27 +15,18 @@ from haystack.query import (
     ValuesSearchQuerySet,
 )
 from haystack.utils.loading import UnifiedIndex
-
-from .mocks import (
-    MOCK_SEARCH_RESULTS,
-    CharPKMockSearchBackend,
-    MockSearchBackend,
-    MockSearchQuery,
-    ReadQuerySetMockSearchBackend,
-    UUIDMockSearchBackend,
+from test_haystack.core.models import (
+    AnotherMockModel,
+    CharPKMockModel,
+    MockModel,
+    UUIDMockModel,
 )
+from .mocks import (CharPKMockSearchBackend, MOCK_SEARCH_RESULTS, MockSearchBackend, MockSearchQuery, ReadQuerySetMockSearchBackend, UUIDMockSearchBackend)
 from .test_indexes import (
     GhettoAFifthMockModelSearchIndex,
     TextReadQuerySetTestSearchIndex,
 )
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
-
-test_pickling = True
-
-try:
-    import pickle
-except ImportError:
-    test_pickling = False
 
 
 class SQTestCase(TestCase):
@@ -1044,7 +1028,6 @@ class EmptySearchQuerySetTestCase(TestCase):
         self.assertRaises(TypeError, lambda: self.esqs["count"])
 
 
-@unittest.skipUnless(test_pickling, "Skipping pickling tests")
 @override_settings(DEBUG=True)
 class PickleSearchQuerySetTestCase(TestCase):
     fixtures = ["base_data"]

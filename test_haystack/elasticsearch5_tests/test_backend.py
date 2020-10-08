@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import logging as std_logging
 import operator
@@ -22,15 +21,7 @@ from haystack.utils.loading import UnifiedIndex
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
 
-test_pickling = True
-
-try:
-    import cPickle as pickle
-except ImportError:
-    try:
-        import pickle
-    except ImportError:
-        test_pickling = False
+import pickle
 
 
 def clear_elasticsearch_index():
@@ -1557,7 +1548,6 @@ class LiveElasticsearch5RoundTripTestCase(TestCase):
         self.assertEqual(result.sites, [3, 5, 1])
 
 
-@unittest.skipUnless(test_pickling, "Skipping pickling tests")
 class LiveElasticsearch5PickleTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 

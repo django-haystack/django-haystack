@@ -1,4 +1,3 @@
-# encoding: utf-8
 import logging as std_logging
 import pickle
 

@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from pkg_resources import DistributionNotFound, get_distribution, parse_version

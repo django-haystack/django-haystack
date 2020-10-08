@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.contrib.gis.measure import D
 from django.test import TestCase
 
