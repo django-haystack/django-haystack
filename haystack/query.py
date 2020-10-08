@@ -714,7 +714,7 @@ class ValuesSearchQuerySet(ValuesListSearchQuerySet):
         query_fields = set(self._internal_fields)
         query_fields.update(self._fields)
         kwargs = {"fields": query_fields}
-        return super()._fill_cache(start, end, **kwargs)
+        return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
 
     def post_process_results(self, results):
         to_cache = []
