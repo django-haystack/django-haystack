@@ -88,11 +88,11 @@ within which to primarily search. Because this ideal is so central and most of
 Haystack is designed to have pluggable backends, it is important to ensure that
 all engines have at least a bare minimum of the data they need to function.
 
-As a result, when creating a ``SearchIndex``, at least one field must be marked
-with ``document=True``. This signifies to Haystack that whatever is placed in
-this field while indexing is to be the primary text the search engine indexes.
-The name of this field can be almost anything, but ``text`` is one of the
-more common names used.
+As a result, when creating a ``SearchIndex``, one (and only one) field must be
+marked with ``document=True``. This signifies to Haystack that whatever is
+placed in this field while indexing is to be the primary text the search engine
+indexes. The name of this field can be almost anything, but ``text`` is one of
+the more common names used.
 
 
 Stored/Indexed Fields
@@ -111,12 +111,12 @@ them through one query instead of many. This still hits the DB and incurs a
 performance penalty.
 
 The other option is to leverage stored fields. By default, all fields in
-Haystack are both indexed (searchable by the engine) and stored (retained by
+Haystack are either indexed (searchable by the engine) or stored (retained by
 the engine and presented in the results). By using a stored field, you can
 store commonly used data in such a way that you don't need to hit the database
 when processing the search result to get more information.
 
-For example, one great way to leverage this is to pre-rendering an object's
+For example, one great way to leverage this is to pre-render an object's
 search result template DURING indexing. You define an additional field, render
 a template with it and it follows the main indexed record into the index. Then,
 when that record is pulled when it matches a query, you can simply display the
@@ -152,9 +152,9 @@ Keeping The Index Fresh
 =======================
 
 There are several approaches to keeping the search index in sync with your
-database. None are more correct than the others and depending the traffic you
-see, the churn rate of your data and what concerns are important to you
-(CPU load, how recent, et cetera).
+database. None are more correct than the others and which one you use depends
+on the traffic you see, the churn rate of your data, and what concerns are
+important to you (CPU load, how recent, et cetera).
 
 The conventional method is to use ``SearchIndex`` in combination with cron
 jobs. Running a ``./manage.py update_index`` every couple hours will keep your
@@ -332,7 +332,6 @@ object and write its ``prepare`` method to populate/alter the data any way you
 choose. For instance, a (naive) user-created ``GeoPointField`` might look
 something like::
 
-    from django.utils import six
     from haystack import indexes
 
     class GeoPointField(indexes.CharField):
@@ -341,7 +340,7 @@ something like::
             super(GeoPointField, self).__init__(**kwargs)
 
         def prepare(self, obj):
-            return six.text_type("%s-%s" % (obj.latitude, obj.longitude))
+            return "%s-%s" % (obj.latitude, obj.longitude)
 
 The ``prepare`` method simply returns the value to be used for that field. It's
 entirely possible to include data that's not directly referenced to the object
@@ -615,4 +614,3 @@ For the impatient::
         def index_queryset(self, using=None):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
-

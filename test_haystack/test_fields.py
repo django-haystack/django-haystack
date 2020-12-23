@@ -1,60 +1,198 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 from decimal import Decimal
+from unittest.mock import Mock
 
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
-from test_haystack.core.models import MockModel, MockTag
+from test_haystack.core.models import (
+    ManyToManyLeftSideModel,
+    ManyToManyRightSideModel,
+    MockModel,
+    MockTag,
+    OneToManyLeftSideModel,
+    OneToManyRightSideModel,
+)
 
 from haystack.fields import *
+
+
+class SearchFieldTestCase(TestCase):
+    def test_get_iterable_objects_with_none(self):
+        self.assertEqual([], SearchField.get_iterable_objects(None))
+
+    def test_get_iterable_objects_with_single_non_iterable_object(self):
+        obj = object()
+        expected = [obj]
+
+        self.assertEqual(expected, SearchField.get_iterable_objects(obj))
+
+    def test_get_iterable_objects_with_list_stays_the_same(self):
+        objects = [object(), object()]
+
+        self.assertIs(objects, SearchField.get_iterable_objects(objects))
+
+    def test_get_iterable_objects_with_django_manytomany_rel(self):
+        left_model = ManyToManyLeftSideModel.objects.create()
+        right_model_1 = ManyToManyRightSideModel.objects.create(name="Right side 1")
+        right_model_2 = ManyToManyRightSideModel.objects.create()
+        left_model.related_models.add(right_model_1)
+        left_model.related_models.add(right_model_2)
+
+        result = SearchField.get_iterable_objects(left_model.related_models)
+
+        self.assertTrue(right_model_1 in result)
+        self.assertTrue(right_model_2 in result)
+
+    def test_get_iterable_objects_with_django_onetomany_rel(self):
+        left_model = OneToManyLeftSideModel.objects.create()
+        right_model_1 = OneToManyRightSideModel.objects.create(left_side=left_model)
+        right_model_2 = OneToManyRightSideModel.objects.create(left_side=left_model)
+
+        result = SearchField.get_iterable_objects(left_model.right_side)
+
+        self.assertTrue(right_model_1 in result)
+        self.assertTrue(right_model_2 in result)
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none(self):
+        related = Mock(spec=["none_field"], none_field=None)
+        obj = Mock(spec=["related"], related=[related])
+
+        field = SearchField(null=False)
+
+        self.assertRaises(
+            SearchFieldError,
+            field.resolve_attributes_lookup,
+            [obj],
+            ["related", "none_field"],
+        )
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_is_allowed_to_be_null(
+        self
+    ):
+        related = Mock(spec=["none_field"], none_field=None)
+        obj = Mock(spec=["related"], related=[related])
+
+        field = SearchField(null=True)
+
+        self.assertEqual(
+            [None], field.resolve_attributes_lookup([obj], ["related", "none_field"])
+        )
+
+    def test_resolve_attributes_lookup_with_field_that_points_to_none_but_has_default(
+        self
+    ):
+        related = Mock(spec=["none_field"], none_field=None)
+        obj = Mock(spec=["related"], related=[related])
+
+        field = SearchField(default="Default value")
+
+        self.assertEqual(
+            ["Default value"],
+            field.resolve_attributes_lookup([obj], ["related", "none_field"]),
+        )
+
+    def test_resolve_attributes_lookup_with_deep_relationship(self):
+        related_lvl_2 = Mock(spec=["value"], value=1)
+        related = Mock(spec=["related"], related=[related_lvl_2, related_lvl_2])
+        obj = Mock(spec=["related"], related=[related])
+
+        field = SearchField()
+
+        self.assertEqual(
+            [1, 1],
+            field.resolve_attributes_lookup([obj], ["related", "related", "value"]),
+        )
+
+    def test_resolve_attributes_lookup_with_deep_relationship_through_m2m(self):
+        # obj.related2m:
+        #   - related1
+        #        .deep1
+        #            .value = 1
+        #   - related2
+        #        .deep2
+        #            .value = 2
+        #   - related3
+        #        .deep3
+        #            .value = 3
+        values = [1, 2, 3]
+        deep1, deep2, deep3 = (Mock(spec=["value"], value=x) for x in values)
+        related1, related2, related3 = (
+            Mock(spec=["related"], related=x) for x in (deep1, deep2, deep3)
+        )
+        m2m_rel = Mock(
+            spec=["__iter__"],
+            __iter__=lambda self: iter([related1, related2, related3]),
+        )
+        obj = Mock(spec=["related_m2m"], related_m2m=m2m_rel)
+        field = SearchField()
+        self.assertEqual(
+            values,
+            field.resolve_attributes_lookup([obj], ["related_m2m", "related", "value"]),
+        )
+
+    def test_prepare_with_null_django_onetomany_rel(self):
+        left_model = OneToManyLeftSideModel.objects.create()
+
+        field = SearchField(model_attr="right_side__pk", null=True)
+        result = field.prepare(left_model)
+
+        self.assertEqual(None, result)
 
 
 class CharFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = CharField(model_attr='foo')
+            foo = CharField(model_attr="foo")
         except:
             self.fail()
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
-        author = CharField(model_attr='user')
+        mock.user = "daniel"
+        author = CharField(model_attr="user")
 
-        self.assertEqual(author.prepare(mock), u'daniel')
+        self.assertEqual(author.prepare(mock), "daniel")
 
         # Do a lookup through the relation.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_name = CharField(model_attr='tag__name')
+        tag_name = CharField(model_attr="tag__name")
 
-        self.assertEqual(tag_name.prepare(mock), u'primary')
+        self.assertEqual(tag_name.prepare(mock), "primary")
 
         # Use the default.
         mock = MockModel()
-        author = CharField(model_attr='author', default='')
+        author = CharField(model_attr="author", default="")
 
-        self.assertEqual(author.prepare(mock), u'')
+        self.assertEqual(author.prepare(mock), "")
 
         # Simulate failed lookups.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_slug = CharField(model_attr='tag__slug')
+        tag_slug = CharField(model_attr="tag__slug")
+
+        self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
+
+        # Simulate failed lookups and ensure we don't get a UnicodeDecodeError
+        # in the error message.
+        mock_tag = MockTag.objects.create(name="básico")
+
+        mock = MockModel()
+        mock.tag = mock_tag
+        tag_slug = CharField(model_attr="tag__slug")
 
         self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
 
         # Simulate default='foo'.
         mock = MockModel()
-        default = CharField(default='foo')
+        default = CharField(default="foo")
 
-        self.assertEqual(default.prepare(mock), 'foo')
+        self.assertEqual(default.prepare(mock), "foo")
 
         # Simulate null=True.
         mock = MockModel()
@@ -64,7 +202,7 @@ class CharFieldTestCase(TestCase):
 
         mock = MockModel()
         mock.user = None
-        author = CharField(model_attr='user', null=True)
+        author = CharField(model_attr="user", null=True)
 
         self.assertEqual(author.prepare(mock), None)
 
@@ -72,7 +210,7 @@ class CharFieldTestCase(TestCase):
 class NgramFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = NgramField(model_attr='foo')
+            foo = NgramField(model_attr="foo")
         except:
             self.fail()
 
@@ -80,40 +218,40 @@ class NgramFieldTestCase(TestCase):
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
-        author = NgramField(model_attr='user')
+        mock.user = "daniel"
+        author = NgramField(model_attr="user")
 
-        self.assertEqual(author.prepare(mock), u'daniel')
+        self.assertEqual(author.prepare(mock), "daniel")
 
         # Do a lookup through the relation.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_name = NgramField(model_attr='tag__name')
+        tag_name = NgramField(model_attr="tag__name")
 
-        self.assertEqual(tag_name.prepare(mock), u'primary')
+        self.assertEqual(tag_name.prepare(mock), "primary")
 
         # Use the default.
         mock = MockModel()
-        author = NgramField(model_attr='author', default='')
+        author = NgramField(model_attr="author", default="")
 
-        self.assertEqual(author.prepare(mock), u'')
+        self.assertEqual(author.prepare(mock), "")
 
         # Simulate failed lookups.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_slug = NgramField(model_attr='tag__slug')
+        tag_slug = NgramField(model_attr="tag__slug")
 
         self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
 
         # Simulate default='foo'.
         mock = MockModel()
-        default = NgramField(default='foo')
+        default = NgramField(default="foo")
 
-        self.assertEqual(default.prepare(mock), 'foo')
+        self.assertEqual(default.prepare(mock), "foo")
 
         # Simulate null=True.
         mock = MockModel()
@@ -123,7 +261,7 @@ class NgramFieldTestCase(TestCase):
 
         mock = MockModel()
         mock.user = None
-        author = NgramField(model_attr='user', null=True)
+        author = NgramField(model_attr="user", null=True)
 
         self.assertEqual(author.prepare(mock), None)
 
@@ -131,7 +269,7 @@ class NgramFieldTestCase(TestCase):
 class EdgeNgramFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = EdgeNgramField(model_attr='foo')
+            foo = EdgeNgramField(model_attr="foo")
         except:
             self.fail()
 
@@ -139,40 +277,40 @@ class EdgeNgramFieldTestCase(TestCase):
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
-        author = EdgeNgramField(model_attr='user')
+        mock.user = "daniel"
+        author = EdgeNgramField(model_attr="user")
 
-        self.assertEqual(author.prepare(mock), u'daniel')
+        self.assertEqual(author.prepare(mock), "daniel")
 
         # Do a lookup through the relation.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_name = EdgeNgramField(model_attr='tag__name')
+        tag_name = EdgeNgramField(model_attr="tag__name")
 
-        self.assertEqual(tag_name.prepare(mock), u'primary')
+        self.assertEqual(tag_name.prepare(mock), "primary")
 
         # Use the default.
         mock = MockModel()
-        author = EdgeNgramField(model_attr='author', default='')
+        author = EdgeNgramField(model_attr="author", default="")
 
-        self.assertEqual(author.prepare(mock), u'')
+        self.assertEqual(author.prepare(mock), "")
 
         # Simulate failed lookups.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_slug = EdgeNgramField(model_attr='tag__slug')
+        tag_slug = EdgeNgramField(model_attr="tag__slug")
 
         self.assertRaises(SearchFieldError, tag_slug.prepare, mock)
 
         # Simulate default='foo'.
         mock = MockModel()
-        default = EdgeNgramField(default='foo')
+        default = EdgeNgramField(default="foo")
 
-        self.assertEqual(default.prepare(mock), 'foo')
+        self.assertEqual(default.prepare(mock), "foo")
 
         # Simulate null=True.
         mock = MockModel()
@@ -182,7 +320,7 @@ class EdgeNgramFieldTestCase(TestCase):
 
         mock = MockModel()
         mock.user = None
-        author = EdgeNgramField(model_attr='user', null=True)
+        author = EdgeNgramField(model_attr="user", null=True)
 
         self.assertEqual(author.prepare(mock), None)
 
@@ -190,23 +328,23 @@ class EdgeNgramFieldTestCase(TestCase):
 class IntegerFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = IntegerField(model_attr='foo')
+            foo = IntegerField(model_attr="foo")
         except:
             self.fail()
 
     def test_prepare(self):
         mock = MockModel()
         mock.pk = 1
-        pk = IntegerField(model_attr='pk')
+        pk = IntegerField(model_attr="pk")
 
         self.assertEqual(pk.prepare(mock), 1)
 
         # Simulate failed lookups.
-        mock_tag = MockTag.objects.create(name='primary')
+        mock_tag = MockTag.objects.create(name="primary")
 
         mock = MockModel()
         mock.tag = mock_tag
-        tag_count = IntegerField(model_attr='tag__count')
+        tag_count = IntegerField(model_attr="tag__count")
 
         self.assertRaises(SearchFieldError, tag_count.prepare, mock)
 
@@ -218,7 +356,7 @@ class IntegerFieldTestCase(TestCase):
 
         # Simulate null=True.
         mock = MockModel()
-        pk_none = IntegerField(model_attr='pk', null=True)
+        pk_none = IntegerField(model_attr="pk", null=True)
 
         self.assertEqual(pk_none.prepare(mock), None)
 
@@ -226,14 +364,14 @@ class IntegerFieldTestCase(TestCase):
 class FloatFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FloatField(model_attr='foo')
+            foo = FloatField(model_attr="foo")
         except:
             self.fail()
 
     def test_prepare(self):
         mock = MockModel()
         mock.floaty = 12.5
-        floaty = FloatField(model_attr='floaty')
+        floaty = FloatField(model_attr="floaty")
 
         self.assertEqual(floaty.prepare(mock), 12.5)
 
@@ -253,22 +391,22 @@ class FloatFieldTestCase(TestCase):
 class DecimalFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = DecimalField(model_attr='foo')
+            foo = DecimalField(model_attr="foo")
         except:
             self.fail()
 
     def test_prepare(self):
         mock = MockModel()
-        mock.floaty = Decimal('12.5')
-        floaty = DecimalField(model_attr='floaty')
+        mock.floaty = Decimal("12.5")
+        floaty = DecimalField(model_attr="floaty")
 
-        self.assertEqual(floaty.prepare(mock), '12.5')
+        self.assertEqual(floaty.prepare(mock), "12.5")
 
         # Simulate default=1.5.
         mock = MockModel()
-        default = DecimalField(default='1.5')
+        default = DecimalField(default="1.5")
 
-        self.assertEqual(default.prepare(mock), '1.5')
+        self.assertEqual(default.prepare(mock), "1.5")
 
         # Simulate null=True.
         mock = MockModel()
@@ -280,14 +418,14 @@ class DecimalFieldTestCase(TestCase):
 class BooleanFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = BooleanField(model_attr='foo')
+            foo = BooleanField(model_attr="foo")
         except:
             self.fail()
 
     def test_prepare(self):
         mock = MockModel()
         mock.active = True
-        is_active = BooleanField(model_attr='active')
+        is_active = BooleanField(model_attr="active")
 
         self.assertEqual(is_active.prepare(mock), True)
 
@@ -307,14 +445,18 @@ class BooleanFieldTestCase(TestCase):
 class DateFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = DateField(model_attr='foo')
+            foo = DateField(model_attr="foo")
         except:
             self.fail()
+
+    def test_convert(self):
+        pub_date = DateField()
+        self.assertEqual(pub_date.convert("2016-02-16"), datetime.date(2016, 2, 16))
 
     def test_prepare(self):
         mock = MockModel()
         mock.pub_date = datetime.date(2009, 2, 13)
-        pub_date = DateField(model_attr='pub_date')
+        pub_date = DateField(model_attr="pub_date")
 
         self.assertEqual(pub_date.prepare(mock), datetime.date(2009, 2, 13))
 
@@ -324,20 +466,37 @@ class DateFieldTestCase(TestCase):
 
         self.assertEqual(default.prepare(mock), datetime.date(2000, 1, 1))
 
+    def test_prepare_from_string(self):
+        mock = MockModel()
+        mock.pub_date = datetime.date(2016, 2, 16)
+        pub_date = DateField(model_attr="pub_date")
+
+        self.assertEqual(pub_date.prepare(mock), datetime.date(2016, 2, 16))
+
 
 class DateTimeFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = DateTimeField(model_attr='foo')
+            foo = DateTimeField(model_attr="foo")
         except:
             self.fail()
+
+    def test_convert(self):
+        pub_date = DateTimeField()
+
+        self.assertEqual(
+            pub_date.convert("2016-02-16T10:02:03"),
+            datetime.datetime(2016, 2, 16, 10, 2, 3),
+        )
 
     def test_prepare(self):
         mock = MockModel()
         mock.pub_date = datetime.datetime(2009, 2, 13, 10, 1, 0)
-        pub_date = DateTimeField(model_attr='pub_date')
+        pub_date = DateTimeField(model_attr="pub_date")
 
-        self.assertEqual(pub_date.prepare(mock), datetime.datetime(2009, 2, 13, 10, 1, 0))
+        self.assertEqual(
+            pub_date.prepare(mock), datetime.datetime(2009, 2, 13, 10, 1, 0)
+        )
 
         # Simulate default=datetime.datetime(2009, 2, 13, 10, 01, 00).
         mock = MockModel()
@@ -345,11 +504,20 @@ class DateTimeFieldTestCase(TestCase):
 
         self.assertEqual(default.prepare(mock), datetime.datetime(2000, 1, 1, 0, 0, 0))
 
+    def test_prepare_from_string(self):
+        mock = MockModel()
+        mock.pub_date = "2016-02-16T10:01:02Z"
+        pub_date = DateTimeField(model_attr="pub_date")
+
+        self.assertEqual(
+            pub_date.prepare(mock), datetime.datetime(2016, 2, 16, 10, 1, 2)
+        )
+
 
 class MultiValueFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = MultiValueField(model_attr='foo')
+            foo = MultiValueField(model_attr="foo")
         except:
             self.fail()
 
@@ -357,10 +525,10 @@ class MultiValueFieldTestCase(TestCase):
 
     def test_prepare(self):
         mock = MockModel()
-        mock.sites = ['3', '4', '5']
-        sites = MultiValueField(model_attr='sites')
+        mock.sites = ["3", "4", "5"]
+        sites = MultiValueField(model_attr="sites")
 
-        self.assertEqual(sites.prepare(mock), ['3', '4', '5'])
+        self.assertEqual(sites.prepare(mock), ["3", "4", "5"])
 
         # Simulate default=[1].
         mock = MockModel()
@@ -374,6 +542,28 @@ class MultiValueFieldTestCase(TestCase):
 
         self.assertEqual(multy_none.prepare(mock), None)
 
+    def test_convert_with_single_string(self):
+        field = MultiValueField()
+
+        self.assertEqual(["String"], field.convert("String"))
+
+    def test_convert_with_single_int(self):
+        field = MultiValueField()
+
+        self.assertEqual([1], field.convert(1))
+
+    def test_convert_with_list_of_strings(self):
+        field = MultiValueField()
+
+        self.assertEqual(
+            ["String 1", "String 2"], field.convert(["String 1", "String 2"])
+        )
+
+    def test_convert_with_list_of_ints(self):
+        field = MultiValueField()
+
+        self.assertEqual([1, 2, 3], field.convert([1, 2, 3]))
+
 
 class CharFieldWithTemplateTestCase(TestCase):
     def test_init(self):
@@ -383,40 +573,42 @@ class CharFieldWithTemplateTestCase(TestCase):
             self.fail()
 
         try:
-            foo = CharField(use_template=True, template_name='foo.txt')
+            foo = CharField(use_template=True, template_name="foo.txt")
         except:
             self.fail()
 
-        foo = CharField(use_template=True, template_name='foo.txt')
-        self.assertEqual(foo.template_name, 'foo.txt')
+        foo = CharField(use_template=True, template_name="foo.txt")
+        self.assertEqual(foo.template_name, "foo.txt")
 
         # Test the select_template usage.
-        foo = CharField(use_template=True, template_name=['bar.txt', 'foo.txt'])
-        self.assertEqual(foo.template_name, ['bar.txt', 'foo.txt'])
+        foo = CharField(use_template=True, template_name=["bar.txt", "foo.txt"])
+        self.assertEqual(foo.template_name, ["bar.txt", "foo.txt"])
 
     def test_prepare(self):
         mock = MockModel()
         mock.pk = 1
-        mock.user = 'daniel'
+        mock.user = "daniel"
         template1 = CharField(use_template=True)
 
         self.assertRaises(SearchFieldError, template1.prepare, mock)
 
         template2 = CharField(use_template=True)
-        template2.instance_name = 'template_x'
+        template2.instance_name = "template_x"
         self.assertRaises(TemplateDoesNotExist, template2.prepare, mock)
 
         template3 = CharField(use_template=True)
-        template3.instance_name = 'template'
-        self.assertEqual(template3.prepare(mock), u'Indexed!\n1')
+        template3.instance_name = "template"
+        self.assertEqual(template3.prepare(mock), "Indexed!\n1")
 
-        template4 = CharField(use_template=True, template_name='search/indexes/foo.txt')
-        template4.instance_name = 'template'
-        self.assertEqual(template4.prepare(mock), u'FOO!\n')
+        template4 = CharField(use_template=True, template_name="search/indexes/foo.txt")
+        template4.instance_name = "template"
+        self.assertEqual(template4.prepare(mock), "FOO!\n")
 
-        template5 = CharField(use_template=True, template_name=['foo.txt', 'search/indexes/bar.txt'])
-        template5.instance_name = 'template'
-        self.assertEqual(template5.prepare(mock), u'BAR!\n')
+        template5 = CharField(
+            use_template=True, template_name=["foo.txt", "search/indexes/bar.txt"]
+        )
+        template5.instance_name = "template"
+        self.assertEqual(template5.prepare(mock), "BAR!\n")
 
 
 ##############################################################################
@@ -430,13 +622,13 @@ class FacetFieldTestCase(TestCase):
     def test_init(self):
         # You shouldn't use the FacetField itself.
         try:
-            foo = FacetField(model_attr='foo')
+            foo = FacetField(model_attr="foo")
             self.fail()
         except:
             pass
 
         try:
-            foo_exact = FacetField(facet_for='bar')
+            foo_exact = FacetField(facet_for="bar")
             self.fail()
         except:
             pass
@@ -445,40 +637,40 @@ class FacetFieldTestCase(TestCase):
 class FacetCharFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetCharField(model_attr='foo')
-            foo_exact = FacetCharField(facet_for='bar')
+            foo = FacetCharField(model_attr="foo")
+            foo_exact = FacetCharField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
-        author = FacetCharField(model_attr='user')
+        mock.user = "daniel"
+        author = FacetCharField(model_attr="user")
 
-        self.assertEqual(author.prepare(mock), u'daniel')
+        self.assertEqual(author.prepare(mock), "daniel")
 
 
 class FacetIntegerFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetIntegerField(model_attr='foo')
-            foo_exact = FacetIntegerField(facet_for='bar')
+            foo = FacetIntegerField(model_attr="foo")
+            foo_exact = FacetIntegerField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
+        mock.user = "daniel"
         mock.view_count = 13
-        view_count = FacetIntegerField(model_attr='view_count')
+        view_count = FacetIntegerField(model_attr="view_count")
 
         self.assertEqual(view_count.prepare(mock), 13)
 
@@ -486,20 +678,20 @@ class FacetIntegerFieldTestCase(TestCase):
 class FacetFloatFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetFloatField(model_attr='foo')
-            foo_exact = FacetFloatField(facet_for='bar')
+            foo = FacetFloatField(model_attr="foo")
+            foo_exact = FacetFloatField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
+        mock.user = "daniel"
         mock.price = 25.65
-        price = FacetFloatField(model_attr='price')
+        price = FacetFloatField(model_attr="price")
 
         self.assertEqual(price.prepare(mock), 25.65)
 
@@ -507,20 +699,20 @@ class FacetFloatFieldTestCase(TestCase):
 class FacetBooleanFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetBooleanField(model_attr='foo')
-            foo_exact = FacetBooleanField(facet_for='bar')
+            foo = FacetBooleanField(model_attr="foo")
+            foo_exact = FacetBooleanField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
+        mock.user = "daniel"
         mock.is_active = True
-        is_active = FacetBooleanField(model_attr='is_active')
+        is_active = FacetBooleanField(model_attr="is_active")
 
         self.assertEqual(is_active.prepare(mock), True)
 
@@ -528,20 +720,20 @@ class FacetBooleanFieldTestCase(TestCase):
 class FacetDateFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetDateField(model_attr='foo')
-            foo_exact = FacetDateField(facet_for='bar')
+            foo = FacetDateField(model_attr="foo")
+            foo_exact = FacetDateField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
+        mock.user = "daniel"
         mock.created = datetime.date(2010, 10, 30)
-        created = FacetDateField(model_attr='created')
+        created = FacetDateField(model_attr="created")
 
         self.assertEqual(created.prepare(mock), datetime.date(2010, 10, 30))
 
@@ -549,40 +741,42 @@ class FacetDateFieldTestCase(TestCase):
 class FacetDateTimeFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetDateTimeField(model_attr='foo')
-            foo_exact = FacetDateTimeField(facet_for='bar')
+            foo = FacetDateTimeField(model_attr="foo")
+            foo_exact = FacetDateTimeField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
+        mock.user = "daniel"
         mock.created = datetime.datetime(2010, 10, 30, 3, 14, 25)
-        created = FacetDateTimeField(model_attr='created')
+        created = FacetDateTimeField(model_attr="created")
 
-        self.assertEqual(created.prepare(mock), datetime.datetime(2010, 10, 30, 3, 14, 25))
+        self.assertEqual(
+            created.prepare(mock), datetime.datetime(2010, 10, 30, 3, 14, 25)
+        )
 
 
 class FacetMultiValueFieldTestCase(TestCase):
     def test_init(self):
         try:
-            foo = FacetMultiValueField(model_attr='foo')
-            foo_exact = FacetMultiValueField(facet_for='bar')
+            foo = FacetMultiValueField(model_attr="foo")
+            foo_exact = FacetMultiValueField(facet_for="bar")
         except:
             self.fail()
 
         self.assertEqual(foo.facet_for, None)
         self.assertEqual(foo_exact.null, True)
-        self.assertEqual(foo_exact.facet_for, 'bar')
+        self.assertEqual(foo_exact.facet_for, "bar")
 
     def test_prepare(self):
         mock = MockModel()
-        mock.user = 'daniel'
+        mock.user = "daniel"
         mock.sites = [1, 3, 4]
-        sites = FacetMultiValueField(model_attr='sites')
+        sites = FacetMultiValueField(model_attr="sites")
 
         self.assertEqual(sites.prepare(mock), [1, 3, 4])

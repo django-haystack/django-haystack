@@ -1,17 +1,14 @@
 # encoding: utf-8
+import unittest
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from test_haystack.core.models import AnotherMockModel, MockModel
-from test_haystack.utils import unittest
 
 from haystack import indexes
 from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import loading
-
-from .utils import unittest
 
 try:
     import pysolr
@@ -23,113 +20,166 @@ class ConnectionHandlerTestCase(TestCase):
     def test_init(self):
         ch = loading.ConnectionHandler({})
         self.assertEqual(ch.connections_info, {})
-        self.assertEqual(ch._connections, {})
 
-        ch = loading.ConnectionHandler({
-            'default': {
-                'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-                'URL': 'http://localhost:9001/solr/test_default',
+        ch = loading.ConnectionHandler(
+            {
+                "default": {
+                    "ENGINE": "haystack.backends.solr_backend.SolrEngine",
+                    "URL": "http://localhost:9001/solr/test_default",
+                }
+            }
+        )
+        self.assertEqual(
+            ch.connections_info,
+            {
+                "default": {
+                    "ENGINE": "haystack.backends.solr_backend.SolrEngine",
+                    "URL": "http://localhost:9001/solr/test_default",
+                }
             },
-        })
-        self.assertEqual(ch.connections_info, {
-            'default': {
-                'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-                'URL': 'http://localhost:9001/solr/test_default',
-            },
-        })
-        self.assertEqual(ch._connections, {})
+        )
 
     @unittest.skipIf(pysolr is False, "pysolr required")
     def test_get_item(self):
         ch = loading.ConnectionHandler({})
 
         try:
-            empty_engine = ch['default']
+            empty_engine = ch["default"]
             self.fail()
         except ImproperlyConfigured:
             pass
 
-        ch = loading.ConnectionHandler({
-            'default': {
-                'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-                'URL': 'http://localhost:9001/solr/test_default',
-            },
-        })
-        solr_engine = ch['default']
-        backend_path, memory_address = repr(solr_engine).strip('<>').split(' object at ')
-        self.assertEqual(backend_path, 'haystack.backends.solr_backend.SolrEngine')
+        ch = loading.ConnectionHandler(
+            {
+                "default": {
+                    "ENGINE": "haystack.backends.solr_backend.SolrEngine",
+                    "URL": "http://localhost:9001/solr/test_default",
+                }
+            }
+        )
+        solr_engine = ch["default"]
+        backend_path, memory_address = (
+            repr(solr_engine).strip("<>").split(" object at ")
+        )
+        self.assertEqual(backend_path, "haystack.backends.solr_backend.SolrEngine")
 
-        solr_engine_2 = ch['default']
-        backend_path_2, memory_address_2 = repr(solr_engine_2).strip('<>').split(' object at ')
-        self.assertEqual(backend_path_2, 'haystack.backends.solr_backend.SolrEngine')
+        solr_engine_2 = ch["default"]
+        backend_path_2, memory_address_2 = (
+            repr(solr_engine_2).strip("<>").split(" object at ")
+        )
+        self.assertEqual(backend_path_2, "haystack.backends.solr_backend.SolrEngine")
         # Ensure we're loading out of the memorized connection.
         self.assertEqual(memory_address_2, memory_address)
 
         try:
-            empty_engine = ch['slave']
+            empty_engine = ch["slave"]
             self.fail()
         except ImproperlyConfigured:
             pass
 
     def test_get_unified_index(self):
-        ch = loading.ConnectionHandler({
-            'default': {
-                'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
-            }
-        })
-        ui = ch['default'].get_unified_index()
-        klass, address = repr(ui).strip('<>').split(' object at ')
-        self.assertEqual(str(klass), 'haystack.utils.loading.UnifiedIndex')
+        ch = loading.ConnectionHandler(
+            {"default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}}
+        )
+        ui = ch["default"].get_unified_index()
+        klass, address = repr(ui).strip("<>").split(" object at ")
+        self.assertEqual(str(klass), "haystack.utils.loading.UnifiedIndex")
 
-        ui_2 = ch['default'].get_unified_index()
-        klass_2, address_2 = repr(ui_2).strip('<>').split(' object at ')
-        self.assertEqual(str(klass_2), 'haystack.utils.loading.UnifiedIndex')
+        ui_2 = ch["default"].get_unified_index()
+        klass_2, address_2 = repr(ui_2).strip("<>").split(" object at ")
+        self.assertEqual(str(klass_2), "haystack.utils.loading.UnifiedIndex")
         self.assertEqual(address_2, address)
 
 
 class ConnectionRouterTestCase(TestCase):
+    @override_settings()
     def test_init(self):
+        del settings.HAYSTACK_ROUTERS
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.routers_list, ['haystack.routers.DefaultRouter'])
-        self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
+        self.assertEqual(
+            [str(route.__class__) for route in cr.routers],
+            ["<class 'haystack.routers.DefaultRouter'>"],
+        )
 
-        cr = loading.ConnectionRouter(routers_list=['haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.routers_list, ['haystack.routers.DefaultRouter'])
-        self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'haystack.routers.DefaultRouter'>"])
-
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.routers_list, ['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual([str(route.__class__) for route in cr.routers], ["<class 'test_haystack.mocks.MockMasterSlaveRouter'>", "<class 'haystack.routers.DefaultRouter'>"])
-
-    def test_for_read(self):
+    @override_settings(HAYSTACK_ROUTERS=["haystack.routers.DefaultRouter"])
+    def test_router_override1(self):
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.for_read(), ['default'])
+        self.assertEqual(
+            [str(route.__class__) for route in cr.routers],
+            ["<class 'haystack.routers.DefaultRouter'>"],
+        )
 
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
+    @override_settings(HAYSTACK_ROUTERS=[])
+    def test_router_override2(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual(
+            [str(route.__class__) for route in cr.routers],
+            ["<class 'haystack.routers.DefaultRouter'>"],
+        )
 
-        # Demonstrate pass-through.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(), ['slave', 'default'])
+    @override_settings(
+        HAYSTACK_ROUTERS=[
+            "test_haystack.mocks.MockMasterSlaveRouter",
+            "haystack.routers.DefaultRouter",
+        ]
+    )
+    def test_router_override3(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual(
+            [str(route.__class__) for route in cr.routers],
+            [
+                "<class 'test_haystack.mocks.MockMasterSlaveRouter'>",
+                "<class 'haystack.routers.DefaultRouter'>",
+            ],
+        )
 
+    @override_settings()
+    def test_actions1(self):
+        del settings.HAYSTACK_ROUTERS
+        cr = loading.ConnectionRouter()
+        self.assertEqual(cr.for_read(), "default")
+        self.assertEqual(cr.for_write(), ["default"])
+
+    @override_settings(
+        HAYSTACK_ROUTERS=[
+            "test_haystack.mocks.MockMasterSlaveRouter",
+            "haystack.routers.DefaultRouter",
+        ]
+    )
+    def test_actions2(self):
+        cr = loading.ConnectionRouter()
+        self.assertEqual(cr.for_read(), "slave")
+        self.assertEqual(cr.for_write(), ["master", "default"])
+
+    @override_settings(
+        HAYSTACK_ROUTERS=[
+            "test_haystack.mocks.MockPassthroughRouter",
+            "test_haystack.mocks.MockMasterSlaveRouter",
+            "haystack.routers.DefaultRouter",
+        ]
+    )
+    def test_actions3(self):
+        cr = loading.ConnectionRouter()
+        # Demonstrate pass-through
+        self.assertEqual(cr.for_read(), "slave")
+        self.assertEqual(cr.for_write(), ["master", "default"])
         # Demonstrate that hinting can change routing.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_read(pass_through=False), ['pass', 'slave', 'default'])
+        self.assertEqual(cr.for_read(pass_through=False), "pass")
+        self.assertEqual(
+            cr.for_write(pass_through=False), ["pass", "master", "default"]
+        )
 
-    def test_for_write(self):
+    @override_settings(
+        HAYSTACK_ROUTERS=[
+            "test_haystack.mocks.MockMultiRouter",
+            "haystack.routers.DefaultRouter",
+        ]
+    )
+    def test_actions4(self):
         cr = loading.ConnectionRouter()
-        self.assertEqual(cr.for_write(), ['default'])
-
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_write(), ['master', 'default'])
-
-        # Demonstrate pass-through.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_write(), ['master', 'default'])
-
-        # Demonstrate that hinting can change routing.
-        cr = loading.ConnectionRouter(routers_list=['test_haystack.mocks.MockPassthroughRouter', 'test_haystack.mocks.MockMasterSlaveRouter', 'haystack.routers.DefaultRouter'])
-        self.assertEqual(cr.for_write(pass_through=False), ['pass', 'master', 'default'])
+        # Demonstrate that a router can return multiple backends in the "for_write" method
+        self.assertEqual(cr.for_read(), "default")
+        self.assertEqual(cr.for_write(), ["multi1", "multi2", "default"])
 
 
 class MockNotAModel(object):
@@ -172,7 +222,7 @@ class BasicAnotherMockModelSearchIndex(indexes.BasicSearchIndex, indexes.Indexab
 
 class ValidSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
-    author = indexes.CharField(index_fieldname='name')
+    author = indexes.CharField(index_fieldname="name")
     title = indexes.CharField(indexed=False)
 
     def get_model(self):
@@ -192,7 +242,7 @@ class ExplicitFacetSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.CharField(faceted=True)
     title = indexes.CharField()
-    title_facet = indexes.FacetCharField(facet_for='title')
+    title_facet = indexes.FacetCharField(facet_for="title")
     bare_facet = indexes.FacetCharField()
 
     def get_model(self):
@@ -222,7 +272,9 @@ class UnifiedIndexTestCase(TestCase):
             self.assertTrue(MockModel.__name__ in str(e))
 
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
-        self.assertTrue(isinstance(self.ui.get_index(MockModel), indexes.BasicSearchIndex))
+        self.assertTrue(
+            isinstance(self.ui.get_index(MockModel), indexes.BasicSearchIndex)
+        )
 
     def test_get_indexed_models(self):
         self.assertEqual(self.ui.get_indexed_models(), [])
@@ -247,54 +299,64 @@ class UnifiedIndexTestCase(TestCase):
         self.ui.build(indexes=[BasicMockModelSearchIndex()])
         fields = self.ui.all_searchfields()
         self.assertEqual(len(fields), 1)
-        self.assertTrue('text' in fields)
-        self.assertTrue(isinstance(fields['text'], indexes.CharField))
-        self.assertEqual(fields['text'].document, True)
-        self.assertEqual(fields['text'].use_template, True)
+        self.assertTrue("text" in fields)
+        self.assertTrue(isinstance(fields["text"], indexes.CharField))
+        self.assertEqual(fields["text"].document, True)
+        self.assertEqual(fields["text"].use_template, True)
 
-        self.ui.build(indexes=[BasicMockModelSearchIndex(), AlternateValidSearchIndex()])
+        self.ui.build(
+            indexes=[BasicMockModelSearchIndex(), AlternateValidSearchIndex()]
+        )
         fields = self.ui.all_searchfields()
         self.assertEqual(len(fields), 5)
-        self.assertEqual(sorted(fields.keys()), ['author', 'author_exact', 'text', 'title', 'title_exact'])
-        self.assertTrue('text' in fields)
-        self.assertTrue(isinstance(fields['text'], indexes.CharField))
-        self.assertEqual(fields['text'].document, True)
-        self.assertEqual(fields['text'].use_template, True)
-        self.assertTrue('title' in fields)
-        self.assertTrue(isinstance(fields['title'], indexes.CharField))
-        self.assertEqual(fields['title'].document, False)
-        self.assertEqual(fields['title'].use_template, False)
-        self.assertEqual(fields['title'].faceted, True)
-        self.assertEqual(fields['title'].indexed, True)
-        self.assertTrue('author' in fields)
-        self.assertTrue(isinstance(fields['author'], indexes.CharField))
-        self.assertEqual(fields['author'].document, False)
-        self.assertEqual(fields['author'].use_template, False)
-        self.assertEqual(fields['author'].faceted, True)
-        self.assertEqual(fields['author'].stored, True)
-        self.assertEqual(fields['author'].index_fieldname, 'author')
+        self.assertEqual(
+            sorted(fields.keys()),
+            ["author", "author_exact", "text", "title", "title_exact"],
+        )
+        self.assertTrue("text" in fields)
+        self.assertTrue(isinstance(fields["text"], indexes.CharField))
+        self.assertEqual(fields["text"].document, True)
+        self.assertEqual(fields["text"].use_template, True)
+        self.assertTrue("title" in fields)
+        self.assertTrue(isinstance(fields["title"], indexes.CharField))
+        self.assertEqual(fields["title"].document, False)
+        self.assertEqual(fields["title"].use_template, False)
+        self.assertEqual(fields["title"].faceted, True)
+        self.assertEqual(fields["title"].indexed, True)
+        self.assertTrue("author" in fields)
+        self.assertTrue(isinstance(fields["author"], indexes.CharField))
+        self.assertEqual(fields["author"].document, False)
+        self.assertEqual(fields["author"].use_template, False)
+        self.assertEqual(fields["author"].faceted, True)
+        self.assertEqual(fields["author"].stored, True)
+        self.assertEqual(fields["author"].index_fieldname, "author")
 
-        self.ui.build(indexes=[AlternateValidSearchIndex(), MultiValueValidSearchIndex()])
+        self.ui.build(
+            indexes=[AlternateValidSearchIndex(), MultiValueValidSearchIndex()]
+        )
         fields = self.ui.all_searchfields()
         self.assertEqual(len(fields), 5)
-        self.assertEqual(sorted(fields.keys()), ['author', 'author_exact', 'text', 'title', 'title_exact'])
-        self.assertTrue('text' in fields)
-        self.assertTrue(isinstance(fields['text'], indexes.CharField))
-        self.assertEqual(fields['text'].document, True)
-        self.assertEqual(fields['text'].use_template, False)
-        self.assertTrue('title' in fields)
-        self.assertTrue(isinstance(fields['title'], indexes.CharField))
-        self.assertEqual(fields['title'].document, False)
-        self.assertEqual(fields['title'].use_template, False)
-        self.assertEqual(fields['title'].faceted, True)
-        self.assertEqual(fields['title'].indexed, True)
-        self.assertTrue('author' in fields)
-        self.assertTrue(isinstance(fields['author'], indexes.MultiValueField))
-        self.assertEqual(fields['author'].document, False)
-        self.assertEqual(fields['author'].use_template, False)
-        self.assertEqual(fields['author'].stored, True)
-        self.assertEqual(fields['author'].faceted, True)
-        self.assertEqual(fields['author'].index_fieldname, 'author')
+        self.assertEqual(
+            sorted(fields.keys()),
+            ["author", "author_exact", "text", "title", "title_exact"],
+        )
+        self.assertTrue("text" in fields)
+        self.assertTrue(isinstance(fields["text"], indexes.CharField))
+        self.assertEqual(fields["text"].document, True)
+        self.assertEqual(fields["text"].use_template, False)
+        self.assertTrue("title" in fields)
+        self.assertTrue(isinstance(fields["title"], indexes.CharField))
+        self.assertEqual(fields["title"].document, False)
+        self.assertEqual(fields["title"].use_template, False)
+        self.assertEqual(fields["title"].faceted, True)
+        self.assertEqual(fields["title"].indexed, True)
+        self.assertTrue("author" in fields)
+        self.assertTrue(isinstance(fields["author"], indexes.MultiValueField))
+        self.assertEqual(fields["author"].document, False)
+        self.assertEqual(fields["author"].use_template, False)
+        self.assertEqual(fields["author"].stored, True)
+        self.assertEqual(fields["author"].faceted, True)
+        self.assertEqual(fields["author"].index_fieldname, "author")
 
         try:
             self.ui.build(indexes=[AlternateValidSearchIndex(), InvalidSearchIndex()])
@@ -306,11 +368,13 @@ class UnifiedIndexTestCase(TestCase):
         self.assertEqual(self.ui._fieldnames, {})
 
         self.ui.build(indexes=[ValidSearchIndex(), BasicAnotherMockModelSearchIndex()])
-        self.ui.get_index_fieldname('text')
-        self.assertEqual(self.ui._fieldnames, {'text': 'text', 'title': 'title', 'author': 'name'})
-        self.assertEqual(self.ui.get_index_fieldname('text'), 'text')
-        self.assertEqual(self.ui.get_index_fieldname('author'), 'name')
-        self.assertEqual(self.ui.get_index_fieldname('title'), 'title')
+        self.ui.get_index_fieldname("text")
+        self.assertEqual(
+            self.ui._fieldnames, {"text": "text", "title": "title", "author": "name"}
+        )
+        self.assertEqual(self.ui.get_index_fieldname("text"), "text")
+        self.assertEqual(self.ui.get_index_fieldname("author"), "name")
+        self.assertEqual(self.ui.get_index_fieldname("title"), "title")
 
         # Reset the internal state to test the invalid case.
         self.ui.reset()
@@ -325,22 +389,36 @@ class UnifiedIndexTestCase(TestCase):
     def test_basic_get_facet_field_name(self):
         self.assertEqual(self.ui._facet_fieldnames, {})
 
-        self.ui.build(indexes=[BasicMockModelSearchIndex(), AlternateValidSearchIndex()])
-        self.ui.get_facet_fieldname('text')
-        self.assertEqual(self.ui._facet_fieldnames, {'title': 'title_exact', 'author': 'author_exact'})
-        self.assertEqual(self.ui.get_index_fieldname('text'), 'text')
-        self.assertEqual(self.ui.get_index_fieldname('author'), 'author')
-        self.assertEqual(self.ui.get_index_fieldname('title'), 'title')
+        self.ui.build(
+            indexes=[BasicMockModelSearchIndex(), AlternateValidSearchIndex()]
+        )
+        self.ui.get_facet_fieldname("text")
+        self.assertEqual(
+            self.ui._facet_fieldnames,
+            {"title": "title_exact", "author": "author_exact"},
+        )
+        self.assertEqual(self.ui.get_index_fieldname("text"), "text")
+        self.assertEqual(self.ui.get_index_fieldname("author"), "author")
+        self.assertEqual(self.ui.get_index_fieldname("title"), "title")
 
-        self.assertEqual(self.ui.get_facet_fieldname('text'), 'text')
-        self.assertEqual(self.ui.get_facet_fieldname('author'), 'author_exact')
-        self.assertEqual(self.ui.get_facet_fieldname('title'), 'title_exact')
+        self.assertEqual(self.ui.get_facet_fieldname("text"), "text")
+        self.assertEqual(self.ui.get_facet_fieldname("author"), "author_exact")
+        self.assertEqual(self.ui.get_facet_fieldname("title"), "title_exact")
 
     def test_more_advanced_get_facet_field_name(self):
         self.assertEqual(self.ui._facet_fieldnames, {})
 
-        self.ui.build(indexes=[BasicAnotherMockModelSearchIndex(), ExplicitFacetSearchIndex()])
-        self.ui.get_facet_fieldname('text')
-        self.assertEqual(self.ui._facet_fieldnames, {'bare_facet': 'bare_facet', 'title': 'title_facet', 'author': 'author_exact'})
-        self.assertEqual(self.ui.get_facet_fieldname('title'), 'title_facet')
-        self.assertEqual(self.ui.get_facet_fieldname('bare_facet'), 'bare_facet')
+        self.ui.build(
+            indexes=[BasicAnotherMockModelSearchIndex(), ExplicitFacetSearchIndex()]
+        )
+        self.ui.get_facet_fieldname("text")
+        self.assertEqual(
+            self.ui._facet_fieldnames,
+            {
+                "bare_facet": "bare_facet",
+                "title": "title_facet",
+                "author": "author_exact",
+            },
+        )
+        self.assertEqual(self.ui.get_facet_fieldname("title"), "title_facet")
+        self.assertEqual(self.ui.get_facet_fieldname("bare_facet"), "bare_facet")

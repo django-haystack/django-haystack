@@ -1,61 +1,66 @@
 # encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import logging
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from pkg_resources import DistributionNotFound, get_distribution, parse_version
 
-from haystack.constants import DEFAULT_ALIAS
 from haystack import signals
+from haystack.constants import DEFAULT_ALIAS
 from haystack.utils import loading
 
+__author__ = "Daniel Lindsley"
 
-__author__ = 'Daniel Lindsley'
-__version__ = (2, 4, 0)
+try:
+    pkg_distribution = get_distribution("django-haystack")
+    __version__ = pkg_distribution.version
+    version_info = pkg_distribution.parsed_version
+except DistributionNotFound:
+    __version__ = "0.0.dev0"
+    version_info = parse_version(__version__)
 
-
-# Setup default logging.
-log = logging.getLogger('haystack')
-stream = logging.StreamHandler()
-stream.setLevel(logging.INFO)
-log.addHandler(stream)
+default_app_config = "haystack.apps.HaystackConfig"
 
 
 # Help people clean up from 1.X.
-if hasattr(settings, 'HAYSTACK_SITECONF'):
-    raise ImproperlyConfigured('The HAYSTACK_SITECONF setting is no longer used & can be removed.')
-if hasattr(settings, 'HAYSTACK_SEARCH_ENGINE'):
-    raise ImproperlyConfigured('The HAYSTACK_SEARCH_ENGINE setting has been replaced with HAYSTACK_CONNECTIONS.')
-if hasattr(settings, 'HAYSTACK_ENABLE_REGISTRATIONS'):
-    raise ImproperlyConfigured('The HAYSTACK_ENABLE_REGISTRATIONS setting is no longer used & can be removed.')
-if hasattr(settings, 'HAYSTACK_INCLUDE_SPELLING'):
-    raise ImproperlyConfigured('The HAYSTACK_INCLUDE_SPELLING setting is now a per-backend setting & belongs in HAYSTACK_CONNECTIONS.')
+if hasattr(settings, "HAYSTACK_SITECONF"):
+    raise ImproperlyConfigured(
+        "The HAYSTACK_SITECONF setting is no longer used & can be removed."
+    )
+if hasattr(settings, "HAYSTACK_SEARCH_ENGINE"):
+    raise ImproperlyConfigured(
+        "The HAYSTACK_SEARCH_ENGINE setting has been replaced with HAYSTACK_CONNECTIONS."
+    )
+if hasattr(settings, "HAYSTACK_ENABLE_REGISTRATIONS"):
+    raise ImproperlyConfigured(
+        "The HAYSTACK_ENABLE_REGISTRATIONS setting is no longer used & can be removed."
+    )
+if hasattr(settings, "HAYSTACK_INCLUDE_SPELLING"):
+    raise ImproperlyConfigured(
+        "The HAYSTACK_INCLUDE_SPELLING setting is now a per-backend setting"
+        " & belongs in HAYSTACK_CONNECTIONS."
+    )
 
 
 # Check the 2.X+ bits.
-if not hasattr(settings, 'HAYSTACK_CONNECTIONS'):
-    raise ImproperlyConfigured('The HAYSTACK_CONNECTIONS setting is required.')
+if not hasattr(settings, "HAYSTACK_CONNECTIONS"):
+    raise ImproperlyConfigured("The HAYSTACK_CONNECTIONS setting is required.")
 if DEFAULT_ALIAS not in settings.HAYSTACK_CONNECTIONS:
-    raise ImproperlyConfigured("The default alias '%s' must be included in the HAYSTACK_CONNECTIONS setting." % DEFAULT_ALIAS)
+    raise ImproperlyConfigured(
+        "The default alias '%s' must be included in the HAYSTACK_CONNECTIONS setting."
+        % DEFAULT_ALIAS
+    )
 
 # Load the connections.
 connections = loading.ConnectionHandler(settings.HAYSTACK_CONNECTIONS)
 
+# Just check HAYSTACK_ROUTERS setting validity, routers will be loaded lazily
+if hasattr(settings, "HAYSTACK_ROUTERS"):
+    if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
+        raise ImproperlyConfigured(
+            "The HAYSTACK_ROUTERS setting must be either a list or tuple."
+        )
+
 # Load the router(s).
 connection_router = loading.ConnectionRouter()
-
-if hasattr(settings, 'HAYSTACK_ROUTERS'):
-    if not isinstance(settings.HAYSTACK_ROUTERS, (list, tuple)):
-        raise ImproperlyConfigured("The HAYSTACK_ROUTERS setting must be either a list or tuple.")
-
-    connection_router = loading.ConnectionRouter(settings.HAYSTACK_ROUTERS)
-
-# Setup the signal processor.
-signal_processor_path = getattr(settings, 'HAYSTACK_SIGNAL_PROCESSOR', 'haystack.signals.BaseSignalProcessor')
-signal_processor_class = loading.import_class(signal_processor_path)
-signal_processor = signal_processor_class(connections, connection_router)
 
 
 # Per-request, reset the ghetto query log.
@@ -63,9 +68,11 @@ signal_processor = signal_processor_class(connections, connection_router)
 # DEBUG = True.
 def reset_search_queries(**kwargs):
     for conn in connections.all():
-        conn.reset_queries()
+        if conn:
+            conn.reset_queries()
 
 
 if settings.DEBUG:
     from django.core import signals as django_signals
+
     django_signals.request_started.connect(reset_search_queries)

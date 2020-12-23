@@ -169,9 +169,9 @@ demonstrated in this example which filters the search results in ``get_queryset`
 
     # urls.py
 
-    urlpatterns = patterns('',
+    urlpatterns = [
         url(r'^/search/?$', MySearchView.as_view(), name='search_view'),
-    )
+    ]
 
 
 Upgrading
@@ -184,7 +184,7 @@ Upgrading from basic usage of the old-style views to new-style views is usually 
 #. Move all parameters of your old-style views from your ``urls.py`` to attributes on
    your new views. This will require renaming ``searchqueryset`` to ``queryset`` and
    ``template`` to ``template_name``
-#. Review your templates and replace the ``page`` variable with ``page_object``
+#. Review your templates and replace the ``page`` variable with ``page_obj``
 
 Here's an example::
 
@@ -193,13 +193,13 @@ Here's an example::
 
     sqs = SearchQuerySet().filter(author='john')
 
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=SearchForm
         ), name='haystack_search'),
-    )
+    ]
 
     ### new-style views...
     # views.py
@@ -212,9 +212,9 @@ Here's an example::
     # urls.py
     from myapp.views import JohnSearchView
 
-    urlpatterns = patterns('',
+    urlpatterns = [
         url(r'^$', JohnSearchView.as_view(), name='haystack_search'),
-    )
+    ]
 
 
 If your views overrode methods on the old-style SearchView, you will need to
@@ -254,7 +254,7 @@ The functional view provides an example of how Haystack can be used in more
 traditional settings or as an example of how to write a more complex custom
 view. It is also thread-safe.
 
-``SearchView(template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None)``
+``SearchView(template=None, load_all=True, form_class=None, searchqueryset=None, results_per_page=None)``
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 The ``SearchView`` is designed to be easy/flexible enough to override common
@@ -271,7 +271,7 @@ custom search limited to the 'John' author, displaying all models to search by
 and specifying a custom template (``my/special/path/john_search.html``), your
 URLconf should look something like::
 
-    from django.conf.urls.defaults import *
+    from django.conf.urls import url
     from haystack.forms import ModelSearchForm
     from haystack.query import SearchQuerySet
     from haystack.views import SearchView
@@ -279,25 +279,25 @@ URLconf should look something like::
     sqs = SearchQuerySet().filter(author='john')
 
     # Without threading...
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=SearchForm
         ), name='haystack_search'),
-    )
+    ]
 
     # With threading...
     from haystack.views import SearchView, search_view_factory
 
-    urlpatterns = patterns('haystack.views',
+    urlpatterns = [
         url(r'^$', search_view_factory(
             view_class=SearchView,
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=ModelSearchForm
         ), name='haystack_search'),
-    )
+    ]
 
 .. warning::
 
@@ -372,7 +372,7 @@ creates the context and renders the response for all the aforementioned
 processing.
 
 
-``basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None)``
+``basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, extra_context=None, results_per_page=None)``
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 The ``basic_search`` tries to provide most of the same functionality as the

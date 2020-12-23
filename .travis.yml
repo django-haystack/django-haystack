@@ -1,11 +1,14 @@
-sudo: false
+os: linux
+dist: bionic
 language: python
 python:
-    - 2.6
-    - 2.7
-    - 3.3
-    - 3.4
-    - pypy
+    - 3.5
+    - 3.6
+    - 3.7
+    - 3.8
+    - pypy3
+services:
+    - docker
 
 cache:
     apt: true
@@ -16,21 +19,31 @@ cache:
 addons:
     apt_packages:
         - binutils
-        - default-jdk
+        - openjdk-8-jdk
         - gdal-bin
-        - libgdal1h
-        - libgeos-c1
+        - libgdal20
+        - libgeos-c1v5
         - libproj-dev
-        - libxapian22
         - python-xapian
         - wajig
 
 before_install:
     - mkdir -p $HOME/download-cache
+    - >
+        if [[ $VERSION_ES == '>=2,<3' ]];
+        then
+          docker run -d -p 9200:9200 elasticsearch:2.4.6-alpine
+        elif [[ $VERSION_ES == '>=5,<6' ]];
+        then
+          docker run -d -p 9200:9200 elasticsearch:5.6.10-alpine
+        else
+          docker run -d -p 9200:9200 elasticsearch:1.7.6-alpine
+        fi
 
 install:
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install mock==1.0.1; fi
-    - pip install requests "Django${DJANGO_VERSION}"
+    - pip install --upgrade setuptools
+    - pip install codecov coverage
+    - pip install requests "Django${DJANGO_VERSION}" "elasticsearch${VERSION_ES}"
     - python setup.py clean build install
 
 before_script:
@@ -38,27 +51,44 @@ before_script:
 
 script:
     - python test_haystack/solr_tests/server/wait-for-solr
-    - python setup.py test
+    - coverage run setup.py test
+
+after_success:
+    - codecov
 
 env:
-    matrix:
-        - DJANGO_VERSION=">=1.6,<1.7"
-        - DJANGO_VERSION=">=1.7,<1.8"
-        - DJANGO_VERSION=">=1.8,<1.9"
-
-matrix:
+    global:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    jobs:
+        - DJANGO_VERSION=">=2.2,<3.0" VERSION_ES=">=1,<2"
+        - DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=1,<2"
+        - DJANGO_VERSION=">=2.2,<3.0" VERSION_ES=">=2,<3"
+        - DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=2,<3"
+        - DJANGO_VERSION=">=2.2,<3.0" VERSION_ES=">=5,<6"
+        - DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=5,<6"
+jobs:
     allow_failures:
-        - python: "pypy"
-        - python: 2.6
+        - python: 'pypy3'
     exclude:
-       - python: 2.6
-         env: DJANGO_VERSION=">=1.7,<1.8"
-       - python: 2.6
-         env: DJANGO_VERSION=">=1.8,<1.9"
-
-services:
-    - elasticsearch
+        - python: pypy3
+          env: DJANGO_VERSION=">=2.2,<3.0" VERSION_ES=">=5,<6"
+        - python: pypy3
+          env: DJANGO_VERSION=">=2.2,<3.0" VERSION_ES=">=2,<3"
+        - python: pypy3
+          env: DJANGO_VERSION=">=2.2,<3.0" VERSION_ES=">=1,<2"
+        - python: pypy3
+          env: DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=5,<6"
+        - python: pypy3
+          env: DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=2,<3"
+        - python: pypy3
+          env: DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=1,<2"
+        - python: 3.5
+          env: DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=1,<2"
+        - python: 3.5
+          env: DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=2,<3"
+        - python: 3.5
+          env: DJANGO_VERSION=">=3.0,<3.1" VERSION_ES=">=5,<6"
 
 notifications:
-    irc: "irc.freenode.org#haystack"
+    irc: 'irc.freenode.org#haystack'
     email: false

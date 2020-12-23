@@ -10,7 +10,7 @@ API that allows you to plug in different search backends (such as Solr_,
 Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Elasticsearch: http://elasticsearch.org/
+.. _Elasticsearch: https://www.elastic.co/products/elasticsearch
 .. _Whoosh: https://bitbucket.org/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
@@ -33,12 +33,11 @@ Documentation
 =============
 
 * Development version: http://docs.haystacksearch.org/
-* v2.3.X: http://django-haystack.readthedocs.org/en/v2.3.0/
-* v2.2.X: http://django-haystack.readthedocs.org/en/v2.2.0/
-* v2.1.X: http://django-haystack.readthedocs.org/en/v2.1.0/
-* v2.0.X: http://django-haystack.readthedocs.org/en/v2.0.0/
-* v1.2.X: http://django-haystack.readthedocs.org/en/v1.2.7/
-* v1.1.X: http://django-haystack.readthedocs.org/en/v1.1/
+* v2.8.X: https://django-haystack.readthedocs.io/en/v2.8.1/
+* v2.7.X: https://django-haystack.readthedocs.io/en/v2.7.0/
+* v2.6.X: https://django-haystack.readthedocs.io/en/v2.6.0/
+
+See the `changelog <docs/changelog.rst>`_
 
 Build Status
 ============
@@ -51,9 +50,9 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.7+ or Python 3.3+
-* Django 1.6+
+* Python 3.5+
+* A supported version of Django: https://www.djangoproject.com/download/#supported-versions
 
 Additionally, each backend has its own requirements. You should refer to
-http://django-haystack.readthedocs.org/en/latest/installing_search_engines.html for more
+https://django-haystack.readthedocs.io/en/latest/installing_search_engines.html for more
 details.

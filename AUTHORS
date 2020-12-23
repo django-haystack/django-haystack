@@ -104,3 +104,17 @@ Thanks to
     * Ben Spaulding (@benspaulding) for many updates for Django 1.8 support
     * Troy Grosfield (@troygrosfield) for fixing the test runner for Django 1.8
     * Ilan Steemers (@Koed00) for fixing Django 1.9 deprecation warnings
+    * Ana Carolina (@anacarolinats) and Steve Bussetti (@sbussetti) for adding the ``fuzzy`` operator to
+      SearchQuerySet
+    * Tadas Dailyda (@skirsdeda) for various patches
+    * Craig de Stigter (@craigds) for a patch fixing concurrency issues when building UnifiedIndex
+    * Claude Paroz (@claudep) for Django 1.9 support
+    * Chris Brooke (@chrisbrooke) for patching around a backwards-incompatible change in ElasticSearch 2
+    * Gilad Beeri (@giladbeeri) for adding retries when updating a backend
+    * Arjen Verstoep (@terr) for a patch that allows attribute lookups through Django ManyToManyField relationships
+    * Tim Babych (@tymofij) for enabling backend-specific parameters in ``.highlight()``
+    * Antony Raj (@antonyr) for adding endswith input type and fixing contains input type
+    * Morgan Aubert (@ellmetha) for Django 1.10 support
+    * João Junior (@joaojunior) and Bruno Marques (@ElSaico) for Elasticsearch 2.x support
+    * Alex Tomkins (@tomkins) for various patches
+    * Martin Pauly (@mpauly) for Django 2.0 support

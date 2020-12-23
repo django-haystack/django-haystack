@@ -1,22 +1,14 @@
 # encoding: utf-8
 
 # "Hey, Django! Look at me, I'm an app! For Serious!"
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.utils import six
+from django.utils.encoding import force_str
 from django.utils.text import capfirst
 
+from haystack.constants import DEFAULT_ALIAS
 from haystack.exceptions import NotHandled, SpatialError
 from haystack.utils import log as logging
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
+from haystack.utils.app_loading import haystack_get_model
 
 try:
     from geopy import distance as geopy_distance
@@ -35,6 +27,7 @@ class SearchResult(object):
     result will do O(N) database queries, which may not fit your needs for
     performance.
     """
+
     def __init__(self, app_label, model_name, pk, score, **kwargs):
         self.app_label, self.model_name = app_label, model_name
         self.pk = pk
@@ -43,34 +36,39 @@ class SearchResult(object):
         self._model = None
         self._verbose_name = None
         self._additional_fields = []
-        self._point_of_origin = kwargs.pop('_point_of_origin', None)
-        self._distance = kwargs.pop('_distance', None)
+        self._point_of_origin = kwargs.pop("_point_of_origin", None)
+        self._distance = kwargs.pop("_distance", None)
         self.stored_fields = None
         self.log = self._get_log()
 
         for key, value in kwargs.items():
-            if not key in self.__dict__:
+            if key not in self.__dict__:
                 self.__dict__[key] = value
                 self._additional_fields.append(key)
 
     def _get_log(self):
-        return logging.getLogger('haystack')
+        return logging.getLogger("haystack")
 
     def __repr__(self):
-        return "<SearchResult: %s.%s (pk=%r)>" % (self.app_label, self.model_name, self.pk)
+        return "<SearchResult: %s.%s (pk=%r)>" % (
+            self.app_label,
+            self.model_name,
+            self.pk,
+        )
 
-    def __unicode__(self):
-        return force_text(self.__repr__())
+    def __str__(self):
+        return force_str(self.__repr__())
 
     def __getattr__(self, attr):
-        if attr == '__getnewargs__':
+        if attr == "__getnewargs__":
             raise AttributeError
 
         return self.__dict__.get(attr, None)
 
     def _get_searchindex(self):
         from haystack import connections
-        return connections['default'].get_unified_index().get_index(self.model)
+
+        return connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
 
     searchindex = property(_get_searchindex)
 
@@ -84,11 +82,17 @@ class SearchResult(object):
                 try:
                     self._object = self.searchindex.read_queryset().get(pk=self.pk)
                 except NotHandled:
-                    self.log.warning("Model '%s.%s' not handled by the routers.", self.app_label, self.model_name)
+                    self.log.warning(
+                        "Model '%s.%s' not handled by the routers.",
+                        self.app_label,
+                        self.model_name,
+                    )
                     # Revert to old behaviour
                     self._object = self.model._default_manager.get(pk=self.pk)
             except ObjectDoesNotExist:
-                self.log.error("Object could not be found in database for SearchResult '%s'.", self)
+                self.log.error(
+                    "Object could not be found in database for SearchResult '%s'.", self
+                )
                 self._object = None
 
         return self._object
@@ -101,7 +105,7 @@ class SearchResult(object):
     def _get_model(self):
         if self._model is None:
             try:
-                self._model = models.get_model(self.app_label, self.model_name)
+                self._model = haystack_get_model(self.app_label, self.model_name)
             except LookupError:
                 # this changed in change 1.7 to throw an error instead of
                 # returning None when the model isn't found. So catch the
@@ -116,7 +120,7 @@ class SearchResult(object):
     model = property(_get_model, _set_model)
 
     def _get_distance(self):
-        from haystack.utils.geo import Distance
+        from django.contrib.gis.measure import Distance
 
         if self._distance is None:
             # We didn't get it from the backend & we haven't tried calculating
@@ -124,22 +128,29 @@ class SearchResult(object):
             # (even though slow meant 100 distance calculations in 0.004 seconds
             # in my testing).
             if geopy_distance is None:
-                raise SpatialError("The backend doesn't have 'DISTANCE_AVAILABLE' enabled & the 'geopy' library could not be imported, so distance information is not available.")
+                raise SpatialError(
+                    "The backend doesn't have 'DISTANCE_AVAILABLE' enabled & the 'geopy' library could not be imported, so distance information is not available."
+                )
 
             if not self._point_of_origin:
                 raise SpatialError("The original point is not available.")
 
-            if not hasattr(self, self._point_of_origin['field']):
-                raise SpatialError("The field '%s' was not included in search results, so the distance could not be calculated." % self._point_of_origin['field'])
+            if not hasattr(self, self._point_of_origin["field"]):
+                raise SpatialError(
+                    "The field '%s' was not included in search results, so the distance could not be calculated."
+                    % self._point_of_origin["field"]
+                )
 
-            po_lng, po_lat = self._point_of_origin['point'].get_coords()
-            location_field = getattr(self, self._point_of_origin['field'])
+            po_lng, po_lat = self._point_of_origin["point"].coords
+            location_field = getattr(self, self._point_of_origin["field"])
 
             if location_field is None:
                 return None
 
-            lf_lng, lf_lat = location_field.get_coords()
-            self._distance = Distance(km=geopy_distance.distance((po_lat, po_lng), (lf_lat, lf_lng)).km)
+            lf_lng, lf_lat = location_field.coords
+            self._distance = Distance(
+                km=geopy_distance.distance((po_lat, po_lng), (lf_lat, lf_lng)).km
+            )
 
         # We've either already calculated it or the backend returned it, so
         # let's use that.
@@ -153,18 +164,18 @@ class SearchResult(object):
     def _get_verbose_name(self):
         if self.model is None:
             self.log.error("Model could not be found for SearchResult '%s'.", self)
-            return u''
+            return ""
 
-        return force_text(capfirst(self.model._meta.verbose_name))
+        return force_str(capfirst(self.model._meta.verbose_name))
 
     verbose_name = property(_get_verbose_name)
 
     def _get_verbose_name_plural(self):
         if self.model is None:
             self.log.error("Model could not be found for SearchResult '%s'.", self)
-            return u''
+            return ""
 
-        return force_text(capfirst(self.model._meta.verbose_name_plural))
+        return force_str(capfirst(self.model._meta.verbose_name_plural))
 
     verbose_name_plural = property(_get_verbose_name_plural)
 
@@ -172,9 +183,9 @@ class SearchResult(object):
         """Returns the content type for the result's model instance."""
         if self.model is None:
             self.log.error("Model could not be found for SearchResult '%s'.", self)
-            return u''
+            return ""
 
-        return six.text_type(self.model._meta)
+        return str(self.model._meta)
 
     def get_additional_fields(self):
         """
@@ -200,10 +211,9 @@ class SearchResult(object):
         """
         if self._stored_fields is None:
             from haystack import connections
-            from haystack.exceptions import NotHandled
 
             try:
-                index = connections['default'].get_unified_index().get_index(self.model)
+                index = connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
             except NotHandled:
                 # Not found? Return nothing.
                 return {}
@@ -214,7 +224,7 @@ class SearchResult(object):
             # are stored.
             for fieldname, field in index.fields.items():
                 if field.stored is True:
-                    self._stored_fields[fieldname] = getattr(self, fieldname, u'')
+                    self._stored_fields[fieldname] = getattr(self, fieldname, "")
 
         return self._stored_fields
 
@@ -226,7 +236,7 @@ class SearchResult(object):
         # The ``log`` is excluded because, under the hood, ``logging`` uses
         # ``threading.Lock``, which doesn't pickle well.
         ret_dict = self.__dict__.copy()
-        del(ret_dict['log'])
+        del (ret_dict["log"])
         return ret_dict
 
     def __setstate__(self, data_dict):

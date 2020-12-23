@@ -211,22 +211,18 @@ having it in place but know that it's not required.
 In your URLconf, you'll need to switch to the ``FacetedSearchView``. Your
 URLconf should resemble::
 
-    from django.conf.urls.defaults import *
+    from django.conf.urls import url
     from haystack.forms import FacetedSearchForm
-    from haystack.query import SearchQuerySet
     from haystack.views import FacetedSearchView
     
     
-    sqs = SearchQuerySet().facet('author')
-     
-    
-    urlpatterns = patterns('haystack.views',
-        url(r'^$', FacetedSearchView(form_class=FacetedSearchForm, searchqueryset=sqs), name='haystack_search'),
-    )
+    urlpatterns = [
+        url(r'^$', FacetedSearchView(form_class=FacetedSearchForm, facet_fields=['author']), name='haystack_search'),
+    ]
 
-The ``FacetedSearchView`` will now instantiate the ``FacetedSearchForm`` and use
-the ``SearchQuerySet`` we provided. Now, a ``facets`` variable will be present
-in the context. This is added in an overridden ``extra_context`` method.
+The ``FacetedSearchView`` will now instantiate the ``FacetedSearchForm``.
+The specified ``facet_fields`` will be present in the context variable
+``facets``. This is added in an overridden ``extra_context`` method.
 
 
 3. Display The Facets In The Template
