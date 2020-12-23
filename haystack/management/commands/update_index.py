@@ -162,7 +162,6 @@ class Command(BaseCommand):
             "-m",
             "--minutes",
             type=int,
-            default=DEFAULT_AGE / 60,
             help="Number of minutes back to consider objects new.",
         )
         parser.add_argument(
