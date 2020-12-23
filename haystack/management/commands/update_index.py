@@ -6,14 +6,17 @@ import time
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
-from django.db import close_old_connections, reset_queries
-from django.utils.encoding import force_str, smart_bytes
+from django.db import close_old_connections
+from django.db import reset_queries
+from django.utils.encoding import force_str
+from django.utils.encoding import smart_bytes
 from django.utils.timezone import now
 
 from haystack import connections as haystack_connections
 from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
-from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
+from haystack.utils.app_loading import haystack_get_models
+from haystack.utils.app_loading import haystack_load_apps
 
 DEFAULT_BATCH_SIZE = None
 DEFAULT_AGE = None
