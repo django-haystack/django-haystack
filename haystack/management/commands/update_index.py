@@ -68,22 +68,25 @@ def update_worker(args):
     index = unified_index.get_index(model)
     backend = haystack_connections[using].get_backend()
 
-    qs = index.build_queryset(using=using, start_date=start_date, end_date=end_date)
-    do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
+    qs = index.build_queryset(using=using,
+                              start_date=start_date,
+                              end_date=end_date)
+    do_update(backend, index, qs, start, end, total, verbosity, commit,
+              max_retries)
     return args
 
 
 def do_update(
-    backend,
-    index,
-    qs,
-    start,
-    end,
-    total,
-    verbosity=1,
-    commit=True,
-    max_retries=DEFAULT_MAX_RETRIES,
-    last_max_pk=None,
+        backend,
+        index,
+        qs,
+        start,
+        end,
+        total,
+        verbosity=1,
+        commit=True,
+        max_retries=DEFAULT_MAX_RETRIES,
+        last_max_pk=None,
 ):
 
     # Get a clone of the QuerySet so that the cache doesn't bloat up
@@ -95,7 +98,7 @@ def do_update(
     # to values above; this optimises the query for Postgres as not to
     # devolve into multi-second run time at large offsets.
     if last_max_pk is not None:
-        current_qs = small_cache_qs.filter(pk__gt=last_max_pk)[: end - start]
+        current_qs = small_cache_qs.filter(pk__gt=last_max_pk)[:end - start]
     else:
         current_qs = small_cache_qs[start:end]
 
@@ -111,10 +114,8 @@ def do_update(
         if is_parent_process:
             print("  indexed %s - %d of %d." % (start + 1, end, total))
         else:
-            print(
-                "  indexed %s - %d of %d (worker PID: %s)."
-                % (start + 1, end, total, os.getpid())
-            )
+            print("  indexed %s - %d of %d (worker PID: %s)." %
+                  (start + 1, end, total, os.getpid()))
 
     retries = 0
     while retries < max_retries:
@@ -122,11 +123,8 @@ def do_update(
             # FIXME: Get the right backend.
             backend.update(index, current_qs, commit=commit)
             if verbosity >= 2 and retries:
-                print(
-                    "Completed indexing {} - {}, tried {}/{} times".format(
-                        start + 1, end, retries + 1, max_retries
-                    )
-                )
+                print("Completed indexing {} - {}, tried {}/{} times".format(
+                    start + 1, end, retries + 1, max_retries))
             break
         except Exception as exc:
             # Catch all exceptions which do not normally trigger a system exit, excluding SystemExit and
@@ -154,7 +152,7 @@ def do_update(
                 LOG.warning(error_msg, error_context, exc_info=True)
 
             # If going to try again, sleep a bit before
-            time.sleep(2 ** retries)
+            time.sleep(2**retries)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
@@ -187,14 +185,16 @@ class Command(BaseCommand):
             "-s",
             "--start",
             dest="start_date",
-            help="The start date for indexing. Can be any dateutil-parsable string;"
+            help=
+            "The start date for indexing. Can be any dateutil-parsable string;"
             " YYYY-MM-DDTHH:MM:SS is recommended to avoid confusion",
         )
         parser.add_argument(
             "-e",
             "--end",
             dest="end_date",
-            help="The end date for indexing. Can be any dateutil-parsable string;"
+            help=
+            "The end date for indexing. Can be any dateutil-parsable string;"
             " YYYY-MM-DDTHH:MM:SS is recommended to avoid confusion",
         )
         parser.add_argument(
@@ -209,7 +209,8 @@ class Command(BaseCommand):
             "--remove",
             action="store_true",
             default=False,
-            help="Remove objects from the index that are no longer present in the database.",
+            help=
+            "Remove objects from the index that are no longer present in the database.",
         )
         parser.add_argument(
             "-u",
@@ -240,7 +241,8 @@ class Command(BaseCommand):
             dest="max_retries",
             type=int,
             default=DEFAULT_MAX_RETRIES,
-            help="Maximum number of attempts to write to the backend when an error occurs.",
+            help=
+            "Maximum number of attempts to write to the backend when an error occurs.",
         )
 
     def handle(self, **options):
@@ -267,10 +269,10 @@ class Command(BaseCommand):
         elif self.verbosity > 1:
             LOG.setLevel(logging.INFO)
 
-        if (minutes and age) or (minutes and start_date) or (age and start_date):
+        if (minutes and age) or (minutes and start_date) or (age
+                                                             and start_date):
             raise NotImplementedError(
-                "Minutes / age / start date options are mutually exclusive"
-            )
+                "Minutes / age / start date options are mutually exclusive")
 
         if minutes is not None:
             self.start_date = now() - timedelta(minutes=int(minutes))
@@ -321,17 +323,16 @@ class Command(BaseCommand):
                 # the loop continues and it accesses the ORM makes it better.
                 close_old_connections()
 
-            qs = index.build_queryset(
-                using=using, start_date=self.start_date, end_date=self.end_date
-            )
+            qs = index.build_queryset(using=using,
+                                      start_date=self.start_date,
+                                      end_date=self.end_date)
 
             total = qs.count()
 
             if self.verbosity >= 1:
                 self.stdout.write(
-                    "Indexing %d %s"
-                    % (total, force_str(model._meta.verbose_name_plural))
-                )
+                    "Indexing %d %s" %
+                    (total, force_str(model._meta.verbose_name_plural)))
 
             batch_size = self.batchsize or backend.batch_size
 
@@ -356,20 +357,18 @@ class Command(BaseCommand):
                         last_max_pk=max_pk,
                     )
                 else:
-                    ghetto_queue.append(
-                        (
-                            model,
-                            start,
-                            end,
-                            total,
-                            using,
-                            self.start_date,
-                            self.end_date,
-                            self.verbosity,
-                            self.commit,
-                            self.max_retries,
-                        )
-                    )
+                    ghetto_queue.append((
+                        model,
+                        start,
+                        end,
+                        total,
+                        using,
+                        self.start_date,
+                        self.end_date,
+                        self.verbosity,
+                        self.commit,
+                        self.max_retries,
+                    ))
 
             if self.workers > 0:
                 pool = multiprocessing.Pool(self.workers)
@@ -378,9 +377,8 @@ class Command(BaseCommand):
 
                 if len(ghetto_queue) != len(successful_tasks):
                     self.stderr.write(
-                        "Queued %d tasks but only %d completed"
-                        % (len(ghetto_queue), len(successful_tasks))
-                    )
+                        "Queued %d tasks but only %d completed" %
+                        (len(ghetto_queue), len(successful_tasks)))
                     for i in ghetto_queue:
                         if i not in successful_tasks:
                             self.stderr.write("Incomplete task: %s" % repr(i))
@@ -396,22 +394,22 @@ class Command(BaseCommand):
                     database_pks = set(smart_bytes(pk) for pk in qs)
                 else:
                     database_pks = set(
-                        smart_bytes(pk) for pk in qs.values_list("pk", flat=True)
-                    )
+                        smart_bytes(pk)
+                        for pk in qs.values_list("pk", flat=True))
 
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.
                 # See https://github.com/django-haystack/django-haystack/issues/1186
-                index_total = (
-                    SearchQuerySet(using=backend.connection_alias).models(model).count()
-                )
+                index_total = (SearchQuerySet(
+                    using=backend.connection_alias).models(model).count())
 
                 # Retrieve PKs from the index. Note that this cannot be a numeric range query because although
                 # pks are normally numeric they can be non-numeric UUIDs or other custom values. To reduce
                 # load on the search engine, we only retrieve the pk field, which will be checked against the
                 # full list obtained from the database, and the id field, which will be used to delete the
                 # record should it be found to be stale.
-                index_pks = SearchQuerySet(using=backend.connection_alias).models(model)
+                index_pks = SearchQuerySet(
+                    using=backend.connection_alias).models(model)
                 index_pks = index_pks.values_list("pk", "id")
 
                 # We'll collect all of the record IDs which are no longer present in the database and delete
@@ -429,9 +427,8 @@ class Command(BaseCommand):
 
                 if stale_records:
                     if self.verbosity >= 1:
-                        self.stdout.write(
-                            "  removing %d stale records." % len(stale_records)
-                        )
+                        self.stdout.write("  removing %d stale records." %
+                                          len(stale_records))
 
                     for rec_id in stale_records:
                         # Since the PK was not in the database list, we'll delete the record from the search
