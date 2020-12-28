@@ -259,10 +259,10 @@ class Command(BaseCommand):
             parser.error("Minutes / age / start date options are mutually exclusive")
 
         if minutes is not None:
-            self.start_date = now() - timedelta(minutes=int(minutes))
+            self.start_date = now() - timedelta(minutes=minutes)
 
         if age is not None:
-            self.start_date = now() - timedelta(hours=int(age))
+            self.start_date = now() - timedelta(hours=age)
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
