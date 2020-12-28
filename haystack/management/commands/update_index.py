@@ -256,7 +256,7 @@ class Command(BaseCommand):
             LOG.setLevel(logging.INFO)
 
         if (minutes and age) or (minutes and start_date) or (age and start_date):
-            raise NotImplementedError("Minutes / age / start date options are mutually exclusive")
+            parser.error("Minutes / age / start date options are mutually exclusive")
 
         if minutes is not None:
             self.start_date = now() - timedelta(minutes=int(minutes))
