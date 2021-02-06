@@ -378,7 +378,7 @@ class Command(BaseCommand):
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
-                    qs = index.index_queryset().values_list("pk", flat=True)
+                    qs = index.index_queryset(using=using).values_list("pk", flat=True)
                     database_pks = set(smart_bytes(pk) for pk in qs)
                 else:
                     database_pks = set(
