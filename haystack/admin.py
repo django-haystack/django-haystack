@@ -66,7 +66,9 @@ class SearchModelAdminMixin(object):
     haystack_connection = DEFAULT_ALIAS
 
     def get_ordering(self, request):
-        return ()
+        if SEARCH_VAR in request.GET:
+            return ()
+        return super(SearchModelAdminMixin, self).get_ordering(request)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
