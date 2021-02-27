@@ -32,7 +32,7 @@ class SearchChangeList(ChangeList):
 
         ordering = self.model_admin.get_ordering(request)
         if ordering:
-            qs = qs.order_by(*ordering)
+            sqs = sqs.order_by(*ordering)
 
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
