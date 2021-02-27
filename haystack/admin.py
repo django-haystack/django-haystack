@@ -30,7 +30,7 @@ class SearchChangeList(ChangeList):
             .load_all()
         )
 
-        ordering = self.model_admin.get_ordering(request)
+        ordering = self.get_ordering(request, sqs)
         if ordering:
             sqs = sqs.order_by(*ordering)
 
