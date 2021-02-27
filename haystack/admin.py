@@ -30,6 +30,10 @@ class SearchChangeList(ChangeList):
             .load_all()
         )
 
+        ordering = self.model_admin.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
         result_count = paginator.count
@@ -60,6 +64,9 @@ class SearchChangeList(ChangeList):
 class SearchModelAdminMixin(object):
     # haystack connection to use for searching
     haystack_connection = DEFAULT_ALIAS
+
+    def get_ordering(self, request):
+        return ()
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
@@ -106,7 +113,7 @@ class SearchModelAdminMixin(object):
             "list_max_show_all": self.list_max_show_all,
             "model_admin": self,
         }
-        if hasattr(self, 'get_sortable_by'):  # Django 2.1+
+        if hasattr(self, "get_sortable_by"):  # Django 2.1+
             kwargs["sortable_by"] = self.get_sortable_by(request)
         changelist = SearchChangeList(**kwargs)
         changelist.formset = None
