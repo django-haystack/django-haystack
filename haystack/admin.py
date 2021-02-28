@@ -14,6 +14,9 @@ from haystack.utils import get_model_ct_tuple
 
 
 class SearchChangeList(ChangeList):
+    class Meta:
+        ordering = None
+
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
         super(SearchChangeList, self).__init__(**kwargs)
