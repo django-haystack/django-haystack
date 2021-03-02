@@ -14,9 +14,6 @@ from haystack.utils import get_model_ct_tuple
 
 
 class SearchChangeList(ChangeList):
-    class Meta:
-        ordering = None
-
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
         super(SearchChangeList, self).__init__(**kwargs)
@@ -34,7 +31,8 @@ class SearchChangeList(ChangeList):
         )
 
         ordering = self.get_ordering(request, sqs)
-        if ordering:
+        # get_ordering returns ["-pk"] if no ordering is given
+        if ordering != ["-pk"]:
             sqs = sqs.order_by(*ordering)
 
         paginator = Paginator(sqs, self.list_per_page)
