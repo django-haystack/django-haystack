@@ -39,12 +39,6 @@ Documentation
 
 See the `changelog <docs/changelog.rst>`_
 
-Build Status
-============
-
-.. image:: https://travis-ci.org/django-haystack/django-haystack.svg?branch=master
-   :target: https://travis-ci.org/django-haystack/django-haystack
-
 Requirements
 ============
 
