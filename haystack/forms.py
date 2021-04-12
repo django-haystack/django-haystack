@@ -2,7 +2,7 @@
 from django import forms
 from django.utils.encoding import smart_text
 from django.utils.text import capfirst
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from haystack import connections
 from haystack.constants import DEFAULT_ALIAS
