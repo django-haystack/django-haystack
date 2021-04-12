@@ -1,3 +1,12 @@
+.. image:: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml/badge.svg
+      :target: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml
+.. image:: https://readthedocs.org/projects/django-haystack/badge/
+            :target: https://django-haystack.readthedocs.io/
+.. image:: https://pypip.in/v/django-haystack/badge.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://pypip.in/d/django-haystack/badge.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+
 ========
 Haystack
 ========
