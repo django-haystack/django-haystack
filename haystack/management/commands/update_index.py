@@ -158,6 +158,12 @@ class Command(BaseCommand):
             help="App label of an application to update the search index.",
         )
         parser.add_argument(
+            "-m",
+            "--minutes",
+            type=int,
+            help="Number of minutes back to consider objects new.",
+        )
+        parser.add_argument(
             "-a",
             "--age",
             type=int,
@@ -239,6 +245,7 @@ class Command(BaseCommand):
             self.backends = haystack_connections.connections_info.keys()
 
         age = options.get("age", DEFAULT_AGE)
+        minutes = options.get("minutes", DEFAULT_AGE)
         start_date = options.get("start_date")
         end_date = options.get("end_date")
 
@@ -247,8 +254,14 @@ class Command(BaseCommand):
         elif self.verbosity > 1:
             LOG.setLevel(logging.INFO)
 
+        if (minutes and age) or (minutes and start_date) or (age and start_date):
+            parser.error("Minutes / age / start date options are mutually exclusive")
+
+        if minutes is not None:
+            self.start_date = now() - timedelta(minutes=minutes)
+
         if age is not None:
-            self.start_date = now() - timedelta(hours=int(age))
+            self.start_date = now() - timedelta(hours=age)
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
@@ -364,7 +377,7 @@ class Command(BaseCommand):
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
-                    qs = index.index_queryset().values_list("pk", flat=True)
+                    qs = index.index_queryset(using=using).values_list("pk", flat=True)
                     database_pks = set(smart_bytes(pk) for pk in qs)
                 else:
                     database_pks = set(

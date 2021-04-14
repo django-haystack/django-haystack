@@ -244,15 +244,15 @@ class SearchIndexTestCase(TestCase):
         self.assertTrue(isinstance(self.cmi.fields["extra"], indexes.CharField))
 
     def test_index_queryset(self):
-        self.assertEqual(len(self.cmi.index_queryset()), 3)
+        self.assertEqual(self.cmi.index_queryset().count(), 3)
 
     def test_read_queryset(self):
-        self.assertEqual(len(self.cmi.read_queryset()), 2)
+        self.assertEqual(self.cmi.read_queryset().count(), 2)
 
     def test_build_queryset(self):
         # The custom SearchIndex.build_queryset returns the same records as
         # the read_queryset
-        self.assertEqual(len(self.cmi.build_queryset()), 2)
+        self.assertEqual(self.cmi.build_queryset().count(), 2)
 
         # Store a reference to the original method
         old_guf = self.mi.__class__.get_updated_field

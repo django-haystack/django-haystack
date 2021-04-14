@@ -1,3 +1,12 @@
+.. image:: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml/badge.svg
+      :target: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml
+.. image:: https://readthedocs.org/projects/django-haystack/badge/
+            :target: https://django-haystack.readthedocs.io/
+.. image:: https://pypip.in/v/django-haystack/badge.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://pypip.in/d/django-haystack/badge.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+
 ========
 Haystack
 ========
@@ -11,7 +20,7 @@ Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Elasticsearch: https://www.elastic.co/products/elasticsearch
-.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
+.. _Whoosh: https://github.com/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 Haystack is BSD licensed, plays nicely with third-party app without needing to
@@ -38,12 +47,6 @@ Documentation
 * v2.6.X: https://django-haystack.readthedocs.io/en/v2.6.0/
 
 See the `changelog <docs/changelog.rst>`_
-
-Build Status
-============
-
-.. image:: https://travis-ci.org/django-haystack/django-haystack.svg?branch=master
-   :target: https://travis-ci.org/django-haystack/django-haystack
 
 Requirements
 ============

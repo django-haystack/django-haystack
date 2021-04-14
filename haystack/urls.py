@@ -1,5 +1,5 @@
-from django.conf.urls import url
+from django.urls import path
 
 from haystack.views import SearchView
 
-urlpatterns = [url(r"^$", SearchView(), name="haystack_search")]
+urlpatterns = [path("", SearchView(), name="haystack_search")]
