@@ -11,7 +11,6 @@ from haystack.backends.elasticsearch_backend import (
 from haystack.constants import DJANGO_CT
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
-from haystack.utils import log as logging
 
 try:
     import elasticsearch
