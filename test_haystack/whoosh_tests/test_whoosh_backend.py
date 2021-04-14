@@ -1,4 +1,3 @@
-# encoding: utf-8
 import os
 import unittest
 from datetime import timedelta
@@ -92,7 +91,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return AFourthMockModel
 
     def prepare(self, obj):
-        data = super(WhooshBoostMockSearchIndex, self).prepare(obj)
+        data = super().prepare(obj)
 
         if obj.pk % 2 == 0:
             data["boost"] = 2.0
@@ -115,7 +114,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(WhooshSearchBackendTestCase, self).setUp()
+        super().setUp()
 
         self.old_ui = connections["whoosh"].get_unified_index()
         self.ui = UnifiedIndex()
@@ -135,7 +134,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(WhooshSearchBackendTestCase, self).tearDown()
+        super().tearDown()
 
     def whoosh_search(self, query):
         self.raw_whoosh = self.raw_whoosh.refresh()
@@ -756,7 +755,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
 
 class WhooshBoostBackendTestCase(WhooshTestCase):
     def setUp(self):
-        super(WhooshBoostBackendTestCase, self).setUp()
+        super().setUp()
 
         self.old_ui = connections["whoosh"].get_unified_index()
         self.ui = UnifiedIndex()
@@ -787,7 +786,7 @@ class WhooshBoostBackendTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.ui
-        super(WhooshBoostBackendTestCase, self).tearDown()
+        super().tearDown()
 
     @unittest.expectedFailure
     def test_boost(self):
@@ -809,7 +808,7 @@ class WhooshBoostBackendTestCase(WhooshTestCase):
 
 class LiveWhooshSearchQueryTestCase(WhooshTestCase):
     def setUp(self):
-        super(LiveWhooshSearchQueryTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -838,7 +837,7 @@ class LiveWhooshSearchQueryTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshSearchQueryTestCase, self).tearDown()
+        super().tearDown()
 
     def test_get_spelling(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -886,7 +885,7 @@ class LiveWhooshSearchQueryTestCase(WhooshTestCase):
 @override_settings(DEBUG=True)
 class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
     def setUp(self):
-        super(LiveWhooshSearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -915,7 +914,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_various_searchquerysets(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -1130,7 +1129,7 @@ class LiveWhooshMultiSearchQuerySetTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveWhooshMultiSearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1153,7 +1152,7 @@ class LiveWhooshMultiSearchQuerySetTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshMultiSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_searchquerysets_with_models(self):
         sqs = self.sqs.all()
@@ -1173,7 +1172,7 @@ class LiveWhooshMoreLikeThisTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveWhooshMoreLikeThisTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1196,7 +1195,7 @@ class LiveWhooshMoreLikeThisTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshMoreLikeThisTestCase, self).tearDown()
+        super().tearDown()
 
     # We expect failure here because, despite not changing the code, Whoosh
     # 2.5.1 returns incorrect counts/results. Huzzah.
@@ -1332,7 +1331,7 @@ class LiveWhooshAutocompleteTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveWhooshAutocompleteTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1355,7 +1354,7 @@ class LiveWhooshAutocompleteTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshAutocompleteTestCase, self).tearDown()
+        super().tearDown()
 
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto="mod")
@@ -1397,7 +1396,7 @@ class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
     def prepare(self, obj):
-        prepped = super(WhooshRoundTripSearchIndex, self).prepare(obj)
+        prepped = super().prepare(obj)
         prepped.update(
             {
                 "text": "This is some example text.",
@@ -1419,7 +1418,7 @@ class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
 @override_settings(DEBUG=True)
 class LiveWhooshRoundTripTestCase(WhooshTestCase):
     def setUp(self):
-        super(LiveWhooshRoundTripTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1445,7 +1444,7 @@ class LiveWhooshRoundTripTestCase(WhooshTestCase):
         self.sb.update(self.wrtsi, [mock])
 
     def tearDown(self):
-        super(LiveWhooshRoundTripTestCase, self).tearDown()
+        super().tearDown()
 
     def test_round_trip(self):
         results = self.sqs.filter(id="core.mockmodel.1")
@@ -1476,7 +1475,7 @@ class LiveWhooshRoundTripTestCase(WhooshTestCase):
 @override_settings(DEBUG=True)
 class LiveWhooshRamStorageTestCase(TestCase):
     def setUp(self):
-        super(LiveWhooshRamStorageTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_whoosh_storage = settings.HAYSTACK_CONNECTIONS["whoosh"].get(
@@ -1513,7 +1512,7 @@ class LiveWhooshRamStorageTestCase(TestCase):
 
         settings.HAYSTACK_CONNECTIONS["whoosh"]["STORAGE"] = self.old_whoosh_storage
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshRamStorageTestCase, self).tearDown()
+        super().tearDown()
 
     def test_ram_storage(self):
         results = self.sqs.filter(id="core.mockmodel.1")

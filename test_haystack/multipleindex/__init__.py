@@ -1,4 +1,3 @@
-# encoding: utf-8
 import haystack
 from haystack.signals import RealtimeSignalProcessor
 

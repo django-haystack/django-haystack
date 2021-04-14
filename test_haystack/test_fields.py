@@ -1,4 +1,3 @@
-# encoding: utf-8
 import datetime
 from decimal import Decimal
 from unittest.mock import Mock

@@ -1,4 +1,3 @@
-# encoding: utf-8
 import json
 import os
 import re
@@ -112,7 +111,7 @@ class WhooshSearchBackend(BaseSearchBackend):
     )
 
     def __init__(self, connection_alias, **connection_options):
-        super(WhooshSearchBackend, self).__init__(
+        super().__init__(
             connection_alias, **connection_options
         )
         self.setup_complete = False

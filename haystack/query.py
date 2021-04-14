@@ -1,4 +1,3 @@
-# encoding: utf-8
 from functools import reduce
 import operator
 import warnings
@@ -651,7 +650,7 @@ class EmptySearchQuerySet(SearchQuerySet):
         return True
 
     def _clone(self, klass=None):
-        clone = super(EmptySearchQuerySet, self)._clone(klass=klass)
+        clone = super()._clone(klass=klass)
         clone._result_cache = []
         return clone
 
@@ -669,7 +668,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ValuesListSearchQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._flat = False
         self._fields = []
 
@@ -679,7 +678,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         self._internal_fields = ["id", "django_ct", "django_id", "score"]
 
     def _clone(self, klass=None):
-        clone = super(ValuesListSearchQuerySet, self)._clone(klass=klass)
+        clone = super()._clone(klass=klass)
         clone._fields = self._fields
         clone._flat = self._flat
         return clone
@@ -688,7 +687,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         query_fields = set(self._internal_fields)
         query_fields.update(self._fields)
         kwargs = {"fields": query_fields}
-        return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
+        return super()._fill_cache(start, end, **kwargs)
 
     def post_process_results(self, results):
         to_cache = []
@@ -732,7 +731,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        super(RelatedSearchQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._load_all_querysets = {}
         self._result_cache = []
 
@@ -767,6 +766,6 @@ class RelatedSearchQuerySet(SearchQuerySet):
         return clone
 
     def _clone(self, klass=None):
-        clone = super(RelatedSearchQuerySet, self)._clone(klass=klass)
+        clone = super()._clone(klass=klass)
         clone._load_all_querysets = self._load_all_querysets
         return clone

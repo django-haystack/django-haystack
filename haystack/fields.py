@@ -1,4 +1,3 @@
-# encoding: utf-8
 import re
 from inspect import ismethod
 
@@ -229,10 +228,10 @@ class CharField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetCharField
 
-        super(CharField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(CharField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -247,7 +246,7 @@ class LocationField(SearchField):
     def prepare(self, obj):
         from haystack.utils.geo import ensure_point
 
-        value = super(LocationField, self).prepare(obj)
+        value = super().prepare(obj)
 
         if value is None:
             return None
@@ -289,7 +288,7 @@ class NgramField(CharField):
         if kwargs.get("faceted") is True:
             raise SearchFieldError("%s can not be faceted." % self.__class__.__name__)
 
-        super(NgramField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 class EdgeNgramField(NgramField):
@@ -303,10 +302,10 @@ class IntegerField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetIntegerField
 
-        super(IntegerField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(IntegerField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -322,10 +321,10 @@ class FloatField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetFloatField
 
-        super(FloatField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(FloatField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -341,10 +340,10 @@ class DecimalField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetDecimalField
 
-        super(DecimalField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(DecimalField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -360,10 +359,10 @@ class BooleanField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetBooleanField
 
-        super(BooleanField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(BooleanField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -379,10 +378,10 @@ class DateField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetDateField
 
-        super(DateField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(DateField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -412,10 +411,10 @@ class DateTimeField(SearchField):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetDateTimeField
 
-        super(DateTimeField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def prepare(self, obj):
-        return self.convert(super(DateTimeField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -456,11 +455,11 @@ class MultiValueField(SearchField):
                 % self.__class__.__name__
             )
 
-        super(MultiValueField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.is_multivalued = True
 
     def prepare(self, obj):
-        return self.convert(super(MultiValueField, self).prepare(obj))
+        return self.convert(super().prepare(obj))
 
     def convert(self, value):
         if value is None:
@@ -485,7 +484,7 @@ class FacetField(SearchField):
 
     def __init__(self, **kwargs):
         handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetField, self).__init__(**handled_kwargs)
+        super().__init__(**handled_kwargs)
 
     def handle_facet_parameters(self, kwargs):
         if kwargs.get("faceted", False):

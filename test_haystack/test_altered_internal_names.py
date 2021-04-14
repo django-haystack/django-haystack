@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.conf import settings
 from django.test import TestCase
 from test_haystack.core.models import AnotherMockModel, MockModel
@@ -22,7 +21,7 @@ class MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
 class AlteredInternalNamesTestCase(TestCase):
     def setUp(self):
         check_solr()
-        super(AlteredInternalNamesTestCase, self).setUp()
+        super().setUp()
 
         self.old_ui = connections["solr"].get_unified_index()
         ui = UnifiedIndex()
@@ -38,7 +37,7 @@ class AlteredInternalNamesTestCase(TestCase):
         constants.DJANGO_CT = "django_ct"
         constants.DJANGO_ID = "django_id"
         connections["solr"]._index = self.old_ui
-        super(AlteredInternalNamesTestCase, self).tearDown()
+        super().tearDown()
 
     def test_altered_names(self):
         sq = connections["solr"].get_query()

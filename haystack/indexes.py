@@ -1,4 +1,3 @@
-# encoding: utf-8
 import copy
 import threading
 import warnings
@@ -446,7 +445,7 @@ class ModelSearchIndex(SearchIndex):
     fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, "content", "text")
 
     def __init__(self, extra_field_kwargs=None):
-        super(ModelSearchIndex, self).__init__()
+        super().__init__()
 
         self.model = None
 

@@ -1,4 +1,3 @@
-# encoding: utf-8
 import queue
 import time
 from threading import Thread
@@ -34,7 +33,7 @@ class SearchViewTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SearchViewTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -51,7 +50,7 @@ class SearchViewTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(SearchViewTestCase, self).tearDown()
+        super().tearDown()
 
     def test_search_no_query(self):
         response = self.client.get(reverse("haystack_search"))
@@ -121,7 +120,7 @@ class SearchViewTestCase(TestCase):
         class ThreadedSearchView(SearchView):
             def __call__(self, request):
                 print("Name: %s" % request.GET["name"])
-                return super(ThreadedSearchView, self).__call__(request)
+                return super().__call__(request)
 
         view = search_view_factory(view_class=ThreadedSearchView)
         resp_queue = queue.Queue()
@@ -177,7 +176,7 @@ class ResultsPerPageTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(ResultsPerPageTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -194,7 +193,7 @@ class ResultsPerPageTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(ResultsPerPageTestCase, self).tearDown()
+        super().tearDown()
 
     def test_custom_results_per_page(self):
         response = self.client.get("/search/", {"q": "haystack"})
@@ -210,7 +209,7 @@ class ResultsPerPageTestCase(TestCase):
 
 class FacetedSearchViewTestCase(TestCase):
     def setUp(self):
-        super(FacetedSearchViewTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -227,7 +226,7 @@ class FacetedSearchViewTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(FacetedSearchViewTestCase, self).tearDown()
+        super().tearDown()
 
     def test_search_no_query(self):
         response = self.client.get(reverse("haystack_faceted_search"))
@@ -268,7 +267,7 @@ class BasicSearchViewTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(BasicSearchViewTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -285,7 +284,7 @@ class BasicSearchViewTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(BasicSearchViewTestCase, self).tearDown()
+        super().tearDown()
 
     def test_search_no_query(self):
         response = self.client.get(reverse("haystack_basic_search"))

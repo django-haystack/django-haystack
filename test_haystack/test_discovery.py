@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.test import TestCase
 from test_haystack.discovery.search_indexes import FooIndex
 

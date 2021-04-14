@@ -1,4 +1,3 @@
-# encoding: utf-8
 import warnings
 
 from django.conf import settings
@@ -57,7 +56,7 @@ class SolrSearchBackend(BaseSearchBackend):
     )
 
     def __init__(self, connection_alias, **connection_options):
-        super(SolrSearchBackend, self).__init__(connection_alias, **connection_options)
+        super().__init__(connection_alias, **connection_options)
 
         if "URL" not in connection_options:
             raise ImproperlyConfigured(

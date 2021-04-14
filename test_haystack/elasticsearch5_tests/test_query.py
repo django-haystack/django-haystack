@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 
 from django.contrib.gis.measure import D
@@ -14,7 +13,7 @@ from ..core.models import AnotherMockModel, MockModel
 
 class Elasticsearch5SearchQueryTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch5SearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["elasticsearch"].get_query()
 
     def test_build_query_all(self):

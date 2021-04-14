@@ -1,4 +1,3 @@
-# encoding: utf-8
 import logging as std_logging
 import pickle
 
@@ -25,7 +24,7 @@ class SearchResultTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SearchResultTestCase, self).setUp()
+        super().setUp()
         cap = CaptureHandler()
         logging.getLogger("haystack").addHandler(cap)
 

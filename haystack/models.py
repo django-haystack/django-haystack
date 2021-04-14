@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # "Hey, Django! Look at me, I'm an app! For Serious!"
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import force_str

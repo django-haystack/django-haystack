@@ -1,4 +1,3 @@
-# encoding: utf-8
 from haystack.constants import DEFAULT_ALIAS
 
 

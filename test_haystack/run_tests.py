@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 import sys
 from os.path import abspath, dirname
 

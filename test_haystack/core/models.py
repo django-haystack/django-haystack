@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # A couple models for Haystack to test with.
 import datetime
 import uuid
@@ -63,10 +61,10 @@ class AFourthMockModel(models.Model):
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
-        return super(SoftDeleteManager, self).get_queryset().filter(deleted=False)
+        return super().get_queryset().filter(deleted=False)
 
     def complete_set(self):
-        return super(SoftDeleteManager, self).get_queryset()
+        return super().get_queryset()
 
 
 class AFifthMockModel(models.Model):
