@@ -26,6 +26,9 @@ from haystack.utils.app_loading import haystack_get_model
 try:
     import elasticsearch
 
+    if  (1, 0, 0) <= elasticsearch.__version__ < (2, 0, 0):
+        warnings.warn("ElasticSearch 1.x support deprecated, will be removed in 4.0", DeprecationWarning)
+
     try:
         # let's try this, for elasticsearch > 1.7.0
         from elasticsearch.helpers import bulk
