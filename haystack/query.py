@@ -1,6 +1,6 @@
-from functools import reduce
 import operator
 import warnings
+from functools import reduce
 
 from haystack import connection_router, connections
 from haystack.backends import SQ

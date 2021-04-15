@@ -211,7 +211,9 @@ class SearchResult(object):
             from haystack import connections
 
             try:
-                index = connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
+                index = (
+                    connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
+                )
             except NotHandled:
                 # Not found? Return nothing.
                 return {}
@@ -234,7 +236,7 @@ class SearchResult(object):
         # The ``log`` is excluded because, under the hood, ``logging`` uses
         # ``threading.Lock``, which doesn't pickle well.
         ret_dict = self.__dict__.copy()
-        del (ret_dict["log"])
+        del ret_dict["log"]
         return ret_dict
 
     def __setstate__(self, data_dict):

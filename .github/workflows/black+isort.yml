@@ -1,0 +1,19 @@
+name: black+isort
+
+on: [pull_request, push]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install tools
+      run: pip install black isort
+    - name: Run black+isort
+      run: |
+        black --check --diff haystack
+        isort --check haystack

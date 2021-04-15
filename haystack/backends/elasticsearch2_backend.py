@@ -18,7 +18,11 @@ try:
     if not ((2, 0, 0) <= elasticsearch.__version__ < (3, 0, 0)):
         raise ImportError
     from elasticsearch.helpers import bulk, scan
-    warnings.warn("ElasticSearch 2.x support deprecated, will be removed in 4.0", DeprecationWarning)
+
+    warnings.warn(
+        "ElasticSearch 2.x support deprecated, will be removed in 4.0",
+        DeprecationWarning,
+    )
 except ImportError:
     raise MissingDependency(
         "The 'elasticsearch2' backend requires the \
@@ -29,9 +33,7 @@ except ImportError:
 
 class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super().__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
 
     def clear(self, models=None, commit=True):
