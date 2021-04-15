@@ -257,6 +257,7 @@ class LocationField(SearchField):
 
     def convert(self, value):
         from django.contrib.gis.geos import Point
+
         from haystack.utils.geo import ensure_point
 
         if value is None:
@@ -519,7 +520,7 @@ class FacetField(SearchField):
 
         if "facet_for" in kwargs:
             self.facet_for = kwargs["facet_for"]
-            del (kwargs["facet_for"])
+            del kwargs["facet_for"]
 
         return kwargs
 

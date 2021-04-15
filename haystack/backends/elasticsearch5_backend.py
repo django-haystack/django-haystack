@@ -29,9 +29,7 @@ except ImportError:
 
 class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super().__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
 
     def clear(self, models=None, commit=True):

@@ -26,9 +26,18 @@ def update_worker(args):
         LOG.error("update_worker received incorrect arguments: %r", args)
         raise ValueError("update_worker received incorrect arguments")
 
-    model, start, end, total, using, start_date, end_date, verbosity, commit, max_retries = (
-        args
-    )
+    (
+        model,
+        start,
+        end,
+        total,
+        using,
+        start_date,
+        end_date,
+        verbosity,
+        commit,
+        max_retries,
+    ) = args
 
     # FIXME: confirm that this is still relevant with modern versions of Django:
     # We need to reset the connections, otherwise the different processes
@@ -255,7 +264,9 @@ class Command(BaseCommand):
             LOG.setLevel(logging.INFO)
 
         if (minutes and age) or (minutes and start_date) or (age and start_date):
-            raise CommandError("Minutes / age / start date options are mutually exclusive")
+            raise CommandError(
+                "Minutes / age / start date options are mutually exclusive"
+            )
 
         if minutes is not None:
             self.start_date = now() - timedelta(minutes=minutes)

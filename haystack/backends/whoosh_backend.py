@@ -45,25 +45,15 @@ if not hasattr(whoosh, "__version__") or whoosh.__version__ < (2, 5, 0):
 # Bubble up the correct error.
 from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
+from whoosh.fields import BOOLEAN, DATETIME
 from whoosh.fields import ID as WHOOSH_ID
-from whoosh.fields import (
-    BOOLEAN,
-    DATETIME,
-    IDLIST,
-    KEYWORD,
-    NGRAM,
-    NGRAMWORDS,
-    NUMERIC,
-    Schema,
-    TEXT,
-)
+from whoosh.fields import IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, TEXT, Schema
 from whoosh.filedb.filestore import FileStorage, RamStorage
-from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.highlight import ContextFragmenter, HtmlFormatter
-from whoosh.qparser import QueryParser, FuzzyTermPlugin
+from whoosh.highlight import highlight as whoosh_highlight
+from whoosh.qparser import FuzzyTermPlugin, QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
-
 
 DATETIME_REGEX = re.compile(
     r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
@@ -111,9 +101,7 @@ class WhooshSearchBackend(BaseSearchBackend):
     )
 
     def __init__(self, connection_alias, **connection_options):
-        super().__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
         self.setup_complete = False
         self.use_file_storage = True
         self.post_limit = getattr(connection_options, "POST_LIMIT", 128 * 1024 * 1024)
@@ -741,8 +729,8 @@ class WhooshSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self._to_python(value)
 
-                del (additional_fields[DJANGO_CT])
-                del (additional_fields[DJANGO_ID])
+                del additional_fields[DJANGO_CT]
+                del additional_fields[DJANGO_ID]
 
                 if highlight:
                     sa = StemmingAnalyzer()
@@ -989,23 +977,19 @@ class WhooshSearchQuery(BaseSearchQuery):
                         possible_values = [prepared_value]
 
                     for possible_value in possible_values:
-                        possible_value_str = self.backend._from_python(
-                            possible_value
-                        )
+                        possible_value_str = self.backend._from_python(possible_value)
                         if filter_type == "fuzzy":
                             terms.append(
-                                filter_types[filter_type] % (
+                                filter_types[filter_type]
+                                % (
                                     possible_value_str,
                                     min(
-                                        FUZZY_WHOOSH_MIN_PREFIX,
-                                        len(possible_value_str)
-                                    )
+                                        FUZZY_WHOOSH_MIN_PREFIX, len(possible_value_str)
+                                    ),
                                 )
                             )
                         else:
-                            terms.append(
-                                filter_types[filter_type] % possible_value_str
-                            )
+                            terms.append(filter_types[filter_type] % possible_value_str)
 
                     if len(terms) == 1:
                         query_frag = terms[0]
