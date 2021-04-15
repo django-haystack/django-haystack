@@ -66,7 +66,7 @@ from whoosh.writing import AsyncWriter
 
 
 DATETIME_REGEX = re.compile(
-    "^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
+    r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
 )
 LOCALS = threading.local()
 LOCALS.RAM_STORE = None
@@ -730,7 +730,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     ):
                         # Special-cased due to the nature of KEYWORD fields.
                         if index.fields[string_key].is_multivalued:
-                            if value is None or len(value) is 0:
+                            if value is None or len(value) == 0:
                                 additional_fields[string_key] = []
                             else:
                                 additional_fields[string_key] = value.split(",")
@@ -875,7 +875,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 (list, tuple, set, dict, int, float, complex),
             ):
                 return converted_value
-        except:
+        except Exception:
             # If it fails (SyntaxError or its ilk) or we don't trust it,
             # continue on.
             pass

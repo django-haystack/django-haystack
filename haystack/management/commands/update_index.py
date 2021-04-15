@@ -4,7 +4,7 @@ import os
 import time
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections, reset_queries
 from django.utils.encoding import force_str, smart_bytes
 from django.utils.timezone import now
@@ -255,7 +255,7 @@ class Command(BaseCommand):
             LOG.setLevel(logging.INFO)
 
         if (minutes and age) or (minutes and start_date) or (age and start_date):
-            parser.error("Minutes / age / start date options are mutually exclusive")
+            raise CommandError("Minutes / age / start date options are mutually exclusive")
 
         if minutes is not None:
             self.start_date = now() - timedelta(minutes=minutes)
@@ -284,7 +284,7 @@ class Command(BaseCommand):
             for using in self.backends:
                 try:
                     self.update_backend(label, using)
-                except:
+                except Exception:
                     LOG.exception("Error updating %s using %s ", label, using)
                     raise
 
