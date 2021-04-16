@@ -85,7 +85,7 @@ class Command(BaseCommand):
             if os.path.isfile(managed_schema_path):
                 try:
                     os.rename(managed_schema_path, "%s.old" % managed_schema_path)
-                except (IOError, OSError) as exc:
+                except OSError as exc:
                     raise CommandError(
                         "Could not rename old managed schema file {}: {}".format(
                             managed_schema_path, exc

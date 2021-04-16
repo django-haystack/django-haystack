@@ -174,7 +174,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         initial_key_count = len(schema_fields)
         content_field_name = ""
 
-        for field_name, field_class in fields.items():
+        for _, field_class in fields.items():
             if field_class.is_multivalued:
                 if field_class.indexed is False:
                     schema_fields[field_class.index_fieldname] = IDLIST(

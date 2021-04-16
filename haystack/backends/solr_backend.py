@@ -648,7 +648,7 @@ class SolrSearchBackend(BaseSearchBackend):
         content_field_name = ""
         schema_fields = []
 
-        for field_name, field_class in fields.items():
+        for _, field_class in fields.items():
             field_data = {
                 "field_name": field_class.index_fieldname,
                 "type": "text_en",

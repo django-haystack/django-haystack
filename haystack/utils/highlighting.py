@@ -67,7 +67,7 @@ class Highlighter(object):
         words_found = []
 
         # Next, make sure we found any words at all.
-        for word, offset_list in highlight_locations.items():
+        for _, offset_list in highlight_locations.items():
             if len(offset_list):
                 # Add all of the locations to the list.
                 words_found.extend(offset_list)
