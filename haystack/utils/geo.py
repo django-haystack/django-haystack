@@ -1,4 +1,3 @@
-# encoding: utf-8
 from haystack.constants import WGS_84_SRID
 from haystack.exceptions import SpatialError
 

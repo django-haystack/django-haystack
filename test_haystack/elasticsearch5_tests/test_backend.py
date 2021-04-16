@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import logging as std_logging
 import operator
@@ -22,15 +21,7 @@ from haystack.utils.loading import UnifiedIndex
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
 
-test_pickling = True
-
-try:
-    import cPickle as pickle
-except ImportError:
-    try:
-        import pickle
-    except ImportError:
-        test_pickling = False
+import pickle
 
 
 def clear_elasticsearch_index():
@@ -126,7 +117,7 @@ class Elasticsearch5BoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return AFourthMockModel
 
     def prepare(self, obj):
-        data = super(Elasticsearch5BoostMockSearchIndex, self).prepare(obj)
+        data = super().prepare(obj)
 
         if obj.pk == 4:
             data["boost"] = 5.0
@@ -164,7 +155,7 @@ class Elasticsearch5RoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return MockModel
 
     def prepare(self, obj):
-        prepped = super(Elasticsearch5RoundTripSearchIndex, self).prepare(obj)
+        prepped = super().prepare(obj)
         prepped.update(
             {
                 "text": "This is some example text.",
@@ -241,7 +232,7 @@ class TestSettings(TestCase):
 
 class Elasticsearch5SearchBackendTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch5SearchBackendTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         self.raw_es = elasticsearch.Elasticsearch(
@@ -274,7 +265,7 @@ class Elasticsearch5SearchBackendTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(Elasticsearch5SearchBackendTestCase, self).tearDown()
+        super().tearDown()
         self.sb.silently_fail = True
 
     def raw_search(self, query):
@@ -767,7 +758,7 @@ class LiveElasticsearch5SearchQueryTestCase(TestCase):
     fixtures = ["base_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch5SearchQueryTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -786,7 +777,7 @@ class LiveElasticsearch5SearchQueryTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5SearchQueryTestCase, self).tearDown()
+        super().tearDown()
 
     def test_log_query(self):
         reset_search_queries()
@@ -831,7 +822,7 @@ class LiveElasticsearch5SearchQuerySetTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch5SearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
@@ -858,7 +849,7 @@ class LiveElasticsearch5SearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5SearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_load_all(self):
         sqs = self.sqs.order_by("pub_date").load_all()
@@ -1274,7 +1265,7 @@ class LiveElasticsearch5SpellingTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch5SpellingTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
@@ -1297,7 +1288,7 @@ class LiveElasticsearch5SpellingTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5SpellingTestCase, self).tearDown()
+        super().tearDown()
 
     def test_spelling(self):
         self.assertEqual(
@@ -1317,7 +1308,7 @@ class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch5MoreLikeThisTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1337,7 +1328,7 @@ class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5MoreLikeThisTestCase, self).tearDown()
+        super().tearDown()
 
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
@@ -1395,7 +1386,7 @@ class LiveElasticsearch5AutocompleteTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch5AutocompleteTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
@@ -1418,7 +1409,7 @@ class LiveElasticsearch5AutocompleteTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5AutocompleteTestCase, self).tearDown()
+        super().tearDown()
 
     def test_build_schema(self):
         self.sb = connections["elasticsearch"].get_backend()
@@ -1511,7 +1502,7 @@ class LiveElasticsearch5AutocompleteTestCase(TestCase):
 
 class LiveElasticsearch5RoundTripTestCase(TestCase):
     def setUp(self):
-        super(LiveElasticsearch5RoundTripTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1534,7 +1525,7 @@ class LiveElasticsearch5RoundTripTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5RoundTripTestCase, self).tearDown()
+        super().tearDown()
 
     def test_round_trip(self):
         results = self.sqs.filter(id="core.mockmodel.1")
@@ -1557,12 +1548,11 @@ class LiveElasticsearch5RoundTripTestCase(TestCase):
         self.assertEqual(result.sites, [3, 5, 1])
 
 
-@unittest.skipUnless(test_pickling, "Skipping pickling tests")
 class LiveElasticsearch5PickleTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch5PickleTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1583,7 +1573,7 @@ class LiveElasticsearch5PickleTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch5PickleTestCase, self).tearDown()
+        super().tearDown()
 
     def test_pickling(self):
         results = self.sqs.all()
@@ -1600,7 +1590,7 @@ class LiveElasticsearch5PickleTestCase(TestCase):
 
 class Elasticsearch5BoostBackendTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch5BoostBackendTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         self.raw_es = elasticsearch.Elasticsearch(
@@ -1634,7 +1624,7 @@ class Elasticsearch5BoostBackendTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(Elasticsearch5BoostBackendTestCase, self).tearDown()
+        super().tearDown()
 
     def raw_search(self, query):
         return self.raw_es.search(
@@ -1711,7 +1701,7 @@ class RecreateIndexTestCase(TestCase):
 
 class Elasticsearch5FacetingTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch5FacetingTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1746,7 +1736,7 @@ class Elasticsearch5FacetingTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(Elasticsearch5FacetingTestCase, self).tearDown()
+        super().tearDown()
 
     def test_facet(self):
         self.sb.update(self.smmi, self.sample_objs)

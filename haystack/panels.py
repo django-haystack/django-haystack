@@ -1,6 +1,3 @@
-# encoding: utf-8
-import datetime
-
 from debug_toolbar.panels import DebugPanel
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
@@ -18,7 +15,7 @@ class HaystackDebugPanel(DebugPanel):
     has_content = True
 
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._offset = dict(
             (alias, len(connections[alias].queries))
             for alias in connections.connections_info.keys()

@@ -1,4 +1,3 @@
-# encoding: utf-8
 import re
 import warnings
 from datetime import datetime, timedelta
@@ -25,6 +24,12 @@ from haystack.utils.app_loading import haystack_get_model
 
 try:
     import elasticsearch
+
+    if (1, 0, 0) <= elasticsearch.__version__ < (2, 0, 0):
+        warnings.warn(
+            "ElasticSearch 1.x support deprecated, will be removed in 4.0",
+            DeprecationWarning,
+        )
 
     try:
         # let's try this, for elasticsearch > 1.7.0
@@ -115,9 +120,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
     }
 
     def __init__(self, connection_alias, **connection_options):
-        super(ElasticsearchSearchBackend, self).__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
 
         if "URL" not in connection_options:
             raise ImproperlyConfigured(
@@ -719,8 +722,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self._to_python(value)
 
-                del (additional_fields[DJANGO_CT])
-                del (additional_fields[DJANGO_ID])
+                del additional_fields[DJANGO_CT]
+                del additional_fields[DJANGO_ID]
 
                 if "highlight" in raw_result:
                     additional_fields["highlighted"] = raw_result["highlight"].get(

@@ -1,4 +1,3 @@
-# encoding: utf-8
 from regular_app.models import Dog
 
 from haystack import indexes

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Haystack documentation build configuration file, created by
 # sphinx-quickstart on Wed Apr 15 08:50:46 2009.

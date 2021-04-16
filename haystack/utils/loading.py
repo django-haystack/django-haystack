@@ -1,4 +1,3 @@
-# encoding: utf-8
 import copy
 import inspect
 import threading
@@ -217,10 +216,9 @@ class UnifiedIndex(object):
                     # We've got an index. Check if we should be ignoring it.
                     class_path = "%s.search_indexes.%s" % (app_mod.__name__, item_name)
 
-                    if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(
-                        item_name
-                    ) == id(
-                        item
+                    if (
+                        class_path in self.excluded_indexes
+                        or self.excluded_indexes_ids.get(item_name) == id(item)
                     ):
                         self.excluded_indexes_ids[str(item_name)] = id(item)
                         continue

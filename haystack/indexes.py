@@ -1,4 +1,3 @@
-# encoding: utf-8
 import copy
 import threading
 import warnings
@@ -253,7 +252,7 @@ class SearchIndex(threading.local, metaclass=DeclarativeMetaclass):
             # Remove any fields that lack a value and are ``null=True``.
             if field.null is True:
                 if self.prepared_data[field.index_fieldname] is None:
-                    del (self.prepared_data[field.index_fieldname])
+                    del self.prepared_data[field.index_fieldname]
 
         return self.prepared_data
 
@@ -446,7 +445,7 @@ class ModelSearchIndex(SearchIndex):
     fields_to_skip = (ID, DJANGO_CT, DJANGO_ID, "content", "text")
 
     def __init__(self, extra_field_kwargs=None):
-        super(ModelSearchIndex, self).__init__()
+        super().__init__()
 
         self.model = None
 

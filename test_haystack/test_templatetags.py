@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.template import Context, Template
@@ -27,7 +26,7 @@ class TemplateTagTestCase(TestCase):
 
 class HighlightTestCase(TemplateTagTestCase):
     def setUp(self):
-        super(HighlightTestCase, self).setUp()
+        super().setUp()
         self.sample_entry = """
 Registering indexes in Haystack is very similar to registering models and
 ModelAdmin classes in the Django admin site. If you want to override the default

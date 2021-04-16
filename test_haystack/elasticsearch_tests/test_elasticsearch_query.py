@@ -1,4 +1,3 @@
-# encoding: utf-8
 import datetime
 
 import elasticsearch
@@ -17,7 +16,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(ElasticsearchSearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["elasticsearch"].get_query()
 
     def test_build_query_all(self):
@@ -204,7 +203,7 @@ class ElasticsearchSearchQueryTestCase(TestCase):
 
 class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
     def setUp(self):
-        super(ElasticsearchSearchQuerySpatialBeforeReleaseTestCase, self).setUp()
+        super().setUp()
         self.backend = connections["elasticsearch"].get_backend()
         self._elasticsearch_version = elasticsearch.VERSION
         elasticsearch.VERSION = (0, 9, 9)
@@ -236,7 +235,7 @@ class ElasticsearchSearchQuerySpatialBeforeReleaseTestCase(TestCase):
 
 class ElasticsearchSearchQuerySpatialAfterReleaseTestCase(TestCase):
     def setUp(self):
-        super(ElasticsearchSearchQuerySpatialAfterReleaseTestCase, self).setUp()
+        super().setUp()
         self.backend = connections["elasticsearch"].get_backend()
         self._elasticsearch_version = elasticsearch.VERSION
         elasticsearch.VERSION = (1, 0, 0)

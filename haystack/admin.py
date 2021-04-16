@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.contrib.admin.options import ModelAdmin, csrf_protect_m
 from django.contrib.admin.views.main import SEARCH_VAR, ChangeList
 from django.core.exceptions import PermissionDenied
@@ -16,11 +15,11 @@ from haystack.utils import get_model_ct_tuple
 class SearchChangeList(ChangeList):
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
-        super(SearchChangeList, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_results(self, request):
         if SEARCH_VAR not in request.GET:
-            return super(SearchChangeList, self).get_results(request)
+            return super().get_results(request)
 
         # Note that pagination is 0-based, not 1-based.
         sqs = (
@@ -68,9 +67,7 @@ class SearchModelAdminMixin(object):
 
         if SEARCH_VAR not in request.GET:
             # Do the usual song and dance.
-            return super(SearchModelAdminMixin, self).changelist_view(
-                request, extra_context
-            )
+            return super().changelist_view(request, extra_context)
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
@@ -83,9 +80,7 @@ class SearchModelAdminMixin(object):
         if self.model not in indexed_models:
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
-            return super(SearchModelAdminMixin, self).changelist_view(
-                request, extra_context
-            )
+            return super().changelist_view(request, extra_context)
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
@@ -106,7 +101,7 @@ class SearchModelAdminMixin(object):
             "list_max_show_all": self.list_max_show_all,
             "model_admin": self,
         }
-        if hasattr(self, 'get_sortable_by'):  # Django 2.1+
+        if hasattr(self, "get_sortable_by"):  # Django 2.1+
             kwargs["sortable_by"] = self.get_sortable_by(request)
         changelist = SearchChangeList(**kwargs)
         changelist.formset = None

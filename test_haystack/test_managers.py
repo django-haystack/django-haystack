@@ -1,4 +1,3 @@
-# encoding: utf-8
 import datetime
 
 from django.contrib.gis.measure import D
@@ -36,7 +35,7 @@ class ManagerTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(ManagerTestCase, self).setUp()
+        super().setUp()
 
         self.search_index = BasicMockModelSearchIndex
         # Update the "index".
@@ -249,7 +248,7 @@ class CustomManagerTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(CustomManagerTestCase, self).setUp()
+        super().setUp()
 
         self.search_index_1 = CustomMockModelIndexWithObjectsManager
         self.search_index_2 = CustomMockModelIndexWithAnotherManager

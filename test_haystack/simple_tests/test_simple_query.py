@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.test import TestCase
 
 from haystack import connections
@@ -8,7 +7,7 @@ from haystack.query import SQ
 
 class SimpleSearchQueryTestCase(TestCase):
     def setUp(self):
-        super(SimpleSearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["simple"].get_query()
 
     def test_build_query_all(self):

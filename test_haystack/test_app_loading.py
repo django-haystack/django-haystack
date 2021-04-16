@@ -1,4 +1,3 @@
-# encoding: utf-8
 from types import GeneratorType, ModuleType
 
 from django.test import TestCase

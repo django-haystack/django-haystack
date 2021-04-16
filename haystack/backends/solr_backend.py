@@ -1,4 +1,3 @@
-# encoding: utf-8
 import warnings
 
 from django.conf import settings
@@ -57,7 +56,7 @@ class SolrSearchBackend(BaseSearchBackend):
     )
 
     def __init__(self, connection_alias, **connection_options):
-        super(SolrSearchBackend, self).__init__(connection_alias, **connection_options)
+        super().__init__(connection_alias, **connection_options)
 
         if "URL" not in connection_options:
             raise ImproperlyConfigured(
@@ -544,9 +543,9 @@ class SolrSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self.conn._to_python(value)
 
-                del (additional_fields[DJANGO_CT])
-                del (additional_fields[DJANGO_ID])
-                del (additional_fields["score"])
+                del additional_fields[DJANGO_CT]
+                del additional_fields[DJANGO_ID]
+                del additional_fields["score"]
 
                 if raw_result[ID] in getattr(raw_results, "highlighting", {}):
                     additional_fields["highlighted"] = raw_results.highlighting[
@@ -630,9 +629,7 @@ class SolrSearchBackend(BaseSearchBackend):
                             spelling_suggestions.append(j["word"])
                         else:
                             spelling_suggestions.append(j)
-            elif isinstance(suggestions[0], str) and isinstance(
-                suggestions[1], dict
-            ):
+            elif isinstance(suggestions[0], str) and isinstance(suggestions[1], dict):
                 # Solr 6.4 uses a list of paired (word, dictionary) pairs:
                 for suggestion in suggestions:
                     if isinstance(suggestion, dict):

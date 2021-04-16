@@ -1,4 +1,3 @@
-# encoding: utf-8
 import os
 
 import requests
@@ -12,7 +11,11 @@ from haystack.backends.solr_backend import SolrSearchBackend
 
 
 class Command(BaseCommand):
-    help = "Generates a Solr schema that reflects the indexes using templates " " under a django template dir 'search_configuration/*.xml'.  If none are " " found, then provides defaults suitable to Solr 6.4"
+    help = (
+        "Generates a Solr schema that reflects the indexes using templates "
+        " under a django template dir 'search_configuration/*.xml'.  If none are "
+        " found, then provides defaults suitable to Solr 6.4"
+    )
     schema_template_loc = "search_configuration/schema.xml"
     solrcfg_template_loc = "search_configuration/solrconfig.xml"
 
