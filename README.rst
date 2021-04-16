@@ -1,11 +1,17 @@
 .. image:: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml/badge.svg
       :target: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml
+.. image:: https://img.shields.io/pypi/v/django-haystack.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://img.shields.io/pypi/pyversions/django-haystack.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://img.shields.io/pypi/dm/django-haystack.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
 .. image:: https://readthedocs.org/projects/django-haystack/badge/
-            :target: https://django-haystack.readthedocs.io/
-.. image:: https://pypip.in/v/django-haystack/badge.svg
-      :target: https://pypi.python.org/pypi/django-haystack/
-.. image:: https://pypip.in/d/django-haystack/badge.svg
-      :target: https://pypi.python.org/pypi/django-haystack/
+      :target: https://django-haystack.readthedocs.io/
+.. image:: https://img.shields.io/badge/code%20style-black-000.svg
+      :target: https://github.com/psf/black
+.. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
+      :target: https://pycqa.github.io/isort/
 
 ========
 Haystack
