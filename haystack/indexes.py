@@ -258,7 +258,7 @@ class SearchIndex(threading.local, metaclass=DeclarativeMetaclass):
 
     def get_content_field(self):
         """Returns the field that supplies the primary document to be indexed."""
-        for field_name, field in self.fields.items():
+        for _, field in self.fields.items():
             if field.document is True:
                 return field.index_fieldname
 

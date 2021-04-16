@@ -40,7 +40,7 @@ class HaystackDebugPanel(DebugPanel):
             self._queries.extend([(alias, q) for q in search_queries])
 
         self._queries.sort(key=lambda x: x[1]["start"])
-        self._search_time = sum([d["time_spent"] for d in self._backends.itervalues()])
+        self._search_time = sum([d["time_spent"] for d in self._backends.values()])
         num_queries = len(self._queries)
         return "%d %s in %.2fms" % (
             num_queries,
