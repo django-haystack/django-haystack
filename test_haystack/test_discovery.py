@@ -1,8 +1,8 @@
 from django.test import TestCase
-from test_haystack.discovery.search_indexes import FooIndex
 
 from haystack import connections
 from haystack.utils.loading import UnifiedIndex
+from test_haystack.discovery.search_indexes import FooIndex
 
 EXPECTED_INDEX_MODEL_COUNT = 6
 

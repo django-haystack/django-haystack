@@ -2,6 +2,6 @@
 line_length=88
 
 [tool.isort]
-known_first_party = "haystack"
+known_first_party = ["haystack", "test_haystack"]
 profile = "black"
 multi_line_output = 3

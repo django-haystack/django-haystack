@@ -15,5 +15,5 @@ jobs:
       run: pip install black isort
     - name: Run black+isort
       run: |
-        black --check --diff haystack
-        isort --check haystack
+        black --check --diff .
+        isort --check .

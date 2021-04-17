@@ -1,7 +1,7 @@
+from django.apps import apps
+
 import haystack
 from haystack.signals import RealtimeSignalProcessor
-
-from django.apps import apps
 
 from ..utils import check_solr
 
