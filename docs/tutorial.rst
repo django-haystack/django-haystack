@@ -72,6 +72,9 @@ Example::
 
     pip install django-haystack
 
+When using elasticsearch, use::
+
+    pip install "django-haystack[elasticsearch]"
 
 Configuration
 =============

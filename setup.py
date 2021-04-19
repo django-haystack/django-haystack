@@ -60,5 +60,8 @@ setup(
     zip_safe=False,
     install_requires=install_requires,
     tests_require=tests_require,
+    extras_require={
+        "elasticsearch": ["elasticsearch>=5,<6"],
+    },
     test_suite="test_haystack.run_tests.run_all",
 )
