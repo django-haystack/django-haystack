@@ -6,13 +6,13 @@ from django import forms
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import connections, indexes
 from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm
 from haystack.query import EmptySearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 from haystack.views import FacetedSearchView, SearchView, search_view_factory
+from test_haystack.core.models import AnotherMockModel, MockModel
 
 
 class InitialedSearchForm(SearchForm):

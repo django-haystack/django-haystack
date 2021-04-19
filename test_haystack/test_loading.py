@@ -3,11 +3,11 @@ import unittest
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
-from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import indexes
 from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import loading
+from test_haystack.core.models import AnotherMockModel, MockModel
 
 try:
     import pysolr

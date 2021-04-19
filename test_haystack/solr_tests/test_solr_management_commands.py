@@ -1,5 +1,6 @@
 import datetime
 import os
+from io import StringIO
 from tempfile import mkdtemp
 from unittest.mock import patch
 
@@ -14,9 +15,6 @@ from haystack import connections, constants, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
-
-
-from io import StringIO
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -146,6 +144,7 @@ class ManagementCommandTestCase(TestCase):
     def test_age_with_time_zones(self):
         """Haystack should use django.utils.timezone.now"""
         from django.utils.timezone import now as django_now
+
         from haystack.management.commands.update_index import now as haystack_now
 
         self.assertIs(
@@ -224,10 +223,11 @@ class ManagementCommandTestCase(TestCase):
         try:
             needle = "Th3S3cr3tK3y"
             constants.DOCUMENT_FIELD = (
-                needle
-            )  # Force index to use new key for document_fields
+                needle  # Force index to use new key for document_fields
+            )
             settings.HAYSTACK_CONNECTIONS["solr"]["URL"] = (
-                settings.HAYSTACK_CONNECTIONS["solr"]["URL"].rsplit("/", 1)[0] + "/mgmnt"
+                settings.HAYSTACK_CONNECTIONS["solr"]["URL"].rsplit("/", 1)[0]
+                + "/mgmnt"
             )
 
             ui = UnifiedIndex()
@@ -251,13 +251,17 @@ class ManagementCommandTestCase(TestCase):
             contents = rendered_file.getvalue()
             self.assertGreater(contents.find('name="%s' % needle), -1)
 
-            call_command("build_solr_schema", using="solr", configure_directory=conf_dir)
+            call_command(
+                "build_solr_schema", using="solr", configure_directory=conf_dir
+            )
             with open(schema_file) as s:
                 self.assertGreater(s.read().find('name="%s' % needle), -1)
             with open(solrconfig_file) as s:
                 self.assertGreater(s.read().find('name="df">%s' % needle), -1)
 
-            self.assertTrue(os.path.isfile(os.path.join(conf_dir, "managed-schema.old")))
+            self.assertTrue(
+                os.path.isfile(os.path.join(conf_dir, "managed-schema.old"))
+            )
 
             call_command("build_solr_schema", using="solr", reload_core=True)
 

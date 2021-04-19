@@ -35,9 +35,7 @@ class MockMultiRouter(BaseRouter):
 
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
-        super().__init__(
-            app_label, model_name, pk, score, **kwargs
-        )
+        super().__init__(app_label, model_name, pk, score, **kwargs)
         self._model = apps.get_model("core", model_name)
 
 
@@ -59,7 +57,7 @@ class MockSearchBackend(BaseSearchBackend):
     def remove(self, obj, commit=True):
         global MOCK_INDEX_DATA
         if commit:
-            del (MOCK_INDEX_DATA[get_identifier(obj)])
+            del MOCK_INDEX_DATA[get_identifier(obj)]
 
     def clear(self, models=None, commit=True):
         global MOCK_INDEX_DATA

@@ -2,7 +2,6 @@ import datetime
 
 from django.contrib.gis.measure import D
 from django.test import TestCase
-from test_haystack.core.models import MockModel
 
 from haystack import connections
 from haystack.manager import SearchIndexManager
@@ -13,6 +12,7 @@ from haystack.query import (
     ValuesListSearchQuerySet,
     ValuesSearchQuerySet,
 )
+from test_haystack.core.models import MockModel
 
 from .mocks import CharPKMockSearchBackend
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex

@@ -4,6 +4,10 @@ import time
 from threading import Thread
 
 from django.test import TestCase
+
+from haystack import connections, indexes
+from haystack.exceptions import SearchFieldError
+from haystack.utils.loading import UnifiedIndex
 from test_haystack.core.models import (
     AFifthMockModel,
     AnotherMockModel,
@@ -12,10 +16,6 @@ from test_haystack.core.models import (
     ManyToManyRightSideModel,
     MockModel,
 )
-
-from haystack import connections, indexes
-from haystack.exceptions import SearchFieldError
-from haystack.utils.loading import UnifiedIndex
 
 
 class BadSearchIndex1(indexes.SearchIndex, indexes.Indexable):

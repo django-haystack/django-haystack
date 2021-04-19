@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from haystack import connections, indexes, reset_search_queries
-from haystack.backends import BaseSearchQuery, SQ
+from haystack.backends import SQ, BaseSearchQuery
 from haystack.exceptions import FacetingError
 from haystack.models import SearchResult
 from haystack.query import (
@@ -21,7 +21,15 @@ from test_haystack.core.models import (
     MockModel,
     UUIDMockModel,
 )
-from .mocks import (CharPKMockSearchBackend, MOCK_SEARCH_RESULTS, MockSearchBackend, MockSearchQuery, ReadQuerySetMockSearchBackend, UUIDMockSearchBackend)
+
+from .mocks import (
+    MOCK_SEARCH_RESULTS,
+    CharPKMockSearchBackend,
+    MockSearchBackend,
+    MockSearchQuery,
+    ReadQuerySetMockSearchBackend,
+    UUIDMockSearchBackend,
+)
 from .test_indexes import (
     GhettoAFifthMockModelSearchIndex,
     TextReadQuerySetTestSearchIndex,
