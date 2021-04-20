@@ -318,7 +318,7 @@ class SearchQuerySet(object):
             return self._result_cache[start]
 
     # Methods that return a SearchQuerySet.
-    def all(self):
+    def all(self):  # noqa A003
         """Returns all results for the query."""
         return self._clone()
 
@@ -326,7 +326,7 @@ class SearchQuerySet(object):
         """Returns an empty result list for the query."""
         return self._clone(klass=EmptySearchQuerySet)
 
-    def filter(self, *args, **kwargs):
+    def filter(self, *args, **kwargs):  # noqa A003
         """Narrows the search based on certain attributes and the default operator."""
         if DEFAULT_OPERATOR == "OR":
             return self.filter_or(*args, **kwargs)
@@ -720,7 +720,7 @@ class ValuesSearchQuerySet(ValuesListSearchQuerySet):
         to_cache = []
 
         for result in results:
-            to_cache.append(dict((i, getattr(result, i, None)) for i in self._fields))
+            to_cache.append({i: getattr(result, i, None) for i in self._fields})
 
         return to_cache
 

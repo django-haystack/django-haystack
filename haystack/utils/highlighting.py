@@ -19,9 +19,9 @@ class Highlighter(object):
         if "css_class" in kwargs:
             self.css_class = kwargs["css_class"]
 
-        self.query_words = set(
-            [word.lower() for word in self.query.split() if not word.startswith("-")]
-        )
+        self.query_words = {
+            word.lower() for word in self.query.split() if not word.startswith("-")
+        }
 
     def highlight(self, text_block):
         self.text_block = strip_tags(text_block)

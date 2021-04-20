@@ -5,7 +5,7 @@ from .update_index import DEFAULT_MAX_RETRIES
 
 
 class Command(BaseCommand):
-    help = "Completely rebuilds the search index by removing the old data and then updating."
+    help = "Completely rebuilds the search index by removing the old data and then updating."  # noqa A003
 
     def add_arguments(self, parser):
         parser.add_argument(

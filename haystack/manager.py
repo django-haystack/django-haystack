@@ -15,13 +15,13 @@ class SearchIndexManager(object):
     def get_empty_query_set(self):
         return EmptySearchQuerySet(using=self.using)
 
-    def all(self):
+    def all(self):  # noqa A003
         return self.get_search_queryset()
 
     def none(self):
         return self.get_empty_query_set()
 
-    def filter(self, *args, **kwargs):
+    def filter(self, *args, **kwargs):  # noqa A003
         return self.get_search_queryset().filter(*args, **kwargs)
 
     def exclude(self, *args, **kwargs):

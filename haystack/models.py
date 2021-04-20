@@ -16,7 +16,7 @@ except ImportError:
 
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
-class SearchResult(object):
+class SearchResult:
     """
     A single search result. The actual object is loaded lazily by accessing
     object; until then this object only stores the model, pk, and score.
@@ -98,7 +98,7 @@ class SearchResult(object):
     def _set_object(self, obj):
         self._object = obj
 
-    object = property(_get_object, _set_object)
+    object = property(_get_object, _set_object)  # noqa A003
 
     def _get_model(self):
         if self._model is None:

@@ -12,6 +12,6 @@ jobs:
       with:
         python-version: 3.9
     - name: Install tools
-      run: pip install flake8 flake8-bugbear
+      run: pip install flake8 flake8-assertive flake8-bugbear flake8-builtins flake8-comprehensions flake8-logging-format
     - name: Run flake8
       run: flake8 example_project haystack
