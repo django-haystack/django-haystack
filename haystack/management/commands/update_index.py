@@ -158,7 +158,7 @@ def do_update(
 
 
 class Command(BaseCommand):
-    help = "Freshens the index for the given app(s)."
+    help = "Freshens the index for the given app(s)."  # noqa A003
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -389,11 +389,11 @@ class Command(BaseCommand):
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset(using=using).values_list("pk", flat=True)
-                    database_pks = set(smart_bytes(pk) for pk in qs)
+                    database_pks = {smart_bytes(pk) for pk in qs}
                 else:
-                    database_pks = set(
+                    database_pks = {
                         smart_bytes(pk) for pk in qs.values_list("pk", flat=True)
-                    )
+                    }
 
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.

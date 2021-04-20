@@ -16,10 +16,10 @@ class HaystackDebugPanel(DebugPanel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._offset = dict(
-            (alias, len(connections[alias].queries))
+        self._offset = {
+            alias: len(connections[alias].queries)
             for alias in connections.connections_info.keys()
-        )
+        }
         self._search_time = 0
         self._queries = []
         self._backends = {}

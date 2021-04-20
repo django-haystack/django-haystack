@@ -118,7 +118,7 @@ class SearchIndex(threading.local, metaclass=DeclarativeMetaclass):
         self.prepared_data = None
         content_fields = []
 
-        self.field_map = dict()
+        self.field_map = {}
         for field_name, field in self.fields.items():
             # form field map
             self.field_map[field.index_fieldname] = field_name

@@ -11,7 +11,7 @@ from haystack.backends.solr_backend import SolrSearchBackend
 
 
 class Command(BaseCommand):
-    help = (
+    help = (  # noqa A003
         "Generates a Solr schema that reflects the indexes using templates "
         " under a django template dir 'search_configuration/*.xml'.  If none are "
         " found, then provides defaults suitable to Solr 6.4"

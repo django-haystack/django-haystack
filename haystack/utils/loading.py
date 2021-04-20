@@ -126,7 +126,7 @@ class ConnectionHandler(object):
 
         return self.__getitem__(key)
 
-    def all(self):
+    def all(self):  # noqa A003
         return [self[alias] for alias in self.connections_info]
 
 

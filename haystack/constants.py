@@ -21,22 +21,21 @@ FUZZY_WHOOSH_MIN_PREFIX = getattr(settings, "HAYSTACK_FUZZY_WHOOSH_MIN_PREFIX", 
 FUZZY_WHOOSH_MAX_EDITS = getattr(settings, "HAYSTACK_FUZZY_WHOOSH_MAX_EDITS", 2)
 
 # Valid expression extensions.
-VALID_FILTERS = set(
-    [
-        "contains",
-        "exact",
-        "gt",
-        "gte",
-        "lt",
-        "lte",
-        "in",
-        "startswith",
-        "range",
-        "endswith",
-        "content",
-        "fuzzy",
-    ]
-)
+VALID_FILTERS = {
+    "contains",
+    "exact",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "in",
+    "startswith",
+    "range",
+    "endswith",
+    "content",
+    "fuzzy",
+}
+
 
 FILTER_SEPARATOR = "__"
 
