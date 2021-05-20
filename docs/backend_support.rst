@@ -64,6 +64,7 @@ Whoosh
 * Stored (non-indexed) fields
 * Highlighting
 * Requires: whoosh (2.0.0+)
+* Per-field analyzers
 
 Xapian
 ------

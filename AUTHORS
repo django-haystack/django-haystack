@@ -120,3 +120,4 @@ Thanks to
     * Martin Pauly (@mpauly) for Django 2.0 support
     * Ryan Jarvis (@cabalist) for some code cleanup
     * Dulmandakh Sukhbaatar (@dulmandakh) for GitHub Actions support, and flake8, black, isort checks.
+    * Deniz Dogan (@denizdogan) for adding support for the ``analyzer`` parameter for the Whoosh backend
