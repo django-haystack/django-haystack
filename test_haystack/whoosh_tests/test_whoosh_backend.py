@@ -7,6 +7,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.datetime_safe import date, datetime
+from whoosh.analysis import SpaceSeparatedTokenizer, SubstitutionFilter
 from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
@@ -26,6 +27,10 @@ class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
+    name_analyzed = indexes.CharField(
+        model_attr="author",
+        analyzer=SpaceSeparatedTokenizer() | SubstitutionFilter(r"\d+", ""),
+    )
 
     def get_model(self):
         return MockModel
@@ -751,6 +756,11 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             ["%0.2f" % result.score for result in page_2["results"]],
             ["0.40", "0.40", "0.40"],
         )
+
+    def test_analyzed_fields(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+        results = self.whoosh_search("name_analyzed:1234daniel5678")
+        self.assertEqual(len(results), 23)
 
 
 class WhooshBoostBackendTestCase(WhooshTestCase):
