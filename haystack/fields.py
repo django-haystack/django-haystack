@@ -238,7 +238,9 @@ class CharField(SearchField):
             kwargs["facet_class"] = FacetCharField
 
         # use StemmingAnalyzer by default
-        kwargs["analyzer"] = analysis.StemmingAnalyzer() if analyzer is NOT_PROVIDED else analyzer
+        kwargs["analyzer"] = (
+            analysis.StemmingAnalyzer() if analyzer is NOT_PROVIDED else analyzer
+        )
 
         super().__init__(**kwargs)
 

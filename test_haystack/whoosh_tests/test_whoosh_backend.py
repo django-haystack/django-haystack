@@ -29,7 +29,7 @@ class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     pub_date = indexes.DateTimeField(model_attr="pub_date")
     name_analyzed = indexes.CharField(
         model_attr="author",
-        analyzer=SpaceSeparatedTokenizer() | SubstitutionFilter(r"\d+", "")
+        analyzer=SpaceSeparatedTokenizer() | SubstitutionFilter(r"\d+", ""),
     )
 
     def get_model(self):
