@@ -18,9 +18,9 @@ from haystack.models import SearchResult
 from haystack.query import SQ, SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
-from test_haystack.core.models import AFourthMockModel, AnotherMockModel, MockModel
-from test_haystack.mocks import MockSearchResult
-from test_haystack.whoosh_tests.testcases import WhooshTestCase
+from ..core.models import AFourthMockModel, AnotherMockModel, MockModel
+from ..mocks import MockSearchResult
+from .testcases import WhooshTestCase
 
 
 class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -757,9 +757,9 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             ["0.40", "0.40", "0.40"],
         )
 
-    def test_analyzed_fields(self):  # TODO: rename to test_analyzed_fields
+    def test_analyzed_fields(self):
         self.sb.update(self.wmmi, self.sample_objs)
-        results = self.whoosh_search("name_analyzed:daniel")
+        results = self.whoosh_search("name_analyzed:1234daniel5678")
         self.assertEqual(len(results), 23)
 
 
