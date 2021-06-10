@@ -49,7 +49,7 @@ class MoreLikeThisTagTestCase(TestCase):
             any_order=True,
         )
 
-    # FIXME: https://github.com/toastdriven/django-haystack/issues/1069
+    # FIXME: https://github.com/django-haystack/django-haystack/issues/1069
     @unittest.expectedFailure
     def test_more_like_this_for_model(self, mock_sqs):
         mock_model = MockModel.objects.get(pk=3)
