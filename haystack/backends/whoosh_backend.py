@@ -284,6 +284,8 @@ class WhooshSearchBackend(BaseSearchBackend):
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
             writer.commit()
+            if writer.ident is not None:
+                writer.join()
 
     def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
