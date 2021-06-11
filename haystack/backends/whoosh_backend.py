@@ -719,8 +719,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             for facet_fieldname in raw_page.results.facet_names():
                 facets["fields"][facet_fieldname] = sorted(
                     raw_page.results.groups(facet_fieldname).items(),
-                    key=operator.itemgetter(1, 0),
-                    reverse=True,
+                    key=(lambda itm: (-itm[1], itm[0])),
                 )
 
         for doc_offset, raw_result in enumerate(raw_page):

@@ -258,7 +258,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(results["hits"], 23)
         self.assertEqual(
             results["facets"]["fields"]["name"],
-            [("daniel3", 9), ("daniel2", 7), ("daniel1", 7)],
+            [("daniel3", 9), ("daniel1", 7), ("daniel2", 7)],
         )
 
         self.assertEqual(
