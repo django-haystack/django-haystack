@@ -8,7 +8,7 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.datetime_safe import datetime
+from django.utils.datetime_safe import date, datetime
 from django.utils.encoding import force_str
 
 from haystack.backends import (
@@ -55,7 +55,8 @@ from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.qparser import FuzzyTermPlugin, QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
-from whoosh.sorting import Count, FieldFacet
+from whoosh.sorting import Count, DateRangeFacet, FieldFacet
+from whoosh.support.relativedelta import relativedelta as RelativeDelta
 
 DATETIME_REGEX = re.compile(
     r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
@@ -464,9 +465,22 @@ class WhooshSearchBackend(BaseSearchBackend):
             facet_types.update({facet: "fields" for facet in facets})
 
         if date_facets is not None:
-            warnings.warn(
-                "Whoosh does not handle date faceting.", Warning, stacklevel=2
-            )
+
+            def _fixup_datetime(dt):
+                if isinstance(dt, datetime):
+                    return dt
+                if isinstance(dt, date):
+                    return datetime(dt.year, dt.month, dt.day)
+                raise ValueError
+
+            for key, value in date_facets.items():
+                start = _fixup_datetime(value["start_date"])
+                end = _fixup_datetime(value["end_date"])
+                gap_by = value["gap_by"]
+                gap_amount = value.get("gap_amount", 1)
+                gap = RelativeDelta(**{"%ss" % gap_by: gap_amount})
+                group_by.append(DateRangeFacet(key, start, end, gap, maptype=Count))
+                facet_types[key] = "dates"
 
         if query_facets is not None:
             warnings.warn(

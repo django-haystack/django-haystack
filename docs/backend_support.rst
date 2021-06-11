@@ -63,7 +63,7 @@ Whoosh
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
-* Faceting (no dates or queries)
+* Faceting (no queries)
 * Requires: whoosh (2.0.0+)
 * Per-field analyzers
 
