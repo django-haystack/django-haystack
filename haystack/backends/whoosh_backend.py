@@ -2,7 +2,6 @@ import json
 import os
 import re
 import shutil
-import operator
 import threading
 import warnings
 
@@ -54,9 +53,9 @@ from whoosh.highlight import ContextFragmenter, HtmlFormatter
 from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.qparser import FuzzyTermPlugin, QueryParser
 from whoosh.searching import ResultsPage
-from whoosh.writing import AsyncWriter
 from whoosh.sorting import Count, DateRangeFacet, FieldFacet
 from whoosh.support.relativedelta import relativedelta as RelativeDelta
+from whoosh.writing import AsyncWriter
 
 DATETIME_REGEX = re.compile(
     r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
