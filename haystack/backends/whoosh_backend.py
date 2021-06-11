@@ -455,10 +455,13 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             sort_by = sort_by_list
 
+        group_by = []
+        facet_types = {}
         if facets is not None:
-            facets = [
+            group_by += [
                 FieldFacet(facet, allow_overlap=True, maptype=Count) for facet in facets
             ]
+            facet_types.update({facet: "fields" for facet in facets})
 
         if date_facets is not None:
             warnings.warn(
@@ -530,7 +533,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 "pagelen": page_length,
                 "sortedby": sort_by,
                 "reverse": reverse,
-                "groupedby": facets,
+                "groupedby": group_by,
             }
 
             # Handle the case where the results have been narrowed.
@@ -556,6 +559,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 query_string=query_string,
                 spelling_query=spelling_query,
                 result_class=result_class,
+                facet_types=facet_types,
             )
             searcher.close()
 
@@ -692,6 +696,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         query_string="",
         spelling_query=None,
         result_class=None,
+        facet_types=None,
     ):
         from haystack import connections
 
@@ -710,14 +715,15 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         facets = {}
 
-        if len(raw_page.results.facet_names()):
+        if facet_types:
             facets = {
                 "fields": {},
                 "dates": {},
                 "queries": {},
             }
             for facet_fieldname in raw_page.results.facet_names():
-                facets["fields"][facet_fieldname] = sorted(
+                facet_type = facet_types[facet_fieldname]
+                facets[facet_type][facet_fieldname] = sorted(
                     raw_page.results.groups(facet_fieldname).items(),
                     key=(lambda itm: (-itm[1], itm[0])),
                 )
