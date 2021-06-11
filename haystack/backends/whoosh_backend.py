@@ -55,7 +55,7 @@ from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.qparser import FuzzyTermPlugin, QueryParser
 from whoosh.searching import ResultsPage
 from whoosh.writing import AsyncWriter
-from whoosh.sorting import FieldFacet
+from whoosh.sorting import Count, FieldFacet
 
 DATETIME_REGEX = re.compile(
     r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
@@ -456,7 +456,9 @@ class WhooshSearchBackend(BaseSearchBackend):
             sort_by = sort_by_list
 
         if facets is not None:
-            facets = [FieldFacet(facet, allow_overlap=True) for facet in facets]
+            facets = [
+                FieldFacet(facet, allow_overlap=True, maptype=Count) for facet in facets
+            ]
 
         if date_facets is not None:
             warnings.warn(
@@ -716,12 +718,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             }
             for facet_fieldname in raw_page.results.facet_names():
                 facets["fields"][facet_fieldname] = sorted(
-                    [
-                        (name, len(value))
-                        for name, value in raw_page.results.groups(
-                            facet_fieldname
-                        ).items()
-                    ],
+                    raw_page.results.groups(facet_fieldname).items(),
                     key=operator.itemgetter(1, 0),
                     reverse=True,
                 )
