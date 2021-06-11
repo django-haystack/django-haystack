@@ -722,11 +722,26 @@ class WhooshSearchBackend(BaseSearchBackend):
                 "queries": {},
             }
             for facet_fieldname in raw_page.results.facet_names():
+                group = raw_page.results.groups(facet_fieldname)
                 facet_type = facet_types[facet_fieldname]
-                facets[facet_type][facet_fieldname] = sorted(
-                    raw_page.results.groups(facet_fieldname).items(),
-                    key=(lambda itm: (-itm[1], itm[0])),
+
+                # Extract None item for later processing, if present.
+                none_item = group.pop(None, None)
+
+                lst = facets[facet_type][facet_fieldname] = sorted(
+                    group.items(), key=(lambda itm: (-itm[1], itm[0]))
                 )
+
+                if none_item is not None:
+                    # Inject None item back into the results.
+                    none_entry = (None, none_item)
+                    if not lst or lst[-1][1] >= none_item:
+                        lst.append(none_entry)
+                    else:
+                        for i, value in enumerate(lst):
+                            if value[1] < none_item:
+                                lst.insert(i, none_entry)
+                                break
 
         for doc_offset, raw_result in enumerate(raw_page):
             score = raw_page.score(doc_offset) or 0
