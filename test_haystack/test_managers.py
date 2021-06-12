@@ -1,6 +1,8 @@
 import datetime
+import unittest
 
 from django.contrib.gis.measure import D
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 from haystack import connections
@@ -16,6 +18,13 @@ from test_haystack.core.models import MockModel
 
 from .mocks import CharPKMockSearchBackend
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
+
+try:
+    from django.contrib.gis.geos import Point
+
+    HAVE_GDAL = True
+except ImproperlyConfigured:
+    HAVE_GDAL = False
 
 
 class CustomManager(SearchIndexManager):
@@ -80,9 +89,8 @@ class ManagerTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertTrue("foo" in sqs.query.order_by)
 
+    @unittest.skipUnless(HAVE_GDAL, "Requires gdal library")
     def test_order_by_distance(self):
-        from django.contrib.gis.geos import Point
-
         p = Point(1.23, 4.56)
         sqs = self.search_index.objects.distance("location", p).order_by("distance")
         self.assertTrue(isinstance(sqs, SearchQuerySet))
@@ -111,9 +119,8 @@ class ManagerTestCase(TestCase):
         self.assertTrue(isinstance(sqs, SearchQuerySet))
         self.assertEqual(len(sqs.query.facets), 1)
 
+    @unittest.skipUnless(HAVE_GDAL, "Requires gdal library")
     def test_within(self):
-        from django.contrib.gis.geos import Point
-
         # This is a meaningless query but we're just confirming that the manager updates the parameters here:
         p1 = Point(-90, -90)
         p2 = Point(90, 90)
@@ -127,9 +134,8 @@ class ManagerTestCase(TestCase):
             params["within"], {"field": "location", "point_1": p1, "point_2": p2}
         )
 
+    @unittest.skipUnless(HAVE_GDAL, "Requires gdal library")
     def test_dwithin(self):
-        from django.contrib.gis.geos import Point
-
         p = Point(0, 0)
         distance = D(mi=500)
         sqs = self.search_index.objects.dwithin("location", p, distance)
@@ -142,9 +148,8 @@ class ManagerTestCase(TestCase):
             params["dwithin"], {"field": "location", "point": p, "distance": distance}
         )
 
+    @unittest.skipUnless(HAVE_GDAL, "Requires gdal library")
     def test_distance(self):
-        from django.contrib.gis.geos import Point
-
         p = Point(0, 0)
         sqs = self.search_index.objects.distance("location", p)
         self.assertTrue(isinstance(sqs, SearchQuerySet))
