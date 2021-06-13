@@ -8,6 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import (
+    ALL_FIELD,
     DEFAULT_OPERATOR,
     DJANGO_CT,
     DJANGO_ID,
@@ -405,7 +406,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     "text": spelling_query or query_string,
                     "term": {
                         # Using content_field here will result in suggestions of stemmed words.
-                        "field": "_all"
+                        "field": ALL_FIELD,
                     },
                 }
             }
@@ -760,9 +761,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             "spelling_suggestion": spelling_suggestion,
         }
 
-    def build_schema(self, fields):
-        content_field_name = ""
-        mapping = {
+    def _get_common_mapping(self):
+        return {
             DJANGO_CT: {
                 "type": "string",
                 "index": "not_analyzed",
@@ -774,6 +774,10 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 "include_in_all": False,
             },
         }
+
+    def build_schema(self, fields):
+        content_field_name = ""
+        mapping = self._get_common_mapping()
 
         for _, field_class in fields.items():
             field_mapping = FIELD_MAPPINGS.get(

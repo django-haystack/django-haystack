@@ -9,7 +9,13 @@ from haystack.backends.elasticsearch_backend import (
     ElasticsearchSearchBackend,
     ElasticsearchSearchQuery,
 )
-from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
+from haystack.constants import (
+    ALL_FIELD,
+    DEFAULT_OPERATOR,
+    DJANGO_CT,
+    DJANGO_ID,
+    FUZZINESS,
+)
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
 
@@ -25,6 +31,20 @@ except ImportError:
                             installation of 'elasticsearch>=7.0.0,<8.0.0'. \
                             Please refer to the documentation."
     )
+
+
+DEFAULT_FIELD_MAPPING = {"type": "text", "analyzer": "snowball", "copy_to": "_all"}
+FIELD_MAPPINGS = {
+    "edge_ngram": {"type": "text", "analyzer": "edgengram_analyzer", "copy_to": "_all"},
+    "ngram": {"type": "text", "analyzer": "ngram_analyzer", "copy_to": "_all"},
+    "date": {"type": "date"},
+    "datetime": {"type": "date"},
+    "location": {"type": "geo_point"},
+    "boolean": {"type": "boolean"},
+    "float": {"type": "float"},
+    "long": {"type": "long"},
+    "integer": {"type": "long"},
+}
 
 
 class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
@@ -186,7 +206,7 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                     "text": spelling_query or query_string,
                     "term": {
                         # Using content_field here will result in suggestions of stemmed words.
-                        "field": "_all"
+                        "field": ALL_FIELD,
                     },
                 }
             }
@@ -468,6 +488,44 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                     facets["queries"][facet_fieldname] = facet_info["doc_count"]
         results["facets"] = facets
         return results
+
+    def _get_common_mapping(self):
+        return {
+            ALL_FIELD: {
+                "type": "text",  # For backward compatibility
+            },
+            DJANGO_CT: {
+                "type": "keyword",
+            },
+            DJANGO_ID: {
+                "type": "keyword",
+            },
+        }
+
+    def build_schema(self, fields):
+        content_field_name = ""
+        mapping = self._get_common_mapping()
+
+        for _, field_class in fields.items():
+            field_mapping = FIELD_MAPPINGS.get(
+                field_class.field_type, DEFAULT_FIELD_MAPPING
+            ).copy()
+            if field_class.boost != 1.0:
+                field_mapping["boost"] = field_class.boost
+
+            if field_class.document is True:
+                content_field_name = field_class.index_fieldname
+
+            # Do this last to override `text` fields.
+            if field_mapping["type"] == "string":
+                if field_class.indexed is False or hasattr(field_class, "facet_for"):
+                    # Change to keyword type
+                    field_mapping["type"] = "keyword"
+                    del field_mapping["analyzer"]
+
+            mapping[field_class.index_fieldname] = field_mapping
+
+        return (content_field_name, mapping)
 
 
 class Elasticsearch7SearchQuery(ElasticsearchSearchQuery):
