@@ -107,6 +107,14 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
         super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
 
+    def _get_doc_type_option(self):
+        # ES7 does not support a doc_type option
+        return {}
+
+    def _get_current_mapping(self, field_mapping):
+        # ES7 does not support a doc_type option
+        return {"properties": field_mapping}
+
     def _prepare_object(self, index, obj):
         return index.full_prepare(obj, with_facet=False)
 
@@ -150,7 +158,6 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     query=query,
                     index=self.index_name,
-                    doc_type="modelresult",
                 )
                 actions = (
                     {"_op_type": "delete", "_id": doc["_id"]} for doc in generator
@@ -159,7 +166,6 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     actions=actions,
                     index=self.index_name,
-                    doc_type="modelresult",
                 )
                 self.conn.indices.refresh(index=self.index_name)
 
@@ -495,7 +501,6 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
             raw_results = self.conn.search(
                 body=mlt_query,
                 index=self.index_name,
-                doc_type="modelresult",
                 _source=True,
                 **params
             )
