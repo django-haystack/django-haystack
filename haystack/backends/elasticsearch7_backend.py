@@ -64,6 +64,45 @@ FIELD_MAPPINGS = {
 
 
 class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
+    # Settings to add an n-gram & edge n-gram analyzer.
+    DEFAULT_SETTINGS = {
+        "settings": {
+            "index": {
+                "max_ngram_diff": 2,
+            },
+            "analysis": {
+                "analyzer": {
+                    "ngram_analyzer": {
+                        "tokenizer": "standard",
+                        "filter": [
+                            "haystack_ngram",
+                            "lowercase",
+                        ],
+                    },
+                    "edgengram_analyzer": {
+                        "tokenizer": "standard",
+                        "filter": [
+                            "haystack_edgengram",
+                            "lowercase",
+                        ],
+                    },
+                },
+                "filter": {
+                    "haystack_ngram": {
+                        "type": "ngram",
+                        "min_gram": 3,
+                        "max_gram": 4,
+                    },
+                    "haystack_edgengram": {
+                        "type": "edge_ngram",
+                        "min_gram": 2,
+                        "max_gram": 15,
+                    },
+                },
+            }
+        }
+    }
+
     def __init__(self, connection_alias, **connection_options):
         super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
