@@ -3,7 +3,7 @@ from django.test import TestCase
 from haystack import connections, inputs
 
 
-class Elasticsearch5InputTestCase(TestCase):
+class Elasticsearch7InputTestCase(TestCase):
     def setUp(self):
         super().setUp()
         self.query_obj = connections["elasticsearch"].get_query()

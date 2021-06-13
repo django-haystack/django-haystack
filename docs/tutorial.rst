@@ -160,12 +160,22 @@ Example (ElasticSearch 2.x)::
             'INDEX_NAME': 'haystack',
         },
     }
-    
+
 Example (ElasticSearch 5.x)::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
+
+Example (ElasticSearch 7.x)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine',
             'URL': 'http://127.0.0.1:9200/',
             'INDEX_NAME': 'haystack',
         },
@@ -287,10 +297,10 @@ which field is the primary field for searching within.
     There is nothing special about the ``text`` field name used in all of the
     examples. It could be anything; you could call it ``pink_polka_dot`` and
     it won't matter. It's simply a convention to call it ``text``.
-    
+
     To use a document field with a name other than ``text``, be sure to configure
     the ``HAYSTACK_DOCUMENT_FIELD`` setting. For example,::
-    
+
         HAYSTACK_DOCUMENT_FIELD = 'pink_polka_dot'
 
 Additionally, we're providing ``use_template=True`` on the ``text`` field. This

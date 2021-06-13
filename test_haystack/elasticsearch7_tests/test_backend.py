@@ -41,7 +41,7 @@ def clear_elasticsearch_index():
     connections["elasticsearch"].get_backend().setup_complete = False
 
 
-class Elasticsearch5MockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7MockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr="author", faceted=True)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -50,14 +50,14 @@ class Elasticsearch5MockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
 
-class Elasticsearch5MockSearchIndexWithSkipDocument(Elasticsearch5MockSearchIndex):
+class Elasticsearch7MockSearchIndexWithSkipDocument(Elasticsearch7MockSearchIndex):
     def prepare_text(self, obj):
         if obj.author == "daniel3":
             raise SkipDocument
         return "Indexed!\n%s" % obj.id
 
 
-class Elasticsearch5MockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7MockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr="author", faceted=True)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -69,7 +69,7 @@ class Elasticsearch5MockSpellingIndex(indexes.SearchIndex, indexes.Indexable):
         return obj.foo
 
 
-class Elasticsearch5MaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7MaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     month = indexes.CharField(indexed=False)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -81,7 +81,7 @@ class Elasticsearch5MaintainTypeMockSearchIndex(indexes.SearchIndex, indexes.Ind
         return MockModel
 
 
-class Elasticsearch5MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr="foo", document=True)
     name = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -90,7 +90,7 @@ class Elasticsearch5MockModelSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return MockModel
 
 
-class Elasticsearch5AnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7AnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     name = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
@@ -102,7 +102,7 @@ class Elasticsearch5AnotherMockModelSearchIndex(indexes.SearchIndex, indexes.Ind
         return "You might be searching for the user %s" % obj.author
 
 
-class Elasticsearch5BoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7BoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(
         document=True,
         use_template=True,
@@ -124,7 +124,7 @@ class Elasticsearch5BoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return data
 
 
-class Elasticsearch5FacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7FacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True)
     author = indexes.CharField(model_attr="author", faceted=True)
     editor = indexes.CharField(model_attr="editor", faceted=True)
@@ -138,7 +138,7 @@ class Elasticsearch5FacetingMockSearchIndex(indexes.SearchIndex, indexes.Indexab
         return AFourthMockModel
 
 
-class Elasticsearch5RoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7RoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, default="")
     name = indexes.CharField()
     is_active = indexes.BooleanField()
@@ -172,7 +172,7 @@ class Elasticsearch5RoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return prepped
 
 
-class Elasticsearch5ComplexFacetsMockSearchIndex(
+class Elasticsearch7ComplexFacetsMockSearchIndex(
     indexes.SearchIndex, indexes.Indexable
 ):
     text = indexes.CharField(document=True, default="")
@@ -189,7 +189,7 @@ class Elasticsearch5ComplexFacetsMockSearchIndex(
         return MockModel
 
 
-class Elasticsearch5AutocompleteMockModelSearchIndex(
+class Elasticsearch7AutocompleteMockModelSearchIndex(
     indexes.SearchIndex, indexes.Indexable
 ):
     text = indexes.CharField(model_attr="foo", document=True)
@@ -202,7 +202,7 @@ class Elasticsearch5AutocompleteMockModelSearchIndex(
         return MockModel
 
 
-class Elasticsearch5SpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
+class Elasticsearch7SpatialSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(model_attr="name", document=True)
     location = indexes.LocationField()
 
@@ -229,7 +229,7 @@ class TestSettings(TestCase):
         self.assertEqual(backend.conn.transport.max_retries, 42)
 
 
-class Elasticsearch5SearchBackendTestCase(TestCase):
+class Elasticsearch7SearchBackendTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
@@ -242,9 +242,9 @@ class Elasticsearch5SearchBackendTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockSearchIndex()
-        self.smmidni = Elasticsearch5MockSearchIndexWithSkipDocument()
-        self.smtmmi = Elasticsearch5MaintainTypeMockSearchIndex()
+        self.smmi = Elasticsearch7MockSearchIndex()
+        self.smmidni = Elasticsearch7MockSearchIndexWithSkipDocument()
+        self.smtmmi = Elasticsearch7MaintainTypeMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -632,7 +632,7 @@ class Elasticsearch5SearchBackendTestCase(TestCase):
         )
 
         ui = UnifiedIndex()
-        ui.build(indexes=[Elasticsearch5ComplexFacetsMockSearchIndex()])
+        ui.build(indexes=[Elasticsearch7ComplexFacetsMockSearchIndex()])
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(mapping), 15 + 2)  # +2 management fields
@@ -670,7 +670,7 @@ class Elasticsearch5SearchBackendTestCase(TestCase):
     def test_verify_type(self):
         old_ui = connections["elasticsearch"].get_unified_index()
         ui = UnifiedIndex()
-        smtmmi = Elasticsearch5MaintainTypeMockSearchIndex()
+        smtmmi = Elasticsearch7MaintainTypeMockSearchIndex()
         ui.build(indexes=[smtmmi])
         connections["elasticsearch"]._index = ui
         sb = connections["elasticsearch"].get_backend()
@@ -690,7 +690,7 @@ class CaptureHandler(std_logging.Handler):
         CaptureHandler.logs_seen.append(record)
 
 
-class FailedElasticsearch5SearchBackendTestCase(TestCase):
+class FailedElasticsearch7SearchBackendTestCase(TestCase):
     def setUp(self):
         self.sample_objs = []
 
@@ -716,7 +716,7 @@ class FailedElasticsearch5SearchBackendTestCase(TestCase):
         # Setup the rest of the bits.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockSearchIndex()
+        self.smmi = Elasticsearch7MockSearchIndex()
         ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -753,7 +753,7 @@ class FailedElasticsearch5SearchBackendTestCase(TestCase):
         self.assertEqual(len(CaptureHandler.logs_seen), 6)
 
 
-class LiveElasticsearch5SearchQueryTestCase(TestCase):
+class LiveElasticsearch7SearchQueryTestCase(TestCase):
     fixtures = ["base_data.json"]
 
     def setUp(self):
@@ -765,7 +765,7 @@ class LiveElasticsearch5SearchQueryTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockSearchIndex()
+        self.smmi = Elasticsearch7MockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -815,7 +815,7 @@ lssqstc_all_loaded = None
 
 
 @override_settings(DEBUG=True)
-class LiveElasticsearch5SearchQuerySetTestCase(TestCase):
+class LiveElasticsearch7SearchQuerySetTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
 
     fixtures = ["bulk_data.json"]
@@ -826,7 +826,7 @@ class LiveElasticsearch5SearchQuerySetTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockSearchIndex()
+        self.smmi = Elasticsearch7MockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1258,7 +1258,7 @@ class LiveElasticsearch5SearchQuerySetTestCase(TestCase):
 
 
 @override_settings(DEBUG=True)
-class LiveElasticsearch5SpellingTestCase(TestCase):
+class LiveElasticsearch7SpellingTestCase(TestCase):
     """Used to test actual implementation details of the SearchQuerySet."""
 
     fixtures = ["bulk_data.json"]
@@ -1269,7 +1269,7 @@ class LiveElasticsearch5SpellingTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockSpellingIndex()
+        self.smmi = Elasticsearch7MockSpellingIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1303,7 +1303,7 @@ class LiveElasticsearch5SpellingTestCase(TestCase):
         )
 
 
-class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
+class LiveElasticsearch7MoreLikeThisTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
@@ -1314,8 +1314,8 @@ class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
 
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockModelSearchIndex()
-        self.sammi = Elasticsearch5AnotherMockModelSearchIndex()
+        self.smmi = Elasticsearch7MockModelSearchIndex()
+        self.sammi = Elasticsearch7AnotherMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi, self.sammi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1381,7 +1381,7 @@ class LiveElasticsearch5MoreLikeThisTestCase(TestCase):
         )
 
 
-class LiveElasticsearch5AutocompleteTestCase(TestCase):
+class LiveElasticsearch7AutocompleteTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
@@ -1390,7 +1390,7 @@ class LiveElasticsearch5AutocompleteTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5AutocompleteMockModelSearchIndex()
+        self.smmi = Elasticsearch7AutocompleteMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1499,7 +1499,7 @@ class LiveElasticsearch5AutocompleteTestCase(TestCase):
         self.assertEqual(set([result.pk for result in autocomplete_4]), {"20"})
 
 
-class LiveElasticsearch5RoundTripTestCase(TestCase):
+class LiveElasticsearch7RoundTripTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1509,7 +1509,7 @@ class LiveElasticsearch5RoundTripTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.srtsi = Elasticsearch5RoundTripSearchIndex()
+        self.srtsi = Elasticsearch7RoundTripSearchIndex()
         self.ui.build(indexes=[self.srtsi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -1547,7 +1547,7 @@ class LiveElasticsearch5RoundTripTestCase(TestCase):
         self.assertEqual(result.sites, [3, 5, 1])
 
 
-class LiveElasticsearch5PickleTestCase(TestCase):
+class LiveElasticsearch7PickleTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
@@ -1559,8 +1559,8 @@ class LiveElasticsearch5PickleTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5MockModelSearchIndex()
-        self.sammi = Elasticsearch5AnotherMockModelSearchIndex()
+        self.smmi = Elasticsearch7MockModelSearchIndex()
+        self.sammi = Elasticsearch7AnotherMockModelSearchIndex()
         self.ui.build(indexes=[self.smmi, self.sammi])
         connections["elasticsearch"]._index = self.ui
 
@@ -1587,7 +1587,7 @@ class LiveElasticsearch5PickleTestCase(TestCase):
         self.assertEqual(like_a_cuke[0].id, results[0].id)
 
 
-class Elasticsearch5BoostBackendTestCase(TestCase):
+class Elasticsearch7BoostBackendTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1600,7 +1600,7 @@ class Elasticsearch5BoostBackendTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5BoostMockSearchIndex()
+        self.smmi = Elasticsearch7BoostMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
@@ -1698,7 +1698,7 @@ class RecreateIndexTestCase(TestCase):
         )
 
 
-class Elasticsearch5FacetingTestCase(TestCase):
+class Elasticsearch7FacetingTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1708,7 +1708,7 @@ class Elasticsearch5FacetingTestCase(TestCase):
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
         self.ui = UnifiedIndex()
-        self.smmi = Elasticsearch5FacetingMockSearchIndex()
+        self.smmi = Elasticsearch7FacetingMockSearchIndex()
         self.ui.build(indexes=[self.smmi])
         connections["elasticsearch"]._index = self.ui
         self.sb = connections["elasticsearch"].get_backend()
