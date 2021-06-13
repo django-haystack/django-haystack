@@ -331,7 +331,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
 
         # Check what Elasticsearch thinks is there.
-        self.assertEqual(self.raw_search("*:*")["hits"]["total"], 3)
+        self.assertEqual(self.raw_search("*:*")["hits"]["total"]["value"], 3)
         self.assertEqual(
             sorted(
                 [res["_source"] for res in self.raw_search("*:*")["hits"]["hits"]],
@@ -342,7 +342,6 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                     "django_id": "1",
                     "django_ct": "core.mockmodel",
                     "name": "daniel1",
-                    "name_exact": "daniel1",
                     "text": "Indexed!\n1",
                     "pub_date": "2009-02-24T00:00:00",
                     "id": "core.mockmodel.1",
@@ -351,7 +350,6 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                     "django_id": "2",
                     "django_ct": "core.mockmodel",
                     "name": "daniel2",
-                    "name_exact": "daniel2",
                     "text": "Indexed!\n2",
                     "pub_date": "2009-02-23T00:00:00",
                     "id": "core.mockmodel.2",
@@ -360,7 +358,6 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                     "django_id": "3",
                     "django_ct": "core.mockmodel",
                     "name": "daniel3",
-                    "name_exact": "daniel3",
                     "text": "Indexed!\n3",
                     "pub_date": "2009-02-22T00:00:00",
                     "id": "core.mockmodel.3",
@@ -373,7 +370,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
 
         # Check what Elasticsearch thinks is there.
         res = self.raw_search("*:*")["hits"]
-        self.assertEqual(res["total"], 2)
+        self.assertEqual(res["total"]["value"], 2)
         self.assertListEqual(
             sorted([x["_source"]["id"] for x in res["hits"]]),
             ["core.mockmodel.1", "core.mockmodel.2"],
@@ -381,10 +378,10 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
 
     def test_remove(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*")["hits"]["total"], 3)
+        self.assertEqual(self.raw_search("*:*")["hits"]["total"]["value"], 3)
 
         self.sb.remove(self.sample_objs[0])
-        self.assertEqual(self.raw_search("*:*")["hits"]["total"], 2)
+        self.assertEqual(self.raw_search("*:*")["hits"]["total"]["value"], 2)
         self.assertEqual(
             sorted(
                 [res["_source"] for res in self.raw_search("*:*")["hits"]["hits"]],
@@ -395,7 +392,6 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                     "django_id": "2",
                     "django_ct": "core.mockmodel",
                     "name": "daniel2",
-                    "name_exact": "daniel2",
                     "text": "Indexed!\n2",
                     "pub_date": "2009-02-23T00:00:00",
                     "id": "core.mockmodel.2",
@@ -404,7 +400,6 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                     "django_id": "3",
                     "django_ct": "core.mockmodel",
                     "name": "daniel3",
-                    "name_exact": "daniel3",
                     "text": "Indexed!\n3",
                     "pub_date": "2009-02-22T00:00:00",
                     "id": "core.mockmodel.3",
@@ -418,29 +413,50 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
 
     def test_clear(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 3)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            3,
+        )
 
         self.sb.clear()
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 0)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            0,
+        )
 
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 3)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            3,
+        )
 
         self.sb.clear([AnotherMockModel])
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 3)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            3,
+        )
 
         self.sb.clear([MockModel])
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 0)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            0,
+        )
 
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 3)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            3,
+        )
 
         self.sb.clear([AnotherMockModel, MockModel])
-        self.assertEqual(self.raw_search("*:*").get("hits", {}).get("total", 0), 0)
+        self.assertEqual(
+            self.raw_search("*:*").get("hits", {}).get("total", {}).get("value", 0),
+            0,
+        )
 
     def test_search(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*")["hits"]["total"], 3)
+        self.assertEqual(self.raw_search("*:*")["hits"]["total"]["value"], 3)
 
         self.assertEqual(self.sb.search(""), {"hits": 0, "results": []})
         self.assertEqual(self.sb.search("*:*")["hits"], 3)
@@ -450,7 +466,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         )
 
         self.assertEqual(self.sb.search("", highlight=True), {"hits": 0, "results": []})
-        self.assertEqual(self.sb.search("Index", highlight=True)["hits"], 3)
+        self.assertEqual(self.sb.search("Index*", highlight=True)["hits"], 3)
         self.assertEqual(
             sorted(
                 [
@@ -462,16 +478,16 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         )
 
         self.assertEqual(self.sb.search("Indx")["hits"], 0)
-        self.assertEqual(self.sb.search("indaxed")["spelling_suggestion"], "indexed")
+        self.assertEqual(self.sb.search("indaxed")["spelling_suggestion"], "index")
         self.assertEqual(
             self.sb.search("arf", spelling_query="indexyd")["spelling_suggestion"],
-            "indexed",
+            "index",
         )
 
         self.assertEqual(
             self.sb.search("", facets={"name": {}}), {"hits": 0, "results": []}
         )
-        results = self.sb.search("Index", facets={"name": {}})
+        results = self.sb.search("Index*", facets={"name": {}})
         self.assertEqual(results["hits"], 3)
         self.assertSetEqual(
             set(results["facets"]["fields"]["name"]),
@@ -592,7 +608,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
 
     def test_more_like_this(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*")["hits"]["total"], 3)
+        self.assertEqual(self.raw_search("*:*")["hits"]["total"]["value"], 3)
 
         # A functional MLT example with enough data to work is below. Rely on
         # this to ensure the API is correct enough.
@@ -614,56 +630,80 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         self.assertEqual(
             mapping,
             {
-                "django_id": {
-                    "index": "not_analyzed",
-                    "type": "string",
-                    "include_in_all": False,
+                "_all": {
+                    "type": "text",
+                    "analyzer": "snowball",
                 },
                 "django_ct": {
-                    "index": "not_analyzed",
-                    "type": "string",
-                    "include_in_all": False,
+                    "type": "keyword",
                 },
-                "text": {"type": "string", "analyzer": "snowball"},
-                "pub_date": {"type": "date"},
-                "name": {"type": "string", "analyzer": "snowball"},
-                "name_exact": {"index": "not_analyzed", "type": "string"},
-            },
+                "django_id": {
+                    "type": "keyword",
+                },
+                "text": {
+                    "type": "text",
+                    "analyzer": "snowball",
+                    "copy_to": "_all",
+                },
+                "name": {
+                    "type": "text",
+                    "analyzer": "snowball",
+                    "copy_to": "_all",
+                },
+                "pub_date": {
+                    "type": "date",
+                },
+            }
         )
 
         ui = UnifiedIndex()
         ui.build(indexes=[Elasticsearch7ComplexFacetsMockSearchIndex()])
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
-        self.assertEqual(len(mapping), 15 + 2)  # +2 management fields
+        self.assertEqual(len(mapping), 15 - 6 + 2)  # +2 management fields -6 keyword fields
         self.assertEqual(
             mapping,
             {
-                "django_id": {
-                    "index": "not_analyzed",
-                    "type": "string",
-                    "include_in_all": False,
+                '_all': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
                 },
-                "django_ct": {
-                    "index": "not_analyzed",
-                    "type": "string",
-                    "include_in_all": False,
+                'django_ct': {
+                    'type': 'keyword',
                 },
-                "name": {"type": "string", "analyzer": "snowball"},
-                "is_active_exact": {"type": "boolean"},
-                "created": {"type": "date"},
-                "post_count": {"type": "long"},
-                "created_exact": {"type": "date"},
-                "sites_exact": {"index": "not_analyzed", "type": "string"},
-                "is_active": {"type": "boolean"},
-                "sites": {"type": "string", "analyzer": "snowball"},
-                "post_count_i": {"type": "long"},
-                "average_rating": {"type": "float"},
-                "text": {"type": "string", "analyzer": "snowball"},
-                "pub_date_exact": {"type": "date"},
-                "name_exact": {"index": "not_analyzed", "type": "string"},
-                "pub_date": {"type": "date"},
-                "average_rating_exact": {"type": "float"},
+                'django_id': {
+                    'type': 'keyword',
+                },
+                'text': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
+                    'copy_to': '_all',
+                },
+                'name': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
+                    'copy_to': '_all'
+                },
+                'is_active': {
+                    'type': 'boolean',
+                },
+                'post_count': {
+                    'type': 'long',
+                },
+                'average_rating': {
+                    'type': 'float',
+                },
+                'pub_date': {
+                    'type': 'date',
+                },
+                'created': {
+                    'type': 'date',
+                },
+                'sites': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
+                    'copy_to': '_all',
+                },
             },
         )
 
@@ -1413,25 +1453,44 @@ class LiveElasticsearch7AutocompleteTestCase(TestCase):
     def test_build_schema(self):
         self.sb = connections["elasticsearch"].get_backend()
         content_name, mapping = self.sb.build_schema(self.ui.all_searchfields())
+        print(mapping)
         self.assertEqual(
             mapping,
             {
-                "django_id": {
-                    "index": "not_analyzed",
-                    "type": "string",
-                    "include_in_all": False,
+                '_all': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
                 },
-                "django_ct": {
-                    "index": "not_analyzed",
-                    "type": "string",
-                    "include_in_all": False,
+                'django_ct': {
+                    'type': 'keyword',
                 },
-                "name_auto": {"type": "string", "analyzer": "edgengram_analyzer"},
-                "text": {"type": "string", "analyzer": "snowball"},
-                "pub_date": {"type": "date"},
-                "name": {"type": "string", "analyzer": "snowball"},
-                "text_auto": {"type": "string", "analyzer": "edgengram_analyzer"},
-            },
+                'django_id': {
+                    'type': 'keyword',
+                },
+                'text': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
+                    'copy_to': '_all',
+                },
+                'name': {
+                    'type': 'text',
+                    'analyzer': 'snowball',
+                    'copy_to': '_all',
+                },
+                'pub_date': {
+                    'type': 'date',
+                },
+                'text_auto': {
+                    'type': 'text',
+                    'analyzer': 'edgengram_analyzer',
+                    'copy_to': '_all',
+                },
+                'name_auto': {
+                    'type': 'text',
+                    'analyzer': 'edgengram_analyzer',
+                    'copy_to': '_all',
+                },
+            }
         )
 
     def test_autocomplete(self):
@@ -1632,7 +1691,7 @@ class Elasticsearch7BoostBackendTestCase(TestCase):
 
     def test_boost(self):
         self.sb.update(self.smmi, self.sample_objs)
-        self.assertEqual(self.raw_search("*:*")["hits"]["total"], 4)
+        self.assertEqual(self.raw_search("*:*")["hits"]["total"]["value"], 4)
 
         results = SearchQuerySet(using="elasticsearch").filter(
             SQ(author="daniel") | SQ(editor="daniel")
@@ -1754,7 +1813,7 @@ class Elasticsearch7FacetingTestCase(TestCase):
         counts = (
             SearchQuerySet("elasticsearch")
             .filter(content="white")
-            .facet("facet_field", order="reverse_count")
+            .facet("facet_field", order={"_count": "asc"})
             .facet_counts()
         )
         self.assertEqual(
@@ -1765,8 +1824,8 @@ class Elasticsearch7FacetingTestCase(TestCase):
         self.sb.update(self.smmi, self.sample_objs)
         counts = (
             SearchQuerySet("elasticsearch")
-            .narrow('editor_exact:"Perry White"')
-            .narrow('author_exact:"Daniel Lindsley"')
+            .narrow('editor.keyword:"Perry White"')
+            .narrow('author.keyword:"Daniel Lindsley"')
             .facet("author")
             .facet_counts()
         )
@@ -1778,7 +1837,7 @@ class Elasticsearch7FacetingTestCase(TestCase):
             SearchQuerySet("elasticsearch")
             .facet("author")
             .facet("editor")
-            .narrow('editor_exact:"Perry White"')
+            .narrow('editor.keyword:"Perry White"')
             .facet_counts()
         )
         self.assertEqual(

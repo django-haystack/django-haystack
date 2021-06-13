@@ -182,6 +182,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         self.setup_complete = True
 
+    def _prepare_object(self, index, obj):
+        return index.full_prepare(obj)
+
     def update(self, index, iterable, commit=True):
         if not self.setup_complete:
             try:
@@ -199,7 +202,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         for obj in iterable:
             try:
-                prepped_data = index.full_prepare(obj)
+                prepped_data = self._prepare_object(index, obj)
                 final_data = {}
 
                 # Convert the data to make sure it's happy.
@@ -643,6 +646,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         return self._process_results(raw_results, result_class=result_class)
 
+    def _process_hits(self, raw_results):
+        return raw_results.get("hits", {}).get("total", 0)
+
     def _process_results(
         self,
         raw_results,
@@ -654,7 +660,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         from haystack import connections
 
         results = []
-        hits = raw_results.get("hits", {}).get("total", 0)
+        hits = self._process_hits(raw_results)
         facets = {}
         spelling_suggestion = None
 
