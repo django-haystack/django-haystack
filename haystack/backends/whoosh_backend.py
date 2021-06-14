@@ -226,7 +226,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(
                     stored=True,
-                    analyzer=field_class.analyzer,
+                    analyzer=field_class.analyzer or StemmingAnalyzer(),
                     field_boost=field_class.boost,
                     sortable=True,
                 )

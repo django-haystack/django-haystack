@@ -3,7 +3,6 @@ from inspect import ismethod
 
 from django.template import loader
 from django.utils import datetime_safe
-from whoosh import analysis
 
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
@@ -46,7 +45,7 @@ class SearchField(object):
         facet_class=None,
         boost=1.0,
         weight=None,
-        analyzer=NOT_PROVIDED,
+        analyzer=None,
     ):
         # Track what the index thinks this field is called.
         self.instance_name = None
@@ -61,7 +60,7 @@ class SearchField(object):
         self.null = null
         self.index_fieldname = index_fieldname
         self.boost = weight or boost
-        self._analyzer = analyzer
+        self.analyzer = analyzer
         self.is_multivalued = False
 
         # We supply the facet_class for making it easy to create a faceted
@@ -72,12 +71,6 @@ class SearchField(object):
             self.facet_class = FacetCharField
 
         self.set_instance_name(None)
-
-    @property
-    def analyzer(self):
-        if self._analyzer is NOT_PROVIDED:
-            return None
-        return self._analyzer
 
     def set_instance_name(self, instance_name):
         self.instance_name = instance_name
@@ -233,14 +226,9 @@ class SearchField(object):
 class CharField(SearchField):
     field_type = "string"
 
-    def __init__(self, analyzer=NOT_PROVIDED, **kwargs):
+    def __init__(self, **kwargs):
         if kwargs.get("facet_class") is None:
             kwargs["facet_class"] = FacetCharField
-
-        # use StemmingAnalyzer by default
-        kwargs["analyzer"] = (
-            analysis.StemmingAnalyzer() if analyzer is NOT_PROVIDED else analyzer
-        )
 
         super().__init__(**kwargs)
 
