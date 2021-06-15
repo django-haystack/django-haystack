@@ -121,3 +121,6 @@ Thanks to
     * Ryan Jarvis (@cabalist) for some code cleanup
     * Dulmandakh Sukhbaatar (@dulmandakh) for GitHub Actions support, and flake8, black, isort checks.
     * Deniz Dogan (@denizdogan) for adding support for the ``analyzer`` parameter for the Whoosh backend
+    * parruc for basic Whoosh faceting support
+    * Jens Kadenbach (audax) for updating and testing Whoosh faceting support
+    * Alejandro Sedeño (asedeno) trying the Whoosh faceting thing again

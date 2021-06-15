@@ -254,19 +254,23 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(
             self.sb.search("", facets=["name"]), {"hits": 0, "results": []}
         )
-        results = self.sb.search("Index*", facets=["name"])
         results = self.sb.search("index*", facets=["name"])
         self.assertEqual(results["hits"], 23)
-        self.assertEqual(results["facets"], {})
+        self.assertEqual(results["facets"]["dates"], {})
+        self.assertEqual(results["facets"]["queries"], {})
+        self.assertEqual(
+            results["facets"]["fields"]["name"],
+            [("daniel3", 9), ("daniel1", 7), ("daniel2", 7)],
+        )
 
         self.assertEqual(
             self.sb.search(
                 "",
                 date_facets={
                     "pub_date": {
-                        "start_date": date(2008, 2, 26),
+                        "start_date": date(2007, 2, 26),
                         "end_date": date(2008, 2, 26),
-                        "gap": "/MONTH",
+                        "gap_by": "month",
                     }
                 },
             ),
@@ -276,9 +280,9 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             "Index*",
             date_facets={
                 "pub_date": {
-                    "start_date": date(2008, 2, 26),
+                    "start_date": date(2007, 2, 26),
                     "end_date": date(2008, 2, 26),
-                    "gap": "/MONTH",
+                    "gap_by": "month",
                 }
             },
         )
@@ -286,14 +290,95 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             "index*",
             date_facets={
                 "pub_date": {
-                    "start_date": date(2008, 2, 26),
+                    "start_date": date(2007, 2, 26),
                     "end_date": date(2008, 2, 26),
-                    "gap": "/MONTH",
+                    "gap_by": "month",
                 }
             },
         )
         self.assertEqual(results["hits"], 23)
-        self.assertEqual(results["facets"], {})
+        self.assertEqual(results["facets"]["fields"], {})
+        self.assertEqual(results["facets"]["queries"], {})
+        self.assertEqual(results["facets"]["dates"]["pub_date"], [(None, 23)])
+
+        results = self.sb.search(
+            "index*",
+            date_facets={
+                "pub_date": {
+                    "start_date": date(2009, 3, 26),
+                    "end_date": date(2010, 2, 26),
+                    "gap_by": "month",
+                    "gap_amount": 2,
+                }
+            },
+        )
+        self.assertEqual(results["hits"], 23)
+        self.assertEqual(
+            results["facets"]["dates"]["pub_date"],
+            [
+                ((datetime(2009, 5, 26, 0, 0), datetime(2009, 7, 26, 0, 0)), 23),
+            ],
+        )
+
+        results = self.sb.search(
+            "index*",
+            date_facets={
+                "pub_date": {
+                    "start_date": date(2009, 7, 1),
+                    "end_date": date(2009, 8, 1),
+                    "gap_by": "day",
+                    "gap_amount": 1,
+                }
+            },
+        )
+        self.assertEqual(results["hits"], 23)
+        self.assertEqual(
+            results["facets"]["dates"]["pub_date"],
+            [
+                ((datetime(2009, 7, 17, 0, 0), datetime(2009, 7, 18, 0, 0)), 21),
+                (None, 2),
+            ],
+        )
+
+        results = self.sb.search(
+            "index*",
+            date_facets={
+                "pub_date": {
+                    "start_date": datetime(2009, 6, 1),
+                    "end_date": datetime(2009, 8, 1),
+                    "gap_by": "hour",
+                }
+            },
+        )
+        self.assertEqual(results["hits"], 23)
+        self.assertEqual(
+            results["facets"]["dates"]["pub_date"],
+            [
+                ((datetime(2009, 6, 18, 6, 0), datetime(2009, 6, 18, 7, 0)), 1),
+                ((datetime(2009, 6, 18, 8, 0), datetime(2009, 6, 18, 9, 0)), 1),
+                ((datetime(2009, 7, 17, 0, 0), datetime(2009, 7, 17, 1, 0)), 1),
+                ((datetime(2009, 7, 17, 1, 0), datetime(2009, 7, 17, 2, 0)), 1),
+                ((datetime(2009, 7, 17, 2, 0), datetime(2009, 7, 17, 3, 0)), 1),
+                ((datetime(2009, 7, 17, 3, 0), datetime(2009, 7, 17, 4, 0)), 1),
+                ((datetime(2009, 7, 17, 4, 0), datetime(2009, 7, 17, 5, 0)), 1),
+                ((datetime(2009, 7, 17, 5, 0), datetime(2009, 7, 17, 6, 0)), 1),
+                ((datetime(2009, 7, 17, 6, 0), datetime(2009, 7, 17, 7, 0)), 1),
+                ((datetime(2009, 7, 17, 7, 0), datetime(2009, 7, 17, 8, 0)), 1),
+                ((datetime(2009, 7, 17, 8, 0), datetime(2009, 7, 17, 9, 0)), 1),
+                ((datetime(2009, 7, 17, 9, 0), datetime(2009, 7, 17, 10, 0)), 1),
+                ((datetime(2009, 7, 17, 10, 0), datetime(2009, 7, 17, 11, 0)), 1),
+                ((datetime(2009, 7, 17, 11, 0), datetime(2009, 7, 17, 12, 0)), 1),
+                ((datetime(2009, 7, 17, 12, 0), datetime(2009, 7, 17, 13, 0)), 1),
+                ((datetime(2009, 7, 17, 13, 0), datetime(2009, 7, 17, 14, 0)), 1),
+                ((datetime(2009, 7, 17, 14, 0), datetime(2009, 7, 17, 15, 0)), 1),
+                ((datetime(2009, 7, 17, 15, 0), datetime(2009, 7, 17, 16, 0)), 1),
+                ((datetime(2009, 7, 17, 16, 0), datetime(2009, 7, 17, 17, 0)), 1),
+                ((datetime(2009, 7, 17, 17, 0), datetime(2009, 7, 17, 18, 0)), 1),
+                ((datetime(2009, 7, 17, 18, 0), datetime(2009, 7, 17, 19, 0)), 1),
+                ((datetime(2009, 7, 17, 19, 0), datetime(2009, 7, 17, 20, 0)), 1),
+                ((datetime(2009, 7, 17, 20, 0), datetime(2009, 7, 17, 21, 0)), 1),
+            ],
+        )
 
         self.assertEqual(
             self.sb.search("", query_facets={"name": "[* TO e]"}),
@@ -304,9 +389,12 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(results["hits"], 23)
         self.assertEqual(results["facets"], {})
 
-        # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
-        # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
-        # self.assertEqual(results['hits'], 1)
+        self.assertEqual(
+            self.sb.search("", narrow_queries=set(["name:daniel1"])),
+            {"hits": 0, "results": []},
+        )
+        results = self.sb.search("Index*", narrow_queries=set(["name:daniel1"]))
+        self.assertEqual(results["hits"], 7)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(
