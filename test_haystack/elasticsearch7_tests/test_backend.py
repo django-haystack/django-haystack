@@ -472,7 +472,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         )
 
         self.assertEqual(self.sb.search("", highlight=True), {"hits": 0, "results": []})
-        self.assertEqual(self.sb.search("Index*", highlight=True)["hits"], 3)
+        self.assertEqual(self.sb.search("Index", highlight=True)["hits"], 3)
         self.assertEqual(
             sorted(
                 [
@@ -493,7 +493,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         self.assertEqual(
             self.sb.search("", facets={"name": {}}), {"hits": 0, "results": []}
         )
-        results = self.sb.search("Index*", facets={"name": {}})
+        results = self.sb.search("Index", facets={"name": {}})
         self.assertEqual(results["hits"], 3)
         self.assertSetEqual(
             set(results["facets"]["fields"]["name"]),
@@ -656,7 +656,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                 "pub_date": {
                     "type": "date",
                 },
-            }
+            },
         )
 
         ui = UnifiedIndex()
@@ -664,8 +664,6 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
         (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(mapping), 16 + 2)
-        import json
-        print(json.dumps(mapping, indent=4))
         self.assertEqual(
             mapping,
             {
@@ -725,8 +723,8 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
                 },
                 "facet_field": {
                     "type": "keyword",
-                }
-            }
+                },
+            },
         )
 
     def test_verify_type(self):
@@ -1407,7 +1405,7 @@ class LiveElasticsearch7MoreLikeThisTestCase(TestCase):
         results = [result.pk for result in mlt]
         self.assertEqual(22, mlt.count())
         self.assertEqual(
-            {'14', '6', '10', '4', '5', '22', '12', '3', '7', '2'},
+            {"14", "6", "10", "4", "5", "22", "12", "3", "7", "2"},
             set(results),
         )
         self.assertEqual(10, len(results))
@@ -1418,7 +1416,7 @@ class LiveElasticsearch7MoreLikeThisTestCase(TestCase):
         results = [result.pk for result in alt_mlt]
         self.assertEqual(11, alt_mlt.count())
         self.assertEqual(
-            {'1', '2', '13', '19', '23', '3', '22', '17', '16', '10'},
+            {"1", "2", "13", "19", "23", "3", "22", "17", "16", "10"},
             set(results),
         )
         self.assertEqual(10, len(results))
@@ -1429,7 +1427,7 @@ class LiveElasticsearch7MoreLikeThisTestCase(TestCase):
         results = [result.pk for result in alt_mlt_with_models]
         self.assertEqual(20, alt_mlt_with_models.count())
         self.assertEqual(
-            {'10', '7', '5', '4', '22', '3', '2', '12', '6', '14'},
+            {"10", "7", "5", "4", "22", "3", "2", "12", "6", "14"},
             set(results),
         )
         self.assertEqual(len(results), 10)
@@ -1441,7 +1439,7 @@ class LiveElasticsearch7MoreLikeThisTestCase(TestCase):
             deferred = self.sqs.models(MockModel).more_like_this(qs.get(pk=1))
             self.assertEqual(20, deferred.count())
             self.assertEqual(
-                {'12', '6', '2', '3', '10', '5', '14', '7', '22', '4'},
+                {"12", "6", "2", "3", "10", "5", "14", "7", "22", "4"},
                 {result.pk for result in deferred},
             )
             self.assertEqual(len([result.pk for result in deferred]), 10)
@@ -1492,32 +1490,32 @@ class LiveElasticsearch7AutocompleteTestCase(TestCase):
         self.assertEqual(
             mapping,
             {
-                'django_ct': {
-                    'type': 'keyword',
+                "django_ct": {
+                    "type": "keyword",
                 },
-                'django_id': {
-                    'type': 'keyword',
+                "django_id": {
+                    "type": "keyword",
                 },
-                'text': {
-                    'type': 'text',
-                    'analyzer': 'snowball',
+                "text": {
+                    "type": "text",
+                    "analyzer": "snowball",
                 },
-                'name': {
-                    'type': 'text',
-                    'analyzer': 'snowball',
+                "name": {
+                    "type": "text",
+                    "analyzer": "snowball",
                 },
-                'pub_date': {
-                    'type': 'date',
+                "pub_date": {
+                    "type": "date",
                 },
-                'text_auto': {
-                    'type': 'text',
-                    'analyzer': 'edgengram_analyzer',
+                "text_auto": {
+                    "type": "text",
+                    "analyzer": "edgengram_analyzer",
                 },
-                'name_auto': {
-                    'type': 'text',
-                    'analyzer': 'edgengram_analyzer',
+                "name_auto": {
+                    "type": "text",
+                    "analyzer": "edgengram_analyzer",
                 },
-            }
+            },
         )
 
     def test_autocomplete(self):

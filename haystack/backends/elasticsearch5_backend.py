@@ -9,12 +9,7 @@ from haystack.backends.elasticsearch_backend import (
     ElasticsearchSearchBackend,
     ElasticsearchSearchQuery,
 )
-from haystack.constants import (
-    ALL_FIELD,
-    DEFAULT_OPERATOR,
-    DJANGO_CT,
-    FUZZINESS,
-)
+from haystack.constants import ALL_FIELD, DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
 
@@ -414,7 +409,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                 index=self.index_name,
                 _source=True,
                 **self._get_doc_type_option(),
-                **params
+                **params,
             )
         except elasticsearch.TransportError as e:
             if not self.silently_fail:

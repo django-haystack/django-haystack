@@ -4,20 +4,12 @@ import warnings
 from django.conf import settings
 
 import haystack
-from haystack.backends import (
-    BaseEngine,
-    VALID_GAPS,
-)
+from haystack.backends import BaseEngine
 from haystack.backends.elasticsearch_backend import (
     ElasticsearchSearchBackend,
     ElasticsearchSearchQuery,
 )
-from haystack.constants import (
-    DEFAULT_OPERATOR,
-    DJANGO_CT,
-    DJANGO_ID,
-    FUZZINESS,
-)
+from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, DJANGO_ID, FUZZINESS
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
 
@@ -35,7 +27,6 @@ except ImportError:
     )
 
 
-FACET_FIELD_NAME = 'facet'
 DEFAULT_FIELD_MAPPING = {
     "type": "text",
     "analyzer": "snowball",
@@ -95,8 +86,8 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                         "max_gram": 15,
                     },
                 },
-            }
-        }
+            },
+        },
     }
 
     def __init__(self, connection_alias, **connection_options):
@@ -110,16 +101,6 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
     def _get_current_mapping(self, field_mapping):
         # ES7 does not support a doc_type option
         return {"properties": field_mapping}
-
-    def _get_facet_field_name(self, fieldname):
-        if fieldname.endswith("." + FACET_FIELD_NAME):
-            return fieldname
-        return fieldname + "." + FACET_FIELD_NAME
-
-    def _get_original_field_name(self, facet_fieldname):
-        if facet_fieldname.endswith("." + FACET_FIELD_NAME):
-            return facet_fieldname.replace("." + FACET_FIELD_NAME, "")
-        return facet_fieldname
 
     def clear(self, models=None, commit=True):
         """
@@ -451,10 +432,12 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                 "query": {
                     "more_like_this": {
                         "fields": [field_name],
-                        "like": [{
-                            "_index": self.index_name,
-                            "_id": doc_id,
-                        }, ],
+                        "like": [
+                            {
+                                "_index": self.index_name,
+                                "_id": doc_id,
+                            },
+                        ],
                     }
                 }
             }
@@ -494,10 +477,7 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                 }
 
             raw_results = self.conn.search(
-                body=mlt_query,
-                index=self.index_name,
-                _source=True,
-                **params
+                body=mlt_query, index=self.index_name, _source=True, **params
             )
         except elasticsearch.TransportError as e:
             if not self.silently_fail:

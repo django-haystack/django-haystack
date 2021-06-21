@@ -319,7 +319,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
                 index=self.index_name,
                 _source=True,
                 **self._get_doc_type_option(),
-                **params
+                **params,
             )
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
