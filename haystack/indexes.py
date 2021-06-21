@@ -231,12 +231,18 @@ class SearchIndex(threading.local, metaclass=DeclarativeMetaclass):
 
         return self.prepared_data
 
-    def full_prepare(self, obj, with_facet=True):
+    def full_prepare(self, obj, with_string_facet=True):
         self.prepared_data = self.prepare(obj)
 
         for field_name, field in self.fields.items():
             # Duplicate data for faceted fields.
-            if with_facet and getattr(field, "facet_for", None):
+            if (
+                not with_string_facet
+                and field.field_type == "string"
+                and getattr(field, "facet_for", None) in self.fields
+            ):
+                continue
+            if getattr(field, "facet_for", None):
                 source_field_name = self.fields[field.facet_for].index_fieldname
 
                 # If there's data there, leave it alone. Otherwise, populate it
