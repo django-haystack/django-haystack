@@ -9,28 +9,98 @@ from haystack.backends.elasticsearch_backend import (
     ElasticsearchSearchBackend,
     ElasticsearchSearchQuery,
 )
-from haystack.constants import ALL_FIELD, DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
+from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, DJANGO_ID, FUZZINESS
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
 
 try:
     import elasticsearch
 
-    if not ((5, 0, 0) <= elasticsearch.__version__ < (6, 0, 0)):
+    if not ((7, 0, 0) <= elasticsearch.__version__ < (8, 0, 0)):
         raise ImportError
     from elasticsearch.helpers import bulk, scan
 except ImportError:
     raise MissingDependency(
-        "The 'elasticsearch5' backend requires the \
-                            installation of 'elasticsearch>=5.0.0,<6.0.0'. \
+        "The 'elasticsearch7' backend requires the \
+                            installation of 'elasticsearch>=7.0.0,<8.0.0'. \
                             Please refer to the documentation."
     )
 
 
-class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
+DEFAULT_FIELD_MAPPING = {
+    "type": "text",
+    "analyzer": "snowball",
+}
+FIELD_MAPPINGS = {
+    "edge_ngram": {
+        "type": "text",
+        "analyzer": "edgengram_analyzer",
+    },
+    "ngram": {
+        "type": "text",
+        "analyzer": "ngram_analyzer",
+    },
+    "date": {"type": "date"},
+    "datetime": {"type": "date"},
+    "location": {"type": "geo_point"},
+    "boolean": {"type": "boolean"},
+    "float": {"type": "float"},
+    "long": {"type": "long"},
+    "integer": {"type": "long"},
+}
+
+
+class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
+    # Settings to add an n-gram & edge n-gram analyzer.
+    DEFAULT_SETTINGS = {
+        "settings": {
+            "index": {
+                "max_ngram_diff": 2,
+            },
+            "analysis": {
+                "analyzer": {
+                    "ngram_analyzer": {
+                        "tokenizer": "standard",
+                        "filter": [
+                            "haystack_ngram",
+                            "lowercase",
+                        ],
+                    },
+                    "edgengram_analyzer": {
+                        "tokenizer": "standard",
+                        "filter": [
+                            "haystack_edgengram",
+                            "lowercase",
+                        ],
+                    },
+                },
+                "filter": {
+                    "haystack_ngram": {
+                        "type": "ngram",
+                        "min_gram": 3,
+                        "max_gram": 4,
+                    },
+                    "haystack_edgengram": {
+                        "type": "edge_ngram",
+                        "min_gram": 2,
+                        "max_gram": 15,
+                    },
+                },
+            },
+        },
+    }
+
     def __init__(self, connection_alias, **connection_options):
         super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
+
+    def _get_doc_type_option(self):
+        # ES7 does not support a doc_type option
+        return {}
+
+    def _get_current_mapping(self, field_mapping):
+        # ES7 does not support a doc_type option
+        return {"properties": field_mapping}
 
     def clear(self, models=None, commit=True):
         """
@@ -62,7 +132,6 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     query=query,
                     index=self.index_name,
-                    **self._get_doc_type_option(),
                 )
                 actions = (
                     {"_op_type": "delete", "_id": doc["_id"]} for doc in generator
@@ -71,7 +140,6 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     actions=actions,
                     index=self.index_name,
-                    **self._get_doc_type_option(),
                 )
                 self.conn.indices.refresh(index=self.index_name)
 
@@ -125,7 +193,6 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                         "default_operator": DEFAULT_OPERATOR,
                         "query": query_string,
                         "analyze_wildcard": True,
-                        "auto_generate_phrase_queries": True,
                         "fuzziness": FUZZINESS,
                     }
                 }
@@ -187,7 +254,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     "text": spelling_query or query_string,
                     "term": {
                         # Using content_field here will result in suggestions of stemmed words.
-                        "field": ALL_FIELD,
+                        "field": "text",  # ES7 does not support '_all' field
                     },
                 }
             }
@@ -360,12 +427,17 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
 
         try:
             # More like this Query
-            # https://www.elastic.co/guide/en/elasticsearch/reference/2.2/query-dsl-mlt-query.html
+            # https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html
             mlt_query = {
                 "query": {
                     "more_like_this": {
                         "fields": [field_name],
-                        "like": [{"_id": doc_id}],
+                        "like": [
+                            {
+                                "_index": self.index_name,
+                                "_id": doc_id,
+                            },
+                        ],
                     }
                 }
             }
@@ -405,11 +477,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                 }
 
             raw_results = self.conn.search(
-                body=mlt_query,
-                index=self.index_name,
-                _source=True,
-                **self._get_doc_type_option(),
-                **params,
+                body=mlt_query, index=self.index_name, _source=True, **params
             )
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
@@ -424,6 +492,9 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
             raw_results = {}
 
         return self._process_results(raw_results, result_class=result_class)
+
+    def _process_hits(self, raw_results):
+        return raw_results.get("hits", {}).get("total", {}).get("value", 0)
 
     def _process_results(
         self,
@@ -470,14 +541,46 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
         results["facets"] = facets
         return results
 
+    def _get_common_mapping(self):
+        return {
+            DJANGO_CT: {
+                "type": "keyword",
+            },
+            DJANGO_ID: {
+                "type": "keyword",
+            },
+        }
 
-class Elasticsearch5SearchQuery(ElasticsearchSearchQuery):
+    def build_schema(self, fields):
+        content_field_name = ""
+        mapping = self._get_common_mapping()
+
+        for _, field_class in fields.items():
+            field_mapping = FIELD_MAPPINGS.get(
+                field_class.field_type, DEFAULT_FIELD_MAPPING
+            ).copy()
+            if field_class.boost != 1.0:
+                field_mapping["boost"] = field_class.boost
+
+            if field_class.document is True:
+                content_field_name = field_class.index_fieldname
+
+            # Do this last to override `text` fields.
+            if field_mapping["type"] == "text":
+                if field_class.indexed is False or hasattr(field_class, "facet_for"):
+                    field_mapping["type"] = "keyword"
+                    del field_mapping["analyzer"]
+
+            mapping[field_class.index_fieldname] = field_mapping
+
+        return (content_field_name, mapping)
+
+
+class Elasticsearch7SearchQuery(ElasticsearchSearchQuery):
     def add_field_facet(self, field, **options):
-        """Adds a regular facet on a field."""
-        # to be renamed to the facet fieldname by build_search_kwargs later
         self.facets[field] = options.copy()
 
 
-class Elasticsearch5SearchEngine(BaseEngine):
-    backend = Elasticsearch5SearchBackend
-    query = Elasticsearch5SearchQuery
+class Elasticsearch7SearchEngine(BaseEngine):
+    backend = Elasticsearch7SearchBackend
+    query = Elasticsearch7SearchQuery
