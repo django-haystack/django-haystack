@@ -57,7 +57,7 @@ See the :doc:`searchqueryset_api` docs for more details on using this method.
 Document Boost
 ==============
 
-Document boosting is done by adding a ``boost`` field to the prepared data
+Document boosting is done by adding a ``_boost`` field to the prepared data
 ``SearchIndex`` creates. The best way to do this is to override
 ``SearchIndex.prepare``::
 
@@ -70,7 +70,7 @@ Document boosting is done by adding a ``boost`` field to the prepared data
 
         def prepare(self, obj):
             data = super(NoteSearchIndex, self).prepare(obj)
-            data['boost'] = 1.1
+            data['_boost'] = 1.1
             return data
 
 
