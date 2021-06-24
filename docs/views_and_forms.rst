@@ -163,7 +163,7 @@ demonstrated in this example which filters the search results in ``get_queryset`
             return queryset.filter(pub_date__gte=date(2015, 1, 1))
 
         def get_context_data(self, *args, **kwargs):
-            context = super(MySearchView, self).get_context_data(*args, **kwargs)
+            context = super(MySearchView, self).get_context_data(**kwargs)
             # do something
             return context
 
