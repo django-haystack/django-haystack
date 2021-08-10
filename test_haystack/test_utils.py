@@ -41,7 +41,7 @@ class GetFacetFieldNameTestCase(TestCase):
 
         # … but it also supports a custom override mechanism which would
         # definitely fail with the default implementation:
-        class custom_id_class(object):
+        class custom_id_class:
             def get_custom_haystack_id(self):
                 return "CUSTOM"
 
@@ -324,7 +324,7 @@ class LoggingFacadeTestCase(TestCase):
                 pass
 
     def test_uses_provided_logger_by_default(self):
-        class Logger(object):
+        class Logger:
             def __init__(self):
                 self.was_called = False
 

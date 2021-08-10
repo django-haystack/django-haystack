@@ -181,7 +181,7 @@ class ConnectionRouterTestCase(TestCase):
         self.assertEqual(cr.for_write(), ["multi1", "multi2", "default"])
 
 
-class MockNotAModel(object):
+class MockNotAModel:
     pass
 
 

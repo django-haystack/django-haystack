@@ -158,7 +158,7 @@ class Elasticsearch2SearchQueryTestCase(TestCase):
         self.assertTrue(issubclass(self.sq.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         self.sq.set_result_class(IttyBittyResult)

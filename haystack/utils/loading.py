@@ -87,7 +87,7 @@ def load_router(full_router_path):
     return import_class(full_router_path)
 
 
-class ConnectionHandler(object):
+class ConnectionHandler:
     def __init__(self, connections_info):
         self.connections_info = connections_info
         self.thread_local = threading.local()
@@ -130,7 +130,7 @@ class ConnectionHandler(object):
         return [self[alias] for alias in self.connections_info]
 
 
-class ConnectionRouter(object):
+class ConnectionRouter:
     def __init__(self):
         self._routers = None
 
@@ -174,7 +174,7 @@ class ConnectionRouter(object):
         return self._for_action("for_read", False, **hints)[0]
 
 
-class UnifiedIndex(object):
+class UnifiedIndex:
     # Used to collect all the indexes into a cohesive whole.
     def __init__(self, excluded_indexes=None):
         self._indexes = {}

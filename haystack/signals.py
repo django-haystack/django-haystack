@@ -3,7 +3,7 @@ from django.db import models
 from haystack.exceptions import NotHandled
 
 
-class BaseSignalProcessor(object):
+class BaseSignalProcessor:
     """
     A convenient way to attach Haystack to Django's signals & cause things to
     index.

@@ -322,7 +322,7 @@ Add The ``SearchView`` To Your URLconf
 
 Within your URLconf, add the following line::
 
-    url(r'^search/', include('haystack.urls')),
+    path('search/', include('haystack.urls')),
 
 This will pull in the default URLconf for Haystack. It consists of a single
 URLconf that points to a ``SearchView`` instance. You can change this class's

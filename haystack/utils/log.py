@@ -8,7 +8,7 @@ def getLogger(name):
     return LoggingFacade(real_logger)
 
 
-class LoggingFacade(object):
+class LoggingFacade:
     def __init__(self, real_logger):
         self.real_logger = real_logger
 

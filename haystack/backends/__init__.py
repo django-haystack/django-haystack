@@ -50,7 +50,7 @@ def log_query(func):
     return wrapper
 
 
-class EmptyResults(object):
+class EmptyResults:
     hits = 0
     docs = []
 
@@ -64,7 +64,7 @@ class EmptyResults(object):
             raise IndexError("It's not here.")
 
 
-class BaseSearchBackend(object):
+class BaseSearchBackend:
     """
     Abstract search engine base class.
     """
@@ -451,7 +451,7 @@ class SQ(Q, SearchNode):
     pass
 
 
-class BaseSearchQuery(object):
+class BaseSearchQuery:
     """
     A base class for handling the query itself.
 
@@ -1072,7 +1072,7 @@ class BaseSearchQuery(object):
         return clone
 
 
-class BaseEngine(object):
+class BaseEngine:
     backend = BaseSearchBackend
     query = BaseSearchQuery
     unified_index = UnifiedIndex

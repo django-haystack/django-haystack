@@ -10,7 +10,7 @@ from haystack.inputs import AutoQuery, Raw
 from haystack.utils import log as logging
 
 
-class SearchQuerySet(object):
+class SearchQuerySet:
     """
     Provides a way to specify search parameters and lazily load results.
 

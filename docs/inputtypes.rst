@@ -166,12 +166,12 @@ A full, if somewhat silly, example looks like::
         def __init__(self, query_string, **kwargs):
             # Stash the original, if you need it.
             self.original = query_string
-            super(NoShoutCaps, self).__init__(query_string, **kwargs)
+            super().__init__(query_string, **kwargs)
 
         def prepare(self, query_obj):
             # We need a reference to the current ``SearchQuery`` object this
             # will run against, in case we need backend-specific code.
-            query_string = super(NoShoutCaps, self).prepare(query_obj)
+            query_string = super().prepare(query_obj)
 
             # Take that, capital letters!
             return query_string.lower()
