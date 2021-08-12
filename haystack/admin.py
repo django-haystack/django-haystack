@@ -56,7 +56,7 @@ class SearchChangeList(ChangeList):
         self.paginator = paginator
 
 
-class SearchModelAdminMixin(object):
+class SearchModelAdminMixin:
     # haystack connection to use for searching
     haystack_connection = DEFAULT_ALIAS
 

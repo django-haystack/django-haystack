@@ -25,7 +25,7 @@ DATETIME_REGEX = re.compile(
 # All the SearchFields variants.
 
 
-class SearchField(object):
+class SearchField:
     """The base implementation of a search field."""
 
     field_type = None

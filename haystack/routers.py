@@ -1,7 +1,7 @@
 from haystack.constants import DEFAULT_ALIAS
 
 
-class BaseRouter(object):
+class BaseRouter:
     # Reserved for future extension.
     pass
 

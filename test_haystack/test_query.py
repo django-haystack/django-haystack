@@ -286,7 +286,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertTrue(issubclass(self.bsq.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         self.bsq.set_result_class(IttyBittyResult)
@@ -608,7 +608,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(issubclass(sqs.query.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         sqs = self.msqs.result_class(IttyBittyResult)

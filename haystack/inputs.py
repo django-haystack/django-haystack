@@ -4,7 +4,7 @@ import warnings
 from django.utils.encoding import force_str
 
 
-class BaseInput(object):
+class BaseInput:
     """
     The base input type. Doesn't do much. You want ``Raw`` instead.
     """

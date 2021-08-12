@@ -9,7 +9,7 @@ from haystack.query import EmptySearchQuerySet
 RESULTS_PER_PAGE = getattr(settings, "HAYSTACK_SEARCH_RESULTS_PER_PAGE", 20)
 
 
-class SearchView(object):
+class SearchView:
     template = "search/search.html"
     extra_context = {}
     query = ""

@@ -31,7 +31,7 @@ shows how to override a hypothetical ``FileIndex``'s ``prepare`` method to
 include the extract content along with information retrieved from the database::
 
     def prepare(self, obj):
-        data = super(FileIndex, self).prepare(obj)
+        data = super().prepare(obj)
 
         # This could also be a regular Python open() call, a StringIO instance
         # or the result of opening a URL. Note that due to a library limitation

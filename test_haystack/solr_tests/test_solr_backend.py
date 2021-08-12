@@ -934,13 +934,13 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(LiveSolrSearchQuerySetTestCase, cls).setUpClass()
+        super().setUpClass()
         cls._index_updated = False
 
     @classmethod
     def tearDownClass(cls):
         del cls._index_updated
-        super(LiveSolrSearchQuerySetTestCase, cls).tearDownClass()
+        super().tearDownClass()
 
     def setUp(self):
         super().setUp()

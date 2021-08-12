@@ -1,7 +1,7 @@
 from django.utils.html import strip_tags
 
 
-class Highlighter(object):
+class Highlighter:
     css_class = "highlighted"
     html_tag = "span"
     max_length = 200
