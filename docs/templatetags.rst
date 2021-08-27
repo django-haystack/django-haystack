@@ -12,7 +12,7 @@ special features available to templates.
 =============
 
 Takes a block of text and highlights words from a provided query within that
-block of text. Optionally accepts arguments to provide the HTML tag to wrap 
+block of text. Optionally accepts arguments to provide the HTML tag to wrap
 highlighted word in, a CSS class to use with the tag and a maximum length of
 the blurb in characters.
 
@@ -27,11 +27,11 @@ Example::
 
     # Highlight summary with default behavior.
     {% highlight result.summary with query %}
-    
+
     # Highlight summary but wrap highlighted words with a div and the
     # following CSS class.
     {% highlight result.summary with query html_tag "div" css_class "highlight_me_please" %}
-    
+
     # Highlight summary but only show 40 words.
     {% highlight result.summary with query max_length 40 %}
 
@@ -57,10 +57,10 @@ Example::
 
     # Pull a full SearchQuerySet (lazy loaded) of similar content.
     {% more_like_this entry as related_content %}
-    
+
     # Pull just the top 5 similar pieces of content.
     {% more_like_this entry as related_content limit 5  %}
-    
+
     # Pull just the top 5 similar entries or comments.
     {% more_like_this entry as related_content for "blog.entry,comments.comment" limit 5  %}
 

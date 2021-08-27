@@ -267,7 +267,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel1",
                     "name_exact": "daniel1",
-                    "text": "Indexed!\n1",
+                    "text": "Indexed!\n1\n",
                     "pub_date": "2009-02-24T00:00:00Z",
                     "id": "core.mockmodel.1",
                 },
@@ -276,7 +276,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel2",
                     "name_exact": "daniel2",
-                    "text": "Indexed!\n2",
+                    "text": "Indexed!\n2\n",
                     "pub_date": "2009-02-23T00:00:00Z",
                     "id": "core.mockmodel.2",
                 },
@@ -285,7 +285,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel3",
                     "name_exact": "daniel3",
-                    "text": "Indexed!\n3",
+                    "text": "Indexed!\n3\n",
                     "pub_date": "2009-02-22T00:00:00Z",
                     "id": "core.mockmodel.3",
                 },
@@ -321,7 +321,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel2",
                     "name_exact": "daniel2",
-                    "text": "Indexed!\n2",
+                    "text": "Indexed!\n2\n",
                     "pub_date": "2009-02-23T00:00:00Z",
                     "id": "core.mockmodel.2",
                 },
@@ -330,7 +330,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel3",
                     "name_exact": "daniel3",
-                    "text": "Indexed!\n3",
+                    "text": "Indexed!\n3\n",
                     "pub_date": "2009-02-22T00:00:00Z",
                     "id": "core.mockmodel.3",
                 },
@@ -400,7 +400,11 @@ class SolrSearchBackendTestCase(TestCase):
                 result.highlighted["text"][0]
                 for result in self.sb.search("Index", highlight=True)["results"]
             ],
-            ["<em>Indexed</em>!\n1", "<em>Indexed</em>!\n2", "<em>Indexed</em>!\n3"],
+            [
+                "<em>Indexed</em>!\n1\n",
+                "<em>Indexed</em>!\n2\n",
+                "<em>Indexed</em>!\n3\n",
+            ],
         )
 
         # shortened highlighting options
@@ -428,7 +432,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "results"
                 ]
             ],
-            ["<i>Indexed</i>!\n1", "<i>Indexed</i>!\n2", "<i>Indexed</i>!\n3"],
+            ["<i>Indexed</i>!\n1\n", "<i>Indexed</i>!\n2\n", "<i>Indexed</i>!\n3\n"],
         )
 
         self.assertEqual(self.sb.search("Indx")["hits"], 0)

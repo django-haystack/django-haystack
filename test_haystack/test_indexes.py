@@ -168,7 +168,7 @@ class SearchIndexTestCase(TestCase):
 
         self.sample_docs = {
             "core.mockmodel.1": {
-                "text": "Indexed!\n1",
+                "text": "Indexed!\n1\n",
                 "django_id": "1",
                 "django_ct": "core.mockmodel",
                 "extra": "Stored!\n1",
@@ -177,7 +177,7 @@ class SearchIndexTestCase(TestCase):
                 "id": "core.mockmodel.1",
             },
             "core.mockmodel.2": {
-                "text": "Indexed!\n2",
+                "text": "Indexed!\n2\n",
                 "django_id": "2",
                 "django_ct": "core.mockmodel",
                 "extra": "Stored!\n2",
@@ -186,7 +186,7 @@ class SearchIndexTestCase(TestCase):
                 "id": "core.mockmodel.2",
             },
             "core.mockmodel.3": {
-                "text": "Indexed!\n3",
+                "text": "Indexed!\n3\n",
                 "django_id": "3",
                 "django_ct": "core.mockmodel",
                 "extra": "Stored!\n3",

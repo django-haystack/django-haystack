@@ -37,4 +37,4 @@ class SpellingSuggestionTestCase(LiveWhooshRoundTripTestCase):
         mock = HttpRequest()
         mock.GET["q"] = "exampl"
         resp = view(mock)
-        self.assertEqual(resp.content, b"Suggestion: example")
+        self.assertEqual(resp.content, b"Suggestion: example\n")
