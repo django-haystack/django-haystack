@@ -1,0 +1,33 @@
+exclude: ".*/vendor/.*"
+repos:
+    - repo: https://github.com/pre-commit/mirrors-isort
+      rev: v5.9.3
+      hooks:
+          - id: isort
+    - repo: https://github.com/psf/black
+      rev: 21.7b0
+      hooks:
+          - id: black
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.0.1
+      hooks:
+          - id: check-added-large-files
+            args: ["--maxkb=128"]
+          - id: check-ast
+          - id: check-byte-order-marker
+          - id: check-case-conflict
+          - id: check-docstring-first
+          - id: check-executables-have-shebangs
+          - id: check-json
+          - id: check-merge-conflict
+          - id: check-symlinks
+          - id: check-xml
+          - id: check-yaml
+          - id: debug-statements
+          - id: detect-private-key
+          - id: end-of-file-fixer
+          - id: mixed-line-ending
+            args: ["--fix=lf"]
+          - id: pretty-format-json
+            args: ["--autofix", "--no-sort-keys", "--indent=4"]
+          - id: trailing-whitespace
