@@ -32,7 +32,7 @@ When should I not be using Haystack?
 ====================================
 
 * Non-Model-based data. If you just want to index random data (flat files,
-  alternate sources, etc.), Haystack isn't a good solution. Haystack is very 
+  alternate sources, etc.), Haystack isn't a good solution. Haystack is very
   ``Model``-based and doesn't work well outside of that use case.
 * Ultra-high volume. Because of the very nature of Haystack (abstraction layer),
   there's more overhead involved. This makes it portable, but as with all
@@ -111,7 +111,7 @@ Several possibilities on this.
 #. We're not aware of the engine
 
    If you think we may not be aware of the engine you'd like, please tell us
-   about it (preferably via the group - 
+   about it (preferably via the group -
    http://groups.google.com/group/django-haystack/). Be sure to check through
    the backends (in case it wasn't documented) and search the history on the
    group to minimize duplicates.

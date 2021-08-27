@@ -61,7 +61,7 @@ You'll also need to install the ``pysolr`` client library from PyPI::
 More Like This
 --------------
 
-On Solr 6.X+ "More Like This" functionality is enabled by default. To enable 
+On Solr 6.X+ "More Like This" functionality is enabled by default. To enable
 the "More Like This" functionality on earlier versions of Solr, you'll need
 to enable the ``MoreLikeThisHandler``. Add the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
@@ -93,7 +93,7 @@ Then, you enable it in Solr by adding the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
     <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
-    
+
       <str name="queryAnalyzerFieldType">text_general</str>
       <lst name="spellchecker">
         <str name="name">default</str>
@@ -117,14 +117,14 @@ Then change your default handler from::
         <int name="rows">10</int>
       </lst>
     </requestHandler>
-    
+
 ... to ...::
 
     <requestHandler name="/select" class="solr.SearchHandler">
       <lst name="defaults">
         <str name="echoParams">explicit</str>
         <int name="rows">10</int>
-      
+
         <str name="spellcheck.dictionary">default</str>
         <str name="spellcheck">on</str>
         <str name="spellcheck.extendedResults">true</str>

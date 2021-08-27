@@ -56,4 +56,3 @@ jobs:
         python setup.py clean build install
     - name: Run test
       run: coverage run setup.py test
-

@@ -26,12 +26,12 @@ capabilities. The general workflow in this regard is:
     Faceting can be difficult, especially in providing the user with the right
     number of options and/or the right areas to be able to drill into. This
     is unique to every situation and demands following what real users need.
-    
+
     You may want to consider logging queries and looking at popular terms to
     help you narrow down how you can help your users.
 
 Haystack provides functionality so that all of the above steps are possible.
-From the ground up, let's build a faceted search setup. This assumes that you 
+From the ground up, let's build a faceted search setup. This assumes that you
 have been to work through the :doc:`tutorial` and have a working Haystack
 installation. The same setup from the :doc:`tutorial` applies here.
 
@@ -214,8 +214,8 @@ URLconf should resemble::
     from django.urls import path
     from haystack.forms import FacetedSearchForm
     from haystack.views import FacetedSearchView
-    
-    
+
+
     urlpatterns = [
         path('', FacetedSearchView(form_class=FacetedSearchForm, facet_fields=['author']), name='haystack_search'),
     ]
@@ -243,11 +243,11 @@ might look like this::
             </tbody>
         </table>
     </form>
-    
+
     {% if query %}
         <!-- Begin faceting. -->
         <h2>By Author</h2>
-    
+
         <div>
             <dl>
                 {% if facets.fields.author %}
@@ -262,12 +262,12 @@ might look like this::
             </dl>
         </div>
         <!-- End faceting -->
-    
+
         <!-- Display results... -->
         {% for result in page.object_list %}
             <div class="search_result">
                 <h3><a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a></h3>
-            
+
                 <p>{{ result.object.body|truncatewords:80 }}</p>
             </div>
         {% empty %}
