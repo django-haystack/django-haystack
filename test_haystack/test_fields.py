@@ -597,7 +597,7 @@ class CharFieldWithTemplateTestCase(TestCase):
 
         template3 = CharField(use_template=True)
         template3.instance_name = "template"
-        self.assertEqual(template3.prepare(mock), "Indexed!\n1")
+        self.assertEqual(template3.prepare(mock), "Indexed!\n1\n")
 
         template4 = CharField(use_template=True, template_name="search/indexes/foo.txt")
         template4.instance_name = "template"
