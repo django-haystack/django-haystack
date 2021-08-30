@@ -1,11 +1,11 @@
 exclude: ".*/vendor/.*"
 repos:
-    - repo: https://github.com/pre-commit/mirrors-isort
-      rev: v5.9.3
+    - repo: https://github.com/PyCQA/isort
+      rev: 5.9.3
       hooks:
           - id: isort
     - repo: https://github.com/psf/black
-      rev: 21.7b0
+      rev: 21.8b0
       hooks:
           - id: black
     - repo: https://github.com/pre-commit/pre-commit-hooks
