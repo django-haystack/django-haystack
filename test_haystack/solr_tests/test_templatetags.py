@@ -1,11 +1,8 @@
-# encoding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import unittest
+from unittest.mock import call, patch
 
 from django.template import Context, Template
 from django.test import TestCase
-from mock import call, patch
 
 from ..core.models import MockModel
 
@@ -52,7 +49,7 @@ class MoreLikeThisTagTestCase(TestCase):
             any_order=True,
         )
 
-    # FIXME: https://github.com/toastdriven/django-haystack/issues/1069
+    # FIXME: https://github.com/django-haystack/django-haystack/issues/1069
     @unittest.expectedFailure
     def test_more_like_this_for_model(self, mock_sqs):
         mock_model = MockModel.objects.get(pk=3)

@@ -1,10 +1,5 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from test_haystack.discovery.models import Bar, Foo
-
 from haystack import indexes
+from test_haystack.discovery.models import Bar, Foo
 
 
 class FooIndex(indexes.SearchIndex, indexes.Indexable):

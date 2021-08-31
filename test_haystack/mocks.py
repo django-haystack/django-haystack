@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.apps import apps
 
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
@@ -39,9 +35,7 @@ class MockMultiRouter(BaseRouter):
 
 class MockSearchResult(SearchResult):
     def __init__(self, app_label, model_name, pk, score, **kwargs):
-        super(MockSearchResult, self).__init__(
-            app_label, model_name, pk, score, **kwargs
-        )
+        super().__init__(app_label, model_name, pk, score, **kwargs)
         self._model = apps.get_model("core", model_name)
 
 
@@ -63,7 +57,7 @@ class MockSearchBackend(BaseSearchBackend):
     def remove(self, obj, commit=True):
         global MOCK_INDEX_DATA
         if commit:
-            del (MOCK_INDEX_DATA[get_identifier(obj)])
+            del MOCK_INDEX_DATA[get_identifier(obj)]
 
     def clear(self, models=None, commit=True):
         global MOCK_INDEX_DATA
@@ -147,7 +141,7 @@ class MixedMockSearchBackend(MockSearchBackend):
         if kwargs.get("end_offset") and kwargs["end_offset"] > 30:
             kwargs["end_offset"] = 30
 
-        result_info = super(MixedMockSearchBackend, self).search(query_string, **kwargs)
+        result_info = super().search(query_string, **kwargs)
         result_info["hits"] = 30
 
         # Remove search results from other models.

@@ -1,13 +1,9 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from haystack.query import EmptySearchQuerySet, SearchQuerySet
 
 
-class SearchIndexManager(object):
+class SearchIndexManager:
     def __init__(self, using=None):
-        super(SearchIndexManager, self).__init__()
+        super().__init__()
         self.using = using
 
     def get_search_queryset(self):
@@ -19,13 +15,13 @@ class SearchIndexManager(object):
     def get_empty_query_set(self):
         return EmptySearchQuerySet(using=self.using)
 
-    def all(self):
+    def all(self):  # noqa A003
         return self.get_search_queryset()
 
     def none(self):
         return self.get_empty_query_set()
 
-    def filter(self, *args, **kwargs):
+    def filter(self, *args, **kwargs):  # noqa A003
         return self.get_search_queryset().filter(*args, **kwargs)
 
     def exclude(self, *args, **kwargs):

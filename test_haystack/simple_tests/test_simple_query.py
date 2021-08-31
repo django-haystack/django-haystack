@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.test import TestCase
 
 from haystack import connections
@@ -11,7 +7,7 @@ from haystack.query import SQ
 
 class SimpleSearchQueryTestCase(TestCase):
     def setUp(self):
-        super(SimpleSearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["simple"].get_query()
 
     def test_build_query_all(self):
@@ -31,7 +27,7 @@ class SimpleSearchQueryTestCase(TestCase):
         self.assertTrue(issubclass(self.sq.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         self.sq.set_result_class(IttyBittyResult)

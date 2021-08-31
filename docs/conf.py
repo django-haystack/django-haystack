@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Haystack documentation build configuration file, created by
 # sphinx-quickstart on Wed Apr 15 08:50:46 2009.
@@ -10,8 +9,6 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import sys

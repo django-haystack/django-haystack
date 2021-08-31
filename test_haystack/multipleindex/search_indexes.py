@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from haystack import indexes
 from haystack.indexes import Indexable, SearchIndex
 
@@ -18,7 +14,7 @@ class BaseIndex(indexes.SearchIndex):
 
 class FooIndex(BaseIndex, indexes.Indexable):
     def index_queryset(self, using=None):
-        qs = super(FooIndex, self).index_queryset(using=using)
+        qs = super().index_queryset(using=using)
         if using == "filtered_whoosh":
             qs = qs.filter(body__contains="1")
         return qs

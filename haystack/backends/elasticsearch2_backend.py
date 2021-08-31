@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
+import warnings
 
 from django.conf import settings
 
@@ -13,7 +11,6 @@ from haystack.backends.elasticsearch_backend import (
 from haystack.constants import DJANGO_CT
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
-from haystack.utils import log as logging
 
 try:
     import elasticsearch
@@ -21,6 +18,11 @@ try:
     if not ((2, 0, 0) <= elasticsearch.__version__ < (3, 0, 0)):
         raise ImportError
     from elasticsearch.helpers import bulk, scan
+
+    warnings.warn(
+        "ElasticSearch 2.x support deprecated, will be removed in 4.0",
+        DeprecationWarning,
+    )
 except ImportError:
     raise MissingDependency(
         "The 'elasticsearch2' backend requires the \
@@ -31,9 +33,7 @@ except ImportError:
 
 class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super(Elasticsearch2SearchBackend, self).__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
 
     def clear(self, models=None, commit=True):
@@ -66,7 +66,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     query=query,
                     index=self.index_name,
-                    doc_type="modelresult",
+                    **self._get_doc_type_option(),
                 )
                 actions = (
                     {"_op_type": "delete", "_id": doc["_id"]} for doc in generator
@@ -75,7 +75,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     actions=actions,
                     index=self.index_name,
-                    doc_type="modelresult",
+                    **self._get_doc_type_option(),
                 )
                 self.conn.indices.refresh(index=self.index_name)
 
@@ -115,7 +115,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         limit_to_registered_models=None,
         result_class=None,
     ):
-        kwargs = super(Elasticsearch2SearchBackend, self).build_search_kwargs(
+        kwargs = super().build_search_kwargs(
             query_string,
             sort_by,
             start_offset,
@@ -317,9 +317,9 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
             raw_results = self.conn.search(
                 body=mlt_query,
                 index=self.index_name,
-                doc_type="modelresult",
                 _source=True,
-                **params
+                **self._get_doc_type_option(),
+                **params,
             )
         except elasticsearch.TransportError as e:
             if not self.silently_fail:
@@ -343,7 +343,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         distance_point=None,
         geo_sort=False,
     ):
-        results = super(Elasticsearch2SearchBackend, self)._process_results(
+        results = super()._process_results(
             raw_results, highlight, result_class, distance_point, geo_sort
         )
         facets = {}

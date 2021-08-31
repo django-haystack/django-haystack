@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import shutil
 
@@ -32,7 +28,7 @@ class WhooshTestCase(TestCase):
 
             connections[name].get_backend().setup()
 
-        super(WhooshTestCase, cls).setUpClass()
+        super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
@@ -47,4 +43,4 @@ class WhooshTestCase(TestCase):
             if os.path.exists(conn["PATH"]):
                 shutil.rmtree(conn["PATH"])
 
-        super(WhooshTestCase, cls).tearDownClass()
+        super().tearDownClass()

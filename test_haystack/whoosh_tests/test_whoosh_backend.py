@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import unittest
 from datetime import timedelta
@@ -11,6 +7,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.datetime_safe import date, datetime
+from whoosh.analysis import SpaceSeparatedTokenizer, SubstitutionFilter
 from whoosh.fields import BOOLEAN, DATETIME, KEYWORD, NUMERIC, TEXT
 from whoosh.qparser import QueryParser
 
@@ -30,6 +27,10 @@ class WhooshMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr="author")
     pub_date = indexes.DateTimeField(model_attr="pub_date")
+    name_analyzed = indexes.CharField(
+        model_attr="author",
+        analyzer=SpaceSeparatedTokenizer() | SubstitutionFilter(r"\d+", ""),
+    )
 
     def get_model(self):
         return MockModel
@@ -95,7 +96,7 @@ class WhooshBoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return AFourthMockModel
 
     def prepare(self, obj):
-        data = super(WhooshBoostMockSearchIndex, self).prepare(obj)
+        data = super().prepare(obj)
 
         if obj.pk % 2 == 0:
             data["boost"] = 2.0
@@ -118,7 +119,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(WhooshSearchBackendTestCase, self).setUp()
+        super().setUp()
 
         self.old_ui = connections["whoosh"].get_unified_index()
         self.ui = UnifiedIndex()
@@ -138,7 +139,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(WhooshSearchBackendTestCase, self).tearDown()
+        super().tearDown()
 
     def whoosh_search(self, query):
         self.raw_whoosh = self.raw_whoosh.refresh()
@@ -253,19 +254,23 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(
             self.sb.search("", facets=["name"]), {"hits": 0, "results": []}
         )
-        results = self.sb.search("Index*", facets=["name"])
         results = self.sb.search("index*", facets=["name"])
         self.assertEqual(results["hits"], 23)
-        self.assertEqual(results["facets"], {})
+        self.assertEqual(results["facets"]["dates"], {})
+        self.assertEqual(results["facets"]["queries"], {})
+        self.assertEqual(
+            results["facets"]["fields"]["name"],
+            [("daniel3", 9), ("daniel1", 7), ("daniel2", 7)],
+        )
 
         self.assertEqual(
             self.sb.search(
                 "",
                 date_facets={
                     "pub_date": {
-                        "start_date": date(2008, 2, 26),
+                        "start_date": date(2007, 2, 26),
                         "end_date": date(2008, 2, 26),
-                        "gap": "/MONTH",
+                        "gap_by": "month",
                     }
                 },
             ),
@@ -275,9 +280,9 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             "Index*",
             date_facets={
                 "pub_date": {
-                    "start_date": date(2008, 2, 26),
+                    "start_date": date(2007, 2, 26),
                     "end_date": date(2008, 2, 26),
-                    "gap": "/MONTH",
+                    "gap_by": "month",
                 }
             },
         )
@@ -285,14 +290,95 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             "index*",
             date_facets={
                 "pub_date": {
-                    "start_date": date(2008, 2, 26),
+                    "start_date": date(2007, 2, 26),
                     "end_date": date(2008, 2, 26),
-                    "gap": "/MONTH",
+                    "gap_by": "month",
                 }
             },
         )
         self.assertEqual(results["hits"], 23)
-        self.assertEqual(results["facets"], {})
+        self.assertEqual(results["facets"]["fields"], {})
+        self.assertEqual(results["facets"]["queries"], {})
+        self.assertEqual(results["facets"]["dates"]["pub_date"], [(None, 23)])
+
+        results = self.sb.search(
+            "index*",
+            date_facets={
+                "pub_date": {
+                    "start_date": date(2009, 3, 26),
+                    "end_date": date(2010, 2, 26),
+                    "gap_by": "month",
+                    "gap_amount": 2,
+                }
+            },
+        )
+        self.assertEqual(results["hits"], 23)
+        self.assertEqual(
+            results["facets"]["dates"]["pub_date"],
+            [
+                ((datetime(2009, 5, 26, 0, 0), datetime(2009, 7, 26, 0, 0)), 23),
+            ],
+        )
+
+        results = self.sb.search(
+            "index*",
+            date_facets={
+                "pub_date": {
+                    "start_date": date(2009, 7, 1),
+                    "end_date": date(2009, 8, 1),
+                    "gap_by": "day",
+                    "gap_amount": 1,
+                }
+            },
+        )
+        self.assertEqual(results["hits"], 23)
+        self.assertEqual(
+            results["facets"]["dates"]["pub_date"],
+            [
+                ((datetime(2009, 7, 17, 0, 0), datetime(2009, 7, 18, 0, 0)), 21),
+                (None, 2),
+            ],
+        )
+
+        results = self.sb.search(
+            "index*",
+            date_facets={
+                "pub_date": {
+                    "start_date": datetime(2009, 6, 1),
+                    "end_date": datetime(2009, 8, 1),
+                    "gap_by": "hour",
+                }
+            },
+        )
+        self.assertEqual(results["hits"], 23)
+        self.assertEqual(
+            results["facets"]["dates"]["pub_date"],
+            [
+                ((datetime(2009, 6, 18, 6, 0), datetime(2009, 6, 18, 7, 0)), 1),
+                ((datetime(2009, 6, 18, 8, 0), datetime(2009, 6, 18, 9, 0)), 1),
+                ((datetime(2009, 7, 17, 0, 0), datetime(2009, 7, 17, 1, 0)), 1),
+                ((datetime(2009, 7, 17, 1, 0), datetime(2009, 7, 17, 2, 0)), 1),
+                ((datetime(2009, 7, 17, 2, 0), datetime(2009, 7, 17, 3, 0)), 1),
+                ((datetime(2009, 7, 17, 3, 0), datetime(2009, 7, 17, 4, 0)), 1),
+                ((datetime(2009, 7, 17, 4, 0), datetime(2009, 7, 17, 5, 0)), 1),
+                ((datetime(2009, 7, 17, 5, 0), datetime(2009, 7, 17, 6, 0)), 1),
+                ((datetime(2009, 7, 17, 6, 0), datetime(2009, 7, 17, 7, 0)), 1),
+                ((datetime(2009, 7, 17, 7, 0), datetime(2009, 7, 17, 8, 0)), 1),
+                ((datetime(2009, 7, 17, 8, 0), datetime(2009, 7, 17, 9, 0)), 1),
+                ((datetime(2009, 7, 17, 9, 0), datetime(2009, 7, 17, 10, 0)), 1),
+                ((datetime(2009, 7, 17, 10, 0), datetime(2009, 7, 17, 11, 0)), 1),
+                ((datetime(2009, 7, 17, 11, 0), datetime(2009, 7, 17, 12, 0)), 1),
+                ((datetime(2009, 7, 17, 12, 0), datetime(2009, 7, 17, 13, 0)), 1),
+                ((datetime(2009, 7, 17, 13, 0), datetime(2009, 7, 17, 14, 0)), 1),
+                ((datetime(2009, 7, 17, 14, 0), datetime(2009, 7, 17, 15, 0)), 1),
+                ((datetime(2009, 7, 17, 15, 0), datetime(2009, 7, 17, 16, 0)), 1),
+                ((datetime(2009, 7, 17, 16, 0), datetime(2009, 7, 17, 17, 0)), 1),
+                ((datetime(2009, 7, 17, 17, 0), datetime(2009, 7, 17, 18, 0)), 1),
+                ((datetime(2009, 7, 17, 18, 0), datetime(2009, 7, 17, 19, 0)), 1),
+                ((datetime(2009, 7, 17, 19, 0), datetime(2009, 7, 17, 20, 0)), 1),
+                ((datetime(2009, 7, 17, 20, 0), datetime(2009, 7, 17, 21, 0)), 1),
+            ],
+        )
 
         self.assertEqual(
             self.sb.search("", query_facets={"name": "[* TO e]"}),
@@ -303,9 +389,12 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.assertEqual(results["hits"], 23)
         self.assertEqual(results["facets"], {})
 
-        # self.assertEqual(self.sb.search('', narrow_queries=set(['name:daniel1'])), {'hits': 0, 'results': []})
-        # results = self.sb.search('Index*', narrow_queries=set(['name:daniel1']))
-        # self.assertEqual(results['hits'], 1)
+        self.assertEqual(
+            self.sb.search("", narrow_queries=set(["name:daniel1"])),
+            {"hits": 0, "results": []},
+        )
+        results = self.sb.search("Index*", narrow_queries=set(["name:daniel1"]))
+        self.assertEqual(results["hits"], 7)
 
         # Ensure that swapping the ``result_class`` works.
         self.assertTrue(
@@ -756,10 +845,15 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             ["0.40", "0.40", "0.40"],
         )
 
+    def test_analyzed_fields(self):
+        self.sb.update(self.wmmi, self.sample_objs)
+        results = self.whoosh_search("name_analyzed:1234daniel5678")
+        self.assertEqual(len(results), 23)
+
 
 class WhooshBoostBackendTestCase(WhooshTestCase):
     def setUp(self):
-        super(WhooshBoostBackendTestCase, self).setUp()
+        super().setUp()
 
         self.old_ui = connections["whoosh"].get_unified_index()
         self.ui = UnifiedIndex()
@@ -790,7 +884,7 @@ class WhooshBoostBackendTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.ui
-        super(WhooshBoostBackendTestCase, self).tearDown()
+        super().tearDown()
 
     @unittest.expectedFailure
     def test_boost(self):
@@ -812,7 +906,7 @@ class WhooshBoostBackendTestCase(WhooshTestCase):
 
 class LiveWhooshSearchQueryTestCase(WhooshTestCase):
     def setUp(self):
-        super(LiveWhooshSearchQueryTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -841,7 +935,7 @@ class LiveWhooshSearchQueryTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshSearchQueryTestCase, self).tearDown()
+        super().tearDown()
 
     def test_get_spelling(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -889,7 +983,7 @@ class LiveWhooshSearchQueryTestCase(WhooshTestCase):
 @override_settings(DEBUG=True)
 class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
     def setUp(self):
-        super(LiveWhooshSearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -918,7 +1012,7 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_various_searchquerysets(self):
         self.sb.update(self.wmmi, self.sample_objs)
@@ -1133,7 +1227,7 @@ class LiveWhooshMultiSearchQuerySetTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveWhooshMultiSearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1156,7 +1250,7 @@ class LiveWhooshMultiSearchQuerySetTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshMultiSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_searchquerysets_with_models(self):
         sqs = self.sqs.all()
@@ -1176,7 +1270,7 @@ class LiveWhooshMoreLikeThisTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveWhooshMoreLikeThisTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1199,7 +1293,7 @@ class LiveWhooshMoreLikeThisTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshMoreLikeThisTestCase, self).tearDown()
+        super().tearDown()
 
     # We expect failure here because, despite not changing the code, Whoosh
     # 2.5.1 returns incorrect counts/results. Huzzah.
@@ -1335,7 +1429,7 @@ class LiveWhooshAutocompleteTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveWhooshAutocompleteTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1358,7 +1452,7 @@ class LiveWhooshAutocompleteTestCase(WhooshTestCase):
 
     def tearDown(self):
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshAutocompleteTestCase, self).tearDown()
+        super().tearDown()
 
     def test_autocomplete(self):
         autocomplete = self.sqs.autocomplete(text_auto="mod")
@@ -1400,7 +1494,7 @@ class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return MockModel
 
     def prepare(self, obj):
-        prepped = super(WhooshRoundTripSearchIndex, self).prepare(obj)
+        prepped = super().prepare(obj)
         prepped.update(
             {
                 "text": "This is some example text.",
@@ -1422,7 +1516,7 @@ class WhooshRoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable):
 @override_settings(DEBUG=True)
 class LiveWhooshRoundTripTestCase(WhooshTestCase):
     def setUp(self):
-        super(LiveWhooshRoundTripTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["whoosh"].get_unified_index()
@@ -1448,7 +1542,7 @@ class LiveWhooshRoundTripTestCase(WhooshTestCase):
         self.sb.update(self.wrtsi, [mock])
 
     def tearDown(self):
-        super(LiveWhooshRoundTripTestCase, self).tearDown()
+        super().tearDown()
 
     def test_round_trip(self):
         results = self.sqs.filter(id="core.mockmodel.1")
@@ -1479,7 +1573,7 @@ class LiveWhooshRoundTripTestCase(WhooshTestCase):
 @override_settings(DEBUG=True)
 class LiveWhooshRamStorageTestCase(TestCase):
     def setUp(self):
-        super(LiveWhooshRamStorageTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_whoosh_storage = settings.HAYSTACK_CONNECTIONS["whoosh"].get(
@@ -1516,7 +1610,7 @@ class LiveWhooshRamStorageTestCase(TestCase):
 
         settings.HAYSTACK_CONNECTIONS["whoosh"]["STORAGE"] = self.old_whoosh_storage
         connections["whoosh"]._index = self.old_ui
-        super(LiveWhooshRamStorageTestCase, self).tearDown()
+        super().tearDown()
 
     def test_ram_storage(self):
         results = self.sqs.filter(id="core.mockmodel.1")

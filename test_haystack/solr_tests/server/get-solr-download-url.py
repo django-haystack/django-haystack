@@ -1,19 +1,9 @@
 #!/usr/bin/env python
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import sys
 from itertools import chain
+from urllib.parse import urljoin
 
 import requests
-
-# Try to import urljoin from the Python 3 reorganized stdlib first:
-try:
-    from urllib.parse import urljoin
-except ImportError:
-    from urlparse import urljoin
-
 
 if len(sys.argv) != 2:
     print("Usage: %s SOLR_VERSION" % sys.argv[0], file=sys.stderr)
@@ -52,9 +42,12 @@ for base_url in chain(
     if not test_url.endswith(tarball):
         test_url = urljoin(test_url, dist_path)
 
-    if requests.head(test_url, allow_redirects=True).status_code == 200:
-        download_url = test_url
-        break
+    try:
+        if requests.head(test_url, allow_redirects=True).status_code == 200:
+            download_url = test_url
+            break
+    except requests.exceptions.ConnectionError:
+        continue
 else:
     print("None of the Apache mirrors have %s" % dist_path, file=sys.stderr)
     sys.exit(1)

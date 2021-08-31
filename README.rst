@@ -1,3 +1,18 @@
+.. image:: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml/badge.svg
+      :target: https://github.com/django-haystack/django-haystack/actions/workflows/test.yml
+.. image:: https://img.shields.io/pypi/v/django-haystack.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://img.shields.io/pypi/pyversions/django-haystack.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://img.shields.io/pypi/dm/django-haystack.svg
+      :target: https://pypi.python.org/pypi/django-haystack/
+.. image:: https://readthedocs.org/projects/django-haystack/badge/
+      :target: https://django-haystack.readthedocs.io/
+.. image:: https://img.shields.io/badge/code%20style-black-000.svg
+      :target: https://github.com/psf/black
+.. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
+      :target: https://pycqa.github.io/isort/
+
 ========
 Haystack
 ========
@@ -11,7 +26,7 @@ Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Elasticsearch: https://www.elastic.co/products/elasticsearch
-.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
+.. _Whoosh: https://github.com/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 Haystack is BSD licensed, plays nicely with third-party app without needing to
@@ -39,18 +54,12 @@ Documentation
 
 See the `changelog <docs/changelog.rst>`_
 
-Build Status
-============
-
-.. image:: https://travis-ci.org/django-haystack/django-haystack.svg?branch=master
-   :target: https://travis-ci.org/django-haystack/django-haystack
-
 Requirements
 ============
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 2.7+ or Python 3.3+
+* Python 3.5+
 * A supported version of Django: https://www.djangoproject.com/download/#supported-versions
 
 Additionally, each backend has its own requirements. You should refer to

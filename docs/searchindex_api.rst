@@ -300,7 +300,7 @@ by a single ``SearchField``. An example might look like::
             return Note
 
         def prepare(self, object):
-            self.prepared_data = super(NoteIndex, self).prepare(object)
+            self.prepared_data = super().prepare(object)
 
             # Add in tags (assuming there's a M2M relationship to Tag on the model).
             # Note that this would NOT get picked up by the automatic
@@ -332,16 +332,15 @@ object and write its ``prepare`` method to populate/alter the data any way you
 choose. For instance, a (naive) user-created ``GeoPointField`` might look
 something like::
 
-    from django.utils import six
     from haystack import indexes
 
     class GeoPointField(indexes.CharField):
         def __init__(self, **kwargs):
             kwargs['default'] = '0.00-0.00'
-            super(GeoPointField, self).__init__(**kwargs)
+            super().__init__(**kwargs)
 
         def prepare(self, obj):
-            return six.text_type("%s-%s" % (obj.latitude, obj.longitude))
+            return "%s-%s" % (obj.latitude, obj.longitude)
 
 The ``prepare`` method simply returns the value to be used for that field. It's
 entirely possible to include data that's not directly referenced to the object
@@ -615,4 +614,3 @@ For the impatient::
         def index_queryset(self, using=None):
             "Used when the entire index for model is updated."
             return Note.objects.filter(pub_date__lte=datetime.datetime.now())
-

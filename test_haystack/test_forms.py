@@ -1,22 +1,19 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.test import TestCase
+
+from haystack import connection_router, connections
+from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm, model_choices
+from haystack.query import EmptySearchQuerySet, SearchQuerySet
+from haystack.utils.loading import UnifiedIndex
 from test_haystack.core.models import AnotherMockModel, MockModel
 from test_haystack.test_views import (
     BasicAnotherMockModelSearchIndex,
     BasicMockModelSearchIndex,
 )
 
-from haystack import connection_router, connections
-from haystack.forms import FacetedSearchForm, ModelSearchForm, SearchForm, model_choices
-from haystack.query import EmptySearchQuerySet, SearchQuerySet
-from haystack.utils.loading import UnifiedIndex
-
 
 class SearchFormTestCase(TestCase):
     def setUp(self):
-        super(SearchFormTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -35,7 +32,7 @@ class SearchFormTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(SearchFormTestCase, self).tearDown()
+        super().tearDown()
 
     def test_unbound(self):
         sf = SearchForm({}, searchqueryset=self.sqs)
@@ -50,7 +47,7 @@ class SearchFormTestCase(TestCase):
 
 class ModelSearchFormTestCase(TestCase):
     def setUp(self):
-        super(ModelSearchFormTestCase, self).setUp()
+        super().setUp()
         # Stow.
         self.old_unified_index = connections["default"]._index
         self.ui = UnifiedIndex()
@@ -68,7 +65,7 @@ class ModelSearchFormTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(ModelSearchFormTestCase, self).tearDown()
+        super().tearDown()
 
     def test_models_regression_1(self):
         # Regression for issue #1.
@@ -109,7 +106,7 @@ class ModelSearchFormTestCase(TestCase):
 
 class FacetedSearchFormTestCase(TestCase):
     def setUp(self):
-        super(FacetedSearchFormTestCase, self).setUp()
+        super().setUp()
         # Stow.
         self.old_unified_index = connections["default"]._index
         self.ui = UnifiedIndex()
@@ -127,7 +124,7 @@ class FacetedSearchFormTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(FacetedSearchFormTestCase, self).tearDown()
+        super().tearDown()
 
     def test_init_with_selected_facets(self):
         sf = FacetedSearchForm({}, searchqueryset=self.sqs)

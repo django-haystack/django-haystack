@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 
 from django.contrib.gis.measure import D
@@ -16,7 +13,7 @@ from ..core.models import AnotherMockModel, MockModel
 
 class Elasticsearch5SearchQueryTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch5SearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["elasticsearch"].get_query()
 
     def test_build_query_all(self):
@@ -160,7 +157,7 @@ class Elasticsearch5SearchQueryTestCase(TestCase):
         self.assertTrue(issubclass(self.sq.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         self.sq.set_result_class(IttyBittyResult)
@@ -194,7 +191,7 @@ class Elasticsearch5SearchQueryTestCase(TestCase):
             },
         )
         self.assertEqual(
-            search_kwargs["query"]["bool"]["filter"]["geo_distance"],
+            search_kwargs["query"]["bool"]["filter"]["bool"]["must"][1]["geo_distance"],
             {
                 "distance": "0.500000km",
                 "location_field": {"lat": 2.3456789, "lon": 1.2345678},

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+
+[tool.black]
+line_length=88
+
+[tool.isort]
+known_first_party = ["haystack", "test_haystack"]
+profile = "black"
+multi_line_output = 3
+
+[tool.setuptools_scm]
+fallback_version = "0.0.dev0"
+write_to = "haystack/version.py"

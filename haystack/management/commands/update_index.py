@@ -1,15 +1,12 @@
-# encoding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 import multiprocessing
 import os
 import time
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections, reset_queries
-from django.utils.encoding import force_text, smart_bytes
+from django.utils.encoding import force_str, smart_bytes
 from django.utils.timezone import now
 
 from haystack import connections as haystack_connections
@@ -29,9 +26,18 @@ def update_worker(args):
         LOG.error("update_worker received incorrect arguments: %r", args)
         raise ValueError("update_worker received incorrect arguments")
 
-    model, start, end, total, using, start_date, end_date, verbosity, commit, max_retries = (
-        args
-    )
+    (
+        model,
+        start,
+        end,
+        total,
+        using,
+        start_date,
+        end_date,
+        verbosity,
+        commit,
+        max_retries,
+    ) = args
 
     # FIXME: confirm that this is still relevant with modern versions of Django:
     # We need to reset the connections, otherwise the different processes
@@ -58,7 +64,7 @@ def update_worker(args):
     index = unified_index.get_index(model)
     backend = haystack_connections[using].get_backend()
 
-    qs = index.build_queryset(start_date=start_date, end_date=end_date)
+    qs = index.build_queryset(using=using, start_date=start_date, end_date=end_date)
     do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
     return args
 
@@ -152,13 +158,19 @@ def do_update(
 
 
 class Command(BaseCommand):
-    help = "Freshens the index for the given app(s)."
+    help = "Freshens the index for the given app(s)."  # noqa A003
 
     def add_arguments(self, parser):
         parser.add_argument(
             "app_label",
             nargs="*",
             help="App label of an application to update the search index.",
+        )
+        parser.add_argument(
+            "-m",
+            "--minutes",
+            type=int,
+            help="Number of minutes back to consider objects new.",
         )
         parser.add_argument(
             "-a",
@@ -242,6 +254,7 @@ class Command(BaseCommand):
             self.backends = haystack_connections.connections_info.keys()
 
         age = options.get("age", DEFAULT_AGE)
+        minutes = options.get("minutes", DEFAULT_AGE)
         start_date = options.get("start_date")
         end_date = options.get("end_date")
 
@@ -250,8 +263,16 @@ class Command(BaseCommand):
         elif self.verbosity > 1:
             LOG.setLevel(logging.INFO)
 
+        if (minutes and age) or (minutes and start_date) or (age and start_date):
+            raise CommandError(
+                "Minutes / age / start date options are mutually exclusive"
+            )
+
+        if minutes is not None:
+            self.start_date = now() - timedelta(minutes=minutes)
+
         if age is not None:
-            self.start_date = now() - timedelta(hours=int(age))
+            self.start_date = now() - timedelta(hours=age)
 
         if start_date is not None:
             from dateutil.parser import parse as dateutil_parse
@@ -274,7 +295,7 @@ class Command(BaseCommand):
             for using in self.backends:
                 try:
                     self.update_backend(label, using)
-                except:
+                except Exception:
                     LOG.exception("Error updating %s using %s ", label, using)
                     raise
 
@@ -305,7 +326,7 @@ class Command(BaseCommand):
             if self.verbosity >= 1:
                 self.stdout.write(
                     "Indexing %d %s"
-                    % (total, force_text(model._meta.verbose_name_plural))
+                    % (total, force_str(model._meta.verbose_name_plural))
                 )
 
             batch_size = self.batchsize or backend.batch_size
@@ -367,12 +388,12 @@ class Command(BaseCommand):
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
-                    qs = index.index_queryset().values_list("pk", flat=True)
-                    database_pks = set(smart_bytes(pk) for pk in qs)
+                    qs = index.index_queryset(using=using).values_list("pk", flat=True)
+                    database_pks = {smart_bytes(pk) for pk in qs}
                 else:
-                    database_pks = set(
+                    database_pks = {
                         smart_bytes(pk) for pk in qs.values_list("pk", flat=True)
-                    )
+                    }
 
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.

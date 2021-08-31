@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 import logging as std_logging
 import operator
+import pickle
 import unittest
 from decimal import Decimal
 
@@ -23,16 +21,6 @@ from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import AFourthMockModel, AnotherMockModel, ASixthMockModel, MockModel
 from ..mocks import MockSearchResult
-
-test_pickling = True
-
-try:
-    import cPickle as pickle
-except ImportError:
-    try:
-        import pickle
-    except ImportError:
-        test_pickling = False
 
 
 def clear_elasticsearch_index():
@@ -128,7 +116,7 @@ class Elasticsearch2BoostMockSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return AFourthMockModel
 
     def prepare(self, obj):
-        data = super(Elasticsearch2BoostMockSearchIndex, self).prepare(obj)
+        data = super().prepare(obj)
 
         if obj.pk == 4:
             data["boost"] = 5.0
@@ -166,7 +154,7 @@ class Elasticsearch2RoundTripSearchIndex(indexes.SearchIndex, indexes.Indexable)
         return MockModel
 
     def prepare(self, obj):
-        prepped = super(Elasticsearch2RoundTripSearchIndex, self).prepare(obj)
+        prepped = super().prepare(obj)
         prepped.update(
             {
                 "text": "This is some example text.",
@@ -243,7 +231,7 @@ class TestSettings(TestCase):
 
 class Elasticsearch2SearchBackendTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch2SearchBackendTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         self.raw_es = elasticsearch.Elasticsearch(
@@ -276,7 +264,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(Elasticsearch2SearchBackendTestCase, self).tearDown()
+        super().tearDown()
         self.sb.silently_fail = True
 
     def raw_search(self, query):
@@ -355,7 +343,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel1",
                     "name_exact": "daniel1",
-                    "text": "Indexed!\n1",
+                    "text": "Indexed!\n1\n",
                     "pub_date": "2009-02-24T00:00:00",
                     "id": "core.mockmodel.1",
                 },
@@ -364,7 +352,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel2",
                     "name_exact": "daniel2",
-                    "text": "Indexed!\n2",
+                    "text": "Indexed!\n2\n",
                     "pub_date": "2009-02-23T00:00:00",
                     "id": "core.mockmodel.2",
                 },
@@ -373,7 +361,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel3",
                     "name_exact": "daniel3",
-                    "text": "Indexed!\n3",
+                    "text": "Indexed!\n3\n",
                     "pub_date": "2009-02-22T00:00:00",
                     "id": "core.mockmodel.3",
                 },
@@ -408,7 +396,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel2",
                     "name_exact": "daniel2",
-                    "text": "Indexed!\n2",
+                    "text": "Indexed!\n2\n",
                     "pub_date": "2009-02-23T00:00:00",
                     "id": "core.mockmodel.2",
                 },
@@ -417,7 +405,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
                     "django_ct": "core.mockmodel",
                     "name": "daniel3",
                     "name_exact": "daniel3",
-                    "text": "Indexed!\n3",
+                    "text": "Indexed!\n3\n",
                     "pub_date": "2009-02-22T00:00:00",
                     "id": "core.mockmodel.3",
                 },
@@ -470,7 +458,11 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
                     for result in self.sb.search("Index", highlight=True)["results"]
                 ]
             ),
-            ["<em>Indexed</em>!\n1", "<em>Indexed</em>!\n2", "<em>Indexed</em>!\n3"],
+            [
+                "<em>Indexed</em>!\n1\n",
+                "<em>Indexed</em>!\n2\n",
+                "<em>Indexed</em>!\n3\n",
+            ],
         )
 
         self.assertEqual(self.sb.search("Indx")["hits"], 0)
@@ -582,6 +574,7 @@ class Elasticsearch2SearchBackendTestCase(TestCase):
 
     def test_spatial_search_parameters(self):
         from django.contrib.gis.geos import Point
+
         p1 = Point(1.23, 4.56)
         kwargs = self.sb.build_search_kwargs(
             "*:*",
@@ -768,7 +761,7 @@ class LiveElasticsearch2SearchQueryTestCase(TestCase):
     fixtures = ["base_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch2SearchQueryTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -787,7 +780,7 @@ class LiveElasticsearch2SearchQueryTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2SearchQueryTestCase, self).tearDown()
+        super().tearDown()
 
     def test_log_query(self):
         reset_search_queries()
@@ -832,7 +825,7 @@ class LiveElasticsearch2SearchQuerySetTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch2SearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
@@ -859,7 +852,7 @@ class LiveElasticsearch2SearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2SearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_load_all(self):
         sqs = self.sqs.order_by("pub_date").load_all()
@@ -1275,7 +1268,7 @@ class LiveElasticsearch2SpellingTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch2SpellingTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
@@ -1298,7 +1291,7 @@ class LiveElasticsearch2SpellingTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2SpellingTestCase, self).tearDown()
+        super().tearDown()
 
     def test_spelling(self):
         self.assertEqual(
@@ -1318,7 +1311,7 @@ class LiveElasticsearch2MoreLikeThisTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch2MoreLikeThisTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1338,7 +1331,7 @@ class LiveElasticsearch2MoreLikeThisTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2MoreLikeThisTestCase, self).tearDown()
+        super().tearDown()
 
     def test_more_like_this(self):
         mlt = self.sqs.more_like_this(MockModel.objects.get(pk=1))
@@ -1396,7 +1389,7 @@ class LiveElasticsearch2AutocompleteTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch2AutocompleteTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["elasticsearch"].get_unified_index()
@@ -1419,7 +1412,7 @@ class LiveElasticsearch2AutocompleteTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2AutocompleteTestCase, self).tearDown()
+        super().tearDown()
 
     def test_build_schema(self):
         self.sb = connections["elasticsearch"].get_backend()
@@ -1512,7 +1505,7 @@ class LiveElasticsearch2AutocompleteTestCase(TestCase):
 
 class LiveElasticsearch2RoundTripTestCase(TestCase):
     def setUp(self):
-        super(LiveElasticsearch2RoundTripTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1535,7 +1528,7 @@ class LiveElasticsearch2RoundTripTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2RoundTripTestCase, self).tearDown()
+        super().tearDown()
 
     def test_round_trip(self):
         results = self.sqs.filter(id="core.mockmodel.1")
@@ -1558,12 +1551,11 @@ class LiveElasticsearch2RoundTripTestCase(TestCase):
         self.assertEqual(result.sites, [3, 5, 1])
 
 
-@unittest.skipUnless(test_pickling, "Skipping pickling tests")
 class LiveElasticsearch2PickleTestCase(TestCase):
     fixtures = ["bulk_data.json"]
 
     def setUp(self):
-        super(LiveElasticsearch2PickleTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1584,7 +1576,7 @@ class LiveElasticsearch2PickleTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["elasticsearch"]._index = self.old_ui
-        super(LiveElasticsearch2PickleTestCase, self).tearDown()
+        super().tearDown()
 
     def test_pickling(self):
         results = self.sqs.all()
@@ -1601,7 +1593,7 @@ class LiveElasticsearch2PickleTestCase(TestCase):
 
 class Elasticsearch2BoostBackendTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch2BoostBackendTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         self.raw_es = elasticsearch.Elasticsearch(
@@ -1635,7 +1627,7 @@ class Elasticsearch2BoostBackendTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(Elasticsearch2BoostBackendTestCase, self).tearDown()
+        super().tearDown()
 
     def raw_search(self, query):
         return self.raw_es.search(
@@ -1712,7 +1704,7 @@ class RecreateIndexTestCase(TestCase):
 
 class Elasticsearch2FacetingTestCase(TestCase):
     def setUp(self):
-        super(Elasticsearch2FacetingTestCase, self).setUp()
+        super().setUp()
 
         # Wipe it clean.
         clear_elasticsearch_index()
@@ -1747,7 +1739,7 @@ class Elasticsearch2FacetingTestCase(TestCase):
 
     def tearDown(self):
         connections["elasticsearch"]._index = self.old_ui
-        super(Elasticsearch2FacetingTestCase, self).tearDown()
+        super().tearDown()
 
     def test_facet(self):
         self.sb.update(self.smmi, self.sample_objs)

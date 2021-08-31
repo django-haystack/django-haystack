@@ -1,14 +1,10 @@
-# encoding: utf-8
 """
 A very basic, ORM-based backend for simple search during tests.
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+from functools import reduce
 from warnings import warn
 
 from django.db.models import Q
-from django.utils import six
 
 from haystack import connections
 from haystack.backends import (
@@ -71,7 +67,7 @@ class SimpleSearchBackend(BaseSearchBackend):
 
                         if queries:
                             qs = model.objects.filter(
-                                six.moves.reduce(lambda x, y: x | y, queries)
+                                reduce(lambda x, y: x | y, queries)
                             )
                         else:
                             qs = []
@@ -128,7 +124,7 @@ class SimpleSearchQuery(BaseSearchQuery):
 
                 term_list.append(value.prepare(self))
 
-        return (" ").join(map(six.text_type, term_list))
+        return (" ").join(map(str, term_list))
 
 
 class SimpleEngine(BaseEngine):

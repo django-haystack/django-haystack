@@ -1,13 +1,6 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import datetime
-
 from debug_toolbar.panels import DebugPanel
 from django.template.loader import render_to_string
-from django.utils import six
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from haystack import connections
 
@@ -22,11 +15,11 @@ class HaystackDebugPanel(DebugPanel):
     has_content = True
 
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        self._offset = dict(
-            (alias, len(connections[alias].queries))
+        super().__init__(*args, **kwargs)
+        self._offset = {
+            alias: len(connections[alias].queries)
             for alias in connections.connections_info.keys()
-        )
+        }
         self._search_time = 0
         self._queries = []
         self._backends = {}
@@ -47,7 +40,7 @@ class HaystackDebugPanel(DebugPanel):
             self._queries.extend([(alias, q) for q in search_queries])
 
         self._queries.sort(key=lambda x: x[1]["start"])
-        self._search_time = sum([d["time_spent"] for d in self._backends.itervalues()])
+        self._search_time = sum([d["time_spent"] for d in self._backends.values()])
         num_queries = len(self._queries)
         return "%d %s in %.2fms" % (
             num_queries,
@@ -70,7 +63,7 @@ class HaystackDebugPanel(DebugPanel):
 
             if query.get("additional_kwargs"):
                 if query["additional_kwargs"].get("result_class"):
-                    query["additional_kwargs"]["result_class"] = six.text_type(
+                    query["additional_kwargs"]["result_class"] = str(
                         query["additional_kwargs"]["result_class"]
                     )
 

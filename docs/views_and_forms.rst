@@ -105,7 +105,7 @@ associated with it. You might create a form that looked as follows::
 
         def search(self):
             # First, store the SearchQuerySet received from other processing.
-            sqs = super(DateRangeSearchForm, self).search()
+            sqs = super().search()
 
             if not self.is_valid():
                 return self.no_query_found()
@@ -158,19 +158,19 @@ demonstrated in this example which filters the search results in ``get_queryset`
         """My custom search view."""
 
         def get_queryset(self):
-            queryset = super(MySearchView, self).get_queryset()
+            queryset = super().get_queryset()
             # further filter queryset based on some set of criteria
             return queryset.filter(pub_date__gte=date(2015, 1, 1))
 
         def get_context_data(self, *args, **kwargs):
-            context = super(MySearchView, self).get_context_data(*args, **kwargs)
+            context = super().get_context_data(*args, **kwargs)
             # do something
             return context
 
     # urls.py
 
     urlpatterns = [
-        url(r'^/search/?$', MySearchView.as_view(), name='search_view'),
+        path('/search/', MySearchView.as_view(), name='search_view'),
     ]
 
 
@@ -194,7 +194,7 @@ Here's an example::
     sqs = SearchQuerySet().filter(author='john')
 
     urlpatterns = [
-        url(r'^$', SearchView(
+        path('', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=SearchForm
@@ -213,7 +213,7 @@ Here's an example::
     from myapp.views import JohnSearchView
 
     urlpatterns = [
-        url(r'^$', JohnSearchView.as_view(), name='haystack_search'),
+        path('', JohnSearchView.as_view(), name='haystack_search'),
     ]
 
 
@@ -271,7 +271,7 @@ custom search limited to the 'John' author, displaying all models to search by
 and specifying a custom template (``my/special/path/john_search.html``), your
 URLconf should look something like::
 
-    from django.conf.urls import url
+    from django.urls import path
     from haystack.forms import ModelSearchForm
     from haystack.query import SearchQuerySet
     from haystack.views import SearchView
@@ -280,7 +280,7 @@ URLconf should look something like::
 
     # Without threading...
     urlpatterns = [
-        url(r'^$', SearchView(
+        path('', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
             form_class=SearchForm
@@ -291,7 +291,7 @@ URLconf should look something like::
     from haystack.views import SearchView, search_view_factory
 
     urlpatterns = [
-        url(r'^$', search_view_factory(
+        path('', search_view_factory(
             view_class=SearchView,
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
@@ -393,7 +393,7 @@ As with the forms, inheritance is likely your best bet. In this case, the
 
     class FacetedSearchView(SearchView):
         def extra_context(self):
-            extra = super(FacetedSearchView, self).extra_context()
+            extra = super().extra_context()
 
             if self.results == []:
                 extra['facets'] = self.form.search().facet_counts()

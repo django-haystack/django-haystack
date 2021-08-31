@@ -1,17 +1,13 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging as std_logging
 import pickle
 
 from django.test import TestCase
-from test_haystack.core.models import MockModel
 
 from haystack import connections
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 from haystack.utils.loading import UnifiedIndex
+from test_haystack.core.models import MockModel
 
 from .mocks import MockSearchResult
 from .test_indexes import ReadQuerySetTestSearchIndex
@@ -28,7 +24,7 @@ class SearchResultTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SearchResultTestCase, self).setUp()
+        super().setUp()
         cap = CaptureHandler()
         logging.getLogger("haystack").addHandler(cap)
 
@@ -95,14 +91,14 @@ class SearchResultTestCase(TestCase):
 
     def test_unicode(self):
         self.assertEqual(
-            self.no_data_sr.__unicode__(), "<SearchResult: haystack.mockmodel (pk='1')>"
+            self.no_data_sr.__str__(), "<SearchResult: haystack.mockmodel (pk='1')>"
         )
         self.assertEqual(
-            self.extra_data_sr.__unicode__(),
+            self.extra_data_sr.__str__(),
             "<SearchResult: haystack.mockmodel (pk='1')>",
         )
         self.assertEqual(
-            self.no_overwrite_data_sr.__unicode__(),
+            self.no_overwrite_data_sr.__str__(),
             "<SearchResult: haystack.mockmodel (pk='1')>",
         )
 
