@@ -1,18 +1,12 @@
-# encoding: utf-8
-
-from __future__ import unicode_literals
-
 import importlib
 import re
 
 from django.conf import settings
-from django.utils import six
 
-from haystack.constants import ID, DJANGO_CT, DJANGO_ID
-from haystack.utils.highlighting import Highlighter
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID
+from haystack.utils.highlighting import Highlighter  # noqa=F401
 
-
-IDENTIFIER_REGEX = re.compile("^[\w\d_]+\.[\w\d_]+\.[\w\d-]+$")
+IDENTIFIER_REGEX = re.compile(r"^[\w\d_]+\.[\w\d_]+\.[\w\d-]+$")
 
 
 def default_get_identifier(obj_or_string):
@@ -22,7 +16,7 @@ def default_get_identifier(obj_or_string):
 
     If not overridden, uses <app_label>.<object_name>.<pk>.
     """
-    if isinstance(obj_or_string, six.string_types):
+    if isinstance(obj_or_string, str):
         if not IDENTIFIER_REGEX.match(obj_or_string):
             raise AttributeError(
                 "Provided string '%s' is not a valid identifier." % obj_or_string

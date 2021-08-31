@@ -13,7 +13,7 @@ Useful for essentially extending what Haystack can do.
 queued_search
 -------------
 
-http://github.com/toastdriven/queued_search (2.X compatible)
+http://github.com/django-haystack/queued_search (2.X compatible)
 
 Provides a queue-based setup as an alternative to ``RealtimeSignalProcessor`` or
 constantly running the ``update_index`` command. Useful for high-load, short
@@ -47,7 +47,7 @@ for keeping the index fresh.
 saved_searches
 --------------
 
-http://github.com/toastdriven/saved_searches (2.X compatible)
+http://github.com/django-haystack/saved_searches (2.X compatible)
 
 Adds personalization to search. Retains a history of queries run by the various
 users on the site (including anonymous users). This can be used to present the

@@ -1,6 +1,3 @@
-# encoding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
@@ -8,7 +5,7 @@ from .update_index import DEFAULT_MAX_RETRIES
 
 
 class Command(BaseCommand):
-    help = "Completely rebuilds the search index by removing the old data and then updating."
+    help = "Completely rebuilds the search index by removing the old data and then updating."  # noqa A003
 
     def add_arguments(self, parser):
         parser.add_argument(

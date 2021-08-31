@@ -72,6 +72,9 @@ Example::
 
     pip install django-haystack
 
+When using elasticsearch, use::
+
+    pip install "django-haystack[elasticsearch]"
 
 Configuration
 =============
@@ -157,12 +160,22 @@ Example (ElasticSearch 2.x)::
             'INDEX_NAME': 'haystack',
         },
     }
-    
+
 Example (ElasticSearch 5.x)::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
+
+Example (ElasticSearch 7.x)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine',
             'URL': 'http://127.0.0.1:9200/',
             'INDEX_NAME': 'haystack',
         },
@@ -285,6 +298,11 @@ which field is the primary field for searching within.
     examples. It could be anything; you could call it ``pink_polka_dot`` and
     it won't matter. It's simply a convention to call it ``text``.
 
+    To use a document field with a name other than ``text``, be sure to configure
+    the ``HAYSTACK_DOCUMENT_FIELD`` setting. For example,::
+
+        HAYSTACK_DOCUMENT_FIELD = 'pink_polka_dot'
+
 Additionally, we're providing ``use_template=True`` on the ``text`` field. This
 allows us to use a data template (rather than error-prone concatenation) to
 build the document the search engine will index. You’ll need to
@@ -314,7 +332,7 @@ Add The ``SearchView`` To Your URLconf
 
 Within your URLconf, add the following line::
 
-    url(r'^search/', include('haystack.urls')),
+    path('search/', include('haystack.urls')),
 
 This will pull in the default URLconf for Haystack. It consists of a single
 URLconf that points to a ``SearchView`` instance. You can change this class's

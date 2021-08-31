@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 
 from django.test import TestCase
@@ -18,7 +14,7 @@ class SolrSearchQueryTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SolrSearchQueryTestCase, self).setUp()
+        super().setUp()
         self.sq = connections["solr"].get_query()
 
     def test_build_query_all(self):
@@ -198,7 +194,7 @@ class SolrSearchQueryTestCase(TestCase):
         self.assertTrue(issubclass(self.sq.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         self.sq.set_result_class(IttyBittyResult)

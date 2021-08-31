@@ -1,26 +1,14 @@
 #!/usr/bin/env python
-# encoding: utf-8
+from setuptools import setup
 
-# n.b. we can't have unicode_literals here due to http://bugs.python.org/setuptools/issue152
-from __future__ import absolute_import, division, print_function
-
-try:
-    from setuptools import setup
-except ImportError:
-    from ez_setup import use_setuptools
-
-    use_setuptools()
-    from setuptools import setup
-
-install_requires = ["Django>=1.11"]
+install_requires = ["Django>=2.2"]
 
 tests_require = [
     "pysolr>=3.7.0",
     "whoosh>=2.5.4,<3.0",
     "python-dateutil",
-    "geopy==0.95.1",
+    "geopy==2.0.0",
     "nose",
-    "mock",
     "coverage",
     "requests",
 ]
@@ -48,20 +36,26 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Framework :: Django",
-        "Framework :: Django :: 1.11",
-        "Framework :: Django :: 2.0",
-        "Framework :: Django :: 2.1",
+        "Framework :: Django :: 2.2",
+        "Framework :: Django :: 3.1",
+        "Framework :: Django :: 3.2",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Utilities",
     ],
     zip_safe=False,
     install_requires=install_requires,
     tests_require=tests_require,
+    extras_require={
+        "elasticsearch": ["elasticsearch>=5,<6"],
+    },
     test_suite="test_haystack.run_tests.run_all",
-    setup_requires=["setuptools_scm"],
 )

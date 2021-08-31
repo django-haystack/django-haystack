@@ -1,0 +1,17 @@
+name: flake8
+
+on: [pull_request, push]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install tools
+      run: pip install flake8 flake8-assertive flake8-bugbear flake8-builtins flake8-comprehensions flake8-logging-format
+    - name: Run flake8
+      run: flake8 example_project haystack

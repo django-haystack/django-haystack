@@ -1,13 +1,9 @@
-# coding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from datetime import date
 
-from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from haystack import connection_router, connections, indexes
+from haystack import connections
 from haystack.query import SearchQuerySet
 from haystack.utils.loading import UnifiedIndex
 
@@ -20,7 +16,7 @@ class SimpleSearchBackendTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(SimpleSearchBackendTestCase, self).setUp()
+        super().setUp()
 
         self.backend = connections["simple"].get_backend()
         ui = connections["simple"].get_unified_index()
@@ -225,7 +221,7 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(LiveSimpleSearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_ui = connections["simple"].get_unified_index()
@@ -240,7 +236,7 @@ class LiveSimpleSearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["simple"]._index = self.old_ui
-        super(LiveSimpleSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_general_queries(self):
         # For now, just make sure these don't throw an exception.

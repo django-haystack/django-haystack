@@ -1,11 +1,6 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import operator
 import warnings
-
-from django.utils import six
+from functools import reduce
 
 from haystack import connection_router, connections
 from haystack.backends import SQ
@@ -15,7 +10,7 @@ from haystack.inputs import AutoQuery, Raw
 from haystack.utils import log as logging
 
 
-class SearchQuerySet(object):
+class SearchQuerySet:
     """
     Provides a way to specify search parameters and lazily load results.
 
@@ -283,7 +278,7 @@ class SearchQuerySet(object):
         """
         Retrieves an item or slice from the set of results.
         """
-        if not isinstance(k, (slice, six.integer_types)):
+        if not isinstance(k, (slice, int)):
             raise TypeError
         assert (not isinstance(k, slice) and (k >= 0)) or (
             isinstance(k, slice)
@@ -323,7 +318,7 @@ class SearchQuerySet(object):
             return self._result_cache[start]
 
     # Methods that return a SearchQuerySet.
-    def all(self):
+    def all(self):  # noqa A003
         """Returns all results for the query."""
         return self._clone()
 
@@ -331,7 +326,7 @@ class SearchQuerySet(object):
         """Returns an empty result list for the query."""
         return self._clone(klass=EmptySearchQuerySet)
 
-    def filter(self, *args, **kwargs):
+    def filter(self, *args, **kwargs):  # noqa A003
         """Narrows the search based on certain attributes and the default operator."""
         if DEFAULT_OPERATOR == "OR":
             return self.filter_or(*args, **kwargs)
@@ -513,7 +508,7 @@ class SearchQuerySet(object):
                     kwargs = {field_name: bit}
                     query_bits.append(SQ(**kwargs))
 
-        return clone.filter(six.moves.reduce(operator.__and__, query_bits))
+        return clone.filter(reduce(operator.__and__, query_bits))
 
     def using(self, connection_name):
         """
@@ -655,7 +650,7 @@ class EmptySearchQuerySet(SearchQuerySet):
         return True
 
     def _clone(self, klass=None):
-        clone = super(EmptySearchQuerySet, self)._clone(klass=klass)
+        clone = super()._clone(klass=klass)
         clone._result_cache = []
         return clone
 
@@ -673,7 +668,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ValuesListSearchQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._flat = False
         self._fields = []
 
@@ -683,7 +678,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         self._internal_fields = ["id", "django_ct", "django_id", "score"]
 
     def _clone(self, klass=None):
-        clone = super(ValuesListSearchQuerySet, self)._clone(klass=klass)
+        clone = super()._clone(klass=klass)
         clone._fields = self._fields
         clone._flat = self._flat
         return clone
@@ -692,7 +687,7 @@ class ValuesListSearchQuerySet(SearchQuerySet):
         query_fields = set(self._internal_fields)
         query_fields.update(self._fields)
         kwargs = {"fields": query_fields}
-        return super(ValuesListSearchQuerySet, self)._fill_cache(start, end, **kwargs)
+        return super()._fill_cache(start, end, **kwargs)
 
     def post_process_results(self, results):
         to_cache = []
@@ -725,7 +720,7 @@ class ValuesSearchQuerySet(ValuesListSearchQuerySet):
         to_cache = []
 
         for result in results:
-            to_cache.append(dict((i, getattr(result, i, None)) for i in self._fields))
+            to_cache.append({i: getattr(result, i, None) for i in self._fields})
 
         return to_cache
 
@@ -736,7 +731,7 @@ class RelatedSearchQuerySet(SearchQuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        super(RelatedSearchQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._load_all_querysets = {}
         self._result_cache = []
 
@@ -771,6 +766,6 @@ class RelatedSearchQuerySet(SearchQuerySet):
         return clone
 
     def _clone(self, klass=None):
-        clone = super(RelatedSearchQuerySet, self)._clone(klass=klass)
+        clone = super()._clone(klass=klass)
         clone._load_all_querysets = self._load_all_querysets
         return clone

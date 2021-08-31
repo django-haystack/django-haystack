@@ -1,11 +1,7 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+from django.apps import apps
 
 import haystack
 from haystack.signals import RealtimeSignalProcessor
-
-from django.apps import apps
 
 from ..utils import check_solr
 
