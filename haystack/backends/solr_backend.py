@@ -281,23 +281,25 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if date_facets is not None:
             kwargs["facet"] = "on"
-            kwargs["facet.%s" % self.date_facet_field ] = date_facets.keys()
-            kwargs["facet.%s.other" % self.date_facet_field ] = "none"
+            kwargs["facet.%s" % self.date_facet_field] = date_facets.keys()
+            kwargs["facet.%s.other" % self.date_facet_field] = "none"
 
             for key, value in date_facets.items():
-                kwargs["f.%s.facet.%s.start" % (key, self.date_facet_field)] = self.conn._from_python(
-                    value.get("start_date")
-                )
-                kwargs["f.%s.facet.%s.end" % (key, self.date_facet_field)] = self.conn._from_python(
-                    value.get("end_date")
-                )
+                kwargs[
+                    "f.%s.facet.%s.start" % (key, self.date_facet_field)
+                ] = self.conn._from_python(value.get("start_date"))
+                kwargs[
+                    "f.%s.facet.%s.end" % (key, self.date_facet_field)
+                ] = self.conn._from_python(value.get("end_date"))
                 gap_by_string = value.get("gap_by").upper()
                 gap_string = "%d%s" % (value.get("gap_amount"), gap_by_string)
 
                 if value.get("gap_amount") != 1:
                     gap_string += "S"
 
-                kwargs["f.%s.facet.%s.gap" % (key, self.date_facet_field)] = "+%s/%s" % (
+                kwargs[
+                    "f.%s.facet.%s.gap" % (key, self.date_facet_field)
+                ] = "+%s/%s" % (
                     gap_string,
                     gap_by_string,
                 )
@@ -498,13 +500,16 @@ class SolrSearchBackend(BaseSearchBackend):
                         )
                     )
 
-            for key in ['ranges']:
+            for key in ["ranges"]:
                 for facet_field in facets[key]:
                     # Convert to a two-tuple, as Solr's json format returns a list of
                     # pairs.
                     facets[key][facet_field] = list(
-                        zip(facets[key][facet_field]['counts'][::2],
-                            facets[key][facet_field]['counts'][1::2]))
+                        zip(
+                            facets[key][facet_field]["counts"][::2],
+                            facets[key][facet_field]["counts"][1::2],
+                        )
+                    )
 
         if self.include_spelling and hasattr(raw_results, "spellcheck"):
             try:
