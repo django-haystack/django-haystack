@@ -118,4 +118,10 @@ Thanks to
     * João Junior (@joaojunior) and Bruno Marques (@ElSaico) for Elasticsearch 2.x support
     * Alex Tomkins (@tomkins) for various patches
     * Martin Pauly (@mpauly) for Django 2.0 support
+    * Ryan Jarvis (@cabalist) for some code cleanup
+    * Dulmandakh Sukhbaatar (@dulmandakh) for GitHub Actions support, and flake8, black, isort checks.
+    * Deniz Dogan (@denizdogan) for adding support for the ``analyzer`` parameter for the Whoosh backend
+    * parruc for basic Whoosh faceting support
+    * Jens Kadenbach (audax) for updating and testing Whoosh faceting support
+    * Alejandro Sedeño (asedeno) trying the Whoosh faceting thing again
     * Fábio Piovam (@fabiopiovam) for date_facet on Solr 6.6+
