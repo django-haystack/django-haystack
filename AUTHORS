@@ -118,3 +118,4 @@ Thanks to
     * João Junior (@joaojunior) and Bruno Marques (@ElSaico) for Elasticsearch 2.x support
     * Alex Tomkins (@tomkins) for various patches
     * Martin Pauly (@mpauly) for Django 2.0 support
+    * Fábio Piovam (@fabiopiovam) for date_facet on Solr 6.6+
