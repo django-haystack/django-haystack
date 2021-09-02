@@ -66,6 +66,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
         self.collate = connection_options.get("COLLATE_SPELLING", True)
 
+        # Support to `date_facet` on Solr >= 6.6. Olders set `date`
+        self.date_facet_field = connection_options.get("DATE_FACET_FIELD", "range")
+
         self.conn = Solr(
             connection_options["URL"],
             timeout=self.timeout,
@@ -278,23 +281,25 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if date_facets is not None:
             kwargs["facet"] = "on"
-            kwargs["facet.date"] = date_facets.keys()
-            kwargs["facet.date.other"] = "none"
+            kwargs["facet.%s" % self.date_facet_field] = date_facets.keys()
+            kwargs["facet.%s.other" % self.date_facet_field] = "none"
 
             for key, value in date_facets.items():
-                kwargs["f.%s.facet.date.start" % key] = self.conn._from_python(
-                    value.get("start_date")
-                )
-                kwargs["f.%s.facet.date.end" % key] = self.conn._from_python(
-                    value.get("end_date")
-                )
+                kwargs[
+                    "f.%s.facet.%s.start" % (key, self.date_facet_field)
+                ] = self.conn._from_python(value.get("start_date"))
+                kwargs[
+                    "f.%s.facet.%s.end" % (key, self.date_facet_field)
+                ] = self.conn._from_python(value.get("end_date"))
                 gap_by_string = value.get("gap_by").upper()
                 gap_string = "%d%s" % (value.get("gap_amount"), gap_by_string)
 
                 if value.get("gap_amount") != 1:
                     gap_string += "S"
 
-                kwargs["f.%s.facet.date.gap" % key] = "+%s/%s" % (
+                kwargs[
+                    "f.%s.facet.%s.gap" % (key, self.date_facet_field)
+                ] = "+%s/%s" % (
                     gap_string,
                     gap_by_string,
                 )
@@ -481,6 +486,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 "fields": raw_results.facets.get("facet_fields", {}),
                 "dates": raw_results.facets.get("facet_dates", {}),
                 "queries": raw_results.facets.get("facet_queries", {}),
+                "ranges": raw_results.facets.get("facet_ranges", {}),
             }
 
             for key in ["fields"]:
@@ -491,6 +497,17 @@ class SolrSearchBackend(BaseSearchBackend):
                         zip(
                             facets[key][facet_field][::2],
                             facets[key][facet_field][1::2],
+                        )
+                    )
+
+            for key in ["ranges"]:
+                for facet_field in facets[key]:
+                    # Convert to a two-tuple, as Solr's json format returns a list of
+                    # pairs.
+                    facets[key][facet_field] = list(
+                        zip(
+                            facets[key][facet_field]["counts"][::2],
+                            facets[key][facet_field]["counts"][1::2],
                         )
                     )
 
