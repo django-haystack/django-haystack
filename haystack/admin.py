@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import InvalidPage, Paginator
 from django.shortcuts import render
 from django.utils.encoding import force_str
-from django.utils.translation import ungettext
+from django.utils.translation import ngettext
 
 from haystack import connections
 from haystack.constants import DEFAULT_ALIAS
@@ -116,12 +116,12 @@ class SearchModelAdminMixin:
         else:
             action_form = None
 
-        selection_note = ungettext(
+        selection_note = ngettext(
             "0 of %(count)d selected",
             "of %(count)d selected",
             len(changelist.result_list),
         )
-        selection_note_all = ungettext(
+        selection_note_all = ngettext(
             "%(total_count)s selected",
             "All %(total_count)s selected",
             changelist.result_count,
