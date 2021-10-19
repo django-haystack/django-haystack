@@ -4,7 +4,7 @@
 Getting Started with Haystack
 =============================
 
-Search is a topic of ever increasing importance. Users increasing rely on search
+Search is a topic of ever increasing importance. Users increasingly rely on search
 to separate signal from noise and find what they're looking for quickly. In
 addition, search can provide insight into what things are popular (many
 searches), what things are difficult to find on the site and ways you can
