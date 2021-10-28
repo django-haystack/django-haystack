@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 A very basic, ORM-based backend for simple search during tests.
 """
@@ -46,12 +47,10 @@ class SimpleSearchBackend(BaseSearchBackend):
 
         if query_string:
             for model in models:
-                if query_string == "*":
-                    qs = model.objects.all()
-                else:
+                qs = model.objects.all()
+                if query_string != "*":
                     for term in query_string.split():
                         queries = []
-
                         for field in model._meta.fields:
                             if hasattr(field, "related"):
                                 continue
@@ -66,11 +65,11 @@ class SimpleSearchBackend(BaseSearchBackend):
                             queries.append(Q(**{"%s__icontains" % field.name: term}))
 
                         if queries:
-                            qs = model.objects.filter(
+                            qs = qs.filter(
                                 reduce(lambda x, y: x | y, queries)
                             )
                         else:
-                            qs = []
+                            qs = qs.none()
 
                 hits += len(qs)
 
