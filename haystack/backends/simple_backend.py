@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 A very basic, ORM-based backend for simple search during tests.
 """
@@ -35,7 +36,7 @@ class SimpleSearchBackend(BaseSearchBackend):
         results = []
         result_class = SearchResult
         models = (
-            connections[self.connection_alias].get_unified_index().get_indexed_models()
+            connections[self.connection_alias].get_unified_index().get_indexed_models(),
         )
 
         if kwargs.get("result_class"):
@@ -46,9 +47,8 @@ class SimpleSearchBackend(BaseSearchBackend):
 
         if query_string:
             for model in models:
-                if query_string == "*":
-                    qs = model.objects.all()
-                else:
+                qs = model.objects.all()
+                if query_string != "*":
                     for term in query_string.split():
                         queries = []
 
@@ -66,11 +66,9 @@ class SimpleSearchBackend(BaseSearchBackend):
                             queries.append(Q(**{"%s__icontains" % field.name: term}))
 
                         if queries:
-                            qs = model.objects.filter(
-                                reduce(lambda x, y: x | y, queries)
-                            )
+                            qs = qs.filter(reduce(lambda x, y: x | y, queries))
                         else:
-                            qs = []
+                            qs = qs.none()
 
                 hits += len(qs)
 
@@ -78,7 +76,11 @@ class SimpleSearchBackend(BaseSearchBackend):
                     match.__dict__.pop("score", None)
                     app_label, model_name = get_model_ct_tuple(match)
                     result = result_class(
-                        app_label, model_name, match.pk, 0, **match.__dict__
+                        app_label,
+                        model_name,
+                        match.pk,
+                        0,
+                        **match.__dict__,
                     )
                     # For efficiency.
                     result._model = match.__class__
