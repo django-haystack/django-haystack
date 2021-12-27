@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.encoding import smart_str
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
 
@@ -7,7 +8,6 @@ from haystack.constants import DEFAULT_ALIAS
 from haystack.query import EmptySearchQuerySet, SearchQuerySet
 from haystack.utils import get_model_ct
 from haystack.utils.app_loading import haystack_get_model
-from django.utils.encoding import smart_str
 
 
 def model_choices(using=DEFAULT_ALIAS):
