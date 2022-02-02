@@ -150,7 +150,7 @@ def do_update(
                 LOG.warning(error_msg, error_context, exc_info=True)
 
             # If going to try again, sleep a bit before
-            time.sleep(2 ** retries)
+            time.sleep(2**retries)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
