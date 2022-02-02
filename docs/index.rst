@@ -43,7 +43,6 @@ you up and running:
    glossary
    management_commands
    faq
-   who_uses
    other_apps
    installing_search_engines
    debugging
