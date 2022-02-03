@@ -1,12 +1,24 @@
-import os
+from django.apps import apps
+
+import haystack
+from haystack.signals import RealtimeSignalProcessor
 
 from ..utils import check_solr
 
+_old_sp = None
 
-def load_tests(loader, standard_tests, pattern):
+
+def setup():
     check_solr()
-    package_tests = loader.discover(
-        start_dir=os.path.dirname(__file__), pattern=pattern
+    global _old_sp
+    config = apps.get_app_config("haystack")
+    _old_sp = config.signal_processor
+    config.signal_processor = RealtimeSignalProcessor(
+        haystack.connections, haystack.connection_router
     )
-    standard_tests.addTests(package_tests)
-    return standard_tests
+
+
+def teardown():
+    config = apps.get_app_config("haystack")
+    config.signal_processor.teardown()
+    config.signal_processor = _old_sp

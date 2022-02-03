@@ -1,17 +1,24 @@
 #!/usr/bin/env python
-import os
 import sys
+from os.path import abspath, dirname
 
-import django
-from django.core.management import call_command
+import nose
 
 
 def run_all(argv=None):
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    os.environ["DJANGO_SETTINGS_MODULE"] = "test_haystack.settings"
-    django.setup()
+    sys.exitfunc = lambda: sys.stderr.write("Shutting down....\n")
 
-    call_command("test", sys.argv[1:])
+    # always insert coverage when running tests through setup.py
+    if argv is None:
+        argv = [
+            "nosetests",
+            "--with-coverage",
+            "--cover-package=haystack",
+            "--cover-erase",
+            "--verbose",
+        ]
+
+    nose.run_exit(argv=argv, defaultTest=abspath(dirname(__file__)))
 
 
 if __name__ == "__main__":

@@ -29,13 +29,17 @@ the errors persist.
 To run just a portion of the tests you can use the script ``run_tests.py`` and
 just specify the files or directories you wish to run, for example::
 
-    python test_haystack/run_tests.py whoosh_tests test_loading.py
+    cd test_haystack
+    ./run_tests.py whoosh_tests test_loading.py
 
-The ``run_tests.py`` script is just a tiny wrapper around the Django test
-command and any options you pass to it will be passed on; including ``--help``
-to get a list of possible options::
+The ``run_tests.py`` script is just a tiny wrapper around the nose_ library and
+any options you pass to it will be passed on; including ``--help`` to get a
+list of possible options::
 
-    python test_haystack/run_tests.py --help
+    cd test_haystack
+    ./run_tests.py --help
+
+.. _nose: https://nose.readthedocs.io/en/latest/
 
 Configuring Solr
 ================

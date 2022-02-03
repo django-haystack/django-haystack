@@ -1,12 +1,9 @@
-import os
+import warnings
+
+warnings.simplefilter("ignore", Warning)
 
 from ..utils import check_solr
 
 
-def load_tests(loader, standard_tests, pattern):
+def setup():
     check_solr()
-    package_tests = loader.discover(
-        start_dir=os.path.dirname(__file__), pattern=pattern
-    )
-    standard_tests.addTests(package_tests)
-    return standard_tests

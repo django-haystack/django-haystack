@@ -63,10 +63,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install coverage requests tox tox-gh-actions
+        pip install coverage requests
         pip install django==${{ matrix.django-version }} elasticsearch==${{ matrix.elastic-version }}
         python setup.py clean build install
     - name: Run test
-      run: tox -v
-      env:
-        DJANGO: ${{ matrix.django-version }}
+      run: coverage run setup.py test
