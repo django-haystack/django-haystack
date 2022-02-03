@@ -8,7 +8,6 @@ tests_require = [
     "whoosh>=2.5.4,<3.0",
     "python-dateutil",
     "geopy==2.0.0",
-    "nose",
     "coverage",
     "requests",
 ]
