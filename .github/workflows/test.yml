@@ -12,18 +12,6 @@ jobs:
         python-version: [3.6, 3.7, 3.8, 3.9]
         elastic-version: [1.7, 2.4, 5.5, '7.13.1']
         include:
-          - django-version: 2.2
-            python-version: 3.5
-            elastic-version: 1.7
-          - django-version: 2.2
-            python-version: 3.5
-            elastic-version: 2.4
-          - django-version: 2.2
-            python-version: 3.5
-            elastic-version: 5.5
-          - django-version: 2.2
-            python-version: 3.5
-            elastic-version: '7.13.1'
           - django-version: '4.0'
             python-version: 3.8
             elastic-version: 5.5
