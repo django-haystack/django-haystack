@@ -21,6 +21,10 @@ setup(
     author_email="daniel@toastdriven.com",
     long_description=open("README.rst", "r").read(),
     url="http://haystacksearch.org/",
+    project_urls={
+        "Documentation": "https://django-haystack.readthedocs.io",
+        "Source": "https://github.com/django-haystack/django-haystack",
+    },
     packages=[
         "haystack",
         "haystack.backends",
