@@ -18,7 +18,7 @@ except DistributionNotFound:
 
 
 if django.VERSION < (3, 2):
-    # default_app_config is deprecated since django 3.2. 
+    # default_app_config is deprecated since django 3.2.
     default_app_config = "haystack.apps.HaystackConfig"
 
 
