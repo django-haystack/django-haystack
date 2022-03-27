@@ -77,6 +77,7 @@ Document boosting is done by adding a ``boost`` field to the prepared data
 Another approach might be to add a new field called ``boost``. However, this
 can skew your schema and is not encouraged.
 
+Note that document boosting is not supported by the elasticsearch backend.
 
 Field Boost
 ===========
