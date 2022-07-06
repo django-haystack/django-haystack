@@ -74,7 +74,6 @@ def initializer_worker(*initargs):
     to initialize django whenever starting a new process
     https://docs.djangoproject.com/en/4.0/topics/settings/#calling-django-setup-is-required-for-standalone-django-usage
     """
-    import os
     import django
     from django.apps import apps
     # It gives the opportunity for other functions passed as a parameter in
