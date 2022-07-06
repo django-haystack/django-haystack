@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import time
 from datetime import timedelta
-
+from django.utils.module_loading import import_string
 from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections, reset_queries
 from django.utils.encoding import force_str, smart_bytes
@@ -67,6 +67,26 @@ def update_worker(args):
     qs = index.build_queryset(using=using, start_date=start_date, end_date=end_date)
     do_update(backend, index, qs, start, end, total, verbosity, commit, max_retries)
     return args
+
+
+def initializer_worker(*initargs):
+    """Indexing with workers is importing models in 'standalone' mode and so it is necessary
+    to initialize django whenever starting a new process
+    https://docs.djangoproject.com/en/4.0/topics/settings/#calling-django-setup-is-required-for-standalone-django-usage
+    """
+    import os
+    import django
+    from django.apps import apps
+    # It gives the opportunity for other functions passed as a parameter in
+    # '--initializer-workers' to resolve the django configuration in the running process.
+    for func_name in initargs:
+        try:
+            import_string(func_name)()
+        except ImportError as exc:
+            LOG.error("initializer_worker failed to import '%s': %r", func_name, exc)
+    # If no function has configured the django environment, it continues with the default configuration.
+    if not apps.ready:
+        django.setup()
 
 
 def do_update(
@@ -223,6 +243,13 @@ class Command(BaseCommand):
             help="Allows for the use multiple workers to parallelize indexing.",
         )
         parser.add_argument(
+            "-ik",
+            "--initializer-workers",
+            type=str,
+            nargs="*",
+            help="Full path to startup functions (module.script.func).",
+        )
+        parser.add_argument(
             "--nocommit",
             action="store_false",
             dest="commit",
@@ -246,6 +273,7 @@ class Command(BaseCommand):
         self.end_date = None
         self.remove = options.get("remove", False)
         self.workers = options.get("workers", 0)
+        self.initializer_workers = options.get('initializer_workers')
         self.commit = options.get("commit", True)
         self.max_retries = options.get("max_retries", DEFAULT_MAX_RETRIES)
 
@@ -368,7 +396,7 @@ class Command(BaseCommand):
                     )
 
             if self.workers > 0:
-                pool = multiprocessing.Pool(self.workers)
+                pool = multiprocessing.Pool(self.workers, initializer_worker, self.initializer_workers)
 
                 successful_tasks = pool.map(update_worker, ghetto_queue)
 
