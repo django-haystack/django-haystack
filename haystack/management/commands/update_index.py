@@ -3,10 +3,11 @@ import multiprocessing
 import os
 import time
 from datetime import timedelta
-from django.utils.module_loading import import_string
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections, reset_queries
 from django.utils.encoding import force_str, smart_bytes
+from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
 from haystack import connections as haystack_connections
@@ -75,8 +76,10 @@ def initializer_worker(*initargs):
     https://docs.djangoproject.com/en/4.0/topics/settings/#calling-django-setup-is-required-for-standalone-django-usage
     """
     import os
+
     import django
     from django.apps import apps
+
     # It gives the opportunity for other functions passed as a parameter in
     # '--initializer-workers' to resolve the django configuration in the running process.
     for func_name in initargs:
@@ -273,7 +276,7 @@ class Command(BaseCommand):
         self.end_date = None
         self.remove = options.get("remove", False)
         self.workers = options.get("workers", 0)
-        self.initializer_workers = options.get('initializer_workers')
+        self.initializer_workers = options.get("initializer_workers")
         self.commit = options.get("commit", True)
         self.max_retries = options.get("max_retries", DEFAULT_MAX_RETRIES)
 
@@ -396,7 +399,9 @@ class Command(BaseCommand):
                     )
 
             if self.workers > 0:
-                pool = multiprocessing.Pool(self.workers, initializer_worker, self.initializer_workers)
+                pool = multiprocessing.Pool(
+                    self.workers, initializer_worker, self.initializer_workers
+                )
 
                 successful_tasks = pool.map(update_worker, ghetto_queue)
 
