@@ -172,7 +172,6 @@ class SearchQuerySet:
 
         for result in results:
             if self._load_all:
-
                 model_objects = loaded_objects.get(result.model, {})
                 # Try to coerce a primary key object that matches the models pk
                 # We have to deal with semi-arbitrary keys being cast from strings (UUID, int, etc)

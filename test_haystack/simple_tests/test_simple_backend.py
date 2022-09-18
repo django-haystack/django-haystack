@@ -206,7 +206,6 @@ class SimpleSearchBackendTestCase(TestCase):
         self.assertEqual(self.backend.more_like_this(self.sample_objs[0])["hits"], 0)
 
     def test_score_field_collision(self):
-
         index = connections["simple"].get_unified_index().get_index(ScoreMockModel)
         sample_objs = ScoreMockModel.objects.all()
 
