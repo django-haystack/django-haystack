@@ -502,6 +502,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
             for key in ["ranges"]:
                 for facet_field in facets[key]:
+                    # keep track of optional open-ended range result
+                    ending_range = (
+                        facets[key][facet_field].get("end"),
+                        facets[key][facet_field].get("after"),
+                    )
                     # Convert to a two-tuple, as Solr's json format returns a list of
                     # pairs.
                     facets[key][facet_field] = list(
@@ -510,6 +515,8 @@ class SolrSearchBackend(BaseSearchBackend):
                             facets[key][facet_field]["counts"][1::2],
                         )
                     )
+                    if all(value is not None for value in ending_range):
+                        facets[key][facet_field].append(ending_range)
 
         if self.include_spelling and hasattr(raw_results, "spellcheck"):
             try:
