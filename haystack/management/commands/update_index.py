@@ -329,7 +329,9 @@ class Command(BaseCommand):
                 if self.start_date or self.end_date or total <= 0:
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
-                    remove_qs = index.index_queryset(using=using).values_list("pk", flat=True)
+                    remove_qs = index.index_queryset(using=using).values_list(
+                        "pk", flat=True
+                    )
                     valid_pks = {smart_bytes(pk) for pk in remove_qs}
                 else:
                     valid_pks = {
