@@ -144,7 +144,7 @@ def do_update(
                 error_msg += " (pid %(pid)s): %(exc)s"
 
             if retries >= max_retries:
-                LOG.error(error_msg, error_context, exc_info=True)
+                LOG.exception(error_msg, error_context)
                 raise
             elif verbosity >= 2:
                 LOG.warning(error_msg, error_context, exc_info=True)

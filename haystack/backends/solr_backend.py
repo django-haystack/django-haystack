@@ -91,20 +91,19 @@ class SolrSearchBackend(BaseSearchBackend):
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(
+                self.log.exception(
                     "UnicodeDecodeError while preparing object for update",
-                    exc_info=True,
                     extra={"data": {"index": index, "object": get_identifier(obj)}},
                 )
 
         if len(docs) > 0:
             try:
                 self.conn.add(docs, commit=commit, boost=index.get_field_weights())
-            except (IOError, SolrError) as e:
+            except (IOError, SolrError):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to add documents to Solr: %s", e, exc_info=True)
+                self.log.exception("Failed to add documents to Solr")
 
     def remove(self, obj_or_string, commit=True):
         solr_id = get_identifier(obj_or_string)
@@ -112,15 +111,13 @@ class SolrSearchBackend(BaseSearchBackend):
         try:
             kwargs = {"commit": commit, "id": solr_id}
             self.conn.delete(**kwargs)
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to remove document '%s' from Solr: %s",
+            self.log.exception(
+                "Failed to remove document '%s' from Solr",
                 solr_id,
-                e,
-                exc_info=True,
             )
 
     def clear(self, models=None, commit=True):
@@ -142,19 +139,17 @@ class SolrSearchBackend(BaseSearchBackend):
             if commit:
                 # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
                 self.conn.optimize()
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Solr index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Solr index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error("Failed to clear Solr index: %s", e, exc_info=True)
+                self.log.exception("Failed to clear Solr index")
 
     @log_query
     def search(self, query_string, **kwargs):
@@ -165,13 +160,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.search(query_string, **search_kwargs)
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to query Solr using '%s': %s", query_string, e, exc_info=True
-            )
+            self.log.exception("Failed to query Solr using '%s'", query_string)
             raw_results = EmptyResults()
 
         return self._process_results(
@@ -450,15 +443,12 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to fetch More Like This from Solr for document '%s': %s",
-                query,
-                e,
-                exc_info=True,
+            self.log.exception(
+                "Failed to fetch More Like This from Solr for document '%s'", query
             )
             raw_results = EmptyResults()
 
@@ -514,11 +504,9 @@ class SolrSearchBackend(BaseSearchBackend):
         if self.include_spelling and hasattr(raw_results, "spellcheck"):
             try:
                 spelling_suggestions = self.extract_spelling_suggestions(raw_results)
-            except Exception as exc:
-                self.log.error(
+            except Exception:
+                self.log.exception(
                     "Error extracting spelling suggestions: %s",
-                    exc,
-                    exc_info=True,
                     extra={"data": {"spellcheck": raw_results.spellcheck}},
                 )
 
@@ -747,11 +735,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             return self.conn.extract(file_obj, **kwargs)
-        except Exception as e:
+        except Exception:
             self.log.warning(
-                "Unable to extract file contents: %s",
-                e,
-                exc_info=True,
+                "Unable to extract file contents",
                 extra={"data": {"file": file_obj}},
             )
             return None
