@@ -23,7 +23,7 @@ LOG = multiprocessing.log_to_stderr(level=logging.WARNING)
 
 def update_worker(args):
     if len(args) != 10:
-        LOG.exception("update_worker received incorrect arguments: %r", args)
+        LOG.error("update_worker received incorrect arguments: %r", args)
         raise ValueError("update_worker received incorrect arguments")
 
     (
