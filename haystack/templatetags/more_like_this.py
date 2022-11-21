@@ -42,9 +42,11 @@ class MoreLikeThisNode(template.Node):
                 sqs = sqs[: self.limit]
 
             context[self.varname] = sqs
-        except Exception as exc:
-            logging.warning(
-                "Unhandled exception rendering %r: %s", self, exc, exc_info=True
+        except Exception:
+            logging.exception(
+                "Unhandled exception rendering %r",
+                self,
+                level=logging.WARNING,
             )
 
         return ""

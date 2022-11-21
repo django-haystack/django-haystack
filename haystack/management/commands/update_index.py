@@ -23,7 +23,7 @@ LOG = multiprocessing.log_to_stderr(level=logging.WARNING)
 
 def update_worker(args):
     if len(args) != 10:
-        LOG.error("update_worker received incorrect arguments: %r", args)
+        LOG.exception("update_worker received incorrect arguments: %r", args)
         raise ValueError("update_worker received incorrect arguments")
 
     (
@@ -144,7 +144,7 @@ def do_update(
                 error_msg += " (pid %(pid)s): %(exc)s"
 
             if retries >= max_retries:
-                LOG.error(error_msg, error_context, exc_info=True)
+                LOG.exception(error_msg, error_context)
                 raise
             elif verbosity >= 2:
                 LOG.warning(error_msg, error_context, exc_info=True)
