@@ -323,6 +323,21 @@ class Command(BaseCommand):
 
             total = qs.count()
 
+            # Stores the id of the valid instances, to eventually use in remove.
+            valid_pks = None
+            if self.remove:
+                if self.start_date or self.end_date or total <= 0:
+                    # They're using a reduced set, which may not incorporate
+                    # all pks. Rebuild the list with everything.
+                    remove_qs = index.index_queryset(using=using).values_list(
+                        "pk", flat=True
+                    )
+                    valid_pks = {smart_bytes(pk) for pk in remove_qs}
+                else:
+                    valid_pks = {
+                        smart_bytes(pk) for pk in qs.values_list("pk", flat=True)
+                    }
+
             if self.verbosity >= 1:
                 self.stdout.write(
                     "Indexing %d %s"
@@ -385,16 +400,6 @@ class Command(BaseCommand):
                 pool.join()
 
             if self.remove:
-                if self.start_date or self.end_date or total <= 0:
-                    # They're using a reduced set, which may not incorporate
-                    # all pks. Rebuild the list with everything.
-                    qs = index.index_queryset(using=using).values_list("pk", flat=True)
-                    database_pks = {smart_bytes(pk) for pk in qs}
-                else:
-                    database_pks = {
-                        smart_bytes(pk) for pk in qs.values_list("pk", flat=True)
-                    }
-
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.
                 # See https://github.com/django-haystack/django-haystack/issues/1186
@@ -420,7 +425,7 @@ class Command(BaseCommand):
 
                     # If the database pk is no longer present, queue the index key for removal:
                     for pk, rec_id in index_pks[start:upper_bound]:
-                        if smart_bytes(pk) not in database_pks:
+                        if smart_bytes(pk) not in valid_pks:
                             stale_records.add(rec_id)
 
                 if stale_records:
