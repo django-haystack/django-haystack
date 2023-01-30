@@ -14,7 +14,7 @@ close to GeoDjango_ as possible. There are some differences, which we'll
 highlight throughout this guide. Additionally, while the support isn't as
 comprehensive as PostGIS (for example), it is still quite useful.
 
-.. _GeoDjango: https://docs.djangoproject.com/en/1.11/ref/contrib/gis/
+.. _GeoDjango: https://docs.djangoproject.com/en/stable/ref/contrib/gis/
 
 
 Additional Requirements
