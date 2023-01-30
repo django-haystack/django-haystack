@@ -67,4 +67,4 @@ If you want to run the geo-django tests you may need to review the
 	cd test_haystack
 	./run_tests.py elasticsearch_tests
 
-.. _GeoDjango GEOS and GDAL settings: https://docs.djangoproject.com/en/1.7/ref/contrib/gis/install/geolibs/#geos-library-path
+.. _GeoDjango GEOS and GDAL settings: https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/geolibs/#geos-library-path

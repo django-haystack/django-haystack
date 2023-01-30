@@ -11,7 +11,7 @@ Views & Forms
     which use the standard Django `class-based views`_ which are available in
     every version of Django which is supported by Haystack.
 
-.. _class-based views: https://docs.djangoproject.com/en/1.7/topics/class-based-views/
+.. _class-based views: https://docs.djangoproject.com/en/stable/topics/class-based-views/
 
 Haystack comes with some default, simple views & forms as well as some
 django-style views to help you get started and to cover the common cases.
@@ -137,7 +137,7 @@ Views
     which use the standard Django `class-based views`_ which are available in
     every version of Django which is supported by Haystack.
 
-.. _class-based views: https://docs.djangoproject.com/en/1.7/topics/class-based-views/
+.. _class-based views: https://docs.djangoproject.com/en/stable/topics/class-based-views/
 
 New Django Class Based Views
 ----------------------------
@@ -145,7 +145,7 @@ New Django Class Based Views
  .. versionadded:: 2.4.0
 
 The views in ``haystack.generic_views.SearchView`` inherit from Django’s standard
-`FormView <https://docs.djangoproject.com/en/1.7/ref/class-based-views/generic-editing/#formview>`_.
+`FormView <https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview>`_.
 The example views can be customized like any other Django class-based view as
 demonstrated in this example which filters the search results in ``get_queryset``::
 
@@ -232,9 +232,9 @@ preprocess the values returned by Haystack, that code would move to ``get_contex
 | ``get_query()``       | `get_queryset()`_                         |
 +-----------------------+-------------------------------------------+
 
-.. _get_context_data(): https://docs.djangoproject.com/en/1.7/ref/class-based-views/mixins-simple/#django.views.generic.base.ContextMixin.get_context_data
-.. _dispatch(): https://docs.djangoproject.com/en/1.7/ref/class-based-views/base/#django.views.generic.base.View.dispatch
-.. _get_queryset(): https://docs.djangoproject.com/en/1.7/ref/class-based-views/mixins-multiple-object/#django.views.generic.list.MultipleObjectMixin.get_queryset
+.. _get_context_data(): https://docs.djangoproject.com/en/stable/ref/class-based-views/mixins-simple/#django.views.generic.base.ContextMixin.get_context_data
+.. _dispatch(): https://docs.djangoproject.com/en/stable/ref/class-based-views/base/#django.views.generic.base.View.dispatch
+.. _get_queryset(): https://docs.djangoproject.com/en/stable/ref/class-based-views/mixins-multiple-object/#django.views.generic.list.MultipleObjectMixin.get_queryset
 
 
 Old-Style Views
