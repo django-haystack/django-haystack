@@ -14,6 +14,7 @@ class HaystackConfig(AppConfig):
 
     def ready(self):
         # Setup default logging.
+        #1111
         log = logging.getLogger("haystack")
         self.stream = logging.StreamHandler()
         self.stream.setLevel(logging.INFO)

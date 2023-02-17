@@ -2,7 +2,7 @@ from regular_app.models import Dog
 
 from haystack import indexes
 
-
+# deeeee
 # More typical usage involves creating a subclassed `SearchIndex`. This will
 # provide more control over how data is indexed, generally resulting in better
 # search.

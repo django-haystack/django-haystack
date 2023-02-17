@@ -5,7 +5,7 @@ class HaystackError(Exception):
 
 
 class SearchBackendError(HaystackError):
-    """Raised when a backend can not be found."""
+    """Raised when a backend can not be found........"""
 
     pass
 
