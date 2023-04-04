@@ -197,7 +197,6 @@ class SolrSearchBackend(BaseSearchBackend):
         collate=None,
         **extra_kwargs
     ):
-
         index = haystack.connections[self.connection_alias].get_unified_index()
 
         kwargs = {"fl": "* score", "df": index.document_field}
