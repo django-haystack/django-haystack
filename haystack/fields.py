@@ -489,13 +489,13 @@ class MultiValueField(SearchField):
                     )
                 current_object = getattr(current_object, attributes.pop(0))
 
-                if hasattr(current_object, 'all') and ismethod(current_object.all):
-                    attribute = '__'.join(attributes)
+                if hasattr(current_object, "all") and ismethod(current_object.all):
+                    attribute = "__".join(attributes)
                     return list(
                         current_object.values_list(attribute, flat=True).distinct()
                     )
 
-                elif not hasattr(current_object, '__iter__'):
+                elif not hasattr(current_object, "__iter__"):
                     if hasattr(current_object, attributes[0]):
                         current_object = getattr(current_object, attributes.pop(0))
                     else:
@@ -514,13 +514,13 @@ class MultiValueField(SearchField):
                     )
 
             if not values:
-                if hasattr(current_object, 'all') and ismethod(current_object.all):
+                if hasattr(current_object, "all") and ismethod(current_object.all):
                     values = list(
                         current_object.values_list(attributes[0], flat=True).distinct()
                     )
                 elif attributes and hasattr(current_object, attributes[0]):
                     values.append(getattr(current_object, attributes.pop(0)))
-                elif hasattr(current_object, '__iter__'):
+                elif hasattr(current_object, "__iter__"):
                     values.append(current_object)
 
         return values
