@@ -1,14 +1,12 @@
+import os
 import unittest
-import warnings
 
 from django.conf import settings
 
 from haystack.utils import log as logging
 
-warnings.simplefilter("ignore", Warning)
 
-
-def setup():
+def load_tests(loader, standard_tests, pattern):
     log = logging.getLogger("haystack")
     try:
         import elasticsearch
@@ -29,3 +27,9 @@ def setup():
     except exceptions.ConnectionError as e:
         log.error("elasticsearch not running on %r" % url, exc_info=True)
         raise unittest.SkipTest("elasticsearch not running on %r" % url, e)
+
+    package_tests = loader.discover(
+        start_dir=os.path.dirname(__file__), pattern=pattern
+    )
+    standard_tests.addTests(package_tests)
+    return standard_tests
