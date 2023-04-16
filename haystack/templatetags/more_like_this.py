@@ -75,7 +75,7 @@ def more_like_this(parser, token):
     """
     bits = token.split_contents()
 
-    if not len(bits) in (4, 6, 8):
+    if len(bits) not in (4, 6, 8):
         raise template.TemplateSyntaxError(
             "'%s' tag requires either 3, 5 or 7 arguments." % bits[0]
         )
