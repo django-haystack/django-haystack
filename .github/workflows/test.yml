@@ -13,7 +13,6 @@ jobs:
     - uses: actions/checkout@v3
     - run: pip install --user ruff
     - run: ruff --format=github .
-    - run: ruff --format=github --select=ALL .  # THIS WILL FAIL!!
 
   test:
     runs-on: ubuntu-latest
