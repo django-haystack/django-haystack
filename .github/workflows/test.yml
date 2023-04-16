@@ -1,10 +1,23 @@
 name: Test
 
-on: [pull_request, push]
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
+  ruff:  # https://beta.ruff.rs
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: pip install --user ruff
+    - run: ruff --format=github .
+    - run: ruff --format=github --select=ALL .  # THIS WILL FAIL!!
+
   test:
     runs-on: ubuntu-latest
+    needs: ruff  # Do not run the tests if linting fails.
     strategy:
       fail-fast: false
       matrix:  # https://docs.djangoproject.com/en/4.1/faq/install
