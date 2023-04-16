@@ -132,7 +132,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         if self.use_file_storage and not os.path.exists(self.path):
             try:
                 os.makedirs(self.path)
-            except:
+            except Exception:
                 raise IOError(
                     "The directory of your Whoosh index '%s' (cwd='%s') cannot be created for the current user/group."
                     % (self.path, os.getcwd())
