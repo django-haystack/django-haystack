@@ -311,7 +311,7 @@ class IntegerField(SearchField):
         return self.convert(super().prepare(obj))
 
     def convert(self, value):
-        if value is None:
+        if not value: 
             return None
 
         return int(value)
