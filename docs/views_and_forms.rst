@@ -283,7 +283,7 @@ URLconf should look something like::
         path('', SearchView(
             template='my/special/path/john_search.html',
             searchqueryset=sqs,
-            form_class=SearchForm
+            form_class=ModelSearchForm
         ), name='haystack_search'),
     ]
 
