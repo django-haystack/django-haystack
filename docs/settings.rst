@@ -78,7 +78,10 @@ Additionally, each backend may have additional options it requires:
 
 * Solr
 
-  * ``URL`` - The URL to the Solr core. e.g. http://localhost:9001/solr/collection1
+  * ``URL`` - The URL to the Solr core. e.g. http://localhost:9001/solr/collection1. In case of using `Basic Authentication Plugin`_ ``URL`` looks like http://username:password@localhost:9001/solr/collection1
+
+    .. _Basic Authentication Plugin: https://lucene.apache.org/solr/guide/7_4/basic-authentication-plugin.html
+
   * ``ADMIN_URL`` - The URL to the administrative functions. e.g.
     http://localhost:9001/solr/admin/cores
 
