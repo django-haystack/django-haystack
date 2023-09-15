@@ -42,9 +42,11 @@ class MoreLikeThisNode(template.Node):
                 sqs = sqs[: self.limit]
 
             context[self.varname] = sqs
-        except Exception as exc:
-            logging.warning(
-                "Unhandled exception rendering %r: %s", self, exc, exc_info=True
+        except Exception:
+            logging.exception(
+                "Unhandled exception rendering %r",
+                self,
+                level=logging.WARNING,
             )
 
         return ""
@@ -73,7 +75,7 @@ def more_like_this(parser, token):
     """
     bits = token.split_contents()
 
-    if not len(bits) in (4, 6, 8):
+    if len(bits) not in (4, 6, 8):
         raise template.TemplateSyntaxError(
             "'%s' tag requires either 3, 5 or 7 arguments." % bits[0]
         )

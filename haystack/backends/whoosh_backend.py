@@ -130,7 +130,13 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         # Make sure the index is there.
         if self.use_file_storage and not os.path.exists(self.path):
-            os.makedirs(self.path)
+            try:
+                os.makedirs(self.path)
+            except Exception:
+                raise IOError(
+                    "The directory of your Whoosh index '%s' (cwd='%s') cannot be created for the current user/group."
+                    % (self.path, os.getcwd())
+                )
             new_index = True
 
         if self.use_file_storage and not os.access(self.path, os.W_OK):
@@ -270,16 +276,15 @@ class WhooshSearchBackend(BaseSearchBackend):
 
                 try:
                     writer.update_document(**doc)
-                except Exception as e:
+                except Exception:
                     if not self.silently_fail:
                         raise
 
                     # We'll log the object identifier but won't include the actual object
                     # to avoid the possibility of that generating encoding errors while
                     # processing the log message:
-                    self.log.error(
-                        "%s while preparing object for update" % e.__class__.__name__,
-                        exc_info=True,
+                    self.log.exception(
+                        "Preparing object for update",
                         extra={"data": {"index": index, "object": get_identifier(obj)}},
                     )
 
@@ -298,15 +303,13 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         try:
             self.index.delete_by_query(q=self.parser.parse('%s:"%s"' % (ID, whoosh_id)))
-        except Exception as e:
+        except Exception:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to remove document '%s' from Whoosh: %s",
+            self.log.exception(
+                "Failed to remove document '%s' from Whoosh",
                 whoosh_id,
-                e,
-                exc_info=True,
             )
 
     def clear(self, models=None, commit=True):
@@ -330,19 +333,17 @@ class WhooshSearchBackend(BaseSearchBackend):
                 self.index.delete_by_query(
                     q=self.parser.parse(" OR ".join(models_to_delete))
                 )
-        except Exception as e:
+        except Exception:
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Whoosh index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Whoosh index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error("Failed to clear Whoosh index: %s", e, exc_info=True)
+                self.log.exception("Failed to clear Whoosh index")
 
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
@@ -1019,7 +1020,7 @@ class WhooshSearchQuery(BaseSearchQuery):
                 if value.input_type_name == "exact":
                     query_frag = prepared_value
                 else:
-                    # Iterate over terms & incorportate the converted form of each into the query.
+                    # Iterate over terms & incorporate the converted form of each into the query.
                     terms = []
 
                     if isinstance(prepared_value, str):
