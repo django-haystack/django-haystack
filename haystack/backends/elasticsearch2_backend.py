@@ -244,7 +244,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
 
         # Deferred models will have a different class ("RealClass_Deferred_fieldname")
         # which won't be in our registry:
-        model_klass = model_instance._meta.concrete_model
+        model_klass = model_instance.model._meta.concrete_model
 
         index = (
             connections[self.connection_alias]
@@ -260,7 +260,7 @@ class Elasticsearch2SearchBackend(ElasticsearchSearchBackend):
         if end_offset is not None:
             params["size"] = end_offset - start_offset
 
-        doc_id = get_identifier(model_instance)
+        doc_id = get_identifier(model_instance.object)
 
         try:
             # More like this Query
