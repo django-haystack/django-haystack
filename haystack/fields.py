@@ -1,12 +1,8 @@
+import datetime
 import re
 from inspect import ismethod
 
 from django.template import loader
-
-try:  # datetime_safe was removed in Django 5.0
-    from django.utils import datetime_safe
-except ImportError:
-    import datetime as datetime_safe
 
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
@@ -399,7 +395,7 @@ class DateField(SearchField):
 
             if match:
                 data = match.groupdict()
-                return datetime_safe.date(
+                return datetime.date(
                     int(data["year"]), int(data["month"]), int(data["day"])
                 )
             else:
@@ -432,7 +428,7 @@ class DateTimeField(SearchField):
 
             if match:
                 data = match.groupdict()
-                return datetime_safe.datetime(
+                return datetime.datetime(
                     int(data["year"]),
                     int(data["month"]),
                     int(data["day"]),
