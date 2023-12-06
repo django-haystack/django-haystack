@@ -59,9 +59,19 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 3.6+
+* A supported version of Python: https://devguide.python.org/versions/#supported-versions
 * A supported version of Django: https://www.djangoproject.com/download/#supported-versions
 
 Additionally, each backend has its own requirements. You should refer to
 https://django-haystack.readthedocs.io/en/latest/installing_search_engines.html for more
 details.
+
+Experimental support for Django v5.0
+====================================
+
+The current release on PyPI_ does not yet support Django v5.0.
+
+.. _PyPI: https://pypi.org/project/django-haystack/
+
+To run on Django v5.0, please install by using:
+``pip install git+https://github.com/django-haystack/django-haystack.git``
