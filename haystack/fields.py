@@ -2,7 +2,11 @@ import re
 from inspect import ismethod
 
 from django.template import loader
-from django.utils import datetime_safe
+
+try:  # datetime_safe was removed in Django 5.0
+    from django.utils import datetime_safe
+except ImportError:
+    import datetime as datetime_safe
 
 from haystack.exceptions import SearchFieldError
 from haystack.utils import get_model_ct_tuple
