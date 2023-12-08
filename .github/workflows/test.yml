@@ -48,7 +48,11 @@ jobs:
                 image: solr:6
                 ports:
                     - 8983:8983
+                volumes:
+                    - /home/runner/work/django-haystack/django-haystack/test_haystack/solr_tests/server/confdir/conf:/opt/solr/server/solr/mycores/collection1/conf
         steps:
+            - name: Configure Solr core
+              run: curl -fs --retry 30 --retry-all-errors --retry-delay 2 http://localhost:8983/solr/admin/cores?action=CREATE&name=collection1&instanceDir=/opt/solr/server/solr/mycores/collection1&config=conf/solrconfig.xml&schema=conf/schema.xml
             - uses: actions/checkout@v3
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v4
@@ -63,9 +67,7 @@ jobs:
                   pip install django==${{ matrix.django-version }} elasticsearch==${{ matrix.elastic-version }}
                   python setup.py clean build install
             - name: Run test
-              run: |
-                  echo "$SOLR_HOST:$SOLR_PORT $TEST_SOLR_URL"
-                  tox -v
+              run: tox -v
               env:
                   DJANGO: ${{ matrix.django-version }}
                   SOLR_HOST: "127.0.0.1"
