@@ -53,6 +53,8 @@ jobs:
         steps:
             - name: Configure Solr core
               run: curl -fs --retry 30 --retry-all-errors --retry-delay 2 http://localhost:8983/solr/admin/cores?action=CREATE&name=collection1&instanceDir=/opt/solr/server/solr/mycores/collection1&config=conf/solrconfig.xml&schema=conf/schema.xml
+            - name: Reset permissions so checkout will succeed
+              run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE
             - uses: actions/checkout@v3
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v4
