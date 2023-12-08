@@ -47,7 +47,7 @@ jobs:
             solr:
                 image: solr:6
                 ports:
-                    - 9001:9001
+                    - 8983:8983
         steps:
             - uses: actions/checkout@v3
             - name: Set up Python ${{ matrix.python-version }}
@@ -68,8 +68,8 @@ jobs:
                   tox -v
               env:
                   DJANGO: ${{ matrix.django-version }}
-                  SOLR_HOST: "solr"
-                  SOLR_PORT: "9001"
-                  TEST_ELASTICSEARCH_1_URL: "http://elastic:9200/"
-                  TEST_SOLR_URL: "http://solr:9001/solr/collection1"
-                  TEST_SOLR_ADMIN_URL: "http://solr:9001/solr/admin/cores"
+                  SOLR_HOST: "127.0.0.1"
+                  SOLR_PORT: "8983"
+                  TEST_ELASTICSEARCH_1_URL: "http://127.0.0.1:9200/"
+                  TEST_SOLR_URL: "http://127.0.0.1:8983/solr/collection1"
+                  TEST_SOLR_ADMIN_URL: "http://127.0.0.1:8983/solr/admin/cores"
