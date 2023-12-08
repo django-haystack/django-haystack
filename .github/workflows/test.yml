@@ -51,6 +51,11 @@ jobs:
                 volumes:
                     - /home/runner/work/django-haystack/django-haystack/test_haystack/solr_tests/server/confdir/conf:/opt/solr/server/solr/mycores/collection1/conf
         steps:
+            - name: Display running Docker containers
+              run: docker ps
+            - name: Verify Docker permissions
+              # TODO: use the Solr CLI inside the container to create the core
+              run: docker ps -f ancestor=solr:6 --format '{{.ID}}' | xargs -L1 -I% docker exec % id
             - name: Configure Solr core
               run: curl -fs --retry 30 --retry-all-errors --retry-delay 2 http://localhost:8983/solr/admin/cores?action=CREATE&name=collection1&instanceDir=/opt/solr/server/solr/mycores/collection1&config=conf/solrconfig.xml&schema=conf/schema.xml
             - name: Reset permissions so checkout will succeed
