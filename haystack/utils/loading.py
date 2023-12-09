@@ -338,7 +338,6 @@ class UnifiedIndex:
         return self._fieldnames.get(field) or field
 
     def get_index(self, model_klass):
-
         indexes = self.get_indexes()
 
         if model_klass not in indexes:

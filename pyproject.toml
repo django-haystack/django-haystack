@@ -12,3 +12,23 @@ multi_line_output = 3
 [tool.setuptools_scm]
 fallback_version = "0.0.dev0"
 write_to = "haystack/version.py"
+
+[tool.ruff]
+exclude = ["test_haystack"]
+ignore = ["B018", "B028", "B904", "B905"]
+line-length = 162
+select = ["ASYNC", "B", "C4", "E", "F", "G", "PLR091", "W"]
+show-source = true
+target-version = "py37"
+
+[tool.ruff.isort]
+known-first-party = ["haystack", "test_haystack"]
+
+[tool.ruff.mccabe]
+max-complexity = 14
+
+[tool.ruff.pylint]
+max-args = 20
+max-branches = 40
+max-returns = 8
+max-statements = 91
