@@ -15,7 +15,7 @@ Virtually all tests pass under both Python 2 & 3, with a small number of
 expected failures under Python (typically related to ordering, see below).
 
 .. _`six`: http://pythonhosted.org/six/
-.. _`Django`: https://docs.djangoproject.com/en/1.5/topics/python3/#str-and-unicode-methods
+.. _`Django`: https://docs.djangoproject.com/en/stable/topics/python3/#str-and-unicode-methods
 
 
 Supported Backends

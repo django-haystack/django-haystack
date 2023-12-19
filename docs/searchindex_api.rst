@@ -352,7 +352,7 @@ non-existent), merely an example of how to extend existing fields.
 
 .. note::
 
-   This method is analagous to Django's ``Field.clean`` methods.
+   This method is analogous to Django's ``Field.clean`` methods.
 
 
 Adding New Fields

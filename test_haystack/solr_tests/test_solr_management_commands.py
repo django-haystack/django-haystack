@@ -202,7 +202,6 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search("*:*").hits, 0)
 
     def test_build_schema_wrong_backend(self):
-
         settings.HAYSTACK_CONNECTIONS["whoosh"] = {
             "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
             "PATH": mkdtemp(prefix="dummy-path-"),
@@ -214,7 +213,6 @@ class ManagementCommandTestCase(TestCase):
         )
 
     def test_build_schema(self):
-
         # Stow.
         oldhdf = constants.DOCUMENT_FIELD
         oldui = connections["solr"].get_unified_index()

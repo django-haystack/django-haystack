@@ -115,7 +115,7 @@ If you've been granted the commit bit, here's how to shepherd the changes in:
 
   * ``git merge --squash`` is a good tool for performing this, as is
     ``git rebase -i HEAD~N``.
-  * This is done to prevent anyone using the git repo from accidently pulling
+  * This is done to prevent anyone using the git repo from accidentally pulling
     work-in-progress commits.
 
 * Commit messages should use past tense, describe what changed & thank anyone

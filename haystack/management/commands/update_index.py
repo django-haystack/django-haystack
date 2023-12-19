@@ -81,7 +81,6 @@ def do_update(
     max_retries=DEFAULT_MAX_RETRIES,
     last_max_pk=None,
 ):
-
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
     # the query must be ordered by PK in order to get the max PK in each batch
@@ -144,7 +143,7 @@ def do_update(
                 error_msg += " (pid %(pid)s): %(exc)s"
 
             if retries >= max_retries:
-                LOG.error(error_msg, error_context, exc_info=True)
+                LOG.exception(error_msg, error_context)
                 raise
             elif verbosity >= 2:
                 LOG.warning(error_msg, error_context, exc_info=True)
