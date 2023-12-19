@@ -17,7 +17,7 @@ write_to = "haystack/version.py"
 exclude = ["test_haystack"]
 ignore = ["B018", "B028", "B904", "B905"]
 line-length = 162
-select = ["B", "C4", "E", "F", "G", "PLR091", "W"]
+select = ["ASYNC", "B", "C4", "E", "F", "G", "PLR091", "W"]
 show-source = true
 target-version = "py37"
 
@@ -29,6 +29,6 @@ max-complexity = 14
 
 [tool.ruff.pylint]
 max-args = 20
-max-branches = 39
+max-branches = 40
 max-returns = 8
 max-statements = 91

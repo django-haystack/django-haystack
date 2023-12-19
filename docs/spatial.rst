@@ -261,7 +261,8 @@ calculations on your part.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from django.contrib.gis.geos import Point, D
+    from django.contrib.gis.geos import Point
+    from django.contrib.gis.measure import D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     # Within a two miles.
@@ -304,7 +305,8 @@ include these calculated distances on results.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from django.contrib.gis.geos import Point, D
+    from django.contrib.gis.geos import Point
+    from django.contrib.gis.measure import D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
 
@@ -322,7 +324,8 @@ key, well-cached hotspots in town but want distances from the user's current
 position::
 
     from haystack.query import SearchQuerySet
-    from django.contrib.gis.geos import Point, D
+    from django.contrib.gis.geos import Point
+    from django.contrib.gis.measure import D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     user_loc = Point(-95.23455619812012, 38.97240128290697)
@@ -363,7 +366,8 @@ distance information on the results & nothing to sort by.
 Examples::
 
     from haystack.query import SearchQuerySet
-    from django.contrib.gis.geos import Point, D
+    from django.contrib.gis.geos import Point
+    from django.contrib.gis.measure import D
 
     ninth_and_mass = Point(-95.23592948913574, 38.96753407043678)
     downtown_bottom_left = Point(-95.23947, 38.9637903)
