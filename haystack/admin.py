@@ -41,7 +41,7 @@ class SearchChangeList(ChangeList):
 
         # Get the list of objects to display on this page.
         try:
-            result_list = paginator.page(self.page_num + 1).object_list
+            result_list = paginator.page(self.page_num).object_list
             # Grab just the Django models, since that's what everything else is
             # expecting.
             result_list = [result.object for result in result_list]

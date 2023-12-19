@@ -15,7 +15,6 @@ Table Of Contents
    installing_search_engines
    settings
    faq
-   who_uses
    other_apps
    debugging
 

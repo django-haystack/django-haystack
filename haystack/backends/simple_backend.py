@@ -56,7 +56,7 @@ class SimpleSearchBackend(BaseSearchBackend):
                             if hasattr(field, "related"):
                                 continue
 
-                            if not field.get_internal_type() in (
+                            if field.get_internal_type() not in (
                                 "TextField",
                                 "CharField",
                                 "SlugField",

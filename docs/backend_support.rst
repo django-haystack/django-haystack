@@ -50,7 +50,7 @@ ElasticSearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: `elasticsearch-py <https://pypi.python.org/pypi/elasticsearch>`_ 1.x, 2.x, or 5.X.
+* Requires: `elasticsearch-py <https://pypi.python.org/pypi/elasticsearch>`_ 1.x, 2.x, 5.X, or 7.X.
 
 Whoosh
 ------

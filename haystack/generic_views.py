@@ -109,8 +109,9 @@ class FacetedSearchMixin(SearchMixin):
         for field in self.facet_fields:
             qs = qs.facet(field)
 
-        for field in self.date_facet_fields:
-            qs = qs.date_facet(**field)
+        if self.date_facet_fields:
+            for field in self.date_facet_fields:
+                qs = qs.date_facet(**field)
 
         return qs
 

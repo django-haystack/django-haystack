@@ -199,13 +199,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except elasticsearch.TransportError as e:
+            except elasticsearch.TransportError:
                 if not self.silently_fail:
                     raise
 
-                self.log.error(
-                    "Failed to add documents to Elasticsearch: %s", e, exc_info=True
-                )
+                self.log.exception("Failed to add documents to Elasticsearch")
                 return
 
         prepped_docs = []
@@ -223,16 +221,15 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 prepped_docs.append(final_data)
             except SkipDocument:
                 self.log.debug("Indexing for object `%s` skipped", obj)
-            except elasticsearch.TransportError as e:
+            except elasticsearch.TransportError:
                 if not self.silently_fail:
                     raise
 
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(
-                    "%s while preparing object for update" % e.__class__.__name__,
-                    exc_info=True,
+                self.log.exception(
+                    "Preparing object for update",
                     extra={"data": {"index": index, "object": get_identifier(obj)}},
                 )
 
@@ -252,15 +249,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except elasticsearch.TransportError as e:
+            except elasticsearch.TransportError:
                 if not self.silently_fail:
                     raise
 
-                self.log.error(
-                    "Failed to remove document '%s' from Elasticsearch: %s",
+                self.log.exception(
+                    "Failed to remove document '%s' from Elasticsearch",
                     doc_id,
-                    e,
-                    exc_info=True,
                 )
                 return
 
@@ -274,15 +269,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
             if commit:
                 self.conn.indices.refresh(index=self.index_name)
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to remove document '%s' from Elasticsearch: %s",
+            self.log.exception(
+                "Failed to remove document '%s' from Elasticsearch",
                 doc_id,
-                e,
-                exc_info=True,
             )
 
     def clear(self, models=None, commit=True):
@@ -305,7 +298,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for model in models:
                     models_to_delete.append("%s:%s" % (DJANGO_CT, get_model_ct(model)))
 
-                # Delete by query in Elasticsearch asssumes you're dealing with
+                # Delete by query in Elasticsearch assumes you're dealing with
                 # a ``query`` root object. :/
                 query = {
                     "query": {"query_string": {"query": " OR ".join(models_to_delete)}}
@@ -315,21 +308,17 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     body=query,
                     **self._get_doc_type_option(),
                 )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Elasticsearch index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Elasticsearch index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error(
-                    "Failed to clear Elasticsearch index: %s", e, exc_info=True
-                )
+                self.log.exception("Failed to clear Elasticsearch index")
 
     def build_search_kwargs(
         self,
@@ -588,15 +577,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 _source=True,
                 **self._get_doc_type_option(),
             )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to query Elasticsearch using '%s': %s",
+            self.log.exception(
+                "Failed to query Elasticsearch using '%s'",
                 query_string,
-                e,
-                exc_info=True,
             )
             raw_results = {}
 
@@ -652,15 +639,13 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 **self._get_doc_type_option(),
                 **params,
             )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to fetch More Like This from Elasticsearch for document '%s': %s",
+            self.log.exception(
+                "Failed to fetch More Like This from Elasticsearch for document '%s'",
                 doc_id,
-                e,
-                exc_info=True,
             )
             raw_results = {}
 
@@ -971,7 +956,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                 if value.input_type_name == "exact":
                     query_frag = prepared_value
                 else:
-                    # Iterate over terms & incorportate the converted form of each into the query.
+                    # Iterate over terms & incorporate the converted form of each into the query.
                     terms = []
 
                     if isinstance(prepared_value, str):
