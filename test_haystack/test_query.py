@@ -967,18 +967,18 @@ class SearchQuerySetTestCase(TestCase):
 class ValuesQuerySetTestCase(SearchQuerySetTestCase):
     def test_values_sqs(self):
         sqs = self.msqs.auto_query("test").values("id")
-        self.assertTrue(isinstance(sqs, ValuesSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesSearchQuerySet)
 
         # We'll do a basic test to confirm that slicing works as expected:
-        self.assertTrue(isinstance(sqs[0], dict))
-        self.assertTrue(isinstance(sqs[0:5][0], dict))
+        self.assertIsInstance(sqs[0], dict)
+        self.assertIsInstance(sqs[0:5][0], dict)
 
     def test_valueslist_sqs(self):
         sqs = self.msqs.auto_query("test").values_list("id")
 
-        self.assertTrue(isinstance(sqs, ValuesListSearchQuerySet))
-        self.assertTrue(isinstance(sqs[0], (list, tuple)))
-        self.assertTrue(isinstance(sqs[0:1][0], (list, tuple)))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
+        self.assertIsInstance(sqs[0], (list, tuple))
+        self.assertIsInstance(sqs[0:1][0], (list, tuple))
 
         self.assertRaises(
             TypeError,
@@ -989,12 +989,12 @@ class ValuesQuerySetTestCase(SearchQuerySetTestCase):
         )
 
         flat_sqs = self.msqs.auto_query("test").values_list("id", flat=True)
-        self.assertTrue(isinstance(sqs, ValuesListSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
 
         # Note that this will actually be None because a mocked sqs lacks
         # anything else:
-        self.assertTrue(flat_sqs[0] is None)
-        self.assertTrue(flat_sqs[0:1][0] is None)
+        self.assertIsNone(flat_sqs[0])
+        self.assertIsNone(flat_sqs[0:1][0])
 
 
 class EmptySearchQuerySetTestCase(TestCase):

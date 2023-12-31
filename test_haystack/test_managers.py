@@ -242,11 +242,11 @@ class ManagerTestCase(TestCase):
 
     def test_values(self):
         sqs = self.search_index.objects.auto_query("test").values("id")
-        self.assertTrue(isinstance(sqs, ValuesSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesSearchQuerySet)
 
     def test_valueslist(self):
         sqs = self.search_index.objects.auto_query("test").values_list("id")
-        self.assertTrue(isinstance(sqs, ValuesListSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
 
 
 class CustomManagerTestCase(TestCase):
