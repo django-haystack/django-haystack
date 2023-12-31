@@ -12,14 +12,6 @@ class BaseIndex(indexes.SearchIndex):
         return Foo
 
 
-class FooIndex(BaseIndex, indexes.Indexable):
-    def index_queryset(self, using=None):
-        qs = super().index_queryset(using=using)
-        if using == "filtered_whoosh":
-            qs = qs.filter(body__contains="1")
-        return qs
-
-
 # Import the old way & make sure things don't explode.
 
 

@@ -181,24 +181,6 @@ Example (ElasticSearch 7.x)::
         },
     }
 
-Whoosh
-~~~~~~
-
-Requires setting ``PATH`` to the place on your filesystem where the
-Whoosh index should be located. Standard warnings about permissions and keeping
-it out of a place your webserver may serve documents out of apply.
-
-Example::
-
-    import os
-    HAYSTACK_CONNECTIONS = {
-        'default': {
-            'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-            'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
-        },
-    }
-
-
 Xapian
 ~~~~~~
 

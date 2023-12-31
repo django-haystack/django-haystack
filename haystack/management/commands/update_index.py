@@ -126,7 +126,7 @@ def do_update(
         except Exception as exc:
             # Catch all exceptions which do not normally trigger a system exit, excluding SystemExit and
             # KeyboardInterrupt. This avoids needing to import the backend-specific exception subclasses
-            # from pysolr, elasticsearch, whoosh, requests, etc.
+            # from pysolr, elasticsearch, requests, etc.
             retries += 1
 
             error_context = {

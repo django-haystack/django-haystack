@@ -4,7 +4,7 @@ from haystack import connections
 from haystack.utils.loading import UnifiedIndex
 from test_haystack.discovery.search_indexes import FooIndex
 
-EXPECTED_INDEX_MODEL_COUNT = 6
+EXPECTED_INDEX_MODEL_COUNT = 5
 
 
 class ManualDiscoveryTestCase(TestCase):
@@ -38,7 +38,7 @@ class AutomaticDiscoveryTestCase(TestCase):
         ui.build()
 
         indexed_model_names = [str(i._meta) for i in ui.get_indexed_models()]
-        self.assertIn("multipleindex.foo", indexed_model_names)
+        self.assertNotIn("multipleindex.foo", indexed_model_names)
         self.assertIn("multipleindex.bar", indexed_model_names)
         self.assertNotIn("discovery.bar", indexed_model_names)
 
@@ -49,7 +49,7 @@ class AutomaticDiscoveryTestCase(TestCase):
         ui.build()
 
         indexed_model_names = [str(i._meta) for i in ui.get_indexed_models()]
-        self.assertIn("multipleindex.foo", indexed_model_names)
+        self.assertNotIn("multipleindex.foo", indexed_model_names)
         self.assertIn("multipleindex.bar", indexed_model_names)
         self.assertListEqual(
             [], [i for i in indexed_model_names if i.startswith("discovery")]
