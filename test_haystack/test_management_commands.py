@@ -80,7 +80,10 @@ class CoreManagementCommandsTestCase(TestCase):
     @patch("haystack.management.commands.update_index.Command.handle")
     @patch("haystack.management.commands.clear_index.Command.handle")
     def test_rebuild_index_nocommit(self, *mocks):
-        call_command("rebuild_index", interactive=False, commit=False)
+        try:
+            call_command("rebuild_index", interactive=False, commit=False)
+        except TypeError:
+            assert False, f"rebuild_index: {mocks}"
 
         for m in mocks:
             self.assertEqual(m.call_count, 1)

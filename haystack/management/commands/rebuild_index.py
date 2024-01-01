@@ -61,5 +61,29 @@ class Command(BaseCommand):
             del clear_options[key]
         for key in ("interactive",):
             del update_options[key]
-        call_command("clear_index", **clear_options)
-        call_command("update_index", **update_options)
+        try:
+            call_command("clear_index", **clear_options)
+        except TypeError:
+            """
+            TypeError: clear_index: {'verbosity': 1, 'settings': None, 'pythonpath': None, 'traceback': False, 'no_color': False, 'force_color': False,
+                'skip_checks': True, 'interactive': False, 'using': [], 'commit': False}
+            Valid options are: commit, force_color, help, interactive, no_color, nocommit, noinput, pythonpath, settings, skip_checks, stderr, stdout, traceback,
+                using, verbosity, version.
+            Missing options are: help, nocommit, noinput, stderr, stdout, version.
+            """
+            from pathlib import Path
+
+            here = Path(__file__).parent
+            with (here / "stderr.txt").open("w") as stderr, (here / "stdout.txt").open(
+                "w"
+            ) as stdout:
+                clear_options["stderr"] = stderr
+                clear_options["stdout"] = stdout
+                try:
+                    call_command("clear_index", **clear_options)
+                except TypeError:
+                    raise TypeError(f"clear_index: {clear_options}")
+        try:
+            call_command("update_index", **update_options)
+        except TypeError:
+            raise TypeError(f"update_index: {update_options}")
