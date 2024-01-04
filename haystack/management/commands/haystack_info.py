@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.core.management.base import BaseCommand
 
 from haystack import connections
@@ -6,7 +5,7 @@ from haystack.constants import DEFAULT_ALIAS
 
 
 class Command(BaseCommand):
-    help = "Provides feedback about the current Haystack setup."
+    help = "Provides feedback about the current Haystack setup."  # noqa A003
 
     def handle(self, **options):
         """Provides feedback about the current Haystack setup."""

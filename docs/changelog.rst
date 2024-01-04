@@ -900,7 +900,7 @@ Other
   Add python 3.5 to tests
 - Add python 3.5 to tests. [Marco Badan]
 
-  ref: https://docs.djangoproject.com/en/1.9/faq/install/#what-python-version-can-i-use-with-django
+  ref: https://docs.djangoproject.com/en/stable/faq/install/#what-python-version-can-i-use-with-django
 - SearchQuerySet: don’t trigger backend access in __repr__ [Chris Adams]
 
   This can lead to confusing errors or performance issues by

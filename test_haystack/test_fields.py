@@ -1,10 +1,11 @@
-# encoding: utf-8
 import datetime
 from decimal import Decimal
 from unittest.mock import Mock
 
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
+
+from haystack.fields import *
 from test_haystack.core.models import (
     ManyToManyLeftSideModel,
     ManyToManyRightSideModel,
@@ -13,8 +14,6 @@ from test_haystack.core.models import (
     OneToManyLeftSideModel,
     OneToManyRightSideModel,
 )
-
-from haystack.fields import *
 
 
 class SearchFieldTestCase(TestCase):
@@ -68,7 +67,7 @@ class SearchFieldTestCase(TestCase):
         )
 
     def test_resolve_attributes_lookup_with_field_that_points_to_none_but_is_allowed_to_be_null(
-        self
+        self,
     ):
         related = Mock(spec=["none_field"], none_field=None)
         obj = Mock(spec=["related"], related=[related])
@@ -80,7 +79,7 @@ class SearchFieldTestCase(TestCase):
         )
 
     def test_resolve_attributes_lookup_with_field_that_points_to_none_but_has_default(
-        self
+        self,
     ):
         related = Mock(spec=["none_field"], none_field=None)
         obj = Mock(spec=["related"], related=[related])
@@ -598,7 +597,7 @@ class CharFieldWithTemplateTestCase(TestCase):
 
         template3 = CharField(use_template=True)
         template3.instance_name = "template"
-        self.assertEqual(template3.prepare(mock), "Indexed!\n1")
+        self.assertEqual(template3.prepare(mock), "Indexed!\n1\n")
 
         template4 = CharField(use_template=True, template_name="search/indexes/foo.txt")
         template4.instance_name = "template"

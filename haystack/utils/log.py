@@ -1,4 +1,3 @@
-# encoding: utf-8
 import logging
 
 from django.conf import settings
@@ -9,7 +8,7 @@ def getLogger(name):
     return LoggingFacade(real_logger)
 
 
-class LoggingFacade(object):
+class LoggingFacade:
     def __init__(self, real_logger):
         self.real_logger = real_logger
 

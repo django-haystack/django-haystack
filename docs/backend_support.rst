@@ -15,7 +15,7 @@ Supported Backends
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _ElasticSearch: http://elasticsearch.org/
-.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
+.. _Whoosh: https://github.com/whoosh-community/whoosh/
 .. _Xapian: http://xapian.org/
 
 
@@ -50,7 +50,7 @@ ElasticSearch
 * Stored (non-indexed) fields
 * Highlighting
 * Spatial search
-* Requires: `elasticsearch-py <https://pypi.python.org/pypi/elasticsearch>`_ 1.x, 2.x, or 5.X.
+* Requires: `elasticsearch-py <https://pypi.python.org/pypi/elasticsearch>`_ 1.x, 2.x, 5.X, or 7.X.
 
 Whoosh
 ------
@@ -63,7 +63,9 @@ Whoosh
 * Term Boosting
 * Stored (non-indexed) fields
 * Highlighting
+* Faceting (no queries)
 * Requires: whoosh (2.0.0+)
+* Per-field analyzers
 
 Xapian
 ------
@@ -83,17 +85,17 @@ Xapian
 Backend Support Matrix
 ======================
 
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
-| Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting | Stored Fields | Highlighting | Spatial |
-+================+========================+=====================+================+============+==========+===============+==============+=========+
-| Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          | Yes     |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
-| ElasticSearch  | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes          | Yes     |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
-| Whoosh         | Yes                    | Yes                 | Yes            | Yes        | No       | Yes           | Yes          | No      |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
-| Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes      | Yes           | Yes (plugin) | No      |
-+----------------+------------------------+---------------------+----------------+------------+----------+---------------+--------------+---------+
++----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
+| Backend        | SearchQuerySet Support | Auto Query Building | More Like This | Term Boost | Faceting    | Stored Fields | Highlighting | Spatial |
++================+========================+=====================+================+============+=============+===============+==============+=========+
+| Solr           | Yes                    | Yes                 | Yes            | Yes        | Yes         | Yes           | Yes          | Yes     |
++----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
+| ElasticSearch  | Yes                    | Yes                 | Yes            | Yes        | Yes         | Yes           | Yes          | Yes     |
++----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
+| Whoosh         | Yes                    | Yes                 | Yes            | Yes        | Yes (basic) | Yes           | Yes          | No      |
++----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
+| Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes         | Yes           | Yes (plugin) | No      |
++----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
 
 
 Unsupported Backends & Alternatives

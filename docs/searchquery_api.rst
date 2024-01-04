@@ -236,7 +236,7 @@ Adds a boosted term and the amount to boost it to the query.
 
 Runs a raw query (no parsing) against the backend.
 
-This method causes the ``SearchQuery`` to ignore the standard query-generating 
+This method causes the ``SearchQuery`` to ignore the standard query-generating
 facilities, running only what was provided instead.
 
 Note that any kwargs passed along will override anything provided

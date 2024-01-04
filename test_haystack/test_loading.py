@@ -1,14 +1,13 @@
-# encoding: utf-8
 import unittest
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
-from test_haystack.core.models import AnotherMockModel, MockModel
 
 from haystack import indexes
 from haystack.exceptions import NotHandled, SearchFieldError
 from haystack.utils import loading
+from test_haystack.core.models import AnotherMockModel, MockModel
 
 try:
     import pysolr
@@ -182,7 +181,7 @@ class ConnectionRouterTestCase(TestCase):
         self.assertEqual(cr.for_write(), ["multi1", "multi2", "default"])
 
 
-class MockNotAModel(object):
+class MockNotAModel:
     pass
 
 
@@ -260,7 +259,7 @@ class MultiValueValidSearchIndex(indexes.SearchIndex, indexes.Indexable):
 
 class UnifiedIndexTestCase(TestCase):
     def setUp(self):
-        super(UnifiedIndexTestCase, self).setUp()
+        super().setUp()
         self.ui = loading.UnifiedIndex()
         self.ui.build([])
 

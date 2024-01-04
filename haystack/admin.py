@@ -1,11 +1,10 @@
-# encoding: utf-8
 from django.contrib.admin.options import ModelAdmin, csrf_protect_m
 from django.contrib.admin.views.main import SEARCH_VAR, ChangeList
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import InvalidPage, Paginator
 from django.shortcuts import render
 from django.utils.encoding import force_str
-from django.utils.translation import ungettext
+from django.utils.translation import ngettext
 
 from haystack import connections
 from haystack.constants import DEFAULT_ALIAS
@@ -16,11 +15,11 @@ from haystack.utils import get_model_ct_tuple
 class SearchChangeList(ChangeList):
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
-        super(SearchChangeList, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_results(self, request):
         if SEARCH_VAR not in request.GET:
-            return super(SearchChangeList, self).get_results(request)
+            return super().get_results(request)
 
         # Note that pagination is 0-based, not 1-based.
         sqs = (
@@ -47,7 +46,7 @@ class SearchChangeList(ChangeList):
 
         # Get the list of objects to display on this page.
         try:
-            result_list = paginator.page(self.page_num + 1).object_list
+            result_list = paginator.page(self.page_num).object_list
             # Grab just the Django models, since that's what everything else is
             # expecting.
             result_list = [result.object for result in result_list]
@@ -62,7 +61,7 @@ class SearchChangeList(ChangeList):
         self.paginator = paginator
 
 
-class SearchModelAdminMixin(object):
+class SearchModelAdminMixin:
     # haystack connection to use for searching
     haystack_connection = DEFAULT_ALIAS
 
@@ -78,9 +77,7 @@ class SearchModelAdminMixin(object):
 
         if SEARCH_VAR not in request.GET:
             # Do the usual song and dance.
-            return super(SearchModelAdminMixin, self).changelist_view(
-                request, extra_context
-            )
+            return super().changelist_view(request, extra_context)
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
@@ -93,9 +90,7 @@ class SearchModelAdminMixin(object):
         if self.model not in indexed_models:
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
-            return super(SearchModelAdminMixin, self).changelist_view(
-                request, extra_context
-            )
+            return super().changelist_view(request, extra_context)
 
         # So. Much. Boilerplate.
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
@@ -131,12 +126,12 @@ class SearchModelAdminMixin(object):
         else:
             action_form = None
 
-        selection_note = ungettext(
+        selection_note = ngettext(
             "0 of %(count)d selected",
             "of %(count)d selected",
             len(changelist.result_list),
         )
-        selection_note_all = ungettext(
+        selection_note_all = ngettext(
             "%(total_count)s selected",
             "All %(total_count)s selected",
             changelist.result_count,

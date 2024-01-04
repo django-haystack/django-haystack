@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # "Hey, Django! Look at me, I'm an app! For Serious!"
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import force_str
@@ -18,7 +16,7 @@ except ImportError:
 
 # Not a Django model, but tightly tied to them and there doesn't seem to be a
 # better spot in the tree.
-class SearchResult(object):
+class SearchResult:
     """
     A single search result. The actual object is loaded lazily by accessing
     object; until then this object only stores the model, pk, and score.
@@ -100,7 +98,7 @@ class SearchResult(object):
     def _set_object(self, obj):
         self._object = obj
 
-    object = property(_get_object, _set_object)
+    object = property(_get_object, _set_object)  # noqa A003
 
     def _get_model(self):
         if self._model is None:
@@ -213,7 +211,9 @@ class SearchResult(object):
             from haystack import connections
 
             try:
-                index = connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
+                index = (
+                    connections[DEFAULT_ALIAS].get_unified_index().get_index(self.model)
+                )
             except NotHandled:
                 # Not found? Return nothing.
                 return {}
@@ -236,7 +236,7 @@ class SearchResult(object):
         # The ``log`` is excluded because, under the hood, ``logging`` uses
         # ``threading.Lock``, which doesn't pickle well.
         ret_dict = self.__dict__.copy()
-        del (ret_dict["log"])
+        del ret_dict["log"]
         return ret_dict
 
     def __setstate__(self, data_dict):

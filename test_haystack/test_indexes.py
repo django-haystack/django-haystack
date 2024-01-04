@@ -1,10 +1,13 @@
-# encoding: utf-8
 import datetime
 import queue
 import time
 from threading import Thread
 
 from django.test import TestCase
+
+from haystack import connections, indexes
+from haystack.exceptions import SearchFieldError
+from haystack.utils.loading import UnifiedIndex
 from test_haystack.core.models import (
     AFifthMockModel,
     AnotherMockModel,
@@ -13,10 +16,6 @@ from test_haystack.core.models import (
     ManyToManyRightSideModel,
     MockModel,
 )
-
-from haystack import connections, indexes
-from haystack.exceptions import SearchFieldError
-from haystack.utils.loading import UnifiedIndex
 
 
 class BadSearchIndex1(indexes.SearchIndex, indexes.Indexable):
@@ -63,7 +62,7 @@ class GoodCustomMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     hello = indexes.CharField(model_attr="hello")
 
     def prepare(self, obj):
-        super(GoodCustomMockSearchIndex, self).prepare(obj)
+        super().prepare(obj)
         self.prepared_data["whee"] = "Custom preparation."
         return self.prepared_data
 
@@ -154,7 +153,7 @@ class SearchIndexTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(SearchIndexTestCase, self).setUp()
+        super().setUp()
         self.sb = connections["default"].get_backend()
         self.mi = GoodMockSearchIndex()
         self.cmi = GoodCustomMockSearchIndex()
@@ -169,7 +168,7 @@ class SearchIndexTestCase(TestCase):
 
         self.sample_docs = {
             "core.mockmodel.1": {
-                "text": "Indexed!\n1",
+                "text": "Indexed!\n1\n",
                 "django_id": "1",
                 "django_ct": "core.mockmodel",
                 "extra": "Stored!\n1",
@@ -178,7 +177,7 @@ class SearchIndexTestCase(TestCase):
                 "id": "core.mockmodel.1",
             },
             "core.mockmodel.2": {
-                "text": "Indexed!\n2",
+                "text": "Indexed!\n2\n",
                 "django_id": "2",
                 "django_ct": "core.mockmodel",
                 "extra": "Stored!\n2",
@@ -187,7 +186,7 @@ class SearchIndexTestCase(TestCase):
                 "id": "core.mockmodel.2",
             },
             "core.mockmodel.3": {
-                "text": "Indexed!\n3",
+                "text": "Indexed!\n3\n",
                 "django_id": "3",
                 "django_ct": "core.mockmodel",
                 "extra": "Stored!\n3",
@@ -199,7 +198,7 @@ class SearchIndexTestCase(TestCase):
 
     def tearDown(self):
         connections["default"]._index = self.old_unified_index
-        super(SearchIndexTestCase, self).tearDown()
+        super().tearDown()
 
     def test_no_contentfield_present(self):
         self.assertRaises(SearchFieldError, BadSearchIndex1)
@@ -710,7 +709,7 @@ class PolymorphicModelSearchIndex(indexes.SearchIndex, indexes.Indexable):
         return AnotherMockModel
 
     def prepare(self, obj):
-        self.prepared_data = super(PolymorphicModelSearchIndex, self).prepare(obj)
+        self.prepared_data = super().prepare(obj)
         if isinstance(obj, AThirdMockModel):
             self.prepared_data["average_delay"] = obj.average_delay
         return self.prepared_data
@@ -760,7 +759,7 @@ class ModelWithManyToManyFieldModelSearchIndex(indexes.ModelSearchIndex):
 
 class ModelSearchIndexTestCase(TestCase):
     def setUp(self):
-        super(ModelSearchIndexTestCase, self).setUp()
+        super().setUp()
         self.sb = connections["default"].get_backend()
         self.bmsi = BasicModelSearchIndex()
         self.fmsi = FieldsModelSearchIndex()

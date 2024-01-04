@@ -1,11 +1,10 @@
-# encoding: utf-8
 import re
 import warnings
 
 from django.utils.encoding import force_str
 
 
-class BaseInput(object):
+class BaseInput:
     """
     The base input type. Doesn't do much. You want ``Raw`` instead.
     """
@@ -56,7 +55,7 @@ class Clean(BaseInput):
     input_type_name = "clean"
 
     def prepare(self, query_obj):
-        query_string = super(Clean, self).prepare(query_obj)
+        query_string = super().prepare(query_obj)
         return query_obj.clean(query_string)
 
 
@@ -68,7 +67,7 @@ class Exact(BaseInput):
     input_type_name = "exact"
 
     def prepare(self, query_obj):
-        query_string = super(Exact, self).prepare(query_obj)
+        query_string = super().prepare(query_obj)
 
         if self.kwargs.get("clean", False):
             # We need to clean each part of the exact match.
@@ -88,7 +87,7 @@ class Not(Clean):
     input_type_name = "not"
 
     def prepare(self, query_obj):
-        query_string = super(Not, self).prepare(query_obj)
+        query_string = super().prepare(query_obj)
         return query_obj.build_not_query(query_string)
 
 
@@ -105,7 +104,7 @@ class AutoQuery(BaseInput):
     exact_match_re = re.compile(r'"(?P<phrase>.*?)"')
 
     def prepare(self, query_obj):
-        query_string = super(AutoQuery, self).prepare(query_obj)
+        query_string = super().prepare(query_obj)
         exacts = self.exact_match_re.findall(query_string)
         tokens = []
         query_bits = []

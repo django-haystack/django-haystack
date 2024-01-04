@@ -1,11 +1,10 @@
-# encoding: utf-8
 import logging
 import multiprocessing
 import os
 import time
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections, reset_queries
 from django.utils.encoding import force_str, smart_bytes
 from django.utils.timezone import now
@@ -27,9 +26,18 @@ def update_worker(args):
         LOG.error("update_worker received incorrect arguments: %r", args)
         raise ValueError("update_worker received incorrect arguments")
 
-    model, start, end, total, using, start_date, end_date, verbosity, commit, max_retries = (
-        args
-    )
+    (
+        model,
+        start,
+        end,
+        total,
+        using,
+        start_date,
+        end_date,
+        verbosity,
+        commit,
+        max_retries,
+    ) = args
 
     # FIXME: confirm that this is still relevant with modern versions of Django:
     # We need to reset the connections, otherwise the different processes
@@ -73,7 +81,6 @@ def do_update(
     max_retries=DEFAULT_MAX_RETRIES,
     last_max_pk=None,
 ):
-
     # Get a clone of the QuerySet so that the cache doesn't bloat up
     # in memory. Useful when reindexing large amounts of data.
     # the query must be ordered by PK in order to get the max PK in each batch
@@ -136,13 +143,13 @@ def do_update(
                 error_msg += " (pid %(pid)s): %(exc)s"
 
             if retries >= max_retries:
-                LOG.error(error_msg, error_context, exc_info=True)
+                LOG.exception(error_msg, error_context)
                 raise
             elif verbosity >= 2:
                 LOG.warning(error_msg, error_context, exc_info=True)
 
             # If going to try again, sleep a bit before
-            time.sleep(2 ** retries)
+            time.sleep(2**retries)
 
     # Clear out the DB connections queries because it bloats up RAM.
     reset_queries()
@@ -150,7 +157,7 @@ def do_update(
 
 
 class Command(BaseCommand):
-    help = "Freshens the index for the given app(s)."
+    help = "Freshens the index for the given app(s)."  # noqa A003
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -256,7 +263,9 @@ class Command(BaseCommand):
             LOG.setLevel(logging.INFO)
 
         if (minutes and age) or (minutes and start_date) or (age and start_date):
-            parser.error("Minutes / age / start date options are mutually exclusive")
+            raise CommandError(
+                "Minutes / age / start date options are mutually exclusive"
+            )
 
         if minutes is not None:
             self.start_date = now() - timedelta(minutes=minutes)
@@ -285,7 +294,7 @@ class Command(BaseCommand):
             for using in self.backends:
                 try:
                     self.update_backend(label, using)
-                except:
+                except Exception:
                     LOG.exception("Error updating %s using %s ", label, using)
                     raise
 
@@ -379,11 +388,11 @@ class Command(BaseCommand):
                     # They're using a reduced set, which may not incorporate
                     # all pks. Rebuild the list with everything.
                     qs = index.index_queryset(using=using).values_list("pk", flat=True)
-                    database_pks = set(smart_bytes(pk) for pk in qs)
+                    database_pks = {smart_bytes(pk) for pk in qs}
                 else:
-                    database_pks = set(
+                    database_pks = {
                         smart_bytes(pk) for pk in qs.values_list("pk", flat=True)
-                    )
+                    }
 
                 # Since records may still be in the search index but not the local database
                 # we'll use that to create batches for processing.

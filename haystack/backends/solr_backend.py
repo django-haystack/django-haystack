@@ -1,4 +1,3 @@
-# encoding: utf-8
 import warnings
 
 from django.conf import settings
@@ -57,7 +56,7 @@ class SolrSearchBackend(BaseSearchBackend):
     )
 
     def __init__(self, connection_alias, **connection_options):
-        super(SolrSearchBackend, self).__init__(connection_alias, **connection_options)
+        super().__init__(connection_alias, **connection_options)
 
         if "URL" not in connection_options:
             raise ImproperlyConfigured(
@@ -66,6 +65,9 @@ class SolrSearchBackend(BaseSearchBackend):
             )
 
         self.collate = connection_options.get("COLLATE_SPELLING", True)
+
+        # Support to `date_facet` on Solr >= 6.6. Olders set `date`
+        self.date_facet_field = connection_options.get("DATE_FACET_FIELD", "range")
 
         self.conn = Solr(
             connection_options["URL"],
@@ -89,20 +91,19 @@ class SolrSearchBackend(BaseSearchBackend):
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(
+                self.log.exception(
                     "UnicodeDecodeError while preparing object for update",
-                    exc_info=True,
                     extra={"data": {"index": index, "object": get_identifier(obj)}},
                 )
 
         if len(docs) > 0:
             try:
                 self.conn.add(docs, commit=commit, boost=index.get_field_weights())
-            except (IOError, SolrError) as e:
+            except (IOError, SolrError):
                 if not self.silently_fail:
                     raise
 
-                self.log.error("Failed to add documents to Solr: %s", e, exc_info=True)
+                self.log.exception("Failed to add documents to Solr")
 
     def remove(self, obj_or_string, commit=True):
         solr_id = get_identifier(obj_or_string)
@@ -110,15 +111,13 @@ class SolrSearchBackend(BaseSearchBackend):
         try:
             kwargs = {"commit": commit, "id": solr_id}
             self.conn.delete(**kwargs)
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to remove document '%s' from Solr: %s",
+            self.log.exception(
+                "Failed to remove document '%s' from Solr",
                 solr_id,
-                e,
-                exc_info=True,
             )
 
     def clear(self, models=None, commit=True):
@@ -140,19 +139,17 @@ class SolrSearchBackend(BaseSearchBackend):
             if commit:
                 # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
                 self.conn.optimize()
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Solr index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Solr index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error("Failed to clear Solr index: %s", e, exc_info=True)
+                self.log.exception("Failed to clear Solr index")
 
     @log_query
     def search(self, query_string, **kwargs):
@@ -163,13 +160,11 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.search(query_string, **search_kwargs)
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to query Solr using '%s': %s", query_string, e, exc_info=True
-            )
+            self.log.exception("Failed to query Solr using '%s'", query_string)
             raw_results = EmptyResults()
 
         return self._process_results(
@@ -202,7 +197,6 @@ class SolrSearchBackend(BaseSearchBackend):
         collate=None,
         **extra_kwargs
     ):
-
         index = haystack.connections[self.connection_alias].get_unified_index()
 
         kwargs = {"fl": "* score", "df": index.document_field}
@@ -279,23 +273,25 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if date_facets is not None:
             kwargs["facet"] = "on"
-            kwargs["facet.date"] = date_facets.keys()
-            kwargs["facet.date.other"] = "none"
+            kwargs["facet.%s" % self.date_facet_field] = date_facets.keys()
+            kwargs["facet.%s.other" % self.date_facet_field] = "none"
 
             for key, value in date_facets.items():
-                kwargs["f.%s.facet.date.start" % key] = self.conn._from_python(
-                    value.get("start_date")
-                )
-                kwargs["f.%s.facet.date.end" % key] = self.conn._from_python(
-                    value.get("end_date")
-                )
+                kwargs[
+                    "f.%s.facet.%s.start" % (key, self.date_facet_field)
+                ] = self.conn._from_python(value.get("start_date"))
+                kwargs[
+                    "f.%s.facet.%s.end" % (key, self.date_facet_field)
+                ] = self.conn._from_python(value.get("end_date"))
                 gap_by_string = value.get("gap_by").upper()
                 gap_string = "%d%s" % (value.get("gap_amount"), gap_by_string)
 
                 if value.get("gap_amount") != 1:
                     gap_string += "S"
 
-                kwargs["f.%s.facet.date.gap" % key] = "+%s/%s" % (
+                kwargs[
+                    "f.%s.facet.%s.gap" % (key, self.date_facet_field)
+                ] = "+%s/%s" % (
                     gap_string,
                     gap_by_string,
                 )
@@ -446,15 +442,12 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             raw_results = self.conn.more_like_this(query, field_name, **params)
-        except (IOError, SolrError) as e:
+        except (IOError, SolrError):
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to fetch More Like This from Solr for document '%s': %s",
-                query,
-                e,
-                exc_info=True,
+            self.log.exception(
+                "Failed to fetch More Like This from Solr for document '%s'", query
             )
             raw_results = EmptyResults()
 
@@ -482,6 +475,7 @@ class SolrSearchBackend(BaseSearchBackend):
                 "fields": raw_results.facets.get("facet_fields", {}),
                 "dates": raw_results.facets.get("facet_dates", {}),
                 "queries": raw_results.facets.get("facet_queries", {}),
+                "ranges": raw_results.facets.get("facet_ranges", {}),
             }
 
             for key in ["fields"]:
@@ -495,14 +489,23 @@ class SolrSearchBackend(BaseSearchBackend):
                         )
                     )
 
+            for key in ["ranges"]:
+                for facet_field in facets[key]:
+                    # Convert to a two-tuple, as Solr's json format returns a list of
+                    # pairs.
+                    facets[key][facet_field] = list(
+                        zip(
+                            facets[key][facet_field]["counts"][::2],
+                            facets[key][facet_field]["counts"][1::2],
+                        )
+                    )
+
         if self.include_spelling and hasattr(raw_results, "spellcheck"):
             try:
                 spelling_suggestions = self.extract_spelling_suggestions(raw_results)
-            except Exception as exc:
-                self.log.error(
+            except Exception:
+                self.log.exception(
                     "Error extracting spelling suggestions: %s",
-                    exc,
-                    exc_info=True,
                     extra={"data": {"spellcheck": raw_results.spellcheck}},
                 )
 
@@ -544,9 +547,9 @@ class SolrSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self.conn._to_python(value)
 
-                del (additional_fields[DJANGO_CT])
-                del (additional_fields[DJANGO_ID])
-                del (additional_fields["score"])
+                del additional_fields[DJANGO_CT]
+                del additional_fields[DJANGO_ID]
+                del additional_fields["score"]
 
                 if raw_result[ID] in getattr(raw_results, "highlighting", {}):
                     additional_fields["highlighted"] = raw_results.highlighting[
@@ -630,9 +633,7 @@ class SolrSearchBackend(BaseSearchBackend):
                             spelling_suggestions.append(j["word"])
                         else:
                             spelling_suggestions.append(j)
-            elif isinstance(suggestions[0], str) and isinstance(
-                suggestions[1], dict
-            ):
+            elif isinstance(suggestions[0], str) and isinstance(suggestions[1], dict):
                 # Solr 6.4 uses a list of paired (word, dictionary) pairs:
                 for suggestion in suggestions:
                     if isinstance(suggestion, dict):
@@ -651,7 +652,7 @@ class SolrSearchBackend(BaseSearchBackend):
         content_field_name = ""
         schema_fields = []
 
-        for field_name, field_class in fields.items():
+        for _, field_class in fields.items():
             field_data = {
                 "field_name": field_class.index_fieldname,
                 "type": "text_en",
@@ -733,11 +734,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
         try:
             return self.conn.extract(file_obj, **kwargs)
-        except Exception as e:
+        except Exception:
             self.log.warning(
-                "Unable to extract file contents: %s",
-                e,
-                exc_info=True,
+                "Unable to extract file contents",
                 extra={"data": {"file": file_obj}},
             )
             return None
@@ -805,7 +804,7 @@ class SolrSearchQuery(BaseSearchQuery):
                 if value.input_type_name == "exact":
                     query_frag = prepared_value
                 else:
-                    # Iterate over terms & incorportate the converted form of each into the query.
+                    # Iterate over terms & incorporate the converted form of each into the query.
                     terms = []
 
                     for possible_value in prepared_value.split(" "):

@@ -1,9 +1,8 @@
-# encoding: utf-8
+import django
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from pkg_resources import DistributionNotFound, get_distribution, parse_version
 
-from haystack import signals
 from haystack.constants import DEFAULT_ALIAS
 from haystack.utils import loading
 
@@ -17,7 +16,10 @@ except DistributionNotFound:
     __version__ = "0.0.dev0"
     version_info = parse_version(__version__)
 
-default_app_config = "haystack.apps.HaystackConfig"
+
+if django.VERSION < (3, 2):
+    # default_app_config is deprecated since django 3.2.
+    default_app_config = "haystack.apps.HaystackConfig"
 
 
 # Help people clean up from 1.X.

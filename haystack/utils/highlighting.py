@@ -1,8 +1,7 @@
-# encoding: utf-8
 from django.utils.html import strip_tags
 
 
-class Highlighter(object):
+class Highlighter:
     css_class = "highlighted"
     html_tag = "span"
     max_length = 200
@@ -20,9 +19,9 @@ class Highlighter(object):
         if "css_class" in kwargs:
             self.css_class = kwargs["css_class"]
 
-        self.query_words = set(
-            [word.lower() for word in self.query.split() if not word.startswith("-")]
-        )
+        self.query_words = {
+            word.lower() for word in self.query.split() if not word.startswith("-")
+        }
 
     def highlight(self, text_block):
         self.text_block = strip_tags(text_block)
@@ -68,7 +67,7 @@ class Highlighter(object):
         words_found = []
 
         # Next, make sure we found any words at all.
-        for word, offset_list in highlight_locations.items():
+        for _, offset_list in highlight_locations.items():
             if len(offset_list):
                 # Add all of the locations to the list.
                 words_found.extend(offset_list)

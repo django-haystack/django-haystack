@@ -84,7 +84,7 @@ Haystack ships with a ``DefaultRouter`` enabled. It looks like::
     class DefaultRouter(BaseRouter):
         def for_read(self, **hints):
             return DEFAULT_ALIAS
-        
+
         def for_write(self, **hints):
             return DEFAULT_ALIAS
 
@@ -118,20 +118,20 @@ Master-Slave Example
 The ``MasterRouter`` & ``SlaveRouter`` might look like::
 
     from haystack import routers
-    
-    
+
+
     class MasterRouter(routers.BaseRouter):
         def for_write(self, **hints):
             return 'master'
-        
+
         def for_read(self, **hints):
             return None
-    
-    
+
+
     class SlaveRouter(routers.BaseRouter):
         def for_write(self, **hints):
             return None
-        
+
         def for_read(self, **hints):
             return 'slave'
 
@@ -139,12 +139,12 @@ The observant might notice that since the methods don't overlap, this could be
 combined into one ``Router`` like so::
 
     from haystack import routers
-    
-    
+
+
     class MasterSlaveRouter(routers.BaseRouter):
         def for_write(self, **hints):
             return 'master'
-        
+
         def for_read(self, **hints):
             return 'slave'
 
@@ -160,13 +160,13 @@ For this, the ``SearchQuerySet`` class allows for manually selecting the index
 via the ``SearchQuerySet.using`` method::
 
     from haystack.query import SearchQuerySet
-    
+
     # Uses the routers' opinion.
     sqs = SearchQuerySet().auto_query('banana')
-    
+
     # Forces the default.
     sqs = SearchQuerySet().using('default').auto_query('banana')
-    
+
     # Forces the slave connection (presuming it was setup).
     sqs = SearchQuerySet().using('slave').auto_query('banana')
 

@@ -1,7 +1,5 @@
-# encoding: utf-8
 from django.test import TestCase
 from django.test.utils import override_settings
-from test_haystack.core.models import MockModel
 
 from haystack.utils import (
     _lookup_identifier_method,
@@ -10,6 +8,7 @@ from haystack.utils import (
     log,
 )
 from haystack.utils.highlighting import Highlighter
+from test_haystack.core.models import MockModel
 
 
 class GetIdentifierTestCase(TestCase):
@@ -42,7 +41,7 @@ class GetFacetFieldNameTestCase(TestCase):
 
         # … but it also supports a custom override mechanism which would
         # definitely fail with the default implementation:
-        class custom_id_class(object):
+        class custom_id_class:
             def get_custom_haystack_id(self):
                 return "CUSTOM"
 
@@ -61,7 +60,7 @@ class GetFacetFieldNameTestCase(TestCase):
 
 class HighlighterTestCase(TestCase):
     def setUp(self):
-        super(HighlighterTestCase, self).setUp()
+        super().setUp()
         self.document_1 = "This is a test of the highlightable words detection. This is only a test. Were this an actual emergency, your text would have exploded in mid-air."
         self.document_2 = (
             "The content of words in no particular order causes nothing to occur."
@@ -325,7 +324,7 @@ class LoggingFacadeTestCase(TestCase):
                 pass
 
     def test_uses_provided_logger_by_default(self):
-        class Logger(object):
+        class Logger:
             def __init__(self):
                 self.was_called = False
 

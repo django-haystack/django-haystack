@@ -61,7 +61,7 @@ You'll also need to install the ``pysolr`` client library from PyPI::
 More Like This
 --------------
 
-On Solr 6.X+ "More Like This" functionality is enabled by default. To enable 
+On Solr 6.X+ "More Like This" functionality is enabled by default. To enable
 the "More Like This" functionality on earlier versions of Solr, you'll need
 to enable the ``MoreLikeThisHandler``. Add the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
@@ -85,7 +85,7 @@ Something like the following is suggested::
         suggestions = indexes.FacetCharField()
 
         def prepare(self, obj):
-            prepared_data = super(MySearchIndex, self).prepare(obj)
+            prepared_data = super().prepare(obj)
             prepared_data['suggestions'] = prepared_data['text']
             return prepared_data
 
@@ -93,7 +93,7 @@ Then, you enable it in Solr by adding the following line to your
 ``solrconfig.xml`` file within the ``config`` tag::
 
     <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
-    
+
       <str name="queryAnalyzerFieldType">text_general</str>
       <lst name="spellchecker">
         <str name="name">default</str>
@@ -117,14 +117,14 @@ Then change your default handler from::
         <int name="rows">10</int>
       </lst>
     </requestHandler>
-    
+
 ... to ...::
 
     <requestHandler name="/select" class="solr.SearchHandler">
       <lst name="defaults">
         <str name="echoParams">explicit</str>
         <int name="rows">10</int>
-      
+
         <str name="spellcheck.dictionary">default</str>
         <str name="spellcheck">on</str>
         <str name="spellcheck.extendedResults">true</str>
@@ -153,7 +153,7 @@ Elasticsearch is similar to Solr — another Java application using Lucene — b
 focused on ease of deployment and clustering. See
 https://www.elastic.co/products/elasticsearch for more information.
 
-Haystack currently supports Elasticsearch 1.x, 2.x, and 5.x.
+Haystack currently supports Elasticsearch 1.x, 2.x, 5.x, and 7.x.
 
 Follow the instructions on https://www.elastic.co/downloads/elasticsearch to
 download and install Elasticsearch and configure it for your environment.
@@ -161,7 +161,7 @@ download and install Elasticsearch and configure it for your environment.
 You'll also need to install the Elasticsearch binding: elasticsearch_ for the
 appropriate backend version — for example::
 
-    $ pip install "elasticsearch>=5,<6"
+    $ pip install "elasticsearch>=7,<8"
 
 .. _elasticsearch: https://pypi.python.org/pypi/elasticsearch/
 

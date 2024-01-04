@@ -7,7 +7,7 @@ Elasticsearch_, Whoosh_, Xapian_, etc.) without having to modify your code.
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _Elasticsearch: http://elasticsearch.org/
-.. _Whoosh: https://bitbucket.org/mchaput/whoosh/
+.. _Whoosh: https://github.com/mchaput/whoosh/
 .. _Xapian: http://xapian.org/
 
 
@@ -43,7 +43,6 @@ you up and running:
    glossary
    management_commands
    faq
-   who_uses
    other_apps
    installing_search_engines
    debugging

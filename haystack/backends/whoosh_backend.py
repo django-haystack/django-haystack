@@ -1,4 +1,3 @@
-# encoding: utf-8
 import json
 import os
 import re
@@ -8,7 +7,7 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.datetime_safe import datetime
+from django.utils.datetime_safe import date, datetime
 from django.utils.encoding import force_str
 
 from haystack.backends import (
@@ -46,28 +45,20 @@ if not hasattr(whoosh, "__version__") or whoosh.__version__ < (2, 5, 0):
 # Bubble up the correct error.
 from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
+from whoosh.fields import BOOLEAN, DATETIME
 from whoosh.fields import ID as WHOOSH_ID
-from whoosh.fields import (
-    BOOLEAN,
-    DATETIME,
-    IDLIST,
-    KEYWORD,
-    NGRAM,
-    NGRAMWORDS,
-    NUMERIC,
-    Schema,
-    TEXT,
-)
+from whoosh.fields import IDLIST, KEYWORD, NGRAM, NGRAMWORDS, NUMERIC, TEXT, Schema
 from whoosh.filedb.filestore import FileStorage, RamStorage
-from whoosh.highlight import highlight as whoosh_highlight
 from whoosh.highlight import ContextFragmenter, HtmlFormatter
-from whoosh.qparser import QueryParser, FuzzyTermPlugin
+from whoosh.highlight import highlight as whoosh_highlight
+from whoosh.qparser import FuzzyTermPlugin, QueryParser
 from whoosh.searching import ResultsPage
+from whoosh.sorting import Count, DateRangeFacet, FieldFacet
+from whoosh.support.relativedelta import relativedelta as RelativeDelta
 from whoosh.writing import AsyncWriter
 
-
 DATETIME_REGEX = re.compile(
-    "^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
+    r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.\d{3,6}Z?)?$"
 )
 LOCALS = threading.local()
 LOCALS.RAM_STORE = None
@@ -112,9 +103,7 @@ class WhooshSearchBackend(BaseSearchBackend):
     )
 
     def __init__(self, connection_alias, **connection_options):
-        super(WhooshSearchBackend, self).__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
         self.setup_complete = False
         self.use_file_storage = True
         self.post_limit = getattr(connection_options, "POST_LIMIT", 128 * 1024 * 1024)
@@ -141,7 +130,13 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         # Make sure the index is there.
         if self.use_file_storage and not os.path.exists(self.path):
-            os.makedirs(self.path)
+            try:
+                os.makedirs(self.path)
+            except Exception:
+                raise IOError(
+                    "The directory of your Whoosh index '%s' (cwd='%s') cannot be created for the current user/group."
+                    % (self.path, os.getcwd())
+                )
             new_index = True
 
         if self.use_file_storage and not os.access(self.path, os.W_OK):
@@ -187,7 +182,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         initial_key_count = len(schema_fields)
         content_field_name = ""
 
-        for field_name, field_class in fields.items():
+        for _, field_class in fields.items():
             if field_class.is_multivalued:
                 if field_class.indexed is False:
                     schema_fields[field_class.index_fieldname] = IDLIST(
@@ -239,7 +234,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             else:
                 schema_fields[field_class.index_fieldname] = TEXT(
                     stored=True,
-                    analyzer=StemmingAnalyzer(),
+                    analyzer=field_class.analyzer or StemmingAnalyzer(),
                     field_boost=field_class.boost,
                     sortable=True,
                 )
@@ -281,22 +276,23 @@ class WhooshSearchBackend(BaseSearchBackend):
 
                 try:
                     writer.update_document(**doc)
-                except Exception as e:
+                except Exception:
                     if not self.silently_fail:
                         raise
 
                     # We'll log the object identifier but won't include the actual object
                     # to avoid the possibility of that generating encoding errors while
                     # processing the log message:
-                    self.log.error(
-                        "%s while preparing object for update" % e.__class__.__name__,
-                        exc_info=True,
+                    self.log.exception(
+                        "Preparing object for update",
                         extra={"data": {"index": index, "object": get_identifier(obj)}},
                     )
 
         if len(iterable) > 0:
             # For now, commit no matter what, as we run into locking issues otherwise.
             writer.commit()
+            if writer.ident is not None:
+                writer.join()
 
     def remove(self, obj_or_string, commit=True):
         if not self.setup_complete:
@@ -307,15 +303,13 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         try:
             self.index.delete_by_query(q=self.parser.parse('%s:"%s"' % (ID, whoosh_id)))
-        except Exception as e:
+        except Exception:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to remove document '%s' from Whoosh: %s",
+            self.log.exception(
+                "Failed to remove document '%s' from Whoosh",
                 whoosh_id,
-                e,
-                exc_info=True,
             )
 
     def clear(self, models=None, commit=True):
@@ -339,19 +333,17 @@ class WhooshSearchBackend(BaseSearchBackend):
                 self.index.delete_by_query(
                     q=self.parser.parse(" OR ".join(models_to_delete))
                 )
-        except Exception as e:
+        except Exception:
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Whoosh index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Whoosh index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error("Failed to clear Whoosh index: %s", e, exc_info=True)
+                self.log.exception("Failed to clear Whoosh index")
 
     def delete_index(self):
         # Per the Whoosh mailing list, if wiping out everything from the index,
@@ -464,13 +456,31 @@ class WhooshSearchBackend(BaseSearchBackend):
 
             sort_by = sort_by_list
 
+        group_by = []
+        facet_types = {}
         if facets is not None:
-            warnings.warn("Whoosh does not handle faceting.", Warning, stacklevel=2)
+            group_by += [
+                FieldFacet(facet, allow_overlap=True, maptype=Count) for facet in facets
+            ]
+            facet_types.update({facet: "fields" for facet in facets})
 
         if date_facets is not None:
-            warnings.warn(
-                "Whoosh does not handle date faceting.", Warning, stacklevel=2
-            )
+
+            def _fixup_datetime(dt):
+                if isinstance(dt, datetime):
+                    return dt
+                if isinstance(dt, date):
+                    return datetime(dt.year, dt.month, dt.day)
+                raise ValueError
+
+            for key, value in date_facets.items():
+                start = _fixup_datetime(value["start_date"])
+                end = _fixup_datetime(value["end_date"])
+                gap_by = value["gap_by"]
+                gap_amount = value.get("gap_amount", 1)
+                gap = RelativeDelta(**{"%ss" % gap_by: gap_amount})
+                group_by.append(DateRangeFacet(key, start, end, gap, maptype=Count))
+                facet_types[key] = "dates"
 
         if query_facets is not None:
             warnings.warn(
@@ -516,7 +526,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 if len(recent_narrowed_results) <= 0:
                     return {"results": [], "hits": 0}
 
-                if narrowed_results:
+                if narrowed_results is not None:
                     narrowed_results.filter(recent_narrowed_results)
                 else:
                     narrowed_results = recent_narrowed_results
@@ -537,6 +547,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 "pagelen": page_length,
                 "sortedby": sort_by,
                 "reverse": reverse,
+                "groupedby": group_by,
             }
 
             # Handle the case where the results have been narrowed.
@@ -562,6 +573,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 query_string=query_string,
                 spelling_query=spelling_query,
                 result_class=result_class,
+                facet_types=facet_types,
             )
             searcher.close()
 
@@ -698,6 +710,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         query_string="",
         spelling_query=None,
         result_class=None,
+        facet_types=None,
     ):
         from haystack import connections
 
@@ -710,10 +723,39 @@ class WhooshSearchBackend(BaseSearchBackend):
         if result_class is None:
             result_class = SearchResult
 
-        facets = {}
         spelling_suggestion = None
         unified_index = connections[self.connection_alias].get_unified_index()
         indexed_models = unified_index.get_indexed_models()
+
+        facets = {}
+
+        if facet_types:
+            facets = {
+                "fields": {},
+                "dates": {},
+                "queries": {},
+            }
+            for facet_fieldname in raw_page.results.facet_names():
+                group = raw_page.results.groups(facet_fieldname)
+                facet_type = facet_types[facet_fieldname]
+
+                # Extract None item for later processing, if present.
+                none_item = group.pop(None, None)
+
+                lst = facets[facet_type][facet_fieldname] = sorted(
+                    group.items(), key=(lambda itm: (-itm[1], itm[0]))
+                )
+
+                if none_item is not None:
+                    # Inject None item back into the results.
+                    none_entry = (None, none_item)
+                    if not lst or lst[-1][1] >= none_item:
+                        lst.append(none_entry)
+                    else:
+                        for i, value in enumerate(lst):
+                            if value[1] < none_item:
+                                lst.insert(i, none_entry)
+                                break
 
         for doc_offset, raw_result in enumerate(raw_page):
             score = raw_page.score(doc_offset) or 0
@@ -731,7 +773,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     ):
                         # Special-cased due to the nature of KEYWORD fields.
                         if index.fields[string_key].is_multivalued:
-                            if value is None or len(value) is 0:
+                            if value is None or len(value) == 0:
                                 additional_fields[string_key] = []
                             else:
                                 additional_fields[string_key] = value.split(",")
@@ -742,8 +784,8 @@ class WhooshSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self._to_python(value)
 
-                del (additional_fields[DJANGO_CT])
-                del (additional_fields[DJANGO_ID])
+                del additional_fields[DJANGO_CT]
+                del additional_fields[DJANGO_ID]
 
                 if highlight:
                     sa = StemmingAnalyzer()
@@ -876,7 +918,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 (list, tuple, set, dict, int, float, complex),
             ):
                 return converted_value
-        except:
+        except Exception:
             # If it fails (SyntaxError or its ilk) or we don't trust it,
             # continue on.
             pass
@@ -978,7 +1020,7 @@ class WhooshSearchQuery(BaseSearchQuery):
                 if value.input_type_name == "exact":
                     query_frag = prepared_value
                 else:
-                    # Iterate over terms & incorportate the converted form of each into the query.
+                    # Iterate over terms & incorporate the converted form of each into the query.
                     terms = []
 
                     if isinstance(prepared_value, str):
@@ -990,23 +1032,19 @@ class WhooshSearchQuery(BaseSearchQuery):
                         possible_values = [prepared_value]
 
                     for possible_value in possible_values:
-                        possible_value_str = self.backend._from_python(
-                            possible_value
-                        )
+                        possible_value_str = self.backend._from_python(possible_value)
                         if filter_type == "fuzzy":
                             terms.append(
-                                filter_types[filter_type] % (
+                                filter_types[filter_type]
+                                % (
                                     possible_value_str,
                                     min(
-                                        FUZZY_WHOOSH_MIN_PREFIX,
-                                        len(possible_value_str)
-                                    )
+                                        FUZZY_WHOOSH_MIN_PREFIX, len(possible_value_str)
+                                    ),
                                 )
                             )
                         else:
-                            terms.append(
-                                filter_types[filter_type] % possible_value_str
-                            )
+                            terms.append(filter_types[filter_type] % possible_value_str)
 
                     if len(terms) == 1:
                         query_frag = terms[0]

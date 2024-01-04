@@ -1,4 +1,3 @@
-# encoding: utf-8
 import re
 import warnings
 from datetime import datetime, timedelta
@@ -9,6 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 import haystack
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
 from haystack.constants import (
+    ALL_FIELD,
     DEFAULT_OPERATOR,
     DJANGO_CT,
     DJANGO_ID,
@@ -25,6 +25,12 @@ from haystack.utils.app_loading import haystack_get_model
 
 try:
     import elasticsearch
+
+    if (1, 0, 0) <= elasticsearch.__version__ < (2, 0, 0):
+        warnings.warn(
+            "ElasticSearch 1.x support deprecated, will be removed in 4.0",
+            DeprecationWarning,
+        )
 
     try:
         # let's try this, for elasticsearch > 1.7.0
@@ -115,9 +121,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
     }
 
     def __init__(self, connection_alias, **connection_options):
-        super(ElasticsearchSearchBackend, self).__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
 
         if "URL" not in connection_options:
             raise ImproperlyConfigured(
@@ -134,12 +138,20 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.conn = elasticsearch.Elasticsearch(
             connection_options["URL"],
             timeout=self.timeout,
-            **connection_options.get("KWARGS", {})
+            **connection_options.get("KWARGS", {}),
         )
         self.index_name = connection_options["INDEX_NAME"]
         self.log = logging.getLogger("haystack")
         self.setup_complete = False
         self.existing_mapping = {}
+
+    def _get_doc_type_option(self):
+        return {
+            "doc_type": "modelresult",
+        }
+
+    def _get_current_mapping(self, field_mapping):
+        return {"modelresult": {"properties": field_mapping}}
 
     def setup(self):
         """
@@ -160,7 +172,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         self.content_field_name, field_mapping = self.build_schema(
             unified_index.all_searchfields()
         )
-        current_mapping = {"modelresult": {"properties": field_mapping}}
+        current_mapping = self._get_current_mapping(field_mapping)
 
         if current_mapping != self.existing_mapping:
             try:
@@ -169,7 +181,9 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     index=self.index_name, body=self.DEFAULT_SETTINGS, ignore=400
                 )
                 self.conn.indices.put_mapping(
-                    index=self.index_name, doc_type="modelresult", body=current_mapping
+                    index=self.index_name,
+                    body=current_mapping,
+                    **self._get_doc_type_option(),
                 )
                 self.existing_mapping = current_mapping
             except Exception:
@@ -178,24 +192,25 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
 
         self.setup_complete = True
 
+    def _prepare_object(self, index, obj):
+        return index.full_prepare(obj)
+
     def update(self, index, iterable, commit=True):
         if not self.setup_complete:
             try:
                 self.setup()
-            except elasticsearch.TransportError as e:
+            except elasticsearch.TransportError:
                 if not self.silently_fail:
                     raise
 
-                self.log.error(
-                    "Failed to add documents to Elasticsearch: %s", e, exc_info=True
-                )
+                self.log.exception("Failed to add documents to Elasticsearch")
                 return
 
         prepped_docs = []
 
         for obj in iterable:
             try:
-                prepped_data = index.full_prepare(obj)
+                prepped_data = self._prepare_object(index, obj)
                 final_data = {}
 
                 # Convert the data to make sure it's happy.
@@ -206,20 +221,24 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 prepped_docs.append(final_data)
             except SkipDocument:
                 self.log.debug("Indexing for object `%s` skipped", obj)
-            except elasticsearch.TransportError as e:
+            except elasticsearch.TransportError:
                 if not self.silently_fail:
                     raise
 
                 # We'll log the object identifier but won't include the actual object
                 # to avoid the possibility of that generating encoding errors while
                 # processing the log message:
-                self.log.error(
-                    "%s while preparing object for update" % e.__class__.__name__,
-                    exc_info=True,
+                self.log.exception(
+                    "Preparing object for update",
                     extra={"data": {"index": index, "object": get_identifier(obj)}},
                 )
 
-        bulk(self.conn, prepped_docs, index=self.index_name, doc_type="modelresult")
+        bulk(
+            self.conn,
+            prepped_docs,
+            index=self.index_name,
+            **self._get_doc_type_option(),
+        )
 
         if commit:
             self.conn.indices.refresh(index=self.index_name)
@@ -230,34 +249,33 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             try:
                 self.setup()
-            except elasticsearch.TransportError as e:
+            except elasticsearch.TransportError:
                 if not self.silently_fail:
                     raise
 
-                self.log.error(
-                    "Failed to remove document '%s' from Elasticsearch: %s",
+                self.log.exception(
+                    "Failed to remove document '%s' from Elasticsearch",
                     doc_id,
-                    e,
-                    exc_info=True,
                 )
                 return
 
         try:
             self.conn.delete(
-                index=self.index_name, doc_type="modelresult", id=doc_id, ignore=404
+                index=self.index_name,
+                id=doc_id,
+                ignore=404,
+                **self._get_doc_type_option(),
             )
 
             if commit:
                 self.conn.indices.refresh(index=self.index_name)
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to remove document '%s' from Elasticsearch: %s",
+            self.log.exception(
+                "Failed to remove document '%s' from Elasticsearch",
                 doc_id,
-                e,
-                exc_info=True,
             )
 
     def clear(self, models=None, commit=True):
@@ -280,29 +298,27 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 for model in models:
                     models_to_delete.append("%s:%s" % (DJANGO_CT, get_model_ct(model)))
 
-                # Delete by query in Elasticsearch asssumes you're dealing with
+                # Delete by query in Elasticsearch assumes you're dealing with
                 # a ``query`` root object. :/
                 query = {
                     "query": {"query_string": {"query": " OR ".join(models_to_delete)}}
                 }
                 self.conn.delete_by_query(
-                    index=self.index_name, doc_type="modelresult", body=query
+                    index=self.index_name,
+                    body=query,
+                    **self._get_doc_type_option(),
                 )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Elasticsearch index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Elasticsearch index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error(
-                    "Failed to clear Elasticsearch index: %s", e, exc_info=True
-                )
+                self.log.exception("Failed to clear Elasticsearch index")
 
     def build_search_kwargs(
         self,
@@ -402,7 +418,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     "text": spelling_query or query_string,
                     "term": {
                         # Using content_field here will result in suggestions of stemmed words.
-                        "field": "_all"
+                        "field": ALL_FIELD,
                     },
                 }
             }
@@ -558,18 +574,16 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             raw_results = self.conn.search(
                 body=search_kwargs,
                 index=self.index_name,
-                doc_type="modelresult",
                 _source=True,
+                **self._get_doc_type_option(),
             )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to query Elasticsearch using '%s': %s",
+            self.log.exception(
+                "Failed to query Elasticsearch using '%s'",
                 query_string,
-                e,
-                exc_info=True,
             )
             raw_results = {}
 
@@ -620,24 +634,25 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             raw_results = self.conn.mlt(
                 index=self.index_name,
-                doc_type="modelresult",
                 id=doc_id,
                 mlt_fields=[field_name],
-                **params
+                **self._get_doc_type_option(),
+                **params,
             )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to fetch More Like This from Elasticsearch for document '%s': %s",
+            self.log.exception(
+                "Failed to fetch More Like This from Elasticsearch for document '%s'",
                 doc_id,
-                e,
-                exc_info=True,
             )
             raw_results = {}
 
         return self._process_results(raw_results, result_class=result_class)
+
+    def _process_hits(self, raw_results):
+        return raw_results.get("hits", {}).get("total", 0)
 
     def _process_results(
         self,
@@ -650,7 +665,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         from haystack import connections
 
         results = []
-        hits = raw_results.get("hits", {}).get("total", 0)
+        hits = self._process_hits(raw_results)
         facets = {}
         spelling_suggestion = None
 
@@ -719,8 +734,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     else:
                         additional_fields[string_key] = self._to_python(value)
 
-                del (additional_fields[DJANGO_CT])
-                del (additional_fields[DJANGO_ID])
+                del additional_fields[DJANGO_CT]
+                del additional_fields[DJANGO_ID]
 
                 if "highlight" in raw_result:
                     additional_fields["highlighted"] = raw_result["highlight"].get(
@@ -744,7 +759,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                     model_name,
                     source[DJANGO_ID],
                     raw_result["_score"],
-                    **additional_fields
+                    **additional_fields,
                 )
                 results.append(result)
             else:
@@ -757,9 +772,8 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             "spelling_suggestion": spelling_suggestion,
         }
 
-    def build_schema(self, fields):
-        content_field_name = ""
-        mapping = {
+    def _get_common_mapping(self):
+        return {
             DJANGO_CT: {
                 "type": "string",
                 "index": "not_analyzed",
@@ -772,7 +786,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             },
         }
 
-        for field_name, field_class in fields.items():
+    def build_schema(self, fields):
+        content_field_name = ""
+        mapping = self._get_common_mapping()
+
+        for _, field_class in fields.items():
             field_mapping = FIELD_MAPPINGS.get(
                 field_class.field_type, DEFAULT_FIELD_MAPPING
             ).copy()
@@ -938,7 +956,7 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
                 if value.input_type_name == "exact":
                     query_frag = prepared_value
                 else:
-                    # Iterate over terms & incorportate the converted form of each into the query.
+                    # Iterate over terms & incorporate the converted form of each into the query.
                     terms = []
 
                     if isinstance(prepared_value, str):

@@ -1,6 +1,6 @@
-# encoding: utf-8
 import datetime
 import os
+from io import StringIO
 from tempfile import mkdtemp
 from unittest.mock import patch
 
@@ -15,11 +15,6 @@ from haystack import connections, constants, indexes
 from haystack.utils.loading import UnifiedIndex
 
 from ..core.models import MockModel, MockTag
-
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
 
 class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
@@ -52,7 +47,7 @@ class ManagementCommandTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(ManagementCommandTestCase, self).setUp()
+        super().setUp()
         self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS["solr"]["URL"])
 
         # Stow.
@@ -64,7 +59,7 @@ class ManagementCommandTestCase(TestCase):
 
     def tearDown(self):
         connections["solr"]._index = self.old_ui
-        super(ManagementCommandTestCase, self).tearDown()
+        super().tearDown()
 
     def verify_indexed_documents(self):
         """Confirm that the documents in the search index match the database"""
@@ -149,6 +144,7 @@ class ManagementCommandTestCase(TestCase):
     def test_age_with_time_zones(self):
         """Haystack should use django.utils.timezone.now"""
         from django.utils.timezone import now as django_now
+
         from haystack.management.commands.update_index import now as haystack_now
 
         self.assertIs(
@@ -206,7 +202,6 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search("*:*").hits, 0)
 
     def test_build_schema_wrong_backend(self):
-
         settings.HAYSTACK_CONNECTIONS["whoosh"] = {
             "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
             "PATH": mkdtemp(prefix="dummy-path-"),
@@ -218,7 +213,6 @@ class ManagementCommandTestCase(TestCase):
         )
 
     def test_build_schema(self):
-
         # Stow.
         oldhdf = constants.DOCUMENT_FIELD
         oldui = connections["solr"].get_unified_index()
@@ -227,10 +221,11 @@ class ManagementCommandTestCase(TestCase):
         try:
             needle = "Th3S3cr3tK3y"
             constants.DOCUMENT_FIELD = (
-                needle
-            )  # Force index to use new key for document_fields
+                needle  # Force index to use new key for document_fields
+            )
             settings.HAYSTACK_CONNECTIONS["solr"]["URL"] = (
-                settings.HAYSTACK_CONNECTIONS["solr"]["URL"].rsplit("/", 1)[0] + "/mgmnt"
+                settings.HAYSTACK_CONNECTIONS["solr"]["URL"].rsplit("/", 1)[0]
+                + "/mgmnt"
             )
 
             ui = UnifiedIndex()
@@ -254,13 +249,17 @@ class ManagementCommandTestCase(TestCase):
             contents = rendered_file.getvalue()
             self.assertGreater(contents.find('name="%s' % needle), -1)
 
-            call_command("build_solr_schema", using="solr", configure_directory=conf_dir)
+            call_command(
+                "build_solr_schema", using="solr", configure_directory=conf_dir
+            )
             with open(schema_file) as s:
                 self.assertGreater(s.read().find('name="%s' % needle), -1)
             with open(solrconfig_file) as s:
                 self.assertGreater(s.read().find('name="df">%s' % needle), -1)
 
-            self.assertTrue(os.path.isfile(os.path.join(conf_dir, "managed-schema.old")))
+            self.assertTrue(
+                os.path.isfile(os.path.join(conf_dir, "managed-schema.old"))
+            )
 
             call_command("build_solr_schema", using="solr", reload_core=True)
 
@@ -287,7 +286,7 @@ class AppModelManagementCommandTestCase(TestCase):
     fixtures = ["base_data", "bulk_data.json"]
 
     def setUp(self):
-        super(AppModelManagementCommandTestCase, self).setUp()
+        super().setUp()
         self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS["solr"]["URL"])
 
         # Stow.
@@ -300,7 +299,7 @@ class AppModelManagementCommandTestCase(TestCase):
 
     def tearDown(self):
         connections["solr"]._index = self.old_ui
-        super(AppModelManagementCommandTestCase, self).tearDown()
+        super().tearDown()
 
     def test_app_model_variations(self):
         call_command("clear_index", interactive=False, verbosity=0)

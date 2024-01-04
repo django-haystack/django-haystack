@@ -1,4 +1,3 @@
-# encoding: utf-8
 import copy
 import inspect
 import threading
@@ -88,7 +87,7 @@ def load_router(full_router_path):
     return import_class(full_router_path)
 
 
-class ConnectionHandler(object):
+class ConnectionHandler:
     def __init__(self, connections_info):
         self.connections_info = connections_info
         self.thread_local = threading.local()
@@ -127,11 +126,11 @@ class ConnectionHandler(object):
 
         return self.__getitem__(key)
 
-    def all(self):
+    def all(self):  # noqa A003
         return [self[alias] for alias in self.connections_info]
 
 
-class ConnectionRouter(object):
+class ConnectionRouter:
     def __init__(self):
         self._routers = None
 
@@ -175,7 +174,7 @@ class ConnectionRouter(object):
         return self._for_action("for_read", False, **hints)[0]
 
 
-class UnifiedIndex(object):
+class UnifiedIndex:
     # Used to collect all the indexes into a cohesive whole.
     def __init__(self, excluded_indexes=None):
         self._indexes = {}
@@ -217,10 +216,9 @@ class UnifiedIndex(object):
                     # We've got an index. Check if we should be ignoring it.
                     class_path = "%s.search_indexes.%s" % (app_mod.__name__, item_name)
 
-                    if class_path in self.excluded_indexes or self.excluded_indexes_ids.get(
-                        item_name
-                    ) == id(
-                        item
+                    if (
+                        class_path in self.excluded_indexes
+                        or self.excluded_indexes_ids.get(item_name) == id(item)
                     ):
                         self.excluded_indexes_ids[str(item_name)] = id(item)
                         continue
@@ -340,7 +338,6 @@ class UnifiedIndex(object):
         return self._fieldnames.get(field) or field
 
     def get_index(self, model_klass):
-
         indexes = self.get_indexes()
 
         if model_klass not in indexes:

@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.test.client import RequestFactory
 from django.test.testcases import TestCase
 
@@ -10,7 +9,7 @@ class GenericSearchViewsTestCase(TestCase):
     """Test case for the generic search views."""
 
     def setUp(self):
-        super(GenericSearchViewsTestCase, self).setUp()
+        super().setUp()
         self.query = "haystack"
         self.request = self.get_request(url="/some/random/url?q={0}".format(self.query))
 

@@ -1,4 +1,3 @@
-# encoding: utf-8
 import os
 from tempfile import mkdtemp
 
@@ -102,6 +101,12 @@ if "elasticsearch" in HAYSTACK_CONNECTIONS:
             HAYSTACK_CONNECTIONS["elasticsearch"].update(
                 {
                     "ENGINE": "haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine"
+                }
+            )
+        elif (7,) <= elasticsearch.__version__ <= (8,):
+            HAYSTACK_CONNECTIONS["elasticsearch"].update(
+                {
+                    "ENGINE": "haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine"
                 }
             )
     except ImportError:

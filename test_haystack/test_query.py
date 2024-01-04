@@ -1,15 +1,8 @@
-# -*- coding: utf-8 -*-
 import datetime
-import unittest
+import pickle
 
 from django.test import TestCase
 from django.test.utils import override_settings
-from test_haystack.core.models import (
-    AnotherMockModel,
-    CharPKMockModel,
-    MockModel,
-    UUIDMockModel,
-)
 
 from haystack import connections, indexes, reset_search_queries
 from haystack.backends import SQ, BaseSearchQuery
@@ -22,6 +15,12 @@ from haystack.query import (
     ValuesSearchQuerySet,
 )
 from haystack.utils.loading import UnifiedIndex
+from test_haystack.core.models import (
+    AnotherMockModel,
+    CharPKMockModel,
+    MockModel,
+    UUIDMockModel,
+)
 
 from .mocks import (
     MOCK_SEARCH_RESULTS,
@@ -36,13 +35,6 @@ from .test_indexes import (
     TextReadQuerySetTestSearchIndex,
 )
 from .test_views import BasicAnotherMockModelSearchIndex, BasicMockModelSearchIndex
-
-test_pickling = True
-
-try:
-    import pickle
-except ImportError:
-    test_pickling = False
 
 
 class SQTestCase(TestCase):
@@ -104,7 +96,7 @@ class BaseSearchQueryTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(BaseSearchQueryTestCase, self).setUp()
+        super().setUp()
         self.bsq = BaseSearchQuery()
 
     def test_get_count(self):
@@ -294,7 +286,7 @@ class BaseSearchQueryTestCase(TestCase):
         self.assertTrue(issubclass(self.bsq.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         self.bsq.set_result_class(IttyBittyResult)
@@ -418,7 +410,7 @@ class SearchQuerySetTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
     def setUp(self):
-        super(SearchQuerySetTestCase, self).setUp()
+        super().setUp()
 
         # Stow.
         self.old_unified_index = connections["default"]._index
@@ -442,7 +434,7 @@ class SearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["default"]._index = self.old_unified_index
-        super(SearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_len(self):
         self.assertEqual(len(self.msqs), 23)
@@ -450,7 +442,7 @@ class SearchQuerySetTestCase(TestCase):
     def test_repr(self):
         reset_search_queries()
         self.assertEqual(len(connections["default"].queries), 0)
-        self.assertRegexpMatches(
+        self.assertRegex(
             repr(self.msqs),
             r"^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object"
             r" at 0x[0-9A-Fa-f]+>, using=None>$",
@@ -616,7 +608,7 @@ class SearchQuerySetTestCase(TestCase):
         self.assertTrue(issubclass(sqs.query.result_class, SearchResult))
 
         # Custom class.
-        class IttyBittyResult(object):
+        class IttyBittyResult:
             pass
 
         sqs = self.msqs.result_class(IttyBittyResult)
@@ -975,18 +967,18 @@ class SearchQuerySetTestCase(TestCase):
 class ValuesQuerySetTestCase(SearchQuerySetTestCase):
     def test_values_sqs(self):
         sqs = self.msqs.auto_query("test").values("id")
-        self.assert_(isinstance(sqs, ValuesSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesSearchQuerySet)
 
         # We'll do a basic test to confirm that slicing works as expected:
-        self.assert_(isinstance(sqs[0], dict))
-        self.assert_(isinstance(sqs[0:5][0], dict))
+        self.assertIsInstance(sqs[0], dict)
+        self.assertIsInstance(sqs[0:5][0], dict)
 
     def test_valueslist_sqs(self):
         sqs = self.msqs.auto_query("test").values_list("id")
 
-        self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
-        self.assert_(isinstance(sqs[0], (list, tuple)))
-        self.assert_(isinstance(sqs[0:1][0], (list, tuple)))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
+        self.assertIsInstance(sqs[0], (list, tuple))
+        self.assertIsInstance(sqs[0:1][0], (list, tuple))
 
         self.assertRaises(
             TypeError,
@@ -997,17 +989,17 @@ class ValuesQuerySetTestCase(SearchQuerySetTestCase):
         )
 
         flat_sqs = self.msqs.auto_query("test").values_list("id", flat=True)
-        self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
 
         # Note that this will actually be None because a mocked sqs lacks
         # anything else:
-        self.assert_(flat_sqs[0] is None)
-        self.assert_(flat_sqs[0:1][0] is None)
+        self.assertIsNone(flat_sqs[0])
+        self.assertIsNone(flat_sqs[0:1][0])
 
 
 class EmptySearchQuerySetTestCase(TestCase):
     def setUp(self):
-        super(EmptySearchQuerySetTestCase, self).setUp()
+        super().setUp()
         self.esqs = EmptySearchQuerySet()
 
     def test_get_count(self):
@@ -1044,13 +1036,12 @@ class EmptySearchQuerySetTestCase(TestCase):
         self.assertRaises(TypeError, lambda: self.esqs["count"])
 
 
-@unittest.skipUnless(test_pickling, "Skipping pickling tests")
 @override_settings(DEBUG=True)
 class PickleSearchQuerySetTestCase(TestCase):
     fixtures = ["base_data"]
 
     def setUp(self):
-        super(PickleSearchQuerySetTestCase, self).setUp()
+        super().setUp()
         # Stow.
         self.old_unified_index = connections["default"]._index
         self.ui = UnifiedIndex()
@@ -1072,7 +1063,7 @@ class PickleSearchQuerySetTestCase(TestCase):
     def tearDown(self):
         # Restore.
         connections["default"]._index = self.old_unified_index
-        super(PickleSearchQuerySetTestCase, self).tearDown()
+        super().tearDown()
 
     def test_pickling(self):
         results = self.msqs.all()

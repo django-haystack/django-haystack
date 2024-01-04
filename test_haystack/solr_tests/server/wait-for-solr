@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 """Simple throttle to wait for Solr to start on busy test servers"""
 import sys
 import time
@@ -9,7 +8,7 @@ import requests
 max_retries = 100
 retry_count = 0
 retry_delay = 15
-status_url = 'http://localhost:9001/solr/collection1/admin/ping'
+status_url = "http://localhost:9001/solr/collection1/admin/ping"
 
 
 while retry_count < max_retries:
@@ -21,14 +20,18 @@ while retry_count < max_retries:
         if status_code == 200:
             sys.exit(0)
     except Exception as exc:
-        print('Unhandled exception requesting %s: %s' % (status_url, exc), file=sys.stderr)
+        print(
+            "Unhandled exception requesting %s: %s" % (status_url, exc), file=sys.stderr
+        )
 
     retry_count += 1
 
-    print('Waiting {0} seconds for Solr to start (retry #{1}, status {2})'.format(retry_delay,
-                                                                                  retry_count,
-                                                                                  status_code),
-          file=sys.stderr)
+    print(
+        "Waiting {0} seconds for Solr to start (retry #{1}, status {2})".format(
+            retry_delay, retry_count, status_code
+        ),
+        file=sys.stderr,
+    )
     time.sleep(retry_delay)
 
 

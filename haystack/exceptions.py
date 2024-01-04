@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 class HaystackError(Exception):
     """A generic exception for all others to extend."""
 

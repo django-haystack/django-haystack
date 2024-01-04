@@ -1,11 +1,10 @@
-# encoding: utf-8
 from django.core.management.base import BaseCommand
 
 from haystack import connections
 
 
 class Command(BaseCommand):
-    help = "Clears out the search index completely."
+    help = "Clears out the search index completely."  # noqa A003
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -300,7 +300,7 @@ by a single ``SearchField``. An example might look like::
             return Note
 
         def prepare(self, object):
-            self.prepared_data = super(NoteIndex, self).prepare(object)
+            self.prepared_data = super().prepare(object)
 
             # Add in tags (assuming there's a M2M relationship to Tag on the model).
             # Note that this would NOT get picked up by the automatic
@@ -337,7 +337,7 @@ something like::
     class GeoPointField(indexes.CharField):
         def __init__(self, **kwargs):
             kwargs['default'] = '0.00-0.00'
-            super(GeoPointField, self).__init__(**kwargs)
+            super().__init__(**kwargs)
 
         def prepare(self, obj):
             return "%s-%s" % (obj.latitude, obj.longitude)
@@ -352,7 +352,7 @@ non-existent), merely an example of how to extend existing fields.
 
 .. note::
 
-   This method is analagous to Django's ``Field.clean`` methods.
+   This method is analogous to Django's ``Field.clean`` methods.
 
 
 Adding New Fields

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import warnings
 
@@ -10,7 +9,7 @@ from haystack.backends.elasticsearch_backend import (
     ElasticsearchSearchBackend,
     ElasticsearchSearchQuery,
 )
-from haystack.constants import DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
+from haystack.constants import ALL_FIELD, DEFAULT_OPERATOR, DJANGO_CT, FUZZINESS
 from haystack.exceptions import MissingDependency
 from haystack.utils import get_identifier, get_model_ct
 
@@ -30,9 +29,7 @@ except ImportError:
 
 class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super(Elasticsearch5SearchBackend, self).__init__(
-            connection_alias, **connection_options
-        )
+        super().__init__(connection_alias, **connection_options)
         self.content_field_name = None
 
     def clear(self, models=None, commit=True):
@@ -65,7 +62,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     query=query,
                     index=self.index_name,
-                    doc_type="modelresult",
+                    **self._get_doc_type_option(),
                 )
                 actions = (
                     {"_op_type": "delete", "_id": doc["_id"]} for doc in generator
@@ -74,25 +71,21 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     self.conn,
                     actions=actions,
                     index=self.index_name,
-                    doc_type="modelresult",
+                    **self._get_doc_type_option(),
                 )
                 self.conn.indices.refresh(index=self.index_name)
 
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
             if models is not None:
-                self.log.error(
-                    "Failed to clear Elasticsearch index of models '%s': %s",
+                self.log.exception(
+                    "Failed to clear Elasticsearch index of models '%s'",
                     ",".join(models_to_delete),
-                    e,
-                    exc_info=True,
                 )
             else:
-                self.log.error(
-                    "Failed to clear Elasticsearch index: %s", e, exc_info=True
-                )
+                self.log.exception("Failed to clear Elasticsearch index")
 
     def build_search_kwargs(
         self,
@@ -190,7 +183,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     "text": spelling_query or query_string,
                     "term": {
                         # Using content_field here will result in suggestions of stemmed words.
-                        "field": "_all"
+                        "field": ALL_FIELD,
                     },
                 }
             }
@@ -260,6 +253,23 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
                     "meta": {"_type": "query"},
                     "filter": {"query_string": {"query": value}},
                 }
+
+        if limit_to_registered_models is None:
+            limit_to_registered_models = getattr(
+                settings, "HAYSTACK_LIMIT_TO_REGISTERED_MODELS", True
+            )
+
+        if models and len(models):
+            model_choices = sorted(get_model_ct(model) for model in models)
+        elif limit_to_registered_models:
+            # Using narrow queries, limit the results to only models handled
+            # with the current routers.
+            model_choices = self.build_models_list()
+        else:
+            model_choices = []
+
+        if len(model_choices) > 0:
+            filters.append({"terms": {DJANGO_CT: model_choices}})
 
         for q in narrow_queries:
             filters.append({"query_string": {"query": q}})
@@ -393,19 +403,17 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
             raw_results = self.conn.search(
                 body=mlt_query,
                 index=self.index_name,
-                doc_type="modelresult",
                 _source=True,
-                **params
+                **self._get_doc_type_option(),
+                **params,
             )
-        except elasticsearch.TransportError as e:
+        except elasticsearch.TransportError:
             if not self.silently_fail:
                 raise
 
-            self.log.error(
-                "Failed to fetch More Like This from Elasticsearch for document '%s': %s",
+            self.log.exception(
+                "Failed to fetch More Like This from Elasticsearch for document '%s'",
                 doc_id,
-                e,
-                exc_info=True,
             )
             raw_results = {}
 
@@ -419,7 +427,7 @@ class Elasticsearch5SearchBackend(ElasticsearchSearchBackend):
         distance_point=None,
         geo_sort=False,
     ):
-        results = super(Elasticsearch5SearchBackend, self)._process_results(
+        results = super()._process_results(
             raw_results, highlight, result_class, distance_point, geo_sort
         )
         facets = {}
