@@ -302,7 +302,9 @@ class SolrSearchBackend(BaseSearchBackend):
             kwargs["facet.interval"] = interval_facets.keys()
 
             for key, value in interval_facets.items():
-                kwargs["f.%s.facet.interval.set" % key] = [self.conn._from_python(i) for i in value.get('intervals')]
+                kwargs["f.%s.facet.interval.set" % key] = [
+                    self.conn._from_python(i) for i in value.get("intervals")
+                ]
 
         if query_facets is not None:
             kwargs["facet"] = "on"

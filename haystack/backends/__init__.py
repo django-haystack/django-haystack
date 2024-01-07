@@ -551,7 +551,7 @@ class BaseSearchQuery:
             kwargs["date_facets"] = self.date_facets
 
         if self.interval_facets:
-            kwargs['interval_facets'] = self.interval_facets
+            kwargs["interval_facets"] = self.interval_facets
 
         if self.query_facets:
             kwargs["query_facets"] = self.query_facets
@@ -972,9 +972,11 @@ class BaseSearchQuery:
         from haystack import connections
 
         details = {
-            'intervals': intervals,
+            "intervals": intervals,
         }
-        self.interval_facets[connections[self._using].get_unified_index().get_facet_fieldname(field)] = details
+        self.interval_facets[
+            connections[self._using].get_unified_index().get_facet_fieldname(field)
+        ] = details
 
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
