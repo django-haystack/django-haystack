@@ -172,7 +172,7 @@ class ManagerTestCase(TestCase):
 
     def test_interval_facets(self):
         sqs = self.search_index.objects.interval_facet("price", intervals="[0, 100]")
-        self.assertTrue(isinstance(sqs, SearchQuerySet))
+        self.assertIsInstance(sqs, SearchQuerySet)
         self.assertEqual(len(sqs.query.interval_facets), 1)
 
     def test_query_facets(self):
