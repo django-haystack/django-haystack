@@ -5,11 +5,17 @@ import time
 
 import requests
 
-max_retries = 100
+max_retries = 10  # was 100
 retry_count = 0
 retry_delay = 15
-status_url = "http://localhost:9001/solr/collection1/admin/ping"
+status_url = "http://solr:8983/solr/collection1/admin/ping"
+status_url = "http://localhost:8983/solr/collection1/admin/ping"
 
+# Fail fast if Solr is not up and running at port 8983
+try:
+    assert (s := requests.get(status_url).status_code) == 200, s
+except AssertionError:
+    assert (s := requests.get("http://localhost:8983/solr").status_code) == 200, s
 
 while retry_count < max_retries:
     status_code = 0
