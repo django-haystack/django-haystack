@@ -107,6 +107,8 @@ The following options are optional:
   don't want indexed or for when you want to replace an index.
 * ``KWARGS`` - (Solr and ElasticSearch) Any additional keyword arguments that
   should be passed on to the underlying client library.
+* ``DATE_FACET_FIELD`` - (Solr-only) Support to ``date_facet`` on Solr >= 6.6.
+  Olders set ``date``. Default is ``range``.
 
 
 ``HAYSTACK_ROUTERS``

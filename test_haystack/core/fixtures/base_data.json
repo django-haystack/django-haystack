@@ -1,88 +1,86 @@
 [
-  {
-    "pk": 1,
-    "model": "core.mocktag",
-    "fields": {
-      "name": "primary"
+    {
+        "pk": 1,
+        "model": "core.mocktag",
+        "fields": {
+            "name": "primary"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "core.mocktag",
+        "fields": {
+            "name": "secondary"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "core.mockmodel",
+        "fields": {
+            "author": "daniel1",
+            "foo": "bar",
+            "pub_date": "2009-03-17 06:00:00",
+            "tag": 1
+        }
+    },
+    {
+        "pk": 2,
+        "model": "core.mockmodel",
+        "fields": {
+            "author": "daniel2",
+            "foo": "bar",
+            "pub_date": "2009-03-17 07:00:00",
+            "tag": 1
+        }
+    },
+    {
+        "pk": 3,
+        "model": "core.mockmodel",
+        "fields": {
+            "author": "daniel3",
+            "foo": "bar",
+            "pub_date": "2009-03-17 08:00:00",
+            "tag": 2
+        }
+    },
+    {
+        "pk": "sometext",
+        "model": "core.charpkmockmodel",
+        "fields": {}
+    },
+    {
+        "pk": "1234",
+        "model": "core.charpkmockmodel",
+        "fields": {}
+    },
+    {
+        "pk": 1,
+        "model": "core.afifthmockmodel",
+        "fields": {
+            "author": "sam1",
+            "deleted": false
+        }
+    },
+    {
+        "pk": 2,
+        "model": "core.afifthmockmodel",
+        "fields": {
+            "author": "sam2",
+            "deleted": true
+        }
+    },
+    {
+        "pk": "53554c58-7051-4350-bcc9-dad75eb248a9",
+        "model": "core.uuidmockmodel",
+        "fields": {
+            "characteristics": "some text that was indexed"
+        }
+    },
+    {
+        "pk": "77554c58-7051-4350-bcc9-dad75eb24888",
+        "model": "core.uuidmockmodel",
+        "fields": {
+            "characteristics": "more text that was indexed"
+        }
     }
-  },
-  {
-    "pk": 2,
-    "model": "core.mocktag",
-    "fields": {
-      "name": "secondary"
-    }
-  },
-  {
-    "pk": 1,
-    "model": "core.mockmodel",
-    "fields": {
-      "author": "daniel1",
-      "foo": "bar",
-      "pub_date": "2009-03-17 06:00:00",
-      "tag": 1
-    }
-  },
-  {
-    "pk": 2,
-    "model": "core.mockmodel",
-    "fields": {
-      "author": "daniel2",
-      "foo": "bar",
-      "pub_date": "2009-03-17 07:00:00",
-      "tag": 1
-    }
-  },
-  {
-    "pk": 3,
-    "model": "core.mockmodel",
-    "fields": {
-      "author": "daniel3",
-      "foo": "bar",
-      "pub_date": "2009-03-17 08:00:00",
-      "tag": 2
-    }
-  },
-  {
-    "pk": "sometext",
-    "model": "core.charpkmockmodel",
-    "fields": {
-    }
-  },
-  {
-    "pk": "1234",
-    "model": "core.charpkmockmodel",
-    "fields": {
-    }
-  },
-  {
-    "pk": 1,
-    "model": "core.afifthmockmodel",
-    "fields": {
-      "author": "sam1",
-      "deleted": false
-    }
-  },
-  {
-    "pk": 2,
-    "model": "core.afifthmockmodel",
-    "fields": {
-      "author": "sam2",
-      "deleted": true
-    }
-  },
-  {
-    "pk": "53554c58-7051-4350-bcc9-dad75eb248a9",
-    "model": "core.uuidmockmodel",
-    "fields": {
-      "characteristics": "some text that was indexed"
-    }
-  },
-  {
-    "pk": "77554c58-7051-4350-bcc9-dad75eb24888",
-    "model": "core.uuidmockmodel",
-    "fields": {
-      "characteristics": "more text that was indexed"
-    }
-  }
 ]

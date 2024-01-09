@@ -69,7 +69,7 @@ Document boosting is done by adding a ``boost`` field to the prepared data
         # Your regular fields here then...
 
         def prepare(self, obj):
-            data = super(NoteSearchIndex, self).prepare(obj)
+            data = super().prepare(obj)
             data['boost'] = 1.1
             return data
 

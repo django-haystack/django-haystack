@@ -1,8 +1,4 @@
-# encoding: utf-8
-
 # A couple models for Haystack to test with.
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 import uuid
 
@@ -12,6 +8,9 @@ from django.db import models
 class MockTag(models.Model):
     name = models.CharField(max_length=32)
 
+    def __str__(self):
+        return self.name
+
 
 class MockModel(models.Model):
     author = models.CharField(max_length=255)
@@ -19,24 +18,26 @@ class MockModel(models.Model):
     pub_date = models.DateTimeField(default=datetime.datetime.now)
     tag = models.ForeignKey(MockTag, models.CASCADE)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.author
 
     def hello(self):
-        return 'World!'
+        return "World!"
+
 
 class UUIDMockModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     characteristics = models.TextField()
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.id)
+
 
 class AnotherMockModel(models.Model):
     author = models.CharField(max_length=255)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.author
 
 
@@ -54,16 +55,16 @@ class AFourthMockModel(models.Model):
     editor = models.CharField(max_length=255)
     pub_date = models.DateTimeField(default=datetime.datetime.now)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.author
 
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
-        return super(SoftDeleteManager, self).get_queryset().filter(deleted=False)
+        return super().get_queryset().filter(deleted=False)
 
     def complete_set(self):
-        return super(SoftDeleteManager, self).get_queryset()
+        return super().get_queryset()
 
 
 class AFifthMockModel(models.Model):
@@ -72,7 +73,7 @@ class AFifthMockModel(models.Model):
 
     objects = SoftDeleteManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.author
 
 
@@ -81,25 +82,25 @@ class ASixthMockModel(models.Model):
     lat = models.FloatField()
     lon = models.FloatField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
 class ScoreMockModel(models.Model):
     score = models.CharField(max_length=10)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.score
 
 
 class ManyToManyLeftSideModel(models.Model):
-    related_models = models.ManyToManyField('ManyToManyRightSideModel')
+    related_models = models.ManyToManyField("ManyToManyRightSideModel")
 
 
 class ManyToManyRightSideModel(models.Model):
-    name = models.CharField(max_length=32, default='Default name')
+    name = models.CharField(max_length=32, default="Default name")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -108,4 +109,6 @@ class OneToManyLeftSideModel(models.Model):
 
 
 class OneToManyRightSideModel(models.Model):
-    left_side = models.ForeignKey(OneToManyLeftSideModel, models.CASCADE, related_name='right_side')
+    left_side = models.ForeignKey(
+        OneToManyLeftSideModel, models.CASCADE, related_name="right_side"
+    )

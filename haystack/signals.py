@@ -1,19 +1,16 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.db import models
 
 from haystack.exceptions import NotHandled
 
 
-class BaseSignalProcessor(object):
+class BaseSignalProcessor:
     """
     A convenient way to attach Haystack to Django's signals & cause things to
     index.
 
     By default, does nothing with signals but provides underlying functionality.
     """
+
     def __init__(self, connections, connection_router):
         self.connections = connections
         self.connection_router = connection_router
@@ -75,6 +72,7 @@ class RealtimeSignalProcessor(BaseSignalProcessor):
     Allows for observing when saves/deletes fire & automatically updates the
     search engine appropriately.
     """
+
     def setup(self):
         # Naive (listen to all model saves).
         models.signals.post_save.connect(self.handle_save)

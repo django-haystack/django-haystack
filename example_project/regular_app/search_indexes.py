@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from regular_app.models import Dog
 
 from haystack import indexes
@@ -13,11 +9,11 @@ from haystack import indexes
 class DogIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     # We can pull data straight out of the model via `model_attr`.
-    breed = indexes.CharField(model_attr='breed')
+    breed = indexes.CharField(model_attr="breed")
     # Note that callables are also OK to use.
-    name = indexes.CharField(model_attr='full_name')
-    bio = indexes.CharField(model_attr='name')
-    birth_date = indexes.DateField(model_attr='birth_date')
+    name = indexes.CharField(model_attr="full_name")
+    bio = indexes.CharField(model_attr="name")
+    birth_date = indexes.DateField(model_attr="birth_date")
     # Note that we can't assign an attribute here. We'll manually prepare it instead.
     toys = indexes.MultiValueField()
 

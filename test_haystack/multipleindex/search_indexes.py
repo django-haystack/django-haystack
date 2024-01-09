@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from haystack import indexes
 from haystack.indexes import Indexable, SearchIndex
 
@@ -10,7 +6,7 @@ from .models import Bar, Foo
 
 # To test additional ignores...
 class BaseIndex(indexes.SearchIndex):
-    text = indexes.CharField(document=True, model_attr='body')
+    text = indexes.CharField(document=True, model_attr="body")
 
     def get_model(self):
         return Foo
@@ -18,7 +14,7 @@ class BaseIndex(indexes.SearchIndex):
 
 class FooIndex(BaseIndex, indexes.Indexable):
     def index_queryset(self, using=None):
-        qs = super(FooIndex, self).index_queryset(using=using)
+        qs = super().index_queryset(using=using)
         if using == "filtered_whoosh":
             qs = qs.filter(body__contains="1")
         return qs
@@ -34,4 +30,4 @@ class BarIndex(SearchIndex, Indexable):
         return Bar
 
     def prepare_text(self, obj):
-        return u"%s\n%s" % (obj.author, obj.content)
+        return "%s\n%s" % (obj.author, obj.content)

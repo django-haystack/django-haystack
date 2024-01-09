@@ -1,11 +1,7 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django import forms
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.utils.text import capfirst
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from haystack import connections
 from haystack.constants import DEFAULT_ALIAS
@@ -15,23 +11,28 @@ from haystack.utils.app_loading import haystack_get_model
 
 
 def model_choices(using=DEFAULT_ALIAS):
-    choices = [(get_model_ct(m), capfirst(smart_text(m._meta.verbose_name_plural)))
-               for m in connections[using].get_unified_index().get_indexed_models()]
+    choices = [
+        (get_model_ct(m), capfirst(smart_str(m._meta.verbose_name_plural)))
+        for m in connections[using].get_unified_index().get_indexed_models()
+    ]
     return sorted(choices, key=lambda x: x[1])
 
 
 class SearchForm(forms.Form):
-    q = forms.CharField(required=False, label=_('Search'),
-                        widget=forms.TextInput(attrs={'type': 'search'}))
+    q = forms.CharField(
+        required=False,
+        label=_("Search"),
+        widget=forms.TextInput(attrs={"type": "search"}),
+    )
 
     def __init__(self, *args, **kwargs):
-        self.searchqueryset = kwargs.pop('searchqueryset', None)
-        self.load_all = kwargs.pop('load_all', False)
+        self.searchqueryset = kwargs.pop("searchqueryset", None)
+        self.load_all = kwargs.pop("load_all", False)
 
         if self.searchqueryset is None:
             self.searchqueryset = SearchQuerySet()
 
-        super(SearchForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def no_query_found(self):
         """
@@ -48,10 +49,10 @@ class SearchForm(forms.Form):
         if not self.is_valid():
             return self.no_query_found()
 
-        if not self.cleaned_data.get('q'):
+        if not self.cleaned_data.get("q"):
             return self.no_query_found()
 
-        sqs = self.searchqueryset.auto_query(self.cleaned_data['q'])
+        sqs = self.searchqueryset.auto_query(self.cleaned_data["q"])
 
         if self.load_all:
             sqs = sqs.load_all()
@@ -62,21 +63,21 @@ class SearchForm(forms.Form):
         if not self.is_valid():
             return None
 
-        return self.searchqueryset.spelling_suggestion(self.cleaned_data['q'])
+        return self.searchqueryset.spelling_suggestion(self.cleaned_data["q"])
 
 
 class HighlightedSearchForm(SearchForm):
     def search(self):
-        return super(HighlightedSearchForm, self).search().highlight()
+        return super().search().highlight()
 
 
 class FacetedSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
         self.selected_facets = kwargs.pop("selected_facets", [])
-        super(FacetedSearchForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def search(self):
-        sqs = super(FacetedSearchForm, self).search()
+        sqs = super().search()
 
         # We need to process each facet to ensure that the field name and the
         # value are quoted correctly and separately:
@@ -87,43 +88,48 @@ class FacetedSearchForm(SearchForm):
             field, value = facet.split(":", 1)
 
             if value:
-                sqs = sqs.narrow(u'%s:"%s"' % (field, sqs.query.clean(value)))
+                sqs = sqs.narrow('%s:"%s"' % (field, sqs.query.clean(value)))
 
         return sqs
 
 
 class ModelSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
-        super(ModelSearchForm, self).__init__(*args, **kwargs)
-        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label=_('Search In'), widget=forms.CheckboxSelectMultiple)
+        super().__init__(*args, **kwargs)
+        self.fields["models"] = forms.MultipleChoiceField(
+            choices=model_choices(),
+            required=False,
+            label=_("Search In"),
+            widget=forms.CheckboxSelectMultiple,
+        )
 
     def get_models(self):
         """Return a list of the selected models."""
         search_models = []
 
         if self.is_valid():
-            for model in self.cleaned_data['models']:
-                search_models.append(haystack_get_model(*model.split('.')))
+            for model in self.cleaned_data["models"]:
+                search_models.append(haystack_get_model(*model.split(".")))
 
         return search_models
 
     def search(self):
-        sqs = super(ModelSearchForm, self).search()
+        sqs = super().search()
         return sqs.models(*self.get_models())
 
 
 class HighlightedModelSearchForm(ModelSearchForm):
     def search(self):
-        return super(HighlightedModelSearchForm, self).search().highlight()
+        return super().search().highlight()
 
 
 class FacetedModelSearchForm(ModelSearchForm):
     selected_facets = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def search(self):
-        sqs = super(FacetedModelSearchForm, self).search()
+        sqs = super().search()
 
-        if hasattr(self, 'cleaned_data') and self.cleaned_data['selected_facets']:
-            sqs = sqs.narrow(self.cleaned_data['selected_facets'])
+        if hasattr(self, "cleaned_data") and self.cleaned_data["selected_facets"]:
+            sqs = sqs.narrow(self.cleaned_data["selected_facets"])
 
         return sqs.models(*self.get_models())

@@ -1,29 +1,27 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from django.utils.html import strip_tags
 
 
-class Highlighter(object):
-    css_class = 'highlighted'
-    html_tag = 'span'
+class Highlighter:
+    css_class = "highlighted"
+    html_tag = "span"
     max_length = 200
-    text_block = ''
+    text_block = ""
 
     def __init__(self, query, **kwargs):
         self.query = query
 
-        if 'max_length' in kwargs:
-            self.max_length = int(kwargs['max_length'])
+        if "max_length" in kwargs:
+            self.max_length = int(kwargs["max_length"])
 
-        if 'html_tag' in kwargs:
-            self.html_tag = kwargs['html_tag']
+        if "html_tag" in kwargs:
+            self.html_tag = kwargs["html_tag"]
 
-        if 'css_class' in kwargs:
-            self.css_class = kwargs['css_class']
+        if "css_class" in kwargs:
+            self.css_class = kwargs["css_class"]
 
-        self.query_words = set([word.lower() for word in self.query.split() if not word.startswith('-')])
+        self.query_words = {
+            word.lower() for word in self.query.split() if not word.startswith("-")
+        }
 
     def highlight(self, text_block):
         self.text_block = strip_tags(text_block)
@@ -40,7 +38,7 @@ class Highlighter(object):
         lower_text_block = self.text_block.lower()
 
         for word in self.query_words:
-            if not word in word_positions:
+            if word not in word_positions:
                 word_positions[word] = []
 
             start_offset = 0
@@ -69,7 +67,7 @@ class Highlighter(object):
         words_found = []
 
         # Next, make sure we found any words at all.
-        for word, offset_list in highlight_locations.items():
+        for _, offset_list in highlight_locations.items():
             if len(offset_list):
                 # Add all of the locations to the list.
                 words_found.extend(offset_list)
@@ -95,7 +93,7 @@ class Highlighter(object):
         for count, start in enumerate(words_found[:-1]):
             current_density = 1
 
-            for end in words_found[count + 1:]:
+            for end in words_found[count + 1 :]:
                 if end - start < self.max_length:
                     current_density += 1
                 else:
@@ -126,9 +124,9 @@ class Highlighter(object):
         if self.css_class:
             hl_start = '<%s class="%s">' % (self.html_tag, self.css_class)
         else:
-            hl_start = '<%s>' % (self.html_tag)
+            hl_start = "<%s>" % (self.html_tag)
 
-        hl_end = '</%s>' % self.html_tag
+        hl_end = "</%s>" % self.html_tag
 
         # Copy the part from the start of the string to the first match,
         # and there replace the match with a highlighted version.
@@ -139,14 +137,16 @@ class Highlighter(object):
 
         for cur, cur_str in loc_to_term:
             # This can be in a different case than cur_str
-            actual_term = text[cur:cur + len(cur_str)]
+            actual_term = text[cur : cur + len(cur_str)]
 
             # Handle incorrect highlight_locations by first checking for the term
             if actual_term.lower() == cur_str:
                 if cur < prev + len(prev_str):
                     continue
 
-                highlighted_chunk += text[prev + len(prev_str):cur] + hl_start + actual_term + hl_end
+                highlighted_chunk += (
+                    text[prev + len(prev_str) : cur] + hl_start + actual_term + hl_end
+                )
                 prev = cur
                 prev_str = cur_str
 
@@ -157,9 +157,9 @@ class Highlighter(object):
         highlighted_chunk += text[matched_so_far:]
 
         if start_offset > 0:
-            highlighted_chunk = '...%s' % highlighted_chunk
+            highlighted_chunk = "...%s" % highlighted_chunk
 
         if end_offset < len(self.text_block):
-            highlighted_chunk = '%s...' % highlighted_chunk
+            highlighted_chunk = "%s..." % highlighted_chunk
 
         return highlighted_chunk

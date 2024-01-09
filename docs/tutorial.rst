@@ -4,7 +4,7 @@
 Getting Started with Haystack
 =============================
 
-Search is a topic of ever increasing importance. Users increasing rely on search
+Search is a topic of ever increasing importance. Users increasingly rely on search
 to separate signal from noise and find what they're looking for quickly. In
 addition, search can provide insight into what things are popular (many
 searches), what things are difficult to find on the site and ways you can
@@ -54,7 +54,7 @@ note-taking application. Here is ``myapp/models.py``::
         title = models.CharField(max_length=200)
         body = models.TextField()
 
-        def __unicode__(self):
+        def __str__(self):
             return self.title
 
 Finally, before starting with Haystack, you will want to choose a search
@@ -72,6 +72,9 @@ Example::
 
     pip install django-haystack
 
+When using elasticsearch, use::
+
+    pip install "django-haystack[elasticsearch]"
 
 Configuration
 =============
@@ -112,7 +115,7 @@ the following:
 Solr
 ~~~~
 
-Example::
+Example (Solr 4.X)::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
@@ -123,6 +126,17 @@ Example::
         },
     }
 
+Example (Solr 6.X)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+            'URL': 'http://127.0.0.1:8983/solr/tester',                 # Assuming you created a core named 'tester' as described in installing search engines.
+            'ADMIN_URL': 'http://127.0.0.1:8983/solr/admin/cores'
+            # ...or for multicore...
+            # 'URL': 'http://127.0.0.1:8983/solr/mysite',
+        },
+    }
 
 Elasticsearch
 ~~~~~~~~~~~~~
@@ -142,6 +156,26 @@ Example (ElasticSearch 2.x)::
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
+
+Example (ElasticSearch 5.x)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
+            'URL': 'http://127.0.0.1:9200/',
+            'INDEX_NAME': 'haystack',
+        },
+    }
+
+Example (ElasticSearch 7.x)::
+
+    HAYSTACK_CONNECTIONS = {
+        'default': {
+            'ENGINE': 'haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine',
             'URL': 'http://127.0.0.1:9200/',
             'INDEX_NAME': 'haystack',
         },
@@ -264,6 +298,11 @@ which field is the primary field for searching within.
     examples. It could be anything; you could call it ``pink_polka_dot`` and
     it won't matter. It's simply a convention to call it ``text``.
 
+    To use a document field with a name other than ``text``, be sure to configure
+    the ``HAYSTACK_DOCUMENT_FIELD`` setting. For example,::
+
+        HAYSTACK_DOCUMENT_FIELD = 'pink_polka_dot'
+
 Additionally, we're providing ``use_template=True`` on the ``text`` field. This
 allows us to use a data template (rather than error-prone concatenation) to
 build the document the search engine will index. You’ll need to
@@ -293,7 +332,7 @@ Add The ``SearchView`` To Your URLconf
 
 Within your URLconf, add the following line::
 
-    url(r'^search/', include('haystack.urls')),
+    path('search/', include('haystack.urls')),
 
 This will pull in the default URLconf for Haystack. It consists of a single
 URLconf that points to a ``SearchView`` instance. You can change this class's

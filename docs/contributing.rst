@@ -33,8 +33,8 @@ So you've found a bug or have a great idea for a feature. Here's the steps you
 should take to help get it added/fixed in Haystack:
 
 * First, check to see if there's an existing issue/pull request for the
-  bug/feature. All issues are at https://github.com/toastdriven/django-haystack/issues
-  and pull reqs are at https://github.com/toastdriven/django-haystack/pulls.
+  bug/feature. All issues are at https://github.com/django-haystack/django-haystack/issues
+  and pull reqs are at https://github.com/django-haystack/django-haystack/pulls.
 * If there isn't one there, please file an issue. The ideal report includes:
 
   * A description of the problem/suggestion.
@@ -79,7 +79,8 @@ In order to be merged into Haystack, contributions must have the following:
 
   * is clear.
   * works across all supported versions of Python/Django.
-  * follows the existing style of the code base (mostly PEP-8).
+  * follows the existing style of the code base formatted with
+    isort_ and Black_ using the provided configuration in the repo
   * comments included as needed.
 
 * A test case that demonstrates the previous flaw that now passes
@@ -93,6 +94,8 @@ If your contribution lacks any of these things, they will have to be added
 by a core contributor before being merged into Haystack proper, which may take
 substantial time for the all-volunteer team to get to.
 
+.. _isort: https://pypi.org/project/isort/
+.. _Black: https://pypi.org/project/black/
 
 Guidelines For Core Contributors
 ================================
@@ -112,7 +115,7 @@ If you've been granted the commit bit, here's how to shepherd the changes in:
 
   * ``git merge --squash`` is a good tool for performing this, as is
     ``git rebase -i HEAD~N``.
-  * This is done to prevent anyone using the git repo from accidently pulling
+  * This is done to prevent anyone using the git repo from accidentally pulling
     work-in-progress commits.
 
 * Commit messages should use past tense, describe what changed & thank anyone
