@@ -36,7 +36,7 @@ class Dog(models.Model):
 
 
 class Toy(models.Model):
-    dog = models.ForeignKey(Dog, related_name="toys")
+    dog = models.ForeignKey(Dog, on_delete=models.CASCADE, related_name="toys")
     name = models.CharField(max_length=60)
 
     def __str__(self):
