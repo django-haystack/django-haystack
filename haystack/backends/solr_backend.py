@@ -267,9 +267,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
             for facet_field, options in facets.items():
                 for key, value in options.items():
-                    kwargs[
-                        "f.%s.facet.%s" % (facet_field, key)
-                    ] = self.conn._from_python(value)
+                    kwargs["f.%s.facet.%s" % (facet_field, key)] = (
+                        self.conn._from_python(value)
+                    )
 
         if date_facets is not None:
             kwargs["facet"] = "on"
@@ -277,23 +277,24 @@ class SolrSearchBackend(BaseSearchBackend):
             kwargs["facet.%s.other" % self.date_facet_field] = "none"
 
             for key, value in date_facets.items():
-                kwargs[
-                    "f.%s.facet.%s.start" % (key, self.date_facet_field)
-                ] = self.conn._from_python(value.get("start_date"))
-                kwargs[
-                    "f.%s.facet.%s.end" % (key, self.date_facet_field)
-                ] = self.conn._from_python(value.get("end_date"))
+                kwargs["f.%s.facet.%s.start" % (key, self.date_facet_field)] = (
+                    self.conn._from_python(value.get("start_date"))
+                )
+                kwargs["f.%s.facet.%s.end" % (key, self.date_facet_field)] = (
+                    self.conn._from_python(value.get("end_date"))
+                )
                 gap_by_string = value.get("gap_by").upper()
                 gap_string = "%d%s" % (value.get("gap_amount"), gap_by_string)
 
                 if value.get("gap_amount") != 1:
                     gap_string += "S"
 
-                kwargs[
-                    "f.%s.facet.%s.gap" % (key, self.date_facet_field)
-                ] = "+%s/%s" % (
-                    gap_string,
-                    gap_by_string,
+                kwargs["f.%s.facet.%s.gap" % (key, self.date_facet_field)] = (
+                    "+%s/%s"
+                    % (
+                        gap_string,
+                        gap_by_string,
+                    )
                 )
 
         if query_facets is not None:
