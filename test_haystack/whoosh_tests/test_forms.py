@@ -1,4 +1,5 @@
 """Tests for Whoosh spelling suggestions"""
+
 from django.conf import settings
 from django.http import HttpRequest
 
