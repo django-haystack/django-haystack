@@ -10,7 +10,7 @@ import pysolr
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from haystack import connections, indexes, reset_search_queries
 from haystack.exceptions import SkipDocument
@@ -1650,7 +1650,7 @@ class SolrBoostBackendTestCase(TestCase):
 
 
 @unittest.skipIf(
-    parse_version(pysolr.__version__) < parse_version("3.1.1"),
+    Version(pysolr.__version__) < Version("3.1.1"),
     "content extraction requires pysolr > 3.1.1",
 )
 class LiveSolrContentExtractionTestCase(TestCase):
