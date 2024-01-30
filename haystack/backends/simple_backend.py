@@ -1,6 +1,7 @@
 """
 A very basic, ORM-based backend for simple search during tests.
 """
+
 from functools import reduce
 from warnings import warn
 
