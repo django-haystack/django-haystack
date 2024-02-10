@@ -736,6 +736,10 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
     def test_date_queries(self):
         self.sb.update(self.wmmi, self.sample_objs)
 
+        pub_dates = (f"pub_date:200907170{i:02}000" for i in range(24))
+        d = {s: len(self.whoosh_search(s)) for s in pub_dates}
+        assert len(self.whoosh_search("pub_date:20090717003000")) == 9, d
+
         self.assertEqual(len(self.whoosh_search("pub_date:20090717003000")), 1)
         self.assertEqual(len(self.whoosh_search("pub_date:20090717000000")), 0)
         self.assertEqual(
