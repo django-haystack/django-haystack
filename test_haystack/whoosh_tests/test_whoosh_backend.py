@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from django.conf import settings
@@ -325,8 +325,8 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             "index*",
             date_facets={
                 "pub_date": {
-                    "start_date": date(2009, 7, 1),
-                    "end_date": date(2009, 8, 1),
+                    "start_date": date(2009, 7, 1, tz=timezone.utc),
+                    "end_date": date(2009, 8, 1, tz=timezone.utc),
                     "gap_by": "day",
                     "gap_amount": 1,
                 }
@@ -334,6 +334,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         )
         self.assertEqual(results["hits"], 23)
         # FIXME: Why do we get different results on Python >= 3.10?
+        # It is the HOUR that is off.  Could this be a timezone issue?  UTC vs Django's Chicago time?
         pub_date_results = (
             [
                 ((datetime(2009, 7, 17, 0, 0), datetime(2009, 7, 18, 0, 0)), 21),
@@ -401,7 +402,20 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
                 ((datetime(2009, 7, 17, 20, 0), datetime(2009, 7, 17, 21, 0)), 1),
             ]
             if sys.version_info < (3, 10)
-            else ["XXX"]
+            else [
+                ((datetime(2009, 6, 18, 11, 0), datetime(2009, 6, 18, 12, 0)), 1),
+                ((datetime(2009, 6, 18, 13, 0), datetime(2009, 6, 18, 14, 0)), 1),
+                ((datetime(2009, 7, 17, 5, 0), datetime(2009, 7, 17, 6, 0)), 1),
+                ((datetime(2009, 7, 17, 6, 0), datetime(2009, 7, 17, 7, 0)), 1),
+                ((datetime(2009, 7, 17, 7, 0), datetime(2009, 7, 17, 8, 0)), 1),
+                ((datetime(2009, 7, 17, 8, 0), datetime(2009, 7, 17, 9, 0)), 1),
+                ((datetime(2009, 7, 17, 9, 0), datetime(2009, 7, 17, 10, 0)), 1),
+                ((datetime(2009, 7, 17, 10, 0), datetime(2009, 7, 17, 11, 0)), 1),
+                ((datetime(2009, 7, 17, 11, 0), datetime(2009, 7, 17, 12, 0)), 1),
+                ((datetime(2009, 7, 17, 12, 0), datetime(2009, 7, 17, 13, 0)), 1),
+                ((datetime(2009, 7, 17, 13, 0), datetime(2009, 7, 17, 14, 0)), 1),
+                ((datetime(2009, 7, 17, 14, 0), datetime(2009, 7, 17, 15, 0)), 1),
+            ]
         )
         assert results["facets"]["dates"]["pub_date"] == pub_date_results, results[
             "facets"
