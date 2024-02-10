@@ -343,15 +343,15 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             else [
                 (
                     (
-                        datetime.datetime(2009, 7, 17, 0, 0),
-                        datetime.datetime(2009, 7, 18, 0, 0),
+                        datetime(2009, 7, 17, 0, 0),
+                        datetime(2009, 7, 18, 0, 0),
                     ),
                     19,
                 ),
                 (
                     (
-                        datetime.datetime(2009, 7, 18, 0, 0),
-                        datetime.datetime(2009, 7, 19, 0, 0),
+                        datetime(2009, 7, 18, 0, 0),
+                        datetime(2009, 7, 19, 0, 0),
                     ),
                     2,
                 ),
