@@ -374,8 +374,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             },
         )
         self.assertEqual(results["hits"], 23)
-        self.assertEqual(
-            results["facets"]["dates"]["pub_date"],
+        pub_date_results = (
             [
                 ((datetime(2009, 6, 18, 6, 0), datetime(2009, 6, 18, 7, 0)), 1),
                 ((datetime(2009, 6, 18, 8, 0), datetime(2009, 6, 18, 9, 0)), 1),
@@ -400,8 +399,14 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
                 ((datetime(2009, 7, 17, 18, 0), datetime(2009, 7, 17, 19, 0)), 1),
                 ((datetime(2009, 7, 17, 19, 0), datetime(2009, 7, 17, 20, 0)), 1),
                 ((datetime(2009, 7, 17, 20, 0), datetime(2009, 7, 17, 21, 0)), 1),
-            ],
+            ]
+            if sys.version_info < (3, 10)
+            else ["XXX"]
         )
+        assert results["facets"]["dates"]["pub_date"] == pub_date_results, results[
+            "facets"
+        ]["dates"]["pub_date"]
+        self.assertEqual(results["facets"]["dates"]["pub_date"], pub_date_results)
 
         self.assertEqual(
             self.sb.search("", query_facets={"name": "[* TO e]"}),
