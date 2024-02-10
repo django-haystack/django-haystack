@@ -335,7 +335,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         assert results["facets"]["dates"]["pub_date"] == [
             ((datetime(2009, 7, 17, 0, 0), datetime(2009, 7, 18, 0, 0)), 21),
             (None, 2),
-        ]
+        ], results["facets"]["dates"]["pub_date"]
         self.assertEqual(
             results["facets"]["dates"]["pub_date"],
             [
