@@ -321,12 +321,15 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             ],
         )
 
+        import zoneinfo  # Python 3.9+ only
+
+        tzinfo = zoneinfo.ZoneInfo(key="America/Chicago")
         results = self.sb.search(
             "index*",
             date_facets={
                 "pub_date": {
-                    "start_date": datetime(2009, 7, 1, tz=timezone.utc),
-                    "end_date": datetime(2009, 8, 1, tz=timezone.utc),
+                    "start_date": datetime(2009, 7, 1, tzinfo=tzinfo),
+                    "end_date": datetime(2009, 8, 1, tzinfo=tzinfo),
                     "gap_by": "day",
                     "gap_amount": 1,
                 }
