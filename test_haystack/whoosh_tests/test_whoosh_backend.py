@@ -325,8 +325,8 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             "index*",
             date_facets={
                 "pub_date": {
-                    "start_date": date(2009, 7, 1, tz=timezone.utc),
-                    "end_date": date(2009, 8, 1, tz=timezone.utc),
+                    "start_date": datetime(2009, 7, 1, tz=timezone.utc),
+                    "end_date": datetime(2009, 8, 1, tz=timezone.utc),
                     "gap_by": "day",
                     "gap_amount": 1,
                 }
