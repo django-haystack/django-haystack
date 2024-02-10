@@ -227,7 +227,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         self.sb.clear([AnotherMockModel, MockModel])
         self.assertEqual(self.raw_whoosh.doc_count(), 0)
 
-    @unittest.skip("TODO (cclauss): Fix me!")
+    # @unittest.skip("TODO (cclauss): Fix me!")
     def test_search(self):
         self.sb.update(self.wmmi, self.sample_objs)
         self.assertEqual(len(self.whoosh_search("*")), 23)
