@@ -687,8 +687,7 @@ class FieldsWithOverrideModelSearchIndex(indexes.ModelSearchIndex, indexes.Index
     def get_index_fieldname(self, f):
         if f.name == "author":
             return "author_bar"
-        else:
-            return f.name
+        return f.name
 
 
 class YetAnotherBasicModelSearchIndex(indexes.ModelSearchIndex, indexes.Indexable):
