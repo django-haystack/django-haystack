@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Simple throttle to wait for Solr to start on busy test servers"""
 import sys
+
+sys.exit(0)  # Skip this file.
 import time
 
 import requests
