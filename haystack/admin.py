@@ -29,6 +29,11 @@ class SearchChangeList(ChangeList):
             .load_all()
         )
 
+        ordering = self.get_ordering(request, sqs)
+        # get_ordering returns ["-pk"] if no ordering is given
+        if ordering != ["-pk"]:
+            sqs = sqs.order_by(*ordering)
+
         paginator = Paginator(sqs, self.list_per_page)
         # Get the number of objects, with admin filters applied.
         result_count = paginator.count
@@ -59,6 +64,11 @@ class SearchChangeList(ChangeList):
 class SearchModelAdminMixin:
     # haystack connection to use for searching
     haystack_connection = DEFAULT_ALIAS
+
+    def get_ordering(self, request):
+        if SEARCH_VAR in request.GET:
+            return ()
+        return super(SearchModelAdminMixin, self).get_ordering(request)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
