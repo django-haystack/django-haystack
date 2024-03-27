@@ -59,7 +59,15 @@ curl --fail --silent 'http://localhost:9001/solr/admin/info/system?wt=json&inden
 
 CONF_DIR=${TEST_ROOT}/confdir
 CORE_DIR=${FULL_SOLR_DIR}/server/solr/collection1
-mv ${CORE_DIR}/conf/managed-schema.xml ${CORE_DIR}/conf/managed-schema.old
+
+if [[ $SOLR_VERSION =~ ^9 ]]; then 
+
+    mv ${CORE_DIR}/conf/managed-schema.xml ${CORE_DIR}/conf/managed-schema.old
+else 
+    mv ${CORE_DIR}/conf/managed-schema ${CORE_DIR}/conf/managed-schema.old
+
+fi
+
 cp ${CONF_DIR}/* ${CORE_DIR}/conf/
 
 echo 'Starting server'
