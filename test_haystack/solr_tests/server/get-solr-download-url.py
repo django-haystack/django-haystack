@@ -14,10 +14,10 @@ tarball = "solr-{0}.tgz".format(solr_version)
 
 major_version = solr_version[0]
 
-if major_version == '9':
+if major_version == "9":
     dist_path = "solr/solr/{0}/{1}".format(solr_version, tarball)
 
-elif major_version == 6:
+elif major_version in "678":
     dist_path = "lucene/solr/{0}/{1}".format(solr_version, tarball)
 
 download_url = urljoin("https://archive.apache.org/dist/", dist_path)
