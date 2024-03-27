@@ -11,7 +11,7 @@ if len(sys.argv) != 2:
 
 solr_version = sys.argv[1]
 tarball = "solr-{0}.tgz".format(solr_version)
-dist_path = "lucene/solr/{0}/{1}".format(solr_version, tarball)
+dist_path = "solr/solr/{0}/{1}".format(solr_version, tarball)
 
 download_url = urljoin("https://archive.apache.org/dist/", dist_path)
 mirror_response = requests.get(
