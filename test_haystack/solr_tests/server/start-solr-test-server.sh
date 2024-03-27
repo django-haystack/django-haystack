@@ -2,7 +2,8 @@
 
 set -e
 
-SOLR_VERSION=6.6.4
+#Last supported version 6.6.4
+SOLR_VERSION=${1:-9.5.0}
 SOLR_DIR=solr
 
 
