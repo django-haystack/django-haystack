@@ -527,8 +527,8 @@ class SolrSearchBackend(BaseSearchBackend):
 
         for raw_result in raw_results.docs:
 
-            #Maintain compatibility with older versions of Haystack which returned a string
-            #Newer versions of Solr wraps ['DJANGO_CT']'s value in a 'list'.
+            # Maintain compatibility with older versions of Haystack which returned a string
+            # Newer versions of Solr wraps ['DJANGO_CT']'s value in a 'list'.
             django_ct = raw_result[DJANGO_CT]
 
             if isinstance(django_ct, list) and len(django_ct) > 0:
