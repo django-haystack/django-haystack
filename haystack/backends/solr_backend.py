@@ -526,6 +526,14 @@ class SolrSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
 
         for raw_result in raw_results.docs:
+
+            #Maintain compatibility with older versions of Haystack which returned a string
+            #Newer versions of Solr wraps ['DJANGO_CT']'s value in a 'list'.
+            django_ct = raw_result[DJANGO_CT]
+
+            if isinstance(django_ct, list) and len(django_ct) > 0:
+                raw_result[DJANGO_CT] = django_ct[0]
+
             app_label, model_name = raw_result[DJANGO_CT].split(".")
             additional_fields = {}
             model = haystack_get_model(app_label, model_name)
