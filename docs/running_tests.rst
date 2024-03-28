@@ -29,7 +29,7 @@ the errors persist.
 To run just a portion of the tests you can use the script ``run_tests.py`` and
 just specify the files or directories you wish to run, for example::
 
-    python test_haystack/run_tests.py whoosh_tests test_loading.py
+    python test_haystack/run_tests.py solr_tests test_loading.py
 
 The ``run_tests.py`` script is just a tiny wrapper around the Django test
 command and any options you pass to it will be passed on; including ``--help``

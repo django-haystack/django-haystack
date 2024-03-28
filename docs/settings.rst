@@ -42,15 +42,6 @@ dictionary of dictionaries resembling the following (complete) example::
             'BATCH_SIZE': 100,
             'EXCLUDED_INDEXES': ['thirdpartyapp.search_indexes.BarIndex'],
         },
-        'autocomplete': {
-            'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-            'PATH': '/home/search/whoosh_index',
-            'STORAGE': 'file',
-            'POST_LIMIT': 128 * 1024 * 1024,
-            'INCLUDE_SPELLING': True,
-            'BATCH_SIZE': 100,
-            'EXCLUDED_INDEXES': ['thirdpartyapp.search_indexes.BarIndex'],
-        },
         'slave': {
             'ENGINE': 'xapian_backend.XapianEngine',
             'PATH': '/home/search/xapian_index',
@@ -82,10 +73,6 @@ Additionally, each backend may have additional options it requires:
   * ``ADMIN_URL`` - The URL to the administrative functions. e.g.
     http://localhost:9001/solr/admin/cores
 
-* Whoosh
-
-  * ``PATH`` - The filesystem path to where the index data is located.
-
 * Xapian
 
   * ``PATH`` - The filesystem path to where the index data is located.
@@ -97,10 +84,6 @@ The following options are optional:
   commands. Default is ``1000``.
 * ``TIMEOUT`` - (Solr and ElasticSearch) How long to wait (in seconds) before
   the connection times out. Default is ``10``.
-* ``STORAGE`` - (Whoosh-only) Which storage engine to use. Accepts ``file`` or
-  ``ram``. Default is ``file``.
-* ``POST_LIMIT`` - (Whoosh-only) How large the file sizes can be. Default is
-  ``128 * 1024 * 1024``.
 * ``FLAGS`` - (Xapian-only) A list of flags to use when querying the index.
 * ``EXCLUDED_INDEXES`` - A list of strings (as Python import paths) to indexes
   you do **NOT** want included. Useful for omitting third-party things you

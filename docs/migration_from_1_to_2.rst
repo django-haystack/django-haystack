@@ -33,14 +33,6 @@ look like::
     HAYSTACK_BATCH_SIZE = 100
 
     # Or...
-    HAYSTACK_SEARCH_ENGINE = 'whoosh'
-    HAYSTACK_WHOOSH_PATH = '/home/search/whoosh_index'
-    HAYSTACK_WHOOSH_STORAGE = 'file'
-    HAYSTACK_WHOOSH_POST_LIMIT = 128 * 1024 * 1024
-    HAYSTACK_INCLUDE_SPELLING = True
-    HAYSTACK_BATCH_SIZE = 100
-
-    # Or...
     HAYSTACK_SEARCH_ENGINE = 'xapian'
     HAYSTACK_XAPIAN_PATH = '/home/search/xapian_index'
     HAYSTACK_INCLUDE_SPELLING = True
@@ -55,14 +47,6 @@ would look like::
             'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
             'URL': 'http://localhost:9001/solr/default',
             'TIMEOUT': 60 * 5,
-            'INCLUDE_SPELLING': True,
-            'BATCH_SIZE': 100,
-        },
-        'autocomplete': {
-            'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-            'PATH': '/home/search/whoosh_index',
-            'STORAGE': 'file',
-            'POST_LIMIT': 128 * 1024 * 1024,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
         },
@@ -93,7 +77,6 @@ of the engine to a full path to a new ``Engine`` class within the backend.
 Available options are:
 
 * ``haystack.backends.solr_backend.SolrEngine``
-* ``haystack.backends.whoosh_backend.WhooshEngine``
 * ``haystack.backends.simple_backend.SimpleEngine``
 
 Additionally, the following settings were outright removed & will generate

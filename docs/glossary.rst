@@ -11,11 +11,10 @@ terms and what they mean.
 
 Engine
   An engine, for the purposes of Haystack, is a third-party search solution.
-  It might be a full service (i.e. Solr_) or a library to build an
-  engine with (i.e. Whoosh_)
+  It might be a full service (i.e. Solr_) or a library to build an engine
+  with.
 
 .. _Solr: http://lucene.apache.org/solr/
-.. _Whoosh: https://github.com/mchaput/whoosh/
 
 Index
   The datastore used by the engine is called an index. Its structure can vary

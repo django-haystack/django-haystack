@@ -1,5 +1,3 @@
-import os
-
 from django.conf import settings
 
 SECRET_KEY = "CHANGE ME"
@@ -23,12 +21,6 @@ HAYSTACK_CONNECTIONS = {
         "ENGINE": "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine",
         "URL": "http://localhost:9200",
         "INDEX_NAME": "example_project",
-    },
-    "whoosh": {
-        # For Whoosh:
-        "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
-        "PATH": os.path.join(os.path.dirname(__file__), "whoosh_index"),
-        "INCLUDE_SPELLING": True,
     },
     "simple": {
         # For Simple:

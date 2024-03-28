@@ -8,11 +8,10 @@ install_requires = [
 ]
 
 tests_require = [
-    "pysolr>=3.7.0",
-    "whoosh>=2.5.4,<3.0",
-    "python-dateutil",
-    "geopy==2.0.0",
     "coverage",
+    "geopy==2.0.0",
+    "pysolr>=3.7.0",
+    "python-dateutil",
     "requests",
 ]
 
