@@ -913,6 +913,8 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
             if isinstance(value, str):
                 # It's not an ``InputType``. Assume ``Clean``.
                 value = Clean(value)
+            elif isinstance(value, bool):
+                value = PythonData('true' if value else 'false')
             else:
                 value = PythonData(value)
 
