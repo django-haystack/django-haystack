@@ -106,6 +106,7 @@ class SpatialSolrTestCase(TestCase):
 
         super().setUp()
         self.ui = connections[self.using].get_unified_index()
+        self.ui.reset()
         self.checkindex = self.ui.get_index(Checkin)
         self.checkindex.reindex(using=self.using)
         self.sqs = SearchQuerySet().using(self.using)
