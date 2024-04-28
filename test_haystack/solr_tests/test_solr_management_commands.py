@@ -221,7 +221,7 @@ class ManagementCommandTestCase(TestCase):
         oldurl = settings.HAYSTACK_CONNECTIONS["solr"]["URL"]
 
         conf_dir = tempfile.mkdtemp()
-        with open(os.path.join(conf_dir, 'managed-schema'), 'w+') as fp:
+        with open(os.path.join(conf_dir, "managed-schema"), "w+") as fp:
             pass
         try:
             needle = "Th3S3cr3tK3y"
@@ -262,10 +262,14 @@ class ManagementCommandTestCase(TestCase):
                 os.path.isfile(os.path.join(conf_dir, "managed-schema.old"))
             )
 
-            with patch('haystack.management.commands.build_solr_schema.requests.get') as mock_request:
+            with patch(
+                "haystack.management.commands.build_solr_schema.requests.get"
+            ) as mock_request:
                 call_command("build_solr_schema", using="solr", reload_core=True)
 
-            with patch('haystack.management.commands.build_solr_schema.requests.get') as mock_request:
+            with patch(
+                "haystack.management.commands.build_solr_schema.requests.get"
+            ) as mock_request:
                 mock_request.return_value.ok = False
 
                 self.assertRaises(
