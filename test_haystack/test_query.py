@@ -95,6 +95,12 @@ class SQTestCase(TestCase):
 class BaseSearchQueryTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
+    @classmethod
+    def setUpClass(cls):
+        for connection in connections.all():
+            connection.get_unified_index().reset()
+        super().setUpClass()
+
     def setUp(self):
         super().setUp()
         self.bsq = BaseSearchQuery()
