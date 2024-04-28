@@ -18,7 +18,7 @@ class SearchChangeList(ChangeList):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
         super_kwargs = kwargs
         if django_version[0] >= 4:
-            super_kwargs['search_help_text'] = 'Search...'
+            super_kwargs["search_help_text"] = "Search..."
         super().__init__(**super_kwargs)
 
     def get_results(self, request):
