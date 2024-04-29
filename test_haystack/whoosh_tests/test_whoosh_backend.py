@@ -114,6 +114,7 @@ class WhooshAutocompleteMockModelSearchIndex(indexes.SearchIndex, indexes.Indexa
         return MockModel
 
 
+@override_settings(USE_TZ=False)
 class WhooshSearchBackendTestCase(WhooshTestCase):
     fixtures = ["bulk_data.json"]
 
