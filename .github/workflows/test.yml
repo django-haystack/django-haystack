@@ -63,7 +63,6 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install coverage requests tox tox-gh-actions
           pip install django==${{ matrix.django-version }} elasticsearch==${{ matrix.elastic-version }}
-          # python setup.py clean build install
           pip install --editable .
       - name: Run test
         run: tox -v
