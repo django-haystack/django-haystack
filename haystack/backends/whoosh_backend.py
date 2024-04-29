@@ -930,8 +930,7 @@ class WhooshSearchQuery(BaseSearchQuery):
     def _convert_datetime(self, date):
         if hasattr(date, "hour"):
             return force_str(date.strftime("%Y%m%d%H%M%S"))
-        else:
-            return force_str(date.strftime("%Y%m%d000000"))
+        return force_str(date.strftime("%Y%m%d000000"))
 
     def clean(self, query_fragment):
         """
