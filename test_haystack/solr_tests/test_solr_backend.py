@@ -420,7 +420,7 @@ class SolrSearchBackendTestCase(TestCase):
                     "results"
                 ]
             ],
-            ["<i>Indexed</i>!\n1", "<i>Indexed</i>!\n2", "<i>Indexed</i>!\n3"],
+            ["<i>Indexed</i>!\n1\n", "<i>Indexed</i>!\n2\n", "<i>Indexed</i>!\n3\n"],
         )
 
         # full-form highlighting options
