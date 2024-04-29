@@ -66,26 +66,6 @@ not running a ``rebuild_index`` to populate your index or having a blank
   model via the ``{{ result.object.foo }}`` lookup.
 
 
-"LockError: [Errno 17] File exists: '/path/to/whoosh_index/_MAIN_LOCK'"
-=======================================================================
-
-This is a Whoosh-specific traceback. It occurs when the Whoosh engine in one
-process/thread is locks the index files for writing while another process/thread
-tries to access them. This is a common error when using ``RealtimeSignalProcessor``
-with Whoosh under any kind of load, which is why it's only recommended for
-small sites or development.
-
-The only real solution is to set up a cron job that runs
-``./manage.py rebuild_index`` (optionally with ``--age=24``) that runs nightly
-(or however often you need) to refresh the search indexes. Then disable the
-use of the ``RealtimeSignalProcessor`` within your settings.
-
-The downside to this is that you lose real-time search. For many people, this
-isn't an issue and this will allow you to scale Whoosh up to a much higher
-traffic. If this is not acceptable, you should investigate either the Solr or
-Xapian backends.
-
-
 "Failed to add documents to Solr: [Reason: None]"
 =================================================
 

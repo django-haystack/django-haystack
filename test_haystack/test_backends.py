@@ -19,18 +19,6 @@ class LoadBackendTestCase(TestCase):
         backend = loading.load_backend("haystack.backends.solr_backend.SolrEngine")
         self.assertEqual(backend.__name__, "SolrEngine")
 
-    def test_load_whoosh(self):
-        try:
-            import whoosh
-        except ImportError:
-            warnings.warn(
-                "Whoosh doesn't appear to be installed. Unable to test loading the Whoosh backend."
-            )
-            return
-
-        backend = loading.load_backend("haystack.backends.whoosh_backend.WhooshEngine")
-        self.assertEqual(backend.__name__, "WhooshEngine")
-
     def test_load_elasticsearch(self):
         try:
             import elasticsearch

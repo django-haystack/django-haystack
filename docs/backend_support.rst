@@ -10,12 +10,10 @@ Supported Backends
 
 * Solr_
 * ElasticSearch_
-* Whoosh_
 * Xapian_
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _ElasticSearch: http://elasticsearch.org/
-.. _Whoosh: https://github.com/whoosh-community/whoosh/
 .. _Xapian: http://xapian.org/
 
 
@@ -51,21 +49,6 @@ ElasticSearch
 * Highlighting
 * Spatial search
 * Requires: `elasticsearch-py <https://pypi.python.org/pypi/elasticsearch>`_ 1.x, 2.x, 5.X, or 7.X.
-
-Whoosh
-------
-
-**Complete & included with Haystack.**
-
-* Full SearchQuerySet support
-* Automatic query building
-* "More Like This" functionality
-* Term Boosting
-* Stored (non-indexed) fields
-* Highlighting
-* Faceting (no queries)
-* Requires: whoosh (2.0.0+)
-* Per-field analyzers
 
 Xapian
 ------

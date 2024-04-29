@@ -110,11 +110,11 @@ extracting exact phrases.
 Example::
 
     # Against the main text field with an accidental ":" before "search".
-    # Generates a query like ``haystack (NOT whoosh) "fast search"``
-    sqs = SearchQuerySet().filter(content=AutoQuery('haystack -whoosh "fast :search"'))
+    # Generates a query like ``haystack (NOT solr) "fast search"``
+    sqs = SearchQuerySet().filter(content=AutoQuery('haystack -solr "fast :search"'))
 
     # Equivalent.
-    sqs = SearchQuerySet().auto_query('haystack -whoosh "fast :search"')
+    sqs = SearchQuerySet().auto_query('haystack -solr "fast :search"')
 
     # Fielded.
     sqs = SearchQuerySet().filter(author=AutoQuery('daniel -day -lewis'))

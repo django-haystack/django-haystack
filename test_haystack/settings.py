@@ -62,16 +62,6 @@ HAYSTACK_ROUTERS = [
 
 HAYSTACK_CONNECTIONS = {
     "default": {"ENGINE": "test_haystack.mocks.MockEngine"},
-    "whoosh": {
-        "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
-        "PATH": mkdtemp(prefix="test_whoosh_query"),
-        "INCLUDE_SPELLING": True,
-    },
-    "filtered_whoosh": {
-        "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
-        "PATH": mkdtemp(prefix="haystack-multipleindex-filtered-whoosh-tests-"),
-        "EXCLUDED_INDEXES": ["test_haystack.multipleindex.search_indexes.BarIndex"],
-    },
     "elasticsearch": {
         "ENGINE": "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine",
         "URL": os.environ.get("TEST_ELASTICSEARCH_1_URL", "http://localhost:9200/"),

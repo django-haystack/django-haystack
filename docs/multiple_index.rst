@@ -27,15 +27,6 @@ complete setup that accesses all backends might look like::
             'BATCH_SIZE': 100,
             'SILENTLY_FAIL': True,
         },
-        'autocomplete': {
-            'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-            'PATH': '/home/search/whoosh_index',
-            'STORAGE': 'file',
-            'POST_LIMIT': 128 * 1024 * 1024,
-            'INCLUDE_SPELLING': True,
-            'BATCH_SIZE': 100,
-            'SILENTLY_FAIL': True,
-        },
         'slave': {
             'ENGINE': 'xapian_backend.XapianEngine',
             'PATH': '/home/search/xapian_index',
@@ -61,7 +52,7 @@ All management commands that manipulate data use **ONLY** one connection at a
 time. By default, they use the ``default`` index but accept a ``--using`` flag
 to specify a different connection. For example::
 
-    ./manage.py rebuild_index --noinput --using=whoosh
+    ./manage.py rebuild_index --noinput --using=solr
 
 
 Automatic Routing

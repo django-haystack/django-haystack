@@ -1,3 +1,4 @@
+import unittest
 from unittest.mock import call, patch
 
 from django.conf import settings
@@ -58,7 +59,6 @@ class CoreManagementCommandsTestCase(TestCase):
         for k in settings.HAYSTACK_CONNECTIONS:
             self.assertTrue(call(k) in m2.call_args_list)
         m1.assert_any_call("core", "default")
-        m1.assert_any_call("core", "whoosh")
 
     @patch("haystack.loading.ConnectionHandler.__getitem__")
     @patch("haystack.management.commands.update_index.Command.update_backend")

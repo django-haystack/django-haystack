@@ -204,14 +204,17 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search("*:*").hits, 0)
 
     def test_build_schema_wrong_backend(self):
-        settings.HAYSTACK_CONNECTIONS["whoosh"] = {
-            "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
+        settings.HAYSTACK_CONNECTIONS["elasticsearch"] = {
+            "ENGINE": "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine",
             "PATH": mkdtemp(prefix="dummy-path-"),
         }
 
-        connections["whoosh"]._index = self.ui
+        connections["elasticsearch"]._index = self.ui
         self.assertRaises(
-            ImproperlyConfigured, call_command, "build_solr_schema", using="whoosh"
+            ImproperlyConfigured,
+            call_command,
+            "build_solr_schema",
+            using="elasticsearch",
         )
 
     def test_build_schema(self):

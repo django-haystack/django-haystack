@@ -166,23 +166,6 @@ appropriate backend version — for example::
 .. _elasticsearch: https://pypi.python.org/pypi/elasticsearch/
 
 
-Whoosh
-======
-
-Official Download Location: https://github.com/whoosh-community/whoosh
-
-Whoosh is pure Python, so it's a great option for getting started quickly and
-for development, though it does work for small scale live deployments. The
-current recommended version is 1.3.1+. You can install via PyPI_ using
-``sudo easy_install whoosh`` or ``sudo pip install whoosh``.
-
-Note that, while capable otherwise, the Whoosh backend does not currently
-support "More Like This" or faceting. Support for these features has recently
-been added to Whoosh itself & may be present in a future release.
-
-.. _PyPI: http://pypi.python.org/pypi/Whoosh/
-
-
 Xapian
 ======
 

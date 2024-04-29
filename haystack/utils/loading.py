@@ -40,7 +40,6 @@ def load_backend(full_backend_path):
 
       * haystack.backends.solr.SolrEngine
       * haystack.backends.xapian.XapianEngine (third-party)
-      * haystack.backends.whoosh.WhooshEngine
       * haystack.backends.simple.SimpleEngine
 
     If you've implemented a custom backend, you can provide the path to
