@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix: # https://docs.djangoproject.com/en/stable/faq/install/#what-python-version-can-i-use-with-django
         django-version: ["3.2", "4.2", "5.0"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"] # , "3.12" # Whoosh issues with Py3.10+
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         elastic-version: ["7.17.9"]
         exclude:
           - django-version: "3.2"
