@@ -27,29 +27,6 @@ except ImportError:
     )
 
 
-DEFAULT_FIELD_MAPPING = {
-    "type": "text",
-    "analyzer": "snowball",
-}
-FIELD_MAPPINGS = {
-    "edge_ngram": {
-        "type": "text",
-        "analyzer": "edgengram_analyzer",
-    },
-    "ngram": {
-        "type": "text",
-        "analyzer": "ngram_analyzer",
-    },
-    "date": {"type": "date"},
-    "datetime": {"type": "date"},
-    "location": {"type": "geo_point"},
-    "boolean": {"type": "boolean"},
-    "float": {"type": "float"},
-    "long": {"type": "long"},
-    "integer": {"type": "long"},
-}
-
-
 class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
     # Settings to add an n-gram & edge n-gram analyzer.
     DEFAULT_SETTINGS = {
@@ -88,6 +65,29 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
                 },
             },
         },
+    }
+
+    DEFAULT_FIELD_MAPPING = {
+        "type": "text",
+        "analyzer": "snowball",
+    }
+
+    FIELD_MAPPINGS = {
+        "edge_ngram": {
+            "type": "text",
+            "analyzer": "edgengram_analyzer",
+        },
+        "ngram": {
+            "type": "text",
+            "analyzer": "ngram_analyzer",
+        },
+        "date": {"type": "date"},
+        "datetime": {"type": "date"},
+        "location": {"type": "geo_point"},
+        "boolean": {"type": "boolean"},
+        "float": {"type": "float"},
+        "long": {"type": "long"},
+        "integer": {"type": "long"},
     }
 
     def __init__(self, connection_alias, **connection_options):
@@ -550,8 +550,8 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
         mapping = self._get_common_mapping()
 
         for _, field_class in fields.items():
-            field_mapping = FIELD_MAPPINGS.get(
-                field_class.field_type, DEFAULT_FIELD_MAPPING
+            field_mapping = self.FIELD_MAPPINGS.get(
+                field_class.field_type, self.DEFAULT_FIELD_MAPPING
             ).copy()
             if field_class.boost != 1.0:
                 field_mapping["boost"] = field_class.boost
