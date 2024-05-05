@@ -1,3 +1,4 @@
+from django import VERSION as django_version
 from django.contrib.admin.options import ModelAdmin, csrf_protect_m
 from django.contrib.admin.views.main import SEARCH_VAR, ChangeList
 from django.core.exceptions import PermissionDenied
@@ -15,7 +16,10 @@ from haystack.utils import get_model_ct_tuple
 class SearchChangeList(ChangeList):
     def __init__(self, **kwargs):
         self.haystack_connection = kwargs.pop("haystack_connection", DEFAULT_ALIAS)
-        super().__init__(**kwargs)
+        super_kwargs = kwargs
+        if django_version[0] >= 4:
+            super_kwargs["search_help_text"] = "Search..."
+        super().__init__(**super_kwargs)
 
     def get_results(self, request):
         if SEARCH_VAR not in request.GET:

@@ -95,6 +95,12 @@ class SQTestCase(TestCase):
 class BaseSearchQueryTestCase(TestCase):
     fixtures = ["base_data.json", "bulk_data.json"]
 
+    @classmethod
+    def setUpClass(cls):
+        for connection in connections.all():
+            connection.get_unified_index().reset()
+        super().setUpClass()
+
     def setUp(self):
         super().setUp()
         self.bsq = BaseSearchQuery()
@@ -442,7 +448,7 @@ class SearchQuerySetTestCase(TestCase):
     def test_repr(self):
         reset_search_queries()
         self.assertEqual(len(connections["default"].queries), 0)
-        self.assertRegexpMatches(
+        self.assertRegex(
             repr(self.msqs),
             r"^<SearchQuerySet: query=<test_haystack.mocks.MockSearchQuery object"
             r" at 0x[0-9A-Fa-f]+>, using=None>$",
@@ -967,18 +973,18 @@ class SearchQuerySetTestCase(TestCase):
 class ValuesQuerySetTestCase(SearchQuerySetTestCase):
     def test_values_sqs(self):
         sqs = self.msqs.auto_query("test").values("id")
-        self.assert_(isinstance(sqs, ValuesSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesSearchQuerySet)
 
         # We'll do a basic test to confirm that slicing works as expected:
-        self.assert_(isinstance(sqs[0], dict))
-        self.assert_(isinstance(sqs[0:5][0], dict))
+        self.assertIsInstance(sqs[0], dict)
+        self.assertIsInstance(sqs[0:5][0], dict)
 
     def test_valueslist_sqs(self):
         sqs = self.msqs.auto_query("test").values_list("id")
 
-        self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
-        self.assert_(isinstance(sqs[0], (list, tuple)))
-        self.assert_(isinstance(sqs[0:1][0], (list, tuple)))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
+        self.assertIsInstance(sqs[0], (list, tuple))
+        self.assertIsInstance(sqs[0:1][0], (list, tuple))
 
         self.assertRaises(
             TypeError,
@@ -989,12 +995,12 @@ class ValuesQuerySetTestCase(SearchQuerySetTestCase):
         )
 
         flat_sqs = self.msqs.auto_query("test").values_list("id", flat=True)
-        self.assert_(isinstance(sqs, ValuesListSearchQuerySet))
+        self.assertIsInstance(sqs, ValuesListSearchQuerySet)
 
         # Note that this will actually be None because a mocked sqs lacks
         # anything else:
-        self.assert_(flat_sqs[0] is None)
-        self.assert_(flat_sqs[0:1][0] is None)
+        self.assertIsNone(flat_sqs[0])
+        self.assertIsNone(flat_sqs[0:1][0])
 
 
 class EmptySearchQuerySetTestCase(TestCase):

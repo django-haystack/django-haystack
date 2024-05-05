@@ -128,8 +128,7 @@ class SearchView(SearchMixin, FormView):
 
         if form.is_valid():
             return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
+        return self.form_invalid(form)
 
 
 class FacetedSearchView(FacetedSearchMixin, SearchView):
