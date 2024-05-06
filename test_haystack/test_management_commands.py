@@ -77,8 +77,8 @@ class CoreManagementCommandsTestCase(TestCase):
         self.assertTrue(mock_handle_clear.called)
         self.assertTrue(mock_handle_update.called)
 
-    @patch("haystack.management.commands.update_index.Command.handle")
-    @patch("haystack.management.commands.clear_index.Command.handle")
+    @patch("haystack.management.commands.update_index.Command.handle", return_value="")
+    @patch("haystack.management.commands.clear_index.Command.handle", return_value="")
     def test_rebuild_index_nocommit(self, *mocks):
         call_command("rebuild_index", interactive=False, commit=False)
 
@@ -92,7 +92,7 @@ class CoreManagementCommandsTestCase(TestCase):
 
     @patch("haystack.management.commands.clear_index.Command.handle", return_value="")
     @patch("haystack.management.commands.update_index.Command.handle", return_value="")
-    def test_rebuild_index_nocommit(self, update_mock, clear_mock):
+    def test_rebuild_index_nocommit_two(self, update_mock, clear_mock):
         """
         Confirm that command-line option parsing produces the same results as using call_command() directly,
         mostly as a sanity check for the logic in rebuild_index which combines the option_lists for its

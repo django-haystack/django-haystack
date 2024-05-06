@@ -4,10 +4,10 @@ import re
 import shutil
 import threading
 import warnings
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.datetime_safe import date, datetime
 from django.utils.encoding import force_str
 
 from haystack.backends import (
@@ -130,7 +130,13 @@ class WhooshSearchBackend(BaseSearchBackend):
 
         # Make sure the index is there.
         if self.use_file_storage and not os.path.exists(self.path):
-            os.makedirs(self.path)
+            try:
+                os.makedirs(self.path)
+            except Exception:
+                raise IOError(
+                    "The directory of your Whoosh index '%s' (cwd='%s') cannot be created for the current user/group."
+                    % (self.path, os.getcwd())
+                )
             new_index = True
 
         if self.use_file_storage and not os.access(self.path, os.W_OK):
@@ -924,8 +930,7 @@ class WhooshSearchQuery(BaseSearchQuery):
     def _convert_datetime(self, date):
         if hasattr(date, "hour"):
             return force_str(date.strftime("%Y%m%d%H%M%S"))
-        else:
-            return force_str(date.strftime("%Y%m%d000000"))
+        return force_str(date.strftime("%Y%m%d000000"))
 
     def clean(self, query_fragment):
         """

@@ -229,7 +229,6 @@ class TestSettings(TestCase):
 
 
 class ElasticSearchMockUnifiedIndex(UnifiedIndex):
-
     spy_args = None
 
     def get_index(self, model_klass):

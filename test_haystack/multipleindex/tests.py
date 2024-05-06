@@ -1,9 +1,10 @@
+from django.apps import apps
 from django.db import models
 
-from haystack import connections
+from haystack import connection_router, connections
 from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
-from haystack.signals import BaseSignalProcessor
+from haystack.signals import BaseSignalProcessor, RealtimeSignalProcessor
 
 from ..whoosh_tests.testcases import WhooshTestCase
 from .models import Bar, Foo
@@ -191,6 +192,22 @@ class TestSignalProcessor(BaseSignalProcessor):
 
 
 class SignalProcessorTestCase(WhooshTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        config = apps.get_app_config("haystack")
+        cls._old_sp = config.signal_processor
+        config.signal_processor = RealtimeSignalProcessor(
+            connections, connection_router
+        )
+
+    @classmethod
+    def tearDown(cls):
+        config = apps.get_app_config("haystack")
+        config.signal_processor.teardown()
+        config.signal_processor = cls._old_sp
+        super().tearDown()
+
     def setUp(self):
         super().setUp()
 

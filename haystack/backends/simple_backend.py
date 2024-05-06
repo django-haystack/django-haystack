@@ -1,6 +1,7 @@
 """
 A very basic, ORM-based backend for simple search during tests.
 """
+
 from functools import reduce
 from warnings import warn
 
@@ -56,7 +57,7 @@ class SimpleSearchBackend(BaseSearchBackend):
                             if hasattr(field, "related"):
                                 continue
 
-                            if not field.get_internal_type() in (
+                            if field.get_internal_type() not in (
                                 "TextField",
                                 "CharField",
                                 "SlugField",

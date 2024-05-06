@@ -1,14 +1,103 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+build-backend = "setuptools.build_meta"
+requires = [
+  "setuptools>=61.2",
+  "setuptools_scm[toml]>=3.4",
+  "wheel",
+]
 
-[tool.black]
-line_length=88
+[project]
+name = "django-haystack"
+description = "Pluggable search for Django."
+readme = "README.rst"
+authors = [{name = "Daniel Lindsley", email = "daniel@toastdriven.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+]
+dynamic = [
+  "version",
+]
+dependencies = [
+  "Django>=3.2",
+  "packaging",
+]
+[project.optional-dependencies]
+elasticsearch = [
+  "elasticsearch<8,>=5",
+]
+testing = [
+  "coverage",
+  "geopy==2",
+  "pysolr>=3.7",
+  "python-dateutil",
+  "requests",
+  "whoosh<3.0,>=2.5.4",
+]
+[project.urls]
+Documentation = "https://django-haystack.readthedocs.io"
+Homepage = "http://haystacksearch.org/"
+Source = "https://github.com/django-haystack/django-haystack"
+
+[tool.setuptools]
+packages = [
+    "haystack",
+    "haystack.backends",
+    "haystack.management",
+    "haystack.management.commands",
+    "haystack.templatetags",
+    "haystack.utils",
+]
+include-package-data = false
+# test-suite = "test_haystack.run_tests.run_all"  # validate-pyproject-toml will complain
+zip-safe = false
+
+[tool.setuptools.package-data]
+haystack = [
+    "templates/panels/*",
+    "templates/search_configuration/*",
+]
+
+[tool.setuptools_scm]
+fallback_version = "0.0.dev0"
+write_to = "haystack/version.py"
 
 [tool.isort]
 known_first_party = ["haystack", "test_haystack"]
 profile = "black"
 multi_line_output = 3
 
-[tool.setuptools_scm]
-fallback_version = "0.0.dev0"
-write_to = "haystack/version.py"
+[tool.ruff]
+exclude = ["test_haystack"]
+ignore = ["B018", "B028", "B904", "B905"]
+line-length = 162
+select = ["ASYNC", "B", "C4", "DJ", "E", "F", "G", "PLR091", "W"]
+show-source = true
+target-version = "py38"
+
+[tool.ruff.isort]
+known-first-party = ["haystack", "test_haystack"]
+
+[tool.ruff.mccabe]
+max-complexity = 14
+
+[tool.ruff.pylint]
+max-args = 20
+max-branches = 40
+max-returns = 8
+max-statements = 91
