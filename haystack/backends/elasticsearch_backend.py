@@ -677,9 +677,11 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
             if raw_suggest:
                 spelling_suggestion = " ".join(
                     [
-                        word["text"]
-                        if len(word["options"]) == 0
-                        else word["options"][0]["text"]
+                        (
+                            word["text"]
+                            if len(word["options"]) == 0
+                            else word["options"][0]["text"]
+                        )
                         for word in raw_suggest
                     ]
                 )
