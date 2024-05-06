@@ -1,5 +1,7 @@
 import datetime
 import os
+import shutil
+import tempfile
 from io import StringIO
 from tempfile import mkdtemp
 from unittest.mock import patch
@@ -202,7 +204,6 @@ class ManagementCommandTestCase(TestCase):
         self.assertEqual(self.solr.search("*:*").hits, 0)
 
     def test_build_schema_wrong_backend(self):
-
         settings.HAYSTACK_CONNECTIONS["whoosh"] = {
             "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
             "PATH": mkdtemp(prefix="dummy-path-"),
@@ -214,12 +215,14 @@ class ManagementCommandTestCase(TestCase):
         )
 
     def test_build_schema(self):
-
         # Stow.
         oldhdf = constants.DOCUMENT_FIELD
         oldui = connections["solr"].get_unified_index()
         oldurl = settings.HAYSTACK_CONNECTIONS["solr"]["URL"]
 
+        conf_dir = tempfile.mkdtemp()
+        with open(os.path.join(conf_dir, "managed-schema"), "w+") as fp:
+            pass
         try:
             needle = "Th3S3cr3tK3y"
             constants.DOCUMENT_FIELD = (
@@ -236,10 +239,6 @@ class ManagementCommandTestCase(TestCase):
 
             rendered_file = StringIO()
 
-            script_dir = os.path.realpath(os.path.dirname(__file__))
-            conf_dir = os.path.join(
-                script_dir, "server", "solr", "server", "solr", "mgmnt", "conf"
-            )
             schema_file = os.path.join(conf_dir, "schema.xml")
             solrconfig_file = os.path.join(conf_dir, "solrconfig.xml")
 
@@ -263,16 +262,23 @@ class ManagementCommandTestCase(TestCase):
                 os.path.isfile(os.path.join(conf_dir, "managed-schema.old"))
             )
 
-            call_command("build_solr_schema", using="solr", reload_core=True)
+            with patch(
+                "haystack.management.commands.build_solr_schema.requests.get"
+            ) as mock_request:
+                call_command("build_solr_schema", using="solr", reload_core=True)
 
-            os.rename(schema_file, "%s.bak" % schema_file)
-            self.assertRaises(
-                CommandError,
-                call_command,
-                "build_solr_schema",
-                using="solr",
-                reload_core=True,
-            )
+            with patch(
+                "haystack.management.commands.build_solr_schema.requests.get"
+            ) as mock_request:
+                mock_request.return_value.ok = False
+
+                self.assertRaises(
+                    CommandError,
+                    call_command,
+                    "build_solr_schema",
+                    using="solr",
+                    reload_core=True,
+                )
 
             call_command("build_solr_schema", using="solr", filename=schema_file)
             with open(schema_file) as s:
@@ -282,6 +288,7 @@ class ManagementCommandTestCase(TestCase):
             constants.DOCUMENT_FIELD = oldhdf
             connections["solr"]._index = oldui
             settings.HAYSTACK_CONNECTIONS["solr"]["URL"] = oldurl
+            shutil.rmtree(conf_dir, ignore_errors=True)
 
 
 class AppModelManagementCommandTestCase(TestCase):

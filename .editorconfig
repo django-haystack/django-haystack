@@ -15,6 +15,9 @@ charset = utf-8
 [Makefile]
 indent_style = tab
 
+[*.{yaml,yml}]
+indent_size = 2
+
 # We don't want to apply our defaults to third-party code or minified bundles:
 [**/{external,vendor}/**,**.min.{js,css}]
 indent_style = ignore

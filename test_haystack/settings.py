@@ -8,6 +8,9 @@ DATABASES = {
     "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "haystack_tests.db"}
 }
 
+# Use BigAutoField as the default auto field for all models
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -34,6 +37,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ]
