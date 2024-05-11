@@ -313,8 +313,7 @@ class SearchQuerySet:
         # Cache should be full enough for our needs.
         if is_slice:
             return self._result_cache[start:bound]
-        else:
-            return self._result_cache[start]
+        return self._result_cache[start]
 
     # Methods that return a SearchQuerySet.
     def all(self):  # noqa A003
@@ -329,8 +328,7 @@ class SearchQuerySet:
         """Narrows the search based on certain attributes and the default operator."""
         if DEFAULT_OPERATOR == "OR":
             return self.filter_or(*args, **kwargs)
-        else:
-            return self.filter_and(*args, **kwargs)
+        return self.filter_and(*args, **kwargs)
 
     def exclude(self, *args, **kwargs):
         """Narrows the search by ensuring certain attributes are not included."""

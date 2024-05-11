@@ -1,7 +1,8 @@
-import django
+from importlib.metadata import PackageNotFoundError, version
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from pkg_resources import DistributionNotFound, get_distribution, parse_version
+from packaging.version import Version
 
 from haystack.constants import DEFAULT_ALIAS
 from haystack.utils import loading
@@ -9,18 +10,11 @@ from haystack.utils import loading
 __author__ = "Daniel Lindsley"
 
 try:
-    pkg_distribution = get_distribution("django-haystack")
-    __version__ = pkg_distribution.version
-    version_info = pkg_distribution.parsed_version
-except DistributionNotFound:
+    __version__ = version("django-haystack")
+    version_info = Version(__version__)
+except PackageNotFoundError:
     __version__ = "0.0.dev0"
-    version_info = parse_version(__version__)
-
-
-if django.VERSION < (3, 2):
-    # default_app_config is deprecated since django 3.2.
-    default_app_config = "haystack.apps.HaystackConfig"
-
+    version_info = Version(__version__)
 
 # Help people clean up from 1.X.
 if hasattr(settings, "HAYSTACK_SITECONF"):
