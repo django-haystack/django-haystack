@@ -48,9 +48,8 @@ Documentation
 =============
 
 * Development version: http://docs.haystacksearch.org/
-* v2.8.X: https://django-haystack.readthedocs.io/en/v2.8.1/
-* v2.7.X: https://django-haystack.readthedocs.io/en/v2.7.0/
-* v2.6.X: https://django-haystack.readthedocs.io/en/v2.6.0/
+* v3.3.0: https://django-haystack.readthedocs.io/en/v3.3.0/
+* v2.8.1: https://django-haystack.readthedocs.io/en/v2.8.1/
 
 See the `changelog <docs/changelog.rst>`_
 
@@ -59,19 +58,9 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* A supported version of Python: https://devguide.python.org/versions/#supported-versions
-* A supported version of Django: https://www.djangoproject.com/download/#supported-versions
+* Python 3.8+
+* Django 3-5
 
 Additionally, each backend has its own requirements. You should refer to
 https://django-haystack.readthedocs.io/en/latest/installing_search_engines.html for more
 details.
-
-Experimental support for Django v5.0
-====================================
-
-The current release on PyPI_ does not yet support Django v5.0.
-
-.. _PyPI: https://pypi.org/project/django-haystack/
-
-To run on Django v5.0, please install by using:
-``pip install git+https://github.com/django-haystack/django-haystack.git``
