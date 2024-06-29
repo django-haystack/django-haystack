@@ -11,7 +11,6 @@ RESULTS_PER_PAGE = getattr(settings, "HAYSTACK_SEARCH_RESULTS_PER_PAGE", 20)
 
 class SearchView:
     template = "search/search.html"
-    extra_context = {}
     query = ""
     results = EmptySearchQuerySet()
     request = None
