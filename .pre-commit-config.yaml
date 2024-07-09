@@ -46,9 +46,3 @@ repos:
       - id: pretty-format-json
         args: ["--autofix", "--no-sort-keys", "--indent=4"]
       - id: trailing-whitespace
-
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
-    hooks:
-      - id: prettier
-        types_or: [json, toml, xml, yaml]
