@@ -1,5 +1,5 @@
 # figure out the solr container ID
-SOLR_CONTAINER=`docker ps -f ancestor=solr:6 --format '{{.ID}}'`
+SOLR_CONTAINER=`docker ps -f ancestor=solr:8 --format '{{.ID}}'`
 
 LOCAL_CONFDIR=./test_haystack/solr_tests/server/confdir
 CONTAINER_CONFDIR=/opt/solr/server/solr/collection1/conf
