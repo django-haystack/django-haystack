@@ -2,10 +2,10 @@
 
 set -e
 
-SOLR_VERSION=6.6.4
+# Take a command line parameter or default to 6.6.4
+# SOLR_VERSION=${1:-6.6.4}
+SOLR_VERSION=${1:-8.11.3}
 SOLR_DIR=solr
-
-
 SOLR_PORT=9001
 
 cd $(dirname $0)
