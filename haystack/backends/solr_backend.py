@@ -134,7 +134,12 @@ class SolrSearchBackend(BaseSearchBackend):
                 for model in models:
                     models_to_delete.append("%s:%s" % (DJANGO_CT, get_model_ct(model)))
 
-                self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
+                try:
+                    self.conn.delete(q=" OR ".join(models_to_delete), commit=commit)
+                except SolrError:
+                    msg = f"{models_to_delete = }"
+                    self.log.exception(msg)
+                    raise
 
             if commit:
                 # Run an optimize post-clear. http://wiki.apache.org/solr/FAQ#head-9aafb5d8dff5308e8ea4fcf4b71f19f029c4bb99
@@ -526,7 +531,10 @@ class SolrSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
 
         for raw_result in raw_results.docs:
-            app_label, model_name = raw_result[DJANGO_CT].split(".")
+            if isinstance(raw_result[DJANGO_CT], str):
+                app_label, model_name = raw_result[DJANGO_CT].split(".")
+            else:  # Solr >= v7 returns a list of strings
+                app_label, model_name = raw_result[DJANGO_CT][0].split(".")
             additional_fields = {}
             model = haystack_get_model(app_label, model_name)
 

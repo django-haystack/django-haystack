@@ -42,10 +42,6 @@ jobs:
           --health-retries 10
         ports:
           - 9200:9200
-      solr:
-        image: solr:6
-        ports:
-          - 9001:8983
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
