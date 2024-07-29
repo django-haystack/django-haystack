@@ -56,7 +56,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install system dependencies
-        run: sudo apt install --no-install-recommends -y gdal-bin
+        run: |
+          sudo apt update
+          sudo apt install --no-install-recommends -y gdal-bin
       - name: Setup Solr ${{ matrix.solr-version }} test server in Docker
         run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh ${{ matrix.solr-version }}
       - run: curl --silent http://localhost:9001/solr/admin/info/system?wt=json | jq .lucene || true
