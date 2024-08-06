@@ -1,3 +1,5 @@
+ci:
+  autoupdate_schedule: monthly
 exclude: ".*/vendor/.*"
 repos:
   - repo: https://github.com/adamchainz/django-upgrade
@@ -7,7 +9,7 @@ repos:
         args: [--target-version, "5.0"] # Replace with Django version
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.5
+    rev: v0.5.6
     hooks:
       - id: ruff
         # args: [ --fix, --exit-non-zero-on-fix ]
@@ -18,7 +20,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 24.8.0
     hooks:
       - id: black
 
