@@ -555,19 +555,20 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 bool: "true",  # Maps boolean True to "true"
                 int: TRACK_TOTAL_HITS,  # Maps integer to its value
             }
-            
+
             # Get the mapped value based on the type of TRACK_TOTAL_HITS
             # If the type is not in the mapper, fallback to False
             track_total_hits = track_total_hits_mapper.get(type(TRACK_TOTAL_HITS), False)
-            
-            # If a valid track_total_hits value is obtained, add it to search_kwargs
+
+            # If a valid track_total_hits value is obtained, add it to search kwargs
             if track_total_hits:
-                search_kwargs['track_total_hits'] = track_total_hits
+                kwargs['track_total_hits'] = track_total_hits
             else:
                 # Issue a warning if TRACK_TOTAL_HITS is not of type bool or int
                 warnings.warn(
                     "Wrong value of HAYSTACK_TRACK_TOTAL_HITS is provided. Valid options are `bool` or `int`."
                 )
+
         return kwargs
 
     @log_query
