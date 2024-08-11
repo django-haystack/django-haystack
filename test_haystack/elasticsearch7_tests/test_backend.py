@@ -3,6 +3,8 @@ import logging as std_logging
 import operator
 import pickle
 import unittest
+
+from unittest.mock import patch
 from decimal import Decimal
 
 import elasticsearch
@@ -1909,3 +1911,61 @@ class Elasticsearch7FacetingTestCase(TestCase):
         self.assertEqual(
             counts["dates"]["pub_date"], [(datetime.datetime(2013, 9, 1), 9)]
         )
+
+
+class Elasticsearch7SearchBackendTrackTotalHitsTestCase(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # Wipe it clean.
+        self.raw_es = elasticsearch.Elasticsearch(
+            settings.HAYSTACK_CONNECTIONS["elasticsearch"]["URL"]
+        )
+        clear_elasticsearch_index()
+
+        # Stow.
+        self.old_ui = connections["elasticsearch"].get_unified_index()
+        self.ui = UnifiedIndex()
+        self.smmi = Elasticsearch7MockSearchIndex()
+        self.ui.build(indexes=[self.smmi])
+        connections["elasticsearch"]._index = self.ui
+        self.sb = connections["elasticsearch"].get_backend()
+
+        # Force the backend to rebuild the mapping each time.
+        self.sb.existing_mapping = {}
+        self.sb.setup()
+
+        # Create sample objects for testing.
+        self.sample_objs = []
+        for i in range(1, 50000):
+            mock = MockModel()
+            mock.id = i
+            mock.author = "daniel%s" % i
+            mock.pub_date = datetime.date(2009, 2, 25) - datetime.timedelta(days=i)
+            self.sample_objs.append(mock)
+
+    def tearDown(self):
+        connections["elasticsearch"]._index = self.old_ui
+        super().tearDown()
+        self.sb.silently_fail = True
+
+    def test_track_total_hits(self):
+        # Update the Elasticsearch index with the sample objects for testing.
+        self.sb.update(self.smmi, self.sample_objs)
+
+        # Define test cases for track_total_hits with expected results.
+        track_total_hits_cases = {
+            True: len(self.sample_objs),  # Expect accurate hit count when True.
+            False: 10000,  # Default behavior when track_total_hits is False (Elasticsearch default of 10,000).
+            100: 100  # Expect hit count to be capped at 100 when track_total_hits is set to 100.
+        }
+
+        # Iterate through each test case to check behavior of track_total_hits.
+        for k, v in track_total_hits_cases.items():
+            # Patch TRACK_TOTAL_HITS in the Elasticsearch7 backend to test different settings.
+            with patch('haystack.backends.elasticsearch7_backend.TRACK_TOTAL_HITS', k):
+                # Redefine the SearchQuerySet to clear any cached results from previous iterations.
+                sqs = SearchQuerySet("elasticsearch").all()
+
+                # Assert that the count matches the expected value for the current test case.
+                self.assertEqual(sqs.count(), v)
