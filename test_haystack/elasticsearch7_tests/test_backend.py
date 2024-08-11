@@ -3,9 +3,8 @@ import logging as std_logging
 import operator
 import pickle
 import unittest
-
-from unittest.mock import patch
 from decimal import Decimal
+from unittest.mock import patch
 
 import elasticsearch
 from django.apps import apps
@@ -1957,13 +1956,13 @@ class Elasticsearch7SearchBackendTrackTotalHitsTestCase(TestCase):
         track_total_hits_cases = {
             True: len(self.sample_objs),  # Expect accurate hit count when True.
             False: 10000,  # Default behavior when track_total_hits is False (Elasticsearch default of 10,000).
-            100: 100  # Expect hit count to be capped at 100 when track_total_hits is set to 100.
+            100: 100,  # Expect hit count to be capped at 100 when track_total_hits is set to 100.
         }
 
         # Iterate through each test case to check behavior of track_total_hits.
         for k, v in track_total_hits_cases.items():
             # Patch TRACK_TOTAL_HITS in the Elasticsearch7 backend to test different settings.
-            with patch('haystack.backends.elasticsearch7_backend.TRACK_TOTAL_HITS', k):
+            with patch("haystack.backends.elasticsearch7_backend.TRACK_TOTAL_HITS", k):
                 # Redefine the SearchQuerySet to clear any cached results from previous iterations.
                 sqs = SearchQuerySet("elasticsearch").all()
 
