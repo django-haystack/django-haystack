@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install --user ruff
-      - run: ruff --output-format=github
+      - run: ruff check --output-format=github
 
   test:
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: # https://docs.djangoproject.com/en/stable/faq/install/#what-python-version-can-i-use-with-django
-        django-version: ["3.2", "4.2", "5.0"]
+        django-version: ["3.2", "4.2", "5.0", "5.1"]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         elastic-version: ["7.17.9"]
         exclude:
@@ -31,6 +31,10 @@ jobs:
           - django-version: "5.0"
             python-version: "3.8"
           - django-version: "5.0"
+            python-version: "3.9"
+          - django-version: "5.1"
+            python-version: "3.8"
+          - django-version: "5.1"
             python-version: "3.9"
     services:
       elastic:
@@ -55,7 +59,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install system dependencies
-        run: sudo apt install --no-install-recommends -y gdal-bin
+        run: |
+          sudo apt update
+          sudo apt install --no-install-recommends -y gdal-bin
       - name: Setup solr test server in Docker
         run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh
       - name: Install dependencies

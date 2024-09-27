@@ -18,6 +18,7 @@ classifiers = [
     "Framework :: Django :: 3.2",
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
@@ -83,20 +84,21 @@ profile = "black"
 multi_line_output = 3
 
 [tool.ruff]
-exclude = ["test_haystack"]
-ignore = ["B018", "B028", "B904", "B905"]
+extend-exclude = ["test_haystack/*"]
 line-length = 162
-select = ["ASYNC", "B", "C4", "DJ", "E", "F", "G", "PLR091", "W"]
-show-source = true
 target-version = "py38"
 
-[tool.ruff.isort]
+[tool.ruff.lint]
+ignore = ["B018", "B028", "B904", "B905"]
+select = ["ASYNC", "B", "C4", "DJ", "E", "F", "G", "PLR091", "W"]
+
+[tool.ruff.lint.isort]
 known-first-party = ["haystack", "test_haystack"]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 14
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 max-args = 20
 max-branches = 40
 max-returns = 8

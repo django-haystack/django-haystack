@@ -153,7 +153,7 @@ Elasticsearch is similar to Solr — another Java application using Lucene — b
 focused on ease of deployment and clustering. See
 https://www.elastic.co/products/elasticsearch for more information.
 
-Haystack currently supports Elasticsearch 1.x, 2.x, 5.x, and 7.x.
+Haystack currently supports Elasticsearch 5.x and 7.x.
 
 Follow the instructions on https://www.elastic.co/downloads/elasticsearch to
 download and install Elasticsearch and configure it for your environment.
