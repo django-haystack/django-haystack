@@ -28,7 +28,7 @@ but not useful for haystack, and we'll need to configure solr to use a static
 (classic) schema.  Haystack can generate a viable schema.xml and solrconfig.xml
 for you from your application and reload the core for you (once Haystack is
 installed and setup).  To do this run:
-``./manage.py build_solr_schema --configure-directory=<CoreConfigDif>
+``./manage.py build_solr_schema --configure-directory=<CoreConfigDir>
 --reload-core``. In this example CoreConfigDir is something like
 ``../solr-6.5.0/server/solr/tester/conf``, and ``--reload-core``
 is what triggers reloading of the core.  Please refer to ``build_solr_schema``
