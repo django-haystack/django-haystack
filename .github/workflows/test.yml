@@ -20,18 +20,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix: # https://docs.djangoproject.com/en/stable/faq/install/#what-python-version-can-i-use-with-django
-        django-version: ["5.0"]  # ["3.2", "4.2", "5.0"]  # TODO Undo
-        python-version: ["3.12"]  # ["3.8", "3.9", "3.10", "3.11", "3.12"]  # TODO Undo
-        elastic-version: ["7.17.9"]
+        django-version: ["5.1"]   # ["3.2", "4.2", "5.0", "5.1"]  # TODO Undo
+        python-version: ["3.13"]  # ["3.9", "3.10", "3.11", "3.12", "3.13"]  # TODO Undo
+        elastic-version: ["7.17.12"]
         solr-version: [6, 7, 8, 9]
         exclude:
           - django-version: "3.2"
             python-version: "3.11"
           - django-version: "3.2"
             python-version: "3.12"
+          - django-version: "3.2"
+            python-version: "3.13"
+          - django-version: "4.2"
+            python-version: "3.13"
           - django-version: "5.0"
-            python-version: "3.8"
+            python-version: "3.9"
           - django-version: "5.0"
+            python-version: "3.13"
+          - django-version: "5.1"
             python-version: "3.9"
     services:
       elastic:
