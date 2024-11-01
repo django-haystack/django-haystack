@@ -90,7 +90,7 @@
     <field name="created" type="date" indexed="true" stored="true" multiValued="false"/>
     <field name="editor" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false"/>
     <field name="is_active" type="boolean" indexed="true" stored="true" multiValued="false"/>
-    <field name="location" type="location" indexed="true" stored="true" multiValued="false"/>
+    <!-- <field name="location" type="location" indexed="true" stored="true" multiValued="false"/> -->
     <field name="month" type="string" indexed="false" stored="true" multiValued="false"/>
     <field name="name" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="name_auto" type="edge_ngram" indexed="true" stored="true" multiValued="false"/>
@@ -626,8 +626,8 @@
       For more information about this and other Spatial fields new to Solr 4, see:
       http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4
     -->
-    <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType"
-               geo="true" distErrPct="0.025" maxDistErr="0.001" distanceUnits="kilometers" />
+    <!-- <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType" -->
+    <!--            geo="true" distErrPct="0.025" maxDistErr="0.001" distanceUnits="kilometers" /> -->
 
     <!-- Money/currency field type. See http://wiki.apache.org/solr/MoneyFieldType
         Parameters:

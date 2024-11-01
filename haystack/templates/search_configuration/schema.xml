@@ -607,8 +607,8 @@
       For more information about this and other Spatial fields new to Solr 4, see:
       http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4
     -->
-    <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType"
-               geo="true" distErrPct="0.025" maxDistErr="0.001" distanceUnits="kilometers" />
+    <!-- <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType" -->
+    <!--            geo="true" distErrPct="0.025" maxDistErr="0.001" distanceUnits="kilometers" /> -->
 
     <!-- Money/currency field type. See http://wiki.apache.org/solr/MoneyFieldType
         Parameters:
