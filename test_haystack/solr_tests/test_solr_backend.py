@@ -1639,7 +1639,7 @@ class SolrBoostBackendTestCase(TestCase):
         )
 
         self.assertEqual(
-            sorted([result.id for result in results]),
+            sorted(result.id for result in results),
             [
                 "core.afourthmockmodel.1",
                 "core.afourthmockmodel.2",
