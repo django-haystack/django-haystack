@@ -18,7 +18,7 @@ docker exec $SOLR_CONTAINER ./bin/solr version
 
 # set up a solr core
 echo "0: Create Solr collection1"
-docker exec $SOLR_CONTAINER ./bin/solr create -c collection1 -p 8983 -n basic_config
+docker exec $SOLR_CONTAINER ./bin/solr create -c collection1 -n basic_config
 # copy the testing schema to the collection and fix permissions
 echo "1: Copy schema.xml and solrconfig.xml"
 docker cp $LOCAL_CONFDIR/solrconfig.xml $SOLR_CONTAINER:$CONTAINER_CONFDIR/solrconfig.xml
