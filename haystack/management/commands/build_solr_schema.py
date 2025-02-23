@@ -111,7 +111,11 @@ class Command(BaseCommand):
                 )
 
         if reload_core:
-            core = settings.HAYSTACK_CONNECTIONS[using]["URL"].rsplit("/", 1)[-1]
+            core = (
+                settings.HAYSTACK_CONNECTIONS[using]["URL"]
+                .rstrip("/")
+                .rsplit("/", 1)[-1]
+            )
 
             if "ADMIN_URL" not in settings.HAYSTACK_CONNECTIONS[using]:
                 raise ImproperlyConfigured(
