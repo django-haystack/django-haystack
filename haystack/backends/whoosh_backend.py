@@ -462,7 +462,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             group_by += [
                 FieldFacet(facet, allow_overlap=True, maptype=Count) for facet in facets
             ]
-            facet_types.update({facet: "fields" for facet in facets})
+            facet_types.update(dict.fromkeys(facets, "fields"))
 
         if date_facets is not None:
 
