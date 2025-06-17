@@ -290,6 +290,48 @@ class ManagementCommandTestCase(TestCase):
             settings.HAYSTACK_CONNECTIONS["solr"]["URL"] = oldurl
             shutil.rmtree(conf_dir, ignore_errors=True)
 
+    def test_build_solr_schema_reload_core_without_trailing_slash(self):
+        """Ensure `build_solr_schema` works when the Solr core URL does not have a trailing slash."""
+
+        # Get the current Solr URL from settings
+        current_url = settings.HAYSTACK_CONNECTIONS["solr"]["URL"]
+
+        # Remove trailing slash if present
+        updated_url = (
+            current_url.rstrip("/") if current_url.endswith("/") else current_url
+        )
+
+        # Patch only the `URL` key inside `settings.HAYSTACK_CONNECTIONS["solr"]`
+        with patch.dict(settings.HAYSTACK_CONNECTIONS["solr"], {"URL": updated_url}):
+            out = StringIO()  # Capture output
+            call_command(
+                "build_solr_schema", using="solr", reload_core=True, stdout=out
+            )
+            output = out.getvalue()
+            self.assertIn(
+                "Trying to reload core named", output
+            )  # Verify core reload message
+
+    def test_build_solr_schema_reload_core_with_trailing_slash(self):
+        """Ensure `build_solr_schema` works when the Solr core URL has a trailing slash."""
+
+        # Get the current Solr URL from settings
+        current_url = settings.HAYSTACK_CONNECTIONS["solr"]["URL"]
+
+        # Add a trailing slash if not present
+        updated_url = current_url if current_url.endswith("/") else current_url + "/"
+
+        # Patch only the `URL` key inside `settings.HAYSTACK_CONNECTIONS["solr"]`
+        with patch.dict(settings.HAYSTACK_CONNECTIONS["solr"], {"URL": updated_url}):
+            out = StringIO()  # Capture output
+            call_command(
+                "build_solr_schema", using="solr", reload_core=True, stdout=out
+            )
+            output = out.getvalue()
+            self.assertIn(
+                "Trying to reload core named", output
+            )  # Verify core reload message
+
 
 class AppModelManagementCommandTestCase(TestCase):
     fixtures = ["base_data", "bulk_data.json"]
