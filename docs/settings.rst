@@ -313,3 +313,25 @@ This setting allows you to change the number of terms fuzzy queries will
 expand to when using ``fuzzy`` filter.
 
 Default is ``50``
+
+
+``HAYSTACK_TRACK_TOTAL_HITS``
+==========================
+
+**Optional**
+
+This setting controls how the ``track_total_hits`` parameter is handled in Elasticsearch queries. It allows you to specify whether to include the ``track_total_hits`` parameter and, if so, how to configure it. This can impact the performance and accuracy of hit counts in search results.
+
+If set to ``True``: The ``track_total_hits`` parameter will be included in the Elasticsearch query and will ensure that the total hit count is accurate.
+If set to an integer: The ``track_total_hits`` parameter will be included with the specified integer value, providing an accurate hit count up to the specified number.
+If set to False: The ``track_total_hits`` parameter will be omitted from the Elasticsearch query, which can improve performance but will not provide an exact hit count.
+
+An example::
+
+    HAYSTACK_TRACK_TOTAL_HITS = True
+    # or
+    HAYSTACK_TRACK_TOTAL_HITS = 100
+    # or
+    HAYSTACK_TRACK_TOTAL_HITS = False
+
+The default is ``False``, meaning the track_total_hits parameter is omitted.
