@@ -48,6 +48,7 @@ class SpatialError(HaystackError):
 
 class StatsError(HaystackError):
     "Raised when incorrect arguments have been provided for stats"
+
     pass
 
 

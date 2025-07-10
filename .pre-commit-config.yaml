@@ -3,29 +3,29 @@ ci:
 exclude: ".*/vendor/.*"
 repos:
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.20.0
+    rev: 1.25.0
     hooks:
       - id: django-upgrade
         args: [--target-version, "5.1"] # Replace with Django version
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.3
+    rev: v0.12.2
     hooks:
       - id: ruff
         # args: [ --fix, --exit-non-zero-on-fix ]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.1.0
     hooks:
       - id: black
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
         args: ["--maxkb=128"]
