@@ -71,3 +71,11 @@ class GenericSearchViewsTestCase(TestCase):
 
         request = factory_func(url, data=data or {}, **kwargs)
         return request
+
+
+class GenericSearchViewsHEADTestCase(GenericSearchViewsTestCase):
+    """Test case for the generic search views using the HEAD request method."""
+
+    def setUp(self):
+        super().setUp()
+        self.request.method = "HEAD"
