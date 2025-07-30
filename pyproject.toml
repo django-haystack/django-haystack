@@ -11,6 +11,7 @@ name = "django-haystack"
 description = "Pluggable search for Django."
 readme = "README.rst"
 authors = [{name = "Daniel Lindsley", email = "daniel@toastdriven.com"}]
+license = "BSD-3-Clause"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
