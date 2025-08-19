@@ -59,7 +59,7 @@ class SearchMixin(MultipleObjectMixin, FormMixin):
         Returns the keyword arguments for instantiating the form.
         """
         kwargs = {"initial": self.get_initial()}
-        if self.request.method == "GET":
+        if self.request.method in ["HEAD", "GET"]:
             kwargs.update({"data": self.request.GET})
         kwargs.update(
             {"searchqueryset": self.get_queryset(), "load_all": self.load_all}
