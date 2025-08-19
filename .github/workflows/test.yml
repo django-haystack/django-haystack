@@ -54,11 +54,6 @@ jobs:
           - 9001:8983
     steps:
       - uses: actions/checkout@v5
-      - name: Format TOXENV
-        id: format-tox
-        run: |
-          name="py${{ matrix.python-version }}-dj${{ matrix.django-version }}-es7"
-          echo "out=${name//./}" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -71,8 +66,12 @@ jobs:
         run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install coverage requests tox tox-gh-actions
+          python -m pip install --upgrade pip tox tox-gh-actions
+      - name: Format TOXENV
+        id: format-tox
+        run: |
+          name="py${{ matrix.python-version }}-dj${{ matrix.django-version }}-es7"
+          echo "out=${name//./}" >> $GITHUB_OUTPUT
       - name: Run test
         run: tox -v
         env:
