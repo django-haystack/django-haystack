@@ -114,7 +114,7 @@ class HighlighterTestCase(TestCase):
             highlighter.find_window({"highlight": [203], "tests": [120]}), (120, 320)
         )
         self.assertEqual(
-            highlighter.find_window({"highlight": [], "tests": [100]}), (100, 300)
+            highlighter.find_window({"highlight": [], "tests": [100]}), (0, 200)
         )
         self.assertEqual(
             highlighter.find_window({"highlight": [0], "tests": [80], "moof": [120]}),
@@ -283,11 +283,11 @@ class HighlighterTestCase(TestCase):
         highlighter = Highlighter("content detection")
         self.assertEqual(
             highlighter.highlight(self.document_1),
-            '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air.',
+            'This is a test of the highlightable words <span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-air.',
         )
         self.assertEqual(
             highlighter.highlight(self.document_2),
-            '...<span class="highlighted">content</span> of words in no particular order causes nothing to occur.',
+            'The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.',
         )
         self.assertEqual(
             highlighter.highlight(self.document_3),
@@ -297,11 +297,11 @@ class HighlighterTestCase(TestCase):
         highlighter = Highlighter("content detection", max_length=100)
         self.assertEqual(
             highlighter.highlight(self.document_1),
-            '...<span class="highlighted">detection</span>. This is only a test. Were this an actual emergency, your text would have exploded in mid-...',
+            'This is a test of the highlightable words <span class="highlighted">detection</span>. This is only a test. Were this an actual emerge...',
         )
         self.assertEqual(
             highlighter.highlight(self.document_2),
-            '...<span class="highlighted">content</span> of words in no particular order causes nothing to occur.',
+            'The <span class="highlighted">content</span> of words in no particular order causes nothing to occur.',
         )
         self.assertEqual(
             highlighter.highlight(self.document_3),
