@@ -64,3 +64,5 @@ jobs:
           pip install coverage requests tox tox-gh-actions
       - name: Run test
         run: tox -v
+        env:
+          TOXENV: py${{ matrix.python-version//. }}-django{{ matrix.django-version//. }}-es7.x
