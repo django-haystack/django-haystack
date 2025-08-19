@@ -30,6 +30,12 @@ jobs:
             python-version: "3.9"
           - django-version: "5.2"
             python-version: "3.9"
+          - django-version: "main"
+            python-version: "3.9"
+          - django-version: "main"
+            python-version: "3.10"
+          - django-version: "main"
+            python-version: "3.11"
     services:
       elastic:
         image: elasticsearch:${{ matrix.elastic-version }}
