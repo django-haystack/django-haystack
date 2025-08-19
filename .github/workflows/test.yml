@@ -48,6 +48,11 @@ jobs:
           - 9001:8983
     steps:
       - uses: actions/checkout@v5
+      - name: Format TOXENV
+        id: format-tox
+        run: |
+          name="py${{ matrix.python-version }}-dj${{ matrix.django-version }}-es7"
+          echo "out=${name//./}" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -65,4 +70,4 @@ jobs:
       - name: Run test
         run: tox -v
         env:
-          TOXENV: py${{ replace(matrix.python-version, '.', '') }}-django${{ replace(matrix.django-version, '.', '') }}-es7.x
+          TOXENV: ${{ steps.format-tox.outputs.out }}
