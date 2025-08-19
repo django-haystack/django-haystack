@@ -25,11 +25,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Utilities",
 ]
 dynamic = [
@@ -87,7 +87,7 @@ multi_line_output = 3
 [tool.ruff]
 extend-exclude = ["test_haystack/*"]
 line-length = 162
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = ["B018", "B028", "B904", "B905"]
