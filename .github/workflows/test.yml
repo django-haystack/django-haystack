@@ -65,4 +65,4 @@ jobs:
       - name: Run test
         run: tox -v
         env:
-          TOXENV: py${{ matrix.python-version//. }}-django${{ matrix.django-version//. }}-es7.x
+          TOXENV: py${{ replace(matrix.python-version, '.', '') }}-django${{ replace(matrix.django-version, '.', '') }}-es7.x
