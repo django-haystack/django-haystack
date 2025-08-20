@@ -65,7 +65,8 @@ jobs:
         id: format-tox
         run: |
           safe_dj_version=$(echo "${{ matrix.django-version }}" | tr -cd '[:alnum:]')
-          name="py${{ matrix.python-version }}-dj${safe_dj_version}-es7"
+          safe_py_version=$(echo "${{ matrix.python-version }}" | tr -cd '[:alnum:]')
+          name="py${safe_py_version}-dj${safe_dj_version}-es7"
           echo "out=${name}" >> $GITHUB_OUTPUT
       - name: Run test
         run: tox -v
