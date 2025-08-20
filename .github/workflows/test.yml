@@ -52,6 +52,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install --no-install-recommends -y gdal-bin
       - name: Setup solr test server in Docker
         run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh
       - name: Install dependencies
