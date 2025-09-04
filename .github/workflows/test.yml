@@ -67,7 +67,6 @@ jobs:
           DEB_DIR="$(pwd)/.gdal-debs"
           mkdir -p "$DEB_DIR"
           sudo apt-get update -y
-          # Download gdal and BLAS/LAPACK deps (no install)
           sudo apt-get \
             -o Dir::Cache::archives="$DEB_DIR" \
             -o Debug::NoLocking=1 \
@@ -75,16 +74,23 @@ jobs:
               gdal-bin \
               libblas3 \
               liblapack3 \
-              libopenblas0-pthread || true  # present on noble; harmless if absent on jammy
+              libopenblas0-pthread || true  # noble; harmless on jammy
+
           rm -rf .gdal-root
           mkdir -p .gdal-root
           for f in "$DEB_DIR"/*.deb; do
             dpkg-deb -x "$f" .gdal-root
           done
-          # Quick sanity check: show what we got
+          LIBDIR=".gdal-root/usr/lib/x86_64-linux-gnu"
+          BLASDIR="$LIBDIR/blas"
+          LAPACKDIR="$LIBDIR/lapack"
+          if [ -f "$BLASDIR/libblas.so.3" ] && [ ! -e "$LIBDIR/libblas.so.3" ]; then
+            ln -s "$BLASDIR/libblas.so.3" "$LIBDIR/libblas.so.3"
+          fi
+          if [ -f "$LAPACKDIR/liblapack.so.3" ] && [ ! -e "$LIBDIR/liblapack.so.3" ]; then
+            ln -s "$LAPACKDIR/liblapack.so.3" "$LIBDIR/liblapack.so.3"
+          fi
           .gdal-root/usr/bin/gdalinfo --version || true
-          # (optional) list libodbcinst to confirm presence
-          (set +e; find .gdal-root -name 'libodbcinst.so*' -printf '%p\n' 2>/dev/null || true)
       - name: Export GDAL environment
         run: |
           echo "$(pwd)/.gdal-root/usr/bin" >> $GITHUB_PATH
