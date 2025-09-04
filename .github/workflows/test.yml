@@ -58,22 +58,24 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .gdal-root
-          key: gdal-${{ runner.os }}-jammy-gdalbin-v1
+          key: gdal-${{ runner.os }}-jammy-gdalbin-v2
       - name: Build portable GDAL (cache miss)
         if: steps.gdal-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euxo pipefail
-          # Use our workspace as the apt archive dir to capture ALL debs
           DEB_DIR="$(pwd)/.gdal-debs"
           mkdir -p "$DEB_DIR"
           sudo apt-get update -y
-          # Download gdal-bin *and all its runtime deps* only (no system install)
+          # Download gdal and BLAS/LAPACK deps (no install)
           sudo apt-get \
             -o Dir::Cache::archives="$DEB_DIR" \
             -o Debug::NoLocking=1 \
-            --yes --download-only install gdal-bin
-          # Extract every downloaded .deb into the portable prefix
+            --yes --download-only install \
+              gdal-bin \
+              libblas3 \
+              liblapack3 \
+              libopenblas0-pthread || true  # present on noble; harmless if absent on jammy
           rm -rf .gdal-root
           mkdir -p .gdal-root
           for f in "$DEB_DIR"/*.deb; do
@@ -87,7 +89,7 @@ jobs:
         run: |
           echo "$(pwd)/.gdal-root/usr/bin" >> $GITHUB_PATH
           {
-            echo "LD_LIBRARY_PATH=$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu:$(pwd)/.gdal-root/usr/lib:${LD_LIBRARY_PATH}"
+            echo "LD_LIBRARY_PATH=$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu:$(pwd)/.gdal-root/usr/lib:$(pwd)/.gdal-root/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
             echo "PROJ_LIB=$(pwd)/.gdal-root/usr/share/proj"
             echo "GDAL_DATA=$(pwd)/.gdal-root/usr/share/gdal"
           } >> $GITHUB_ENV
