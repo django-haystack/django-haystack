@@ -58,37 +58,43 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .gdal-root
-          key: gdal-root-${{ runner.os }}
-      - name: Build portable GDAL runtime (on cache miss)
+          key: gdal-${{ runner.os }}-jammy-gdalbin-v1
+      - name: Build portable GDAL (cache miss)
         if: steps.gdal-cache.outputs.cache-hit != 'true'
+        shell: bash
         run: |
-          set -eux
+          set -euxo pipefail
+          # Use our workspace as the apt archive dir to capture ALL debs
+          DEB_DIR="$(pwd)/.gdal-debs"
+          mkdir -p "$DEB_DIR"
           sudo apt-get update -y
-          # Download .debs only; do NOT install
-          mkdir -p .gdal-debs
-          pushd .gdal-debs
-            # core runtime bits; adjust patterns as Ubuntu image evolves
-            apt-get download gdal-bin 'libgdal*' 'libproj*' 'proj-bin' 'proj-data'
-          popd
-          # Extract into a portable prefix
+          # Download gdal-bin *and all its runtime deps* only (no system install)
+          sudo apt-get \
+            -o Dir::Cache::archives="$DEB_DIR" \
+            -o Debug::NoLocking=1 \
+            --yes --download-only install gdal-bin
+          # Extract every downloaded .deb into the portable prefix
           rm -rf .gdal-root
           mkdir -p .gdal-root
-          for f in .gdal-debs/*.deb; do
-            dpkg -x "$f" .gdal-root
+          for f in "$DEB_DIR"/*.deb; do
+            dpkg-deb -x "$f" .gdal-root
           done
-          # Quick sanity check
+          # Quick sanity check: show what we got
           .gdal-root/usr/bin/gdalinfo --version || true
+          # (optional) list libodbcinst to confirm presence
+          (set +e; find .gdal-root -name 'libodbcinst.so*' -printf '%p\n' 2>/dev/null || true)
       - name: Export GDAL environment
         run: |
           echo "$(pwd)/.gdal-root/usr/bin" >> $GITHUB_PATH
           {
-            echo "LD_LIBRARY_PATH=$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+            echo "LD_LIBRARY_PATH=$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu:$(pwd)/.gdal-root/usr/lib:${LD_LIBRARY_PATH}"
             echo "PROJ_LIB=$(pwd)/.gdal-root/usr/share/proj"
             echo "GDAL_DATA=$(pwd)/.gdal-root/usr/share/gdal"
           } >> $GITHUB_ENV
       - name: Verify GDAL
         run: |
           which gdalinfo
+          ldd "$(which gdalinfo)" || true
           gdalinfo --version
       - name: Setup solr test server in Docker
         run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh
