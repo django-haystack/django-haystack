@@ -3,19 +3,19 @@ ci:
 exclude: ".*/vendor/.*"
 repos:
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.29.0
+    rev: 1.29.1
     hooks:
       - id: django-upgrade
         args: [--target-version, "5.1"] # Replace with Django version
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.3
     hooks:
       - id: ruff
         # args: [ --fix, --exit-non-zero-on-fix ]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: isort
 
