@@ -43,10 +43,6 @@ jobs:
           --health-retries 10
         ports:
           - 9200:9200
-      solr:
-        image: solr:${{ matrix.solr-version }}
-        ports:
-          - 9001:8983
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
@@ -57,9 +53,12 @@ jobs:
         run: |
           sudo apt update
           sudo apt install --no-install-recommends -y gdal-bin
-      - name: Setup Solr ${{ matrix.solr-version }} test server in Docker
-        run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh ${{ matrix.solr-version }}
-      - run: curl --silent http://localhost:9001/solr/admin/info/system?wt=json | jq .lucene || true
+      - name: Setup Apache Solr Infrastructure
+        uses: dhavalgojiya/setup-solr-action@125f357085ac6b8f57436ebc982230565cd418a1  # v1.0.4
+        with:
+          solr-version: ${{ matrix.solr-version }}
+          solr-core-name: "collection1"
+          solr-custom-configset-path: "test_haystack/solr_tests/server/confdir/"  # Path must be relative to repo root      - run: curl --silent http://localhost:9001/solr/admin/info/system?wt=json | jq .lucene || true
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
