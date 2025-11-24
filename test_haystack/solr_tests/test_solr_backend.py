@@ -1220,6 +1220,21 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual([obj.object.id for obj in sqs], list(range(11, 24)))
         self.assertEqual([obj.object.id for obj in sqs[10:20]], [21, 22, 23])
 
+    def test_related_load_all_with_empty_model_results(self):
+        another_index = SolrAnotherMockModelSearchIndex()
+        another_index.update("solr")
+        self.ui.build(indexes=[self.smmi, another_index])
+
+        sqs = self.rsqs.order_by("id")
+        assert len(list(sqs)) == 25
+        sqs = sqs.all().load_all_queryset(
+            AnotherMockModel, AnotherMockModel.objects.none()
+        )
+        sqs = sqs.load_all()
+        # two AnotherMockModel objects are skipped, so only 23 results now
+        # (but those results are still present and weren't skipped)
+        assert len(list(sqs)) == 23
+
     def test_related_iter(self):
         reset_search_queries()
         self.assertEqual(len(connections["solr"].queries), 0)

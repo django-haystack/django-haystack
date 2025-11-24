@@ -11,31 +11,31 @@ name = "django-haystack"
 description = "Pluggable search for Django."
 readme = "README.rst"
 authors = [{name = "Daniel Lindsley", email = "daniel@toastdriven.com"}]
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Framework :: Django",
-    "Framework :: Django :: 3.2",
     "Framework :: Django :: 4.2",
-    "Framework :: Django :: 5.0",
     "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Utilities",
 ]
 dynamic = [
   "version",
 ]
 dependencies = [
-  "Django>=3.2",
+  "Django>=4.2",
   "packaging",
 ]
 [project.optional-dependencies]
@@ -86,7 +86,7 @@ multi_line_output = 3
 [tool.ruff]
 extend-exclude = ["test_haystack/*"]
 line-length = 162
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = ["B018", "B028", "B904", "B905"]
