@@ -23,6 +23,13 @@ jobs:
         django-version: ["4.2", "5.1", "5.2"]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         elastic-version: ["7.17.12"]
+        include:
+          - django-version: "5.2"
+            python-version: "3.14"
+            elastic-version: "7.17.12"
+          - django-version: "5.2"
+            python-version: "3.14t"
+            elastic-version: "7.17.12"
         exclude:
           - django-version: "4.2"
             python-version: "3.13"
@@ -46,6 +53,7 @@ jobs:
         image: solr:6
         ports:
           - 9001:8983
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
