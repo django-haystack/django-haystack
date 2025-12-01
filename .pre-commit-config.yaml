@@ -9,7 +9,7 @@ repos:
         args: [--target-version, "5.1"] # Replace with Django version
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.3
+    rev: v0.14.7
     hooks:
       - id: ruff-check
         # args: [ --fix, --exit-non-zero-on-fix ]
@@ -20,7 +20,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.9.0
+    rev: 25.11.0
     hooks:
       - id: black
 
