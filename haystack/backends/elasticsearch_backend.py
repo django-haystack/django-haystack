@@ -339,7 +339,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **extra_kwargs
+        **extra_kwargs,
     ):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
@@ -604,7 +604,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         from haystack import connections
 

@@ -147,7 +147,7 @@ class BaseSearchBackend:
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **extra_kwargs
+        **extra_kwargs,
     ):
         # A convenience method most backends should include in order to make
         # extension easier.

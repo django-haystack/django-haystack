@@ -223,7 +223,7 @@ class TestSettings(TestCase):
                 "URL": settings.HAYSTACK_CONNECTIONS["elasticsearch"]["URL"],
                 "INDEX_NAME": "testing",
                 "KWARGS": {"max_retries": 42},
-            }
+            },
         )
 
         self.assertEqual(backend.conn.transport.max_retries, 42)
