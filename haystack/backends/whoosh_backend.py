@@ -407,7 +407,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         if not self.setup_complete:
             self.setup()
@@ -607,7 +607,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         if not self.setup_complete:
             self.setup()
@@ -808,7 +808,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     model_name,
                     raw_result[DJANGO_ID],
                     score,
-                    **additional_fields
+                    **additional_fields,
                 )
                 results.append(result)
             else:
