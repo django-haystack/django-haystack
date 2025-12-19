@@ -9,6 +9,7 @@ requires = [
 [project]
 name = "django-haystack"
 description = "Pluggable search for Django."
+# Python 3.14 is not yet supported; update this constraint after #2031 is merged
 requires-python = ">=3.9,<3.14"
 readme = "README.rst"
 authors = [{name = "Daniel Lindsley", email = "daniel@toastdriven.com"}]
