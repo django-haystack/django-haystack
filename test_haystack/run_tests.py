@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import multiprocessing
 import os
 import sys
 
@@ -11,6 +12,11 @@ def run_all(argv=None):
     os.environ["DJANGO_SETTINGS_MODULE"] = "test_haystack.settings"
     django.setup()
 
+    # Python >= 3.14: default start method changed from `fork` --> `forkserver`
+    # (No state inheritance in child processes)
+    # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    if sys.version_info >= (3, 14):
+        multiprocessing.set_start_method("fork", force=True)
     call_command("test", sys.argv[1:])
 
 
