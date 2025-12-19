@@ -9,6 +9,7 @@ requires = [
 [project]
 name = "django-haystack"
 description = "Pluggable search for Django."
+requires-python = ">=3.9,<3.14"
 readme = "README.rst"
 authors = [{name = "Daniel Lindsley", email = "daniel@toastdriven.com"}]
 license = "BSD-3-Clause"
@@ -86,7 +87,6 @@ multi_line_output = 3
 [tool.ruff]
 extend-exclude = ["test_haystack/*"]
 line-length = 162
-target-version = "py39"
 
 [tool.ruff.lint]
 ignore = ["B018", "B028", "B904", "B905"]
