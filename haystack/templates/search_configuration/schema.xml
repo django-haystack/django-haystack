@@ -208,8 +208,7 @@
     <dynamicField name="*_tdt" type="tdate"  indexed="true"  stored="true"/>
     <dynamicField name="*_tdts" type="tdates"  indexed="true"  stored="true"/>
 
-    <dynamicField name="*_c"   type="currency" indexed="true"  stored="true"/>
-
+    <!-- <dynamicField name="*_c"   type="currency" indexed="true"  stored="true"/> -->
     <dynamicField name="ignored_*" type="ignored" multiValued="true"/>
     <dynamicField name="attr_*" type="text_general" indexed="true" stored="true" multiValued="true"/>
 
@@ -602,7 +601,7 @@
     <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
-    <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
+    <fieldType name="location" class="solr.LatLonPointSpatialField" docValues="true"/>
 
     <!-- An alternative geospatial field type new to Solr 4.  It supports multiValued and polygon shapes.
       For more information about this and other Spatial fields new to Solr 4, see:
@@ -622,7 +621,7 @@
                              ratesFileLocation: URL or path to rates JSON file (default latest.json on the web)
                              refreshInterval: Number of minutes between each rates fetch (default: 1440, min: 60)
     -->
-    <fieldType name="currency" class="solr.CurrencyField" precisionStep="8" defaultCurrency="USD" currencyConfig="currency.xml" />
+    <!-- <fieldType name="currency" class="solr.CurrencyField" precisionStep="8" defaultCurrency="USD" currencyConfig="currency.xml" /> -->
 
 
 

@@ -1068,11 +1068,11 @@
        results for a given query regardless of the normal lucene
        scoring.
     -->
-  <searchComponent name="elevator" class="solr.QueryElevationComponent" >
+  <!-- <searchComponent name="elevator" class="solr.QueryElevationComponent" > -->
     <!-- pick a fieldType to analyze queries -->
-    <str name="queryFieldType">string</str>
-    <str name="config-file">elevate.xml</str>
-  </searchComponent>
+  <!--   <str name="queryFieldType">string</str> -->
+  <!--   <str name="config-file">elevate.xml</str> -->
+  <!-- </searchComponent> -->
 
   <!-- A request handler for demonstrating the elevator component -->
   <requestHandler name="/elevate" class="solr.SearchHandler" startup="lazy">
@@ -1381,9 +1381,9 @@
        in Solr's conf/xslt directory.  Changes to xslt files are checked for
        every xsltCacheLifetimeSeconds.
     -->
-  <queryResponseWriter name="xslt" class="solr.XSLTResponseWriter">
+  <!-- <queryResponseWriter name="xslt" class="solr.XSLTResponseWriter">
     <int name="xsltCacheLifetimeSeconds">5</int>
-  </queryResponseWriter>
+  </queryResponseWriter> -->
 
   <!-- Query Parsers
 
