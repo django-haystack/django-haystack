@@ -15,6 +15,7 @@ jobs:
       - run: ruff check --output-format=github
 
   test:
+    name: Test (py${{ matrix.python-version }}, dj${{ matrix.django-version }}, es${{ matrix.elastic-version }})
     runs-on: ubuntu-latest
     needs: ruff # Do not run the tests if linting fails.
     strategy:
@@ -60,10 +61,57 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install system dependencies
+      - name: Restore GDAL runtime cache
+        id: gdal-cache
+        uses: actions/cache@v4
+        with:
+          path: .gdal-root
+          key: gdal-${{ runner.os }}-jammy-gdalbin-v2
+      - name: Build portable GDAL (cache miss)
+        if: steps.gdal-cache.outputs.cache-hit != 'true'
+        shell: bash
         run: |
-          sudo apt update
-          sudo apt install --no-install-recommends -y gdal-bin
+          set -euxo pipefail
+          DEB_DIR="$(pwd)/.gdal-debs"
+          mkdir -p "$DEB_DIR"
+          sudo apt-get update -y
+          sudo apt-get \
+            -o Dir::Cache::archives="$DEB_DIR" \
+            -o Debug::NoLocking=1 \
+            --yes --download-only install \
+              gdal-bin \
+              libblas3 \
+              liblapack3 \
+              libopenblas0-pthread || true  # noble; harmless on jammy
+
+          rm -rf .gdal-root
+          mkdir -p .gdal-root
+          for f in "$DEB_DIR"/*.deb; do
+            dpkg-deb -x "$f" .gdal-root
+          done
+          LIBDIR=".gdal-root/usr/lib/x86_64-linux-gnu"
+          BLASDIR="$LIBDIR/blas"
+          LAPACKDIR="$LIBDIR/lapack"
+          if [ -f "$BLASDIR/libblas.so.3" ] && [ ! -e "$LIBDIR/libblas.so.3" ]; then
+            ln -s "$BLASDIR/libblas.so.3" "$LIBDIR/libblas.so.3"
+          fi
+          if [ -f "$LAPACKDIR/liblapack.so.3" ] && [ ! -e "$LIBDIR/liblapack.so.3" ]; then
+            ln -s "$LAPACKDIR/liblapack.so.3" "$LIBDIR/liblapack.so.3"
+          fi
+          .gdal-root/usr/bin/gdalinfo --version || true
+      - name: Export GDAL environment
+        run: |
+          echo "$(pwd)/.gdal-root/usr/bin" >> $GITHUB_PATH
+          {
+            echo "LD_LIBRARY_PATH=$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu:$(pwd)/.gdal-root/usr/lib:$(pwd)/.gdal-root/lib/x86_64-linux-gnu:$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu/blas:$(pwd)/.gdal-root/usr/lib/x86_64-linux-gnu/lapack:${LD_LIBRARY_PATH}"
+            echo "PROJ_LIB=$(pwd)/.gdal-root/usr/share/proj"
+            echo "GDAL_DATA=$(pwd)/.gdal-root/usr/share/gdal"
+          } >> $GITHUB_ENV
+      - name: Verify GDAL
+        run: |
+          which gdalinfo
+          ldd "$(which gdalinfo)" || true
+          gdalinfo --version
       - name: Setup solr test server in Docker
         run: bash test_haystack/solr_tests/server/setup-solr-test-server-in-docker.sh
       - name: Install dependencies
