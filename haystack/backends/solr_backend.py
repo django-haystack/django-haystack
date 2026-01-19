@@ -184,6 +184,7 @@ class SolrSearchBackend(BaseSearchBackend):
         highlight=False,
         facets=None,
         date_facets=None,
+        interval_facets=None,
         query_facets=None,
         narrow_queries=None,
         spelling_query=None,
@@ -296,6 +297,15 @@ class SolrSearchBackend(BaseSearchBackend):
                         gap_by_string,
                     )
                 )
+
+        if interval_facets is not None:
+            kwargs["facet"] = "on"
+            kwargs["facet.interval"] = interval_facets.keys()
+
+            for key, value in interval_facets.items():
+                kwargs["f.%s.facet.interval.set" % key] = [
+                    self.conn._from_python(i) for i in value.get("intervals")
+                ]
 
         if query_facets is not None:
             kwargs["facet"] = "on"
@@ -475,6 +485,7 @@ class SolrSearchBackend(BaseSearchBackend):
             facets = {
                 "fields": raw_results.facets.get("facet_fields", {}),
                 "dates": raw_results.facets.get("facet_dates", {}),
+                "intervals": raw_results.facets.get("facet_intervals", {}),
                 "queries": raw_results.facets.get("facet_queries", {}),
                 "ranges": raw_results.facets.get("facet_ranges", {}),
             }
@@ -891,6 +902,9 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if self.date_facets:
             search_kwargs["date_facets"] = self.date_facets
+
+        if self.interval_facets:
+            search_kwargs["interval_facets"] = self.interval_facets
 
         if self.distance_point:
             search_kwargs["distance_point"] = self.distance_point
