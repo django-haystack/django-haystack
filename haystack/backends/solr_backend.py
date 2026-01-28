@@ -665,23 +665,23 @@ class SolrSearchBackend(BaseSearchBackend):
             if field_class.document is True:
                 content_field_name = field_class.index_fieldname
 
-            # DRL_FIXME: Perhaps move to something where, if none of these
-            #            checks succeed, call a custom method on the form that
-            #            returns, per-backend, the right type of storage?
-            if field_class.field_type in ["date", "datetime"]:
-                field_data["type"] = "date"
-            elif field_class.field_type == "integer":
-                field_data["type"] = "long"
-            elif field_class.field_type == "float":
-                field_data["type"] = "float"
-            elif field_class.field_type == "boolean":
-                field_data["type"] = "boolean"
-            elif field_class.field_type == "ngram":
-                field_data["type"] = "ngram"
-            elif field_class.field_type == "edge_ngram":
-                field_data["type"] = "edge_ngram"
-            elif field_class.field_type == "location":
-                field_data["type"] = "location"
+            if hasattr(field_class, "get_field_type"):
+                field_data["type"] = field_class.get_field_type()
+            else:
+                if field_class.field_type in ["date", "datetime"]:
+                    field_data["type"] = "date"
+                elif field_class.field_type == "integer":
+                    field_data["type"] = "long"
+                elif field_class.field_type == "float":
+                    field_data["type"] = "float"
+                elif field_class.field_type == "boolean":
+                    field_data["type"] = "boolean"
+                elif field_class.field_type == "ngram":
+                    field_data["type"] = "ngram"
+                elif field_class.field_type == "edge_ngram":
+                    field_data["type"] = "edge_ngram"
+                elif field_class.field_type == "location":
+                    field_data["type"] = "location"
 
             if field_class.is_multivalued:
                 field_data["multi_valued"] = "true"
