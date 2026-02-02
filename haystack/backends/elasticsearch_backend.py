@@ -500,7 +500,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
 
-            ((south, west), (north, east)) = generate_bounding_box(
+            (south, west), (north, east) = generate_bounding_box(
                 within["point_1"], within["point_2"]
             )
             within_filter = {

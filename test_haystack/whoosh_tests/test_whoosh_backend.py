@@ -705,7 +705,7 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
         ui = UnifiedIndex()
         ui.build(indexes=[AllTypesWhooshMockSearchIndex()])
 
-        (content_field_name, schema) = self.sb.build_schema(ui.all_searchfields())
+        content_field_name, schema = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
 
         schema_names = set(schema.names())

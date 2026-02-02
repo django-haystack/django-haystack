@@ -644,7 +644,7 @@ class SolrSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections["solr"].get_unified_index()
 
-        (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
+        content_field_name, fields = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(fields), 4)
         self.assertEqual(
@@ -683,7 +683,7 @@ class SolrSearchBackendTestCase(TestCase):
 
         ui = UnifiedIndex()
         ui.build(indexes=[SolrComplexFacetsMockSearchIndex()])
-        (content_field_name, fields) = self.sb.build_schema(ui.all_searchfields())
+        content_field_name, fields = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(fields), 15)
         fields = sorted(fields, key=lambda field: field["field_name"])

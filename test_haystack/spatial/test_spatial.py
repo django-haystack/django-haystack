@@ -75,7 +75,7 @@ class SpatialUtilitiesTestCase(TestCase):
 
         downtown_bottom_left = Point(-95.23947, 38.9637903)
         downtown_top_right = Point(-95.23362278938293, 38.973081081164715)
-        ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(
+        (min_lat, min_lng), (max_lat, max_lng) = generate_bounding_box(
             downtown_bottom_left, downtown_top_right
         )
         self.assertEqual(min_lat, 38.9637903)
@@ -88,7 +88,7 @@ class SpatialUtilitiesTestCase(TestCase):
 
         downtown_bottom_left = Point(95.23947, 38.9637903)
         downtown_top_right = Point(-95.23362278938293, 38.973081081164715)
-        ((south, west), (north, east)) = generate_bounding_box(
+        (south, west), (north, east) = generate_bounding_box(
             downtown_bottom_left, downtown_top_right
         )
         self.assertEqual(south, 38.9637903)

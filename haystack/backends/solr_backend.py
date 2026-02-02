@@ -339,7 +339,7 @@ class SolrSearchBackend(BaseSearchBackend):
             from haystack.utils.geo import generate_bounding_box
 
             kwargs.setdefault("fq", [])
-            ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(
+            (min_lat, min_lng), (max_lat, max_lng) = generate_bounding_box(
                 within["point_1"], within["point_2"]
             )
             # Bounding boxes are min, min TO max, max. Solr's wiki was *NOT*
