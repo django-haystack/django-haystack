@@ -634,7 +634,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections["elasticsearch"].get_unified_index()
 
-        (content_field_name, mapping) = self.sb.build_schema(old_ui.all_searchfields())
+        content_field_name, mapping = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(mapping), 4 + 2)  # + 2 management fields
         self.assertEqual(
@@ -665,7 +665,7 @@ class Elasticsearch7SearchBackendTestCase(TestCase):
 
         ui = UnifiedIndex()
         ui.build(indexes=[Elasticsearch7ComplexFacetsMockSearchIndex()])
-        (content_field_name, mapping) = self.sb.build_schema(ui.all_searchfields())
+        content_field_name, mapping = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(mapping), 16 + 2)
         self.assertEqual(
