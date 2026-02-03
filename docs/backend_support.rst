@@ -12,12 +12,13 @@ Supported Backends
 * ElasticSearch_
 * Whoosh_
 * Xapian_
+* `PostgreSQL Full Text Search`_
 
 .. _Solr: http://lucene.apache.org/solr/
 .. _ElasticSearch: http://elasticsearch.org/
 .. _Whoosh: https://github.com/whoosh-community/whoosh/
 .. _Xapian: http://xapian.org/
-
+.. _PostgreSQL Full Text Search: https://www.postgresql.org/docs/current/textsearch.html
 
 Backend Capabilities
 ====================
@@ -82,6 +83,21 @@ Xapian
 * Requires: Xapian 1.0.5+ & python-xapian 1.0.5+
 * Backend can be downloaded here: `xapian-haystack <http://github.com/notanumber/xapian-haystack/>`__
 
+PostgreSQL Full Text Search
+---------------------------
+
+**Available as a third party download.**
+
+* Full SearchQuerySet support
+* Automatic query building
+* Term Boosting
+* Faceting
+* Stored (non-indexed) fields
+* Highlighting
+* Backend can be downloaded here: `postgres-fts-backend <https://pypi.org/project/postgres-fts-backend/>`__
+
+
+
 Backend Support Matrix
 ======================
 
@@ -95,6 +111,8 @@ Backend Support Matrix
 | Whoosh         | Yes                    | Yes                 | Yes            | Yes        | Yes (basic) | Yes           | Yes          | No      |
 +----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
 | Xapian         | Yes                    | Yes                 | Yes            | Yes        | Yes         | Yes           | Yes (plugin) | No      |
++----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
+| PostgreSQL FTS | Yes                    | Yes                 | No             | Yes        | Yes         | Yes           | Yes (plugin) | No      |
 +----------------+------------------------+---------------------+----------------+------------+-------------+---------------+--------------+---------+
 
 
