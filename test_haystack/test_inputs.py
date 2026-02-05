@@ -1,6 +1,9 @@
+import re
+
 from django.test import TestCase
 
 from haystack import connections, inputs
+from haystack.backends import BaseSearchQuery
 
 
 class InputTestCase(TestCase):
@@ -82,3 +85,108 @@ class InputTestCase(TestCase):
         altparser = inputs.AltParser("dismax", "douglas adams", qf="author", mm=1)
         # Not supported on that backend.
         self.assertEqual(altparser.prepare(self.query_obj), "")
+
+
+class BinaryNotSearchQuery(BaseSearchQuery):
+    """
+    A query class that treats NOT as a binary operator (like SQLite FTS5).
+
+    In FTS5, NOT requires a left-hand operand:
+        <query1> NOT <query2>
+
+    This means negated terms must be collected and appended at the end
+    as binary operators against the preceding positive query.
+    """
+
+    def build_auto_query(self, query_string):
+        from haystack.inputs import Clean, Exact
+
+        exact_match_re = re.compile(r'"(?P<phrase>.*?)"')
+        exacts = exact_match_re.findall(query_string)
+        tokens = []
+
+        for rough_token in exact_match_re.split(query_string):
+            if not rough_token:
+                continue
+            elif rough_token not in exacts:
+                tokens.extend(rough_token.split(" "))
+            else:
+                tokens.append(rough_token)
+
+        positive_bits = []
+        negative_bits = []
+
+        for token in tokens:
+            if not token:
+                continue
+            if token in exacts:
+                positive_bits.append(Exact(token, clean=True).prepare(self))
+            elif token.startswith("-") and len(token) > 1:
+                # Collect negated terms separately (without the NOT keyword)
+                negative_bits.append(Clean(token[1:]).prepare(self))
+            else:
+                positive_bits.append(Clean(token).prepare(self))
+
+        # Build FTS5-style query: positive terms first, then NOT as binary operator
+        if positive_bits and negative_bits:
+            return "({}) NOT ({})".format(
+                " AND ".join(positive_bits), " AND ".join(negative_bits)
+            )
+        elif positive_bits:
+            return " AND ".join(positive_bits)
+        elif negative_bits:
+            # FTS5 can't handle NOT without a positive term; return empty or raise
+            return ""
+        return ""
+
+
+class BuildAutoQueryOverrideTestCase(TestCase):
+    """
+    Test that backends can override build_auto_query to customize
+    how AutoQuery strings are parsed and assembled.
+
+    This demonstrates the extensibility needed for backends like SQLite FTS5
+    where NOT is a binary operator rather than unary.
+    """
+
+    def test_default_auto_query_uses_unary_not(self):
+        """Default behavior: NOT is unary, applied inline to each negated term."""
+        query_obj = connections["default"].get_query()
+        autoquery = inputs.AutoQuery("foo bar -baz")
+        result = autoquery.prepare(query_obj)
+        self.assertEqual(result, "foo bar NOT baz")
+
+    def test_binary_not_override(self):
+        """Custom backend can restructure query for binary NOT (FTS5-style)."""
+        query_obj = BinaryNotSearchQuery()
+        autoquery = inputs.AutoQuery("foo bar -baz")
+        result = autoquery.prepare(query_obj)
+        self.assertEqual(result, "(foo AND bar) NOT (baz)")
+
+    def test_binary_not_multiple_negations(self):
+        """Multiple negated terms are grouped together."""
+        query_obj = BinaryNotSearchQuery()
+        autoquery = inputs.AutoQuery("foo -bar -baz")
+        result = autoquery.prepare(query_obj)
+        self.assertEqual(result, "(foo) NOT (bar AND baz)")
+
+    def test_binary_not_with_exact_phrase(self):
+        """Exact phrases work with binary NOT."""
+        query_obj = BinaryNotSearchQuery()
+        autoquery = inputs.AutoQuery('"hello world" foo -bar')
+        result = autoquery.prepare(query_obj)
+        self.assertEqual(result, '("hello world" AND foo) NOT (bar)')
+
+    def test_binary_not_no_negations(self):
+        """When no negations, just return positive terms."""
+        query_obj = BinaryNotSearchQuery()
+        autoquery = inputs.AutoQuery("foo bar")
+        result = autoquery.prepare(query_obj)
+        self.assertEqual(result, "foo AND bar")
+
+    def test_binary_not_only_negations(self):
+        """FTS5 can't search for only negated terms; returns empty."""
+        query_obj = BinaryNotSearchQuery()
+        autoquery = inputs.AutoQuery("-foo -bar")
+        result = autoquery.prepare(query_obj)
+        self.assertEqual(result, "")

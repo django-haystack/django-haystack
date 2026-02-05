@@ -1,4 +1,5 @@
 import copy
+import re
 from copy import deepcopy
 from time import time
 
@@ -797,6 +798,47 @@ class BaseSearchQuery:
 
     def build_exact_query(self, query_string):
         return '"%s"' % query_string
+
+    def build_auto_query(self, query_string):
+        """
+        Parse a user query string and assemble it into backend query syntax.
+
+        Handles:
+        - Quoted phrases as exact matches
+        - Terms prefixed with ``-`` as NOT queries
+        - All other terms as cleaned search terms
+
+        Backends can override this method to customize parsing, token handling,
+        or assembly order.
+        """
+        from haystack.inputs import Clean, Exact, Not
+
+        exact_match_re = re.compile(r'"(?P<phrase>.*?)"')
+        exacts = exact_match_re.findall(query_string)
+        tokens = []
+
+        for rough_token in exact_match_re.split(query_string):
+            if not rough_token:
+                continue
+            elif rough_token not in exacts:
+                # We have something that's not an exact match but may have more
+                # than one word in it.
+                tokens.extend(rough_token.split())
+            else:
+                tokens.append(rough_token)
+
+        query_bits = []
+        for token in tokens:
+            if not token:
+                continue
+            if token in exacts:
+                query_bits.append(Exact(token, clean=True).prepare(self))
+            elif token.startswith("-") and len(token) > 1:
+                query_bits.append(Not(token[1:]).prepare(self))
+            else:
+                query_bits.append(Clean(token).prepare(self))
+
+        return " ".join(query_bits)
 
     def add_filter(self, query_filter, use_or=False):
         """
