@@ -323,6 +323,23 @@ Example::
     # Count document hits for each author within the index.
     SearchQuerySet().filter(content='foo').facet('author')
 
+``interval_facet``
+~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.interval_facet(self, field, interval)
+
+Adds interval faceting to a query for the provided field. You provide the field
+(from one of the ``SearchIndex`` classes) you like to facet on and an array of
+``intervals``. This is currently supported only when using Solr (ver 4.10+)
+
+In the search results you get back, facet counts will be populated in the
+``SearchResult`` object. You can access them via the ``facet_counts`` method.
+
+Example::
+
+    # Count document hits that have a price included in the following ranges: between 0 and 100, and greater than 100
+    SearchQuerySet().filter(content='foo').interval_facet('price', intervals=['[0,100]', '(100,*]'])
+
 ``date_facet``
 ~~~~~~~~~~~~~~
 

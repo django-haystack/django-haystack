@@ -101,7 +101,7 @@ known-first-party = ["haystack", "test_haystack"]
 max-complexity = 14
 
 [tool.ruff.lint.pylint]
-max-args = 20
+max-args = 21
 max-branches = 40
 max-returns = 8
 max-statements = 91
