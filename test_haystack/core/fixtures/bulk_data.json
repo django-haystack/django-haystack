@@ -231,7 +231,7 @@
         "model": "core.mockmodel",
         "fields": {
             "author": "daniel3",
-            "foo": "Each SearchIndex gets a prepare method, which handles collecting all the data. This method should return a dictionary that will be the final data used by the search backend. Overriding this method is useful if you need to collect more than one piece of data or need to incorporate additional data that is not well represented by a single SearchField. An example might look like:",
+            "foo": "Uniqueness. Each SearchIndex gets a prepare method, which handles collecting all the data. This method should return a dictionary that will be the final data used by the search backend. Overriding this method is useful if you need to collect more than one piece of data or need to incorporate additional data that is not well represented by a single SearchField. An example might look like:",
             "pub_date": "2009-07-17 20:30:00",
             "tag": 1
         }
