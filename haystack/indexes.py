@@ -316,6 +316,11 @@ class SearchIndex(threading.local, metaclass=DeclarativeMetaclass):
         used. Default relies on the routers to decide which backend should
         be used.
         """
+        if kwargs.get('raw', False):
+            # if loading inherited models from fixtures Django will pass in a crippled instance
+            # see https://code.djangoproject.com/ticket/13299
+            instance = instance.__class__._default_manager.get(pk=instance.pk)
+
         # Check to make sure we want to index this first.
         if self.should_update(instance, **kwargs):
             backend = self.get_backend(using)
