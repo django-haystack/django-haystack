@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: # https://docs.djangoproject.com/en/stable/faq/install/#what-python-version-can-i-use-with-django
-        django-version: ["4.2", "5.1", "5.2"]
+        django-version: ["4.2", "5.1", "5.2", "6.0"]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         elastic-version: ["7.17.12"]
         include:
@@ -30,6 +30,12 @@ jobs:
           - django-version: "5.2"
             python-version: "3.14t"
             elastic-version: "7.17.12"
+          - django-version: "6.0"
+            python-version: "3.14"
+            elastic-version: "7.17.12"
+          - django-version: "6.0"
+            python-version: "3.14t"
+            elastic-version: "7.17.12"
         exclude:
           - django-version: "4.2"
             python-version: "3.13"
@@ -37,6 +43,12 @@ jobs:
             python-version: "3.9"
           - django-version: "5.2"
             python-version: "3.9"
+          - django-version: "6.0"
+            python-version: "3.9"
+          - django-version: "6.0"
+            python-version: "3.10"
+          - django-version: "6.0"
+            python-version: "3.11"
     services:
       elastic:
         image: elasticsearch:${{ matrix.elastic-version }}
