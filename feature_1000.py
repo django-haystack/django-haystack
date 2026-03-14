@@ -1,6 +1,7 @@
 # Feature Implementation for Issue #1000
 from typing import Optional
 
+
 class FeatureManager:
     def __init__(self):
         self.features = {}
@@ -10,6 +11,7 @@ class FeatureManager:
 
     def get(self, name: str) -> Optional[bool]:
         return self.features.get(name)
+
 
 # Tests
 mgr = FeatureManager()
