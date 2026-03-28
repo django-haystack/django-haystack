@@ -76,7 +76,10 @@ class Highlighter:
             return (best_start, best_end)
 
         if len(words_found) == 1:
-            return (words_found[0], words_found[0] + self.max_length)
+            # Center the text around the found word if possible
+            best_start = max(words_found[0] - self.max_length / 2, 0)
+            best_end = best_start + self.max_length
+            return (best_start, best_end)
 
         # Sort the list so it's in ascending order.
         words_found = sorted(words_found)
