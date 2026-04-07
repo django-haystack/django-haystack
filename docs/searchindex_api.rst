@@ -148,6 +148,21 @@ And finally, in ``search/search.html``::
     {% endfor %}
 
 
+Custom field types
+==================
+
+For some use-cases it may be necessary to use other pre-defined field-types or 
+even custom field-types, e.g. `text_general`. Therefor you must derive a custom
+type which defines a method `get_field_type` which returns the name of the 
+field-type you want to use.
+
+Within ``myapp/search_indexes.py``::
+
+    class TextGeneralField(CharField):
+        def get_field_type(self):
+            return 'text_general'
+
+
 Keeping The Index Fresh
 =======================
 
