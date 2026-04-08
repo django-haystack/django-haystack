@@ -1,4 +1,3 @@
-import re
 import warnings
 
 from django.utils.encoding import force_str
@@ -97,40 +96,18 @@ class AutoQuery(BaseInput):
 
     In addition to cleaning all tokens, it handles double quote bits as
     exact matches & terms with '-' in front as NOT queries.
+
+    The actual parsing and assembly is delegated to the backend's query
+    class via ``build_auto_query()``, allowing backends to customize how
+    the query string is constructed.
     """
 
     input_type_name = "auto_query"
     post_process = False
-    exact_match_re = re.compile(r'"(?P<phrase>.*?)"')
 
     def prepare(self, query_obj):
         query_string = super().prepare(query_obj)
-        exacts = self.exact_match_re.findall(query_string)
-        tokens = []
-        query_bits = []
-
-        for rough_token in self.exact_match_re.split(query_string):
-            if not rough_token:
-                continue
-            elif rough_token not in exacts:
-                # We have something that's not an exact match but may have more
-                # than on word in it.
-                tokens.extend(rough_token.split(" "))
-            else:
-                tokens.append(rough_token)
-
-        for token in tokens:
-            if not token:
-                continue
-            if token in exacts:
-                query_bits.append(Exact(token, clean=True).prepare(query_obj))
-            elif token.startswith("-") and len(token) > 1:
-                # This might break Xapian. Check on this.
-                query_bits.append(Not(token[1:]).prepare(query_obj))
-            else:
-                query_bits.append(Clean(token).prepare(query_obj))
-
-        return " ".join(query_bits)
+        return query_obj.build_auto_query(query_string)
 
 
 class AltParser(BaseInput):
