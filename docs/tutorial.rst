@@ -327,8 +327,6 @@ Your search template (``search/search.html`` for the default case) will likely
 be very simple. The following is enough to get going (your template/block names
 will likely differ)::
 
-    {% extends 'base.html' %}
-
     {% block content %}
         <h2>Search</h2>
 
