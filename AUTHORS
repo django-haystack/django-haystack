@@ -125,3 +125,4 @@ Thanks to
     * Jens Kadenbach (audax) for updating and testing Whoosh faceting support
     * Alejandro Sedeño (asedeno) trying the Whoosh faceting thing again
     * Fábio Piovam (fabiopiovam) for date_facet on Solr 6.6+
+    * Julie Rymer (Chadys) for adding open-ended range to range facet result
