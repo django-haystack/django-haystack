@@ -31,7 +31,7 @@ class SimpleSearchBackend(BaseSearchBackend):
         warn("clear is not implemented in this backend")
 
     @log_query
-    def search(self, query_string, **kwargs):
+    def search(self, query_string, start_offset=None, end_offset=None, **kwargs):
         hits = 0
         results = []
         result_class = SearchResult
@@ -73,7 +73,13 @@ class SimpleSearchBackend(BaseSearchBackend):
                         else:
                             qs = []
 
-                hits += len(qs)
+                hits += qs.count()
+
+                if start_offset is not None:
+                    if end_offset is not None:
+                        qs = qs[start_offset:end_offset]
+                    else:
+                        qs = qs[start_offset:]
 
                 for match in qs:
                     match.__dict__.pop("score", None)
