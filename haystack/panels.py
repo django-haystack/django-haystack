@@ -1,11 +1,10 @@
-from debug_toolbar.panels import DebugPanel
-from django.template.loader import render_to_string
+from debug_toolbar.panels import Panel
 from django.utils.translation import gettext_lazy as _
 
 from haystack import connections
 
 
-class HaystackDebugPanel(DebugPanel):
+class HaystackDebugPanel(Panel):
     """
     Panel that displays information about the Haystack queries run while
     processing the request.
@@ -13,6 +12,7 @@ class HaystackDebugPanel(DebugPanel):
 
     name = "Haystack"
     has_content = True
+    template = "panels/haystack.html"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,9 +24,11 @@ class HaystackDebugPanel(DebugPanel):
         self._queries = []
         self._backends = {}
 
-    def nav_title(self):
-        return _("Haystack")
+    @property
+    def title(self):
+        return _("Haystack Queries")
 
+    @property
     def nav_subtitle(self):
         self._queries = []
         self._backends = {}
@@ -48,13 +50,7 @@ class HaystackDebugPanel(DebugPanel):
             self._search_time,
         )
 
-    def title(self):
-        return _("Search Queries")
-
-    def url(self):
-        return ""
-
-    def content(self):
+    def get_stats(self):
         width_ratio_tally = 0
 
         for alias, query in self._queries:
@@ -75,15 +71,10 @@ class HaystackDebugPanel(DebugPanel):
             query["start_offset"] = width_ratio_tally
             width_ratio_tally += query["width_ratio"]
 
-        context = self.context.copy()
-        context.update(
-            {
-                "backends": sorted(
-                    self._backends.items(), key=lambda x: -x[1]["time_spent"]
-                ),
-                "queries": [q for a, q in self._queries],
-                "sql_time": self._search_time,
-            }
-        )
-
-        return render_to_string("panels/haystack.html", context)
+        return {
+            "backends": sorted(
+                self._backends.items(), key=lambda x: -x[1]["time_spent"]
+            ),
+            "queries": [q for a, q in self._queries],
+            "sql_time": self._search_time,
+        }
