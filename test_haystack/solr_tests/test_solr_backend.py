@@ -34,6 +34,7 @@ class SolrMockSearchIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr="author", faceted=True)
     pub_date = indexes.DateTimeField(model_attr="pub_date")
+    price = indexes.DecimalField(model_attr="price")
 
     def get_model(self):
         return MockModel
