@@ -3,26 +3,26 @@ name: "PyPI releases"
 on: release
 
 jobs:
-  build_sdist:
-    name: Build Python source distribution
+  build:
+    name: Build Python distributions
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Build sdist
-        run: pipx run build --sdist
+      - name: Build distributions
+        run: pipx run build
 
       - uses: actions/upload-artifact@v7
         with:
-          path: dist/*.tar.gz
+          path: dist/
 
   pypi-publish:
     name: Upload release to PyPI
     if: github.event_name == 'release' && github.event.action == 'published'
     needs:
-      - build_sdist
+      - build
     runs-on: ubuntu-latest
     environment:
       name: pypi
