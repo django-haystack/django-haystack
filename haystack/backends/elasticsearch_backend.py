@@ -1,3 +1,4 @@
+import ast
 import re
 import warnings
 from datetime import datetime, timedelta
@@ -862,7 +863,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             # This is slightly gross but it's hard to tell otherwise what the
             # string's original type might have been. Be careful who you trust.
-            converted_value = eval(value)
+            converted_value = ast.literal_eval(value)
 
             # Try to handle most built-in types.
             if isinstance(
