@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from django.urls import reverse
 
 
 class Cat(models.Model):
@@ -13,6 +14,5 @@ class Cat(models.Model):
     def __str__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("cat_detail", [], {"id": self.id})
+        return reverse("cat_detail", kwargs={"id": self.id})

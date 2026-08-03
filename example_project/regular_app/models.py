@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from django.urls import reverse
 
 BREED_CHOICES = [
     ("collie", "Collie"),
@@ -24,9 +25,8 @@ class Dog(models.Model):
     def __str__(self):
         return self.full_name()
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("dog_detail", [], {"id": self.id})
+        return reverse("dog_detail", kwargs={"id": self.id})
 
     def full_name(self):
         if self.owner_last_name:
