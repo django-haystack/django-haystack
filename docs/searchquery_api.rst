@@ -299,6 +299,13 @@ Adds a regular facet on a field.
 
 Adds a date-based facet on a field.
 
+``add_interval_facet``
+~~~~~~~~~~~~~~~~~~
+
+.. method:: SearchQuery.add_interval_facet(self, field, intervals)
+
+Adds an interval facet on a field.
+
 ``add_query_facet``
 ~~~~~~~~~~~~~~~~~~~
 

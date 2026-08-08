@@ -96,7 +96,7 @@
     <field name="name_auto" type="edge_ngram" indexed="true" stored="true" multiValued="false"/>
     <field name="name_exact" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="post_count" type="ints" indexed="true" stored="true" multiValued="false"/>
-    <field name="price" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="price" type="float" indexed="true" stored="true" multiValued="false"/>
     <field name="pub_date" type="date" indexed="true" stored="true" multiValued="false"/>
     <field name="sites" type="ints" indexed="true" stored="true" multiValued="true"/>
     <field name="tags" type="text_en" indexed="true" stored="true" multiValued="true"/>
