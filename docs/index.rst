@@ -116,7 +116,7 @@ Requirements
 
 Haystack has a relatively easily-met set of requirements.
 
-* Python 3.9+
+* Python 3.10+
 * Django 4-6
 
 Additionally, each backend has its own requirements. You should refer to
