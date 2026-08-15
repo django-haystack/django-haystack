@@ -1,19 +1,15 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [
-  "setuptools>=61.2",
-  "setuptools_scm[toml]>=3.4",
-  "wheel",
-]
+requires = [ "setuptools>=61.2", "setuptools-scm[toml]>=3.4" ]
 
 [project]
 name = "django-haystack"
 description = "Pluggable search for Django."
-requires-python = ">=3.10"
 readme = "README.rst"
-authors = [{name = "Daniel Lindsley", email = "daniel@toastdriven.com"}]
 license = "BSD-3-Clause"
-license-files = ["LICENSE"]
+license-files = [ "LICENSE" ]
+authors = [ { name = "Daniel Lindsley", email = "daniel@toastdriven.com" } ]
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
@@ -26,7 +22,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -36,28 +32,26 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dynamic = [
-  "version",
+    "version",
 ]
 dependencies = [
-  "Django>=4.2",
-  "packaging",
+    "django>=4.2",
+    "packaging",
 ]
-[project.optional-dependencies]
-elasticsearch = [
-  "elasticsearch<8,>=5",
+optional-dependencies.elasticsearch = [
+    "elasticsearch<8,>=5",
 ]
-testing = [
-  "coverage",
-  "geopy==2",
-  "pysolr>=3.7",
-  "python-dateutil",
-  "requests",
-  "whoosh<3.0,>=2.5.4",
+optional-dependencies.testing = [
+    "coverage",
+    "geopy==2",
+    "pysolr>=3.7",
+    "python-dateutil",
+    "requests",
+    "whoosh<3,>=2.5.4",
 ]
-[project.urls]
-Documentation = "https://django-haystack.readthedocs.io"
-Homepage = "http://haystacksearch.org/"
-Source = "https://github.com/django-haystack/django-haystack"
+urls.Documentation = "https://django-haystack.readthedocs.io"
+urls.Homepage = "http://haystacksearch.org/"
+urls.Source = "https://github.com/django-haystack/django-haystack"
 
 [tool.setuptools]
 packages = [
@@ -69,40 +63,33 @@ packages = [
     "haystack.utils",
 ]
 include-package-data = false
-# test-suite = "test_haystack.run_tests.run_all"  # validate-pyproject-toml will complain
-zip-safe = false
-
-[tool.setuptools.package-data]
-haystack = [
+package-data.haystack = [
     "templates/panels/*",
     "templates/search_configuration/*",
 ]
+zip-safe = false
+# test-suite = "test_haystack.run_tests.run_all"  # validate-pyproject-toml will complain
 
 [tool.setuptools_scm]
 fallback_version = "0.0.dev0"
 write_to = "haystack/version.py"
 
+[tool.ruff]
+line-length = 162
+extend-exclude = [ "test_haystack/*" ]
+lint.select = [ "ASYNC", "B", "C4", "DJ", "E", "F", "G", "PLR091", "W" ]
+lint.ignore = [ "B018", "B028", "B904", "B905" ]
+lint.isort.known-first-party = [ "haystack", "test_haystack" ]
+lint.mccabe.max-complexity = 14
+lint.pylint.max-args = 20
+lint.pylint.max-branches = 40
+lint.pylint.max-returns = 8
+lint.pylint.max-statements = 91
+
 [tool.isort]
-known_first_party = ["haystack", "test_haystack"]
 profile = "black"
 multi_line_output = 3
+known_first_party = [ "haystack", "test_haystack" ]
 
-[tool.ruff]
-extend-exclude = ["test_haystack/*"]
-line-length = 162
-
-[tool.ruff.lint]
-ignore = ["B018", "B028", "B904", "B905"]
-select = ["ASYNC", "B", "C4", "DJ", "E", "F", "G", "PLR091", "W"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["haystack", "test_haystack"]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 14
-
-[tool.ruff.lint.pylint]
-max-args = 20
-max-branches = 40
-max-returns = 8
-max-statements = 91
+[tool.pyproject-fmt]
+indent = 4

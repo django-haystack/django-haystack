@@ -48,3 +48,13 @@ repos:
       - id: pretty-format-json
         args: ["--autofix", "--no-sort-keys", "--indent=4"]
       - id: trailing-whitespace
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.27.1
+    hooks:
+      - id: pyproject-fmt
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.25
+    hooks:
+      - id: validate-pyproject
