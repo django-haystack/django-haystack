@@ -59,7 +59,7 @@ jobs:
             python-version: "3.11"
     services:
       elastic:
-        image: elasticsearch:${{ matrix.elastic-version }}
+        image: docker.elastic.co/elasticsearch/elasticsearch:${{ matrix.elastic-version }}
         env:
           discovery.type: "single-node"
         options: >-
