@@ -19,6 +19,7 @@ jobs:
       - run: ruff check --output-format=github
 
   test:
+    name: Test (py${{ matrix.python-version }}, dj${{ matrix.django-version }}, es${{ matrix.elastic-version }})
     runs-on: ubuntu-latest
     needs: ruff # Do not run the tests if linting fails.
     strategy:
@@ -73,7 +74,7 @@ jobs:
           sudo apt update
           sudo apt install --no-install-recommends -y gdal-bin
 
-      - name: Start Elasticsearch and Solr
+      - name: Start Elasticsearch ${{ ELASTICSEARCH_VERSION }} and Solr 6
         env:
           ELASTICSEARCH_VERSION: ${{ matrix.elastic-version }}
           SOLR_VERSION: "6"
