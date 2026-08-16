@@ -15,7 +15,7 @@ HAYSTACK_CONNECTIONS = {
     "default": {
         # For Solr:
         "ENGINE": "haystack.backends.solr_backend.SolrEngine",
-        "URL": "http://localhost:9001/solr/example",
+        "URL": "http://localhost:8983/solr/example",
         "TIMEOUT": 60 * 5,
         "INCLUDE_SPELLING": True,
     },

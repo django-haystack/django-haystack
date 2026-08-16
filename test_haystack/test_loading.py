@@ -24,7 +24,7 @@ class ConnectionHandlerTestCase(TestCase):
             {
                 "default": {
                     "ENGINE": "haystack.backends.solr_backend.SolrEngine",
-                    "URL": "http://localhost:9001/solr/test_default",
+                    "URL": "http://localhost:8983/solr/test_default",
                 }
             }
         )
@@ -33,7 +33,7 @@ class ConnectionHandlerTestCase(TestCase):
             {
                 "default": {
                     "ENGINE": "haystack.backends.solr_backend.SolrEngine",
-                    "URL": "http://localhost:9001/solr/test_default",
+                    "URL": "http://localhost:8983/solr/test_default",
                 }
             },
         )
@@ -52,7 +52,7 @@ class ConnectionHandlerTestCase(TestCase):
             {
                 "default": {
                     "ENGINE": "haystack.backends.solr_backend.SolrEngine",
-                    "URL": "http://localhost:9001/solr/test_default",
+                    "URL": "http://localhost:8983/solr/test_default",
                 }
             }
         )
