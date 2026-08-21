@@ -58,3 +58,8 @@ repos:
     rev: v0.25
     hooks:
       - id: validate-pyproject
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.29.0
+    hooks:
+    - id: zizmor
