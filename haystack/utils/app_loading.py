@@ -20,7 +20,7 @@ def haystack_load_apps():
 def haystack_get_models(label):
     try:
         app_mod = apps.get_app_config(label)
-        return app_mod.get_models()
+        return list(app_mod.get_models())
     except LookupError:
         if "." not in label:
             raise ImproperlyConfigured("Unknown application label {}".format(label))
