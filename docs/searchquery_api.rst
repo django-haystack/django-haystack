@@ -215,6 +215,9 @@ by chaining this method several times.
 
 Restricts the query by altering either the start, end or both offsets.
 
+.. note:: In order to get limited results, you should call get_results() 
+method while fetching the results. Otherwise the queryset API will return all results.
+
 ``clear_limits``
 ~~~~~~~~~~~~~~~~
 
