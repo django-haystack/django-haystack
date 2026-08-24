@@ -73,6 +73,14 @@ Document boosting is done by adding a ``boost`` field to the prepared data
             data['boost'] = 1.1
             return data
 
+.. warning::
+
+  This method works by modifying whatever field your backend uses to determine
+  boost, so your mileage may vary depending on the backend. For example,
+  [ElasticSearch](http://www.elasticsearch.org/guide/reference/mapping/boost-field/)
+  uses `_boost` while [Solr](http://wiki.apache.org/solr/SolrRelevancyFAQ#How_can_I_increase_the_score_for_specific_documents)
+  uses `boost`. Support in [Whoosh](https://github.com/toastdriven/django-haystack/issues/369)
+  and [Xapian](https://github.com/notanumber/xapian-haystack/issues/80) are not there yet.
 
 Another approach might be to add a new field called ``boost``. However, this
 can skew your schema and is not encouraged.
