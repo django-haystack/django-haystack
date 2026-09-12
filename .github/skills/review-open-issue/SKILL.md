@@ -14,6 +14,21 @@ to decide, for each issue, **where the root cause actually lives** and give the
 reporter a concrete next step. Work through the buckets below in order; the
 first one that fits is usually the right home for the issue.
 
+## Quick decision tree
+Before deep-reading, run each issue through this in order and stop at the first
+"yes":
+
+1. Does the report name a **different backend** (Elasticsearch/Solr/Xapian/PG)?
+   → bucket 6, *Not Whoosh*.
+2. Is the failing surface a **Haystack construct** (`SearchQuerySet` caching,
+   pagination, templates, `SimpleLazyObject`) with no Whoosh traceback?
+   → bucket 6, *Haystack layer*.
+3. Does it involve **what got indexed vs. what matched** (stemming, accents,
+   CJK, n-grams, wildcards, `__contains`)? → bucket 1 or 2.
+4. Is it about **ranking/order** of otherwise-correct hits? → bucket 3.
+5. Is it about **speed**? → bucket 4.
+6. Is it a **lock / "already in a doc" / multi-worker** error? → bucket 5.
+
 ## 1. Analysis / tokenization
 Symptoms: unexpected stemming, accented characters not matching, CJK/non-English
 tokenization, n-gram sizing, field-name collisions.
@@ -73,3 +88,29 @@ For each issue, leave (or record) one of:
 - **Needs repro** — ask for a minimal example against current whoosh3.
 - **Closable** — behavior is fixed/changed in whoosh3 (note the version).
 - **Not Whoosh** — route to the correct backend or Haystack layer.
+
+
+## Worked example
+> *"Searching for `e-mail` returns nothing, but `email` works."*
+
+1. Different backend? No — reporter shows a Whoosh index.
+2. Haystack construct? No — it's about matching.
+3. Indexed-vs-matched? **Yes** → bucket 2 (query parsing / reserved chars).
+
+Answer: the `-` is being treated as a query operator (or stripped by the
+backend's `clean()`), so `e-mail` parses as `e AND NOT mail`. Fixes: search the
+raw term as a phrase, or index a keyword/non-stemmed field so `e-mail` survives
+tokenization. Outcome: **Config answer**, no code change in Haystack.
+
+## Suggested labels for routing
+Applying consistent labels makes a second review pass much faster:
+
+| Bucket | Label | Typical resolution |
+| --- | --- | --- |
+| 1 Analysis | `whoosh/analysis` | Config answer |
+| 2 Query parsing | `whoosh/query` | Config answer / needs repro |
+| 3 Scoring | `whoosh/scoring` | Config answer |
+| 4 Performance | `whoosh/perf` | Needs repro against whoosh3 |
+| 5 Locking | `whoosh/concurrency` | Retest on whoosh3 |
+| 6 Not Whoosh | `backend/<name>` or `haystack-core` | Route / close |
+
