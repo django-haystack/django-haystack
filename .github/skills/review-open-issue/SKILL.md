@@ -35,7 +35,7 @@ tokenization, n-gram sizing, field-name collisions.
 
 - Whoosh analyzers are **composable and per-field**
   (`Tokenizer | Filter | Filter`), so most of these are configuration, not bugs.
-- Stemming surprises (e.g. `Sodenthaler → sodenthal`) → the field should let the
+- Stemming surprises (e.g., `Sodenthaler → sodenthal`) → the field should let the
   user opt in to `StemmingAnalyzer` rather than have it hardcoded.
 - Accent/character folding → `StandardAnalyzer() | CharsetFilter(accent_map)`.
 - Non-English / CJK → wrap a custom tokenizer (jieba, MeCab) or use `NGRAM`.
@@ -113,3 +113,4 @@ Applying consistent labels makes a second review pass much faster:
 | 4 Performance | `whoosh/perf` | Needs repro against whoosh3 |
 | 5 Locking | `whoosh/concurrency` | Retest on whoosh3 |
 | 6 Not Whoosh | `backend/<name>` or `haystack-core` | Route / close |
+| 7 Old issue or stale | `needs review` | Route / close |
