@@ -113,4 +113,3 @@ Applying consistent labels makes a second review pass much faster:
 | 4 Performance | `whoosh/perf` | Needs repro against whoosh3 |
 | 5 Locking | `whoosh/concurrency` | Retest on whoosh3 |
 | 6 Not Whoosh | `backend/<name>` or `haystack-core` | Route / close |
-
