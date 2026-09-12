@@ -1,0 +1,58 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-7.17.13}
+    environment:
+      discovery.type: single-node
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fs http://localhost:9200/_cluster/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - search
+
+  solr:
+    image: solr:${SOLR_VERSION:-6}
+    ports:
+      - "8983:8983"
+    volumes:
+      - ./solr/${SOLR_VERSION:-6}.x.x/conf:/haystack-configset:ro
+    environment:
+      BASE_CONFIGSET: /opt/solr/server/solr/configsets/basic_configs
+      HAYSTACK_CONFIGSET: /haystack-configset
+      # Solr 6 stores cores under `mycores`, while Solr 8+ uses `SOLR_HOME`.
+      SOLR_CORE_HOME: /opt/solr/server/solr/mycores
+      SOLR_CORE_NAME: collection1
+    command: |
+      bash -c "
+      set -e
+
+      # Create the main core using the base configset.
+      # Syntax: precreate-core <core> <configset>
+      precreate-core $$SOLR_CORE_NAME $$BASE_CONFIGSET
+
+      # Override the core's configuration with the Haystack-specific config files.
+      cp $$HAYSTACK_CONFIGSET/solrconfig.xml $$SOLR_CORE_HOME/$$SOLR_CORE_NAME/conf/solrconfig.xml
+      cp $$HAYSTACK_CONFIGSET/schema.xml $$SOLR_CORE_HOME/$$SOLR_CORE_NAME/conf/schema.xml
+
+      # Start standalone Solr in the foreground (PID 1).
+      exec solr-foreground
+      "
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fs http://localhost:8983/solr/$$SOLR_CORE_NAME/admin/ping?wt=json || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - search
+
+networks:
+  search:
+    driver: bridge

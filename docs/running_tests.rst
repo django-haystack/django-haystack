@@ -37,25 +37,65 @@ to get a list of possible options::
 
     python test_haystack/run_tests.py --help
 
+Starting the search servers
+===========================
+
+A Compose file is provided which starts both Solr and Elasticsearch
+preconfigured for the test suite::
+
+    docker compose up -d
+
+Both services declare health checks, so you can block until they are actually
+ready to serve requests rather than merely started::
+
+    docker compose up -d --wait
+
+Shut the services down again when you are finished::
+
+    docker compose down -v
+
+The image versions can be overridden with environment variables:
+
+``SOLR_VERSION``
+    Tag of the ``solr`` image to run. Defaults to ``6``. This also selects
+    which configuration directory is mounted into the container, so it must
+    match a directory under ``solr/`` (for example ``SOLR_VERSION=6`` uses
+    ``solr/6.x.x/conf/``).
+
+``ELASTICSEARCH_VERSION``
+    Tag of the ``docker.elastic.co/elasticsearch/elasticsearch`` image to run.
+    Defaults to ``7.17.13``.
+
 Configuring Solr
 ================
 
-Haystack assumes that you have a Solr server running on port ``9001`` which
-uses the schema and configuration provided in the
-``test_haystack/solr_tests/server/`` directory. For convenience, a script is
-provided which will download, configure and start a test Solr server::
+The ``solr`` service listens on port ``8983`` and creates a core named
+``collection1``. On startup the container creates that core from Solr's
+``basic_configs`` configset and then overwrites ``solrconfig.xml`` and
+``schema.xml`` with the Haystack test configuration mounted from
+``solr/<SOLR_VERSION>.x.x/conf/``, so the core is ready to index as soon as
+the container reports healthy.
 
-    test_haystack/solr_tests/server/start-solr-test-server.sh
+The test suite defaults to port ``8983``, so point it at the container by
+exporting both Solr URLs before running the tests::
+
+    export TEST_SOLR_URL="http://localhost:8983/solr/collection1"
+    export TEST_SOLR_ADMIN_URL="http://localhost:8983/solr/admin/cores"
+
+    python test_haystack/run_tests.py solr_tests
 
 If no server is found all solr-related tests will be skipped.
 
 Configuring Elasticsearch
 =========================
 
-The test suite will try to connect to Elasticsearch on port ``9200``. If no
-server is found all elasticsearch tests will be skipped. Note that the tests
-are destructive - during the teardown phase they will wipe the cluster clean so
-make sure you don't run them against an instance with data you wish to keep.
+The ``elasticsearch`` service listens on port ``9200`` as a single-node
+cluster, which is where the test suite looks by default; no extra
+configuration is needed. To use an instance elsewhere, set
+``TEST_ELASTICSEARCH_1_URL``. If no server is found all elasticsearch tests
+will be skipped. Note that the tests are destructive - during the teardown
+phase they will wipe the cluster clean so make sure you don't run them against
+an instance with data you wish to keep.
 
 If you want to run the geo-django tests you may need to review the
 `GeoDjango GEOS and GDAL settings`_ before running these commands::

@@ -21,7 +21,7 @@ complete setup that accesses all backends might look like::
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-            'URL': 'http://localhost:9001/solr/default',
+            'URL': 'http://localhost:8983/solr/default',
             'TIMEOUT': 60 * 5,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
