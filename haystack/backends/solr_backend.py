@@ -526,7 +526,7 @@ class SolrSearchBackend(BaseSearchBackend):
         indexed_models = unified_index.get_indexed_models()
 
         for raw_result in raw_results.docs:
-            app_label, model_name = raw_result[DJANGO_CT].split(".")
+            app_label, model_name = raw_result[DJANGO_CT][0].split(".")
             additional_fields = {}
             model = haystack_get_model(app_label, model_name)
 
@@ -538,7 +538,8 @@ class SolrSearchBackend(BaseSearchBackend):
                     # re-map key if alternate name used
                     if string_key in index_field_map:
                         string_key = index_field_map[key]
-
+                    if type(value) == list:
+                        value = value[0]
                     if string_key in index.fields and hasattr(
                         index.fields[string_key], "convert"
                     ):
