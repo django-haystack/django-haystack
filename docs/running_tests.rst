@@ -9,7 +9,7 @@ Everything
 
 The simplest way to get up and running with Haystack's tests is to run::
 
-    python setup.py test
+    tox
 
 This installs all of the backend libraries & all dependencies for getting the
 tests going and runs the tests. You will still have to setup search servers
