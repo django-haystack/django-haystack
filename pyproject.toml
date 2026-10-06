@@ -1,9 +1,10 @@
 [build-system]
-build-backend = "setuptools.build_meta"
-requires = [ "setuptools>=61.2", "setuptools-scm[toml]>=3.4" ]
+build-backend = "hatchling.build"
+requires = [ "hatchling" ]
 
 [project]
 name = "django-haystack"
+version = "3.4.0"
 description = "Pluggable search for Django."
 readme = "README.rst"
 license = "BSD-3-Clause"
@@ -32,9 +33,6 @@ classifiers = [
     "Programming Language :: Python :: Free Threading",
     "Topic :: Utilities",
 ]
-dynamic = [
-    "version",
-]
 dependencies = [
     "django>=4.2",
     "packaging",
@@ -54,26 +52,8 @@ urls.Documentation = "https://django-haystack.readthedocs.io"
 urls.Homepage = "http://haystacksearch.org/"
 urls.Source = "https://github.com/django-haystack/django-haystack"
 
-[tool.setuptools]
-packages = [
-    "haystack",
-    "haystack.backends",
-    "haystack.management",
-    "haystack.management.commands",
-    "haystack.templatetags",
-    "haystack.utils",
-]
-include-package-data = false
-package-data.haystack = [
-    "templates/panels/*",
-    "templates/search_configuration/*",
-]
-zip-safe = false
-# test-suite = "test_haystack.run_tests.run_all"  # validate-pyproject-toml will complain
-
-[tool.setuptools_scm]
-fallback_version = "0.0.dev0"
-write_to = "haystack/version.py"
+[tool.hatch]
+build.targets.wheel.packages = [ "haystack" ]
 
 [tool.ruff]
 line-length = 162
