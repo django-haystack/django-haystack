@@ -10,6 +10,7 @@ from django.utils.encoding import force_str, smart_bytes
 from django.utils.timezone import now
 
 from haystack import connections as haystack_connections
+from haystack.constants import ID
 from haystack.exceptions import NotHandled
 from haystack.query import SearchQuerySet
 from haystack.utils.app_loading import haystack_get_models, haystack_load_apps
@@ -404,10 +405,10 @@ class Command(BaseCommand):
                 # Retrieve PKs from the index. Note that this cannot be a numeric range query because although
                 # pks are normally numeric they can be non-numeric UUIDs or other custom values. To reduce
                 # load on the search engine, we only retrieve the pk field, which will be checked against the
-                # full list obtained from the database, and the id field, which will be used to delete the
+                # full list obtained from the database, and the configured ID field, which will be used to delete the
                 # record should it be found to be stale.
                 index_pks = SearchQuerySet(using=backend.connection_alias).models(model)
-                index_pks = index_pks.values_list("pk", "id")
+                index_pks = index_pks.values_list("pk", ID)
 
                 # We'll collect all of the record IDs which are no longer present in the database and delete
                 # them after walking the entire index. This uses more memory than the incremental approach but
