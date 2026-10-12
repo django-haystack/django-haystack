@@ -1,8 +1,11 @@
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-7.17.13}
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-8.19.23}
     environment:
       discovery.type: single-node
+      # Elasticsearch 8 enables TLS and authentication by default; the test
+      # suite talks to the cluster over plain HTTP without credentials.
+      xpack.security.enabled: "false"
     ports:
       - "9200:9200"
     healthcheck:
