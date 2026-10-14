@@ -44,7 +44,7 @@ optional-dependencies.elasticsearch = [
 ]
 optional-dependencies.testing = [
     "coverage",
-    "geopy==2.5.0",
+    "geopy==2.5",
     "pysolr>=3.7",
     "python-dateutil",
     "requests",
