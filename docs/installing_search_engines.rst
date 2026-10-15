@@ -153,15 +153,14 @@ Elasticsearch is similar to Solr — another Java application using Lucene — b
 focused on ease of deployment and clustering. See
 https://www.elastic.co/products/elasticsearch for more information.
 
-Haystack currently supports Elasticsearch 5.x and 7.x.
+Haystack currently supports Elasticsearch 8.x.
 
 Follow the instructions on https://www.elastic.co/downloads/elasticsearch to
 download and install Elasticsearch and configure it for your environment.
 
-You'll also need to install the Elasticsearch binding: elasticsearch_ for the
-appropriate backend version — for example::
+You'll also need to install the Elasticsearch binding: elasticsearch_::
 
-    $ pip install "elasticsearch>=7,<8"
+    $ pip install "elasticsearch>=8,<9"
 
 .. _elasticsearch: https://pypi.python.org/pypi/elasticsearch/
 

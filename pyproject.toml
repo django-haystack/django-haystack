@@ -40,7 +40,7 @@ dependencies = [
     "packaging",
 ]
 optional-dependencies.elasticsearch = [
-    "elasticsearch<8,>=5",
+    "elasticsearch<9,>=8",
 ]
 optional-dependencies.testing = [
     "coverage",
