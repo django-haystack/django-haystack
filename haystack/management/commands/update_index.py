@@ -44,18 +44,12 @@ def update_worker(args):
     # will try to share the connection, which causes things to blow up.
     from django.db import connections
 
-    for alias, info in connections.databases.items():
+    for conn in connections.all(initialized_only=True):
         # We need to also tread lightly with SQLite, because blindly wiping
         # out connections (via ``... = {}``) destroys in-memory DBs.
-        if "sqlite3" not in info["ENGINE"]:
-            try:
-                close_old_connections()
-                if isinstance(connections._connections, dict):
-                    del connections._connections[alias]
-                else:
-                    delattr(connections._connections, alias)
-            except KeyError:
-                pass
+        if "sqlite3" not in conn.settings_dict["ENGINE"]:
+            close_old_connections()
+            del connections[conn.alias]
 
     # Request that the connection clear out any transient sessions, file handles, etc.
     haystack_connections[using].reset_sessions()
