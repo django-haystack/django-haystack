@@ -1,8 +1,12 @@
-from unittest.mock import call, patch
+from unittest.mock import Mock, call, patch
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db import connections
 from django.test import TestCase
+
+from haystack.management.commands.update_index import update_worker
+from test_haystack.core.models import MockModel
 
 __all__ = ["CoreManagementCommandsTestCase"]
 
@@ -116,3 +120,31 @@ class CoreManagementCommandsTestCase(TestCase):
 
         self.assertIn("interactive", kwargs)
         self.assertIs(kwargs["interactive"], False)
+
+    @patch("haystack.management.commands.update_index.do_update")
+    @patch("haystack.management.commands.update_index.haystack_connections")
+    def test_update_worker_skips_unused_database_alias(
+        self, mock_connections, mock_do_update
+    ):
+        """update_worker skips DATABASES aliases the parent process never connected to"""
+        unused = {"unused": {"ENGINE": "django.db.backends.postgresql"}}
+        with patch.dict(connections.settings, unused):
+            update_worker((MockModel, 0, 1, 1, "default", None, None, 0, True, 0))
+
+        mock_do_update.assert_called_once()
+
+    @patch("haystack.management.commands.update_index.do_update")
+    @patch("haystack.management.commands.update_index.haystack_connections")
+    def test_update_worker_drops_inherited_connections(
+        self, mock_connections, mock_do_update
+    ):
+        """update_worker drops inherited non-SQLite connections and keeps SQLite ones"""
+        other = {"other": {"ENGINE": "django.db.backends.postgresql"}}
+        with patch.dict(connections.settings, other):
+            connections["other"] = Mock(alias="other", settings_dict=other["other"])
+            update_worker((MockModel, 0, 1, 1, "default", None, None, 0, True, 0))
+
+            self.assertEqual(
+                [conn.alias for conn in connections.all(initialized_only=True)],
+                ["default"],
+            )
