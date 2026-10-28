@@ -803,6 +803,16 @@ class WhooshSearchBackendTestCase(WhooshTestCase):
             [result.pk for result in page_2["results"]], ["21", "22", "23"]
         )
 
+        # Regression test for #1664: a slice whose start_offset is NOT an exact
+        # multiple of its length (as produced by a Paginator's short final
+        # page) used to be mapped onto the wrong Whoosh page, returning shifted
+        # / duplicated rows. page_length here is 3 and start_offset is 20.
+        page_3 = self.sb.search("*", start_offset=20, end_offset=23)
+        self.assertEqual(len(page_3["results"]), 3)
+        self.assertEqual(
+            [result.pk for result in page_3["results"]], ["21", "22", "23"]
+        )
+
         # This used to throw an error.
         page_0 = self.sb.search("*", start_offset=0, end_offset=0)
         self.assertEqual(len(page_0["results"]), 1)
@@ -1108,7 +1118,10 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
         reset_search_queries()
         self.assertEqual(len(connections["whoosh"].queries), 0)
         results = self.sqs.auto_query("Indexed!")
-        self.assertEqual(sorted([int(result.pk) for result in results[1:3]]), [1, 2])
+        # results[1:3] must skip the first hit (offset semantics), matching the
+        # Solr/Elasticsearch backends. Before #1664 the offset was dropped when
+        # start_offset < the slice length, so this wrongly returned [1, 2].
+        self.assertEqual(sorted([int(result.pk) for result in results[1:3]]), [2, 3])
         self.assertEqual(len(connections["whoosh"].queries), 1)
 
         reset_search_queries()
@@ -1127,7 +1140,11 @@ class LiveWhooshSearchQuerySetTestCase(WhooshTestCase):
 
         # The values will come back as strings because Hasytack doesn't assume PKs are integers.
         # We'll prepare this set once since we're going to query the same results in multiple ways:
-        expected_pks = ["3", "2", "1"]
+        # order_by("pub_date") ascending -> [3, 2, 1]; the [1:11] slice drops the
+        # first hit, so the expected window is [2, 1]. Before #1664 the offset
+        # was ignored for slices starting below the page length. This matches
+        # the Solr/Elasticsearch test_values_slicing contract.
+        expected_pks = ["2", "1"]
 
         results = self.sqs.all().order_by("pub_date").values("pk")
         self.assertListEqual([i["pk"] for i in results[1:11]], expected_pks)
