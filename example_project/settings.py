@@ -20,7 +20,7 @@ HAYSTACK_CONNECTIONS = {
         "INCLUDE_SPELLING": True,
     },
     "elasticsearch": {
-        "ENGINE": "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine",
+        "ENGINE": "haystack.backends.elasticsearch8_backend.Elasticsearch8SearchEngine",
         "URL": "http://localhost:9200",
         "INDEX_NAME": "example_project",
     },
