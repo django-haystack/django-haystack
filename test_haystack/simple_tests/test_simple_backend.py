@@ -193,6 +193,10 @@ class SimpleSearchBackendTestCase(TestCase):
             {"hits": 0, "results": []},
         )
 
+        # Search by string containing more than one word.
+        self.assertEqual(self.backend.search("uniqueness index")["hits"], 1)
+        self.assertEqual(self.backend.search("uniqueness index")["results"][0].pk, 23)
+
     def test_filter_models(self):
         self.backend.update(self.index, self.sample_objs)
         self.assertEqual(self.backend.search("*", models=set([]))["hits"], 24)
