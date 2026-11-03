@@ -126,3 +126,4 @@ Thanks to
     * Alejandro Sedeño (asedeno) trying the Whoosh faceting thing again
     * Fábio Piovam (fabiopiovam) for date_facet on Solr 6.6+
     * Wu Shuwen (dajiaohuang) for fixing the tutorial's Django ForeignKey example
+    * Vamsi-2581 for clarifying the SearchQuerySet boost documentation.
