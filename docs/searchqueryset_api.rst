@@ -299,6 +299,9 @@ Example::
 
     SearchQuerySet().filter(content='foo').boost('bar', 1.5)
 
+Boosting a term affects the query result by weighting the specified term in the
+``content`` field only. It does not apply to other fields.
+
 ``facet``
 ~~~~~~~~~
 
