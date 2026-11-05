@@ -73,8 +73,8 @@ HAYSTACK_CONNECTIONS = {
         "EXCLUDED_INDEXES": ["test_haystack.multipleindex.search_indexes.BarIndex"],
     },
     "elasticsearch": {
-        "ENGINE": "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine",
-        "URL": os.environ.get("TEST_ELASTICSEARCH_1_URL", "http://localhost:9200/"),
+        "ENGINE": "haystack.backends.elasticsearch8_backend.Elasticsearch8SearchEngine",
+        "URL": os.environ.get("TEST_ELASTICSEARCH_URL", "http://localhost:9200/"),
         "INDEX_NAME": "test_default",
         "INCLUDE_SPELLING": True,
     },
@@ -95,17 +95,7 @@ if "elasticsearch" in HAYSTACK_CONNECTIONS:
     try:
         import elasticsearch
 
-        if (5,) <= elasticsearch.__version__ <= (6,):
-            HAYSTACK_CONNECTIONS["elasticsearch"].update(
-                {
-                    "ENGINE": "haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine"
-                }
-            )
-        elif (7,) <= elasticsearch.__version__ <= (8,):
-            HAYSTACK_CONNECTIONS["elasticsearch"].update(
-                {
-                    "ENGINE": "haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine"
-                }
-            )
+        if not ((8, 0, 0) <= elasticsearch.__version__ < (9, 0, 0)):
+            raise ImportError
     except ImportError:
         del HAYSTACK_CONNECTIONS["elasticsearch"]

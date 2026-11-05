@@ -141,23 +141,29 @@ Example (Solr 6.X)::
 Elasticsearch
 ~~~~~~~~~~~~~
 
-Example (ElasticSearch 5.x)::
+Example (ElasticSearch 8.x)::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
-            'ENGINE': 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
+            'ENGINE': 'haystack.backends.elasticsearch8_backend.Elasticsearch8SearchEngine',
             'URL': 'http://127.0.0.1:9200/',
             'INDEX_NAME': 'haystack',
         },
     }
 
-Example (ElasticSearch 7.x)::
+Elasticsearch 8 enables TLS and authentication by default. Connection
+credentials and any other options accepted by the ``Elasticsearch`` client are
+passed through ``KWARGS``::
 
     HAYSTACK_CONNECTIONS = {
         'default': {
-            'ENGINE': 'haystack.backends.elasticsearch7_backend.Elasticsearch7SearchEngine',
-            'URL': 'http://127.0.0.1:9200/',
+            'ENGINE': 'haystack.backends.elasticsearch8_backend.Elasticsearch8SearchEngine',
+            'URL': 'https://127.0.0.1:9200/',
             'INDEX_NAME': 'haystack',
+            'KWARGS': {
+                'basic_auth': ('elastic', 'changeme'),
+                'ca_certs': '/path/to/http_ca.crt',
+            },
         },
     }
 

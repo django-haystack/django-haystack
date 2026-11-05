@@ -64,7 +64,7 @@ The image versions can be overridden with environment variables:
 
 ``ELASTICSEARCH_VERSION``
     Tag of the ``docker.elastic.co/elasticsearch/elasticsearch`` image to run.
-    Defaults to ``7.17.13``.
+    Defaults to ``8.19.23``.
 
 Configuring Solr
 ================
@@ -92,7 +92,7 @@ Configuring Elasticsearch
 The ``elasticsearch`` service listens on port ``9200`` as a single-node
 cluster, which is where the test suite looks by default; no extra
 configuration is needed. To use an instance elsewhere, set
-``TEST_ELASTICSEARCH_1_URL``. If no server is found all elasticsearch tests
+``TEST_ELASTICSEARCH_URL``. If no server is found all elasticsearch tests
 will be skipped. Note that the tests are destructive - during the teardown
 phase they will wipe the cluster clean so make sure you don't run them against
 an instance with data you wish to keep.
@@ -101,6 +101,6 @@ If you want to run the geo-django tests you may need to review the
 `GeoDjango GEOS and GDAL settings`_ before running these commands::
 
 	cd test_haystack
-	./run_tests.py elasticsearch_tests
+	./run_tests.py elasticsearch8_tests
 
 .. _GeoDjango GEOS and GDAL settings: https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/geolibs/#geos-library-path

@@ -34,16 +34,20 @@ class LoadBackendTestCase(TestCase):
     def test_load_elasticsearch(self):
         try:
             import elasticsearch
+
+            if not ((8, 0, 0) <= elasticsearch.__version__ < (9, 0, 0)):
+                raise ImportError
         except ImportError:
             warnings.warn(
-                "elasticsearch-py doesn't appear to be installed. Unable to test loading the ElasticSearch backend."
+                "'elasticsearch>=8.0.0,<9.0.0' doesn't appear to be installed. "
+                "Unable to test loading the ElasticSearch backend."
             )
             return
 
         backend = loading.load_backend(
-            "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine"
+            "haystack.backends.elasticsearch8_backend.Elasticsearch8SearchEngine"
         )
-        self.assertEqual(backend.__name__, "ElasticsearchSearchEngine")
+        self.assertEqual(backend.__name__, "Elasticsearch8SearchEngine")
 
     def test_load_simple(self):
         backend = loading.load_backend("haystack.backends.simple_backend.SimpleEngine")

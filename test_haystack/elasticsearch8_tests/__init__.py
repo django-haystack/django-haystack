@@ -11,14 +11,14 @@ def load_tests(loader, standard_tests, pattern):
     try:
         import elasticsearch
 
-        if not ((7, 0, 0) <= elasticsearch.__version__ < (8, 0, 0)):
+        if not ((8, 0, 0) <= elasticsearch.__version__ < (9, 0, 0)):
             raise ImportError
         from elasticsearch import Elasticsearch, exceptions
     except ImportError:
         log.error(
-            "Skipping ElasticSearch 7 tests: 'elasticsearch>=7.0.0,<8.0.0' not installed."
+            "Skipping ElasticSearch 8 tests: 'elasticsearch>=8.0.0,<9.0.0' not installed."
         )
-        raise unittest.SkipTest("'elasticsearch>=7.0.0,<8.0.0' not installed.")
+        raise unittest.SkipTest("'elasticsearch>=8.0.0,<9.0.0' not installed.")
 
     url = settings.HAYSTACK_CONNECTIONS["elasticsearch"]["URL"]
     es = Elasticsearch(url)
