@@ -97,7 +97,7 @@ class ModelSearchForm(SearchForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["models"] = forms.MultipleChoiceField(
-            choices=model_choices(),
+            choices=model_choices(using=self.searchqueryset.query._using),
             required=False,
             label=_("Search In"),
             widget=forms.CheckboxSelectMultiple,

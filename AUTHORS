@@ -126,3 +126,5 @@ Thanks to
     * Alejandro Sedeño (asedeno) trying the Whoosh faceting thing again
     * Fábio Piovam (fabiopiovam) for date_facet on Solr 6.6+
     * Wu Shuwen (dajiaohuang) for fixing the tutorial's Django ForeignKey example
+
+    * Ilya Khalafi (@IlyaKhalafi) for fixing model choices on secondary search connections
