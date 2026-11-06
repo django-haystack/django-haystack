@@ -94,6 +94,24 @@ class ModelSearchFormTestCase(TestCase):
             ["Another mock models", "Mock models"],
         )
 
+    def test_model_choices_use_queryset_connection(self):
+        backend = connections["simple"]
+        self.addCleanup(setattr, backend, "_index", backend._index)
+        ui = UnifiedIndex()
+        ui.build(indexes=[self.bammsi])
+        backend._index = ui
+
+        form = ModelSearchForm(
+            {"q": "test", "models": ["core.anothermockmodel"]},
+            searchqueryset=self.sqs.using("simple"),
+        )
+
+        self.assertEqual(
+            list(form.fields["models"].choices),
+            [("core.anothermockmodel", "Another mock models")],
+        )
+        self.assertTrue(form.is_valid())
+
     def test_model_choices_unicode(self):
         stowed_verbose_name_plural = MockModel._meta.verbose_name_plural
         MockModel._meta.verbose_name_plural = "☃"
