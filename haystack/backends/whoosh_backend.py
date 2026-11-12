@@ -387,6 +387,44 @@ class WhooshSearchBackend(BaseSearchBackend):
         page_num += 1
         return page_num, page_length
 
+    def calculate_limit(self, end_offset=None):
+        """Return the ``limit`` to pass to Whoosh's ``Searcher.search`` for a
+        request whose slice ends at ``end_offset``.
+
+        ``None`` means "no limit" (fetch every match). A non-positive
+        ``end_offset`` is coerced to ``1`` so an empty window still returns the
+        first hit rather than making Whoosh raise on ``limit <= 0`` -- this
+        preserves the historical behaviour of ``calculate_page``.
+        """
+        if end_offset is None:
+            return None
+        if end_offset <= 0:
+            return 1
+        return end_offset
+
+    def build_page(self, raw_results, start_offset=0, end_offset=None):
+        """Wrap a Whoosh ``Results`` in a ``ResultsPage`` spanning the
+        half-open window ``[start_offset:end_offset]``.
+
+        ``ResultsPage`` normally derives its ``offset`` from
+        ``(pagenum - 1) * pagelen``; here we set the window from the raw
+        offsets directly so arbitrary slices (as produced by Django's
+        ``Paginator``) map to the correct rows. ``len(page)`` still reports the
+        total number of matches, matching the old ``search_page`` behaviour.
+        """
+        if start_offset is None:
+            start_offset = 0
+
+        total = len(raw_results)
+
+        if end_offset is None:
+            end_offset = total
+
+        page = ResultsPage(raw_results, 1, max(total, 1))
+        page.offset = start_offset
+        page.pagelen = max(0, min(end_offset, total) - start_offset)
+        return page
+
     @log_query
     def search(
         self,
@@ -541,10 +579,17 @@ class WhooshSearchBackend(BaseSearchBackend):
             if parsed_query is None:
                 return {"results": [], "hits": 0}
 
-            page_num, page_length = self.calculate_page(start_offset, end_offset)
+            # Whoosh's search_page() maps a *page number* onto a fixed-size
+            # window anchored at offset 0, so an arbitrary (start, end) slice
+            # only lands on the right rows when start_offset is an exact
+            # multiple of the page length. Django's Paginator violates that on
+            # the final, short page (and whenever start_offset < the page
+            # length), which shifted or duplicated rows. Search with an
+            # explicit limit and slice the exact window instead. See #1664.
+            limit = self.calculate_limit(end_offset)
 
             search_kwargs = {
-                "pagelen": page_length,
+                "limit": limit,
                 "sortedby": sort_by,
                 "reverse": reverse,
                 "groupedby": group_by,
@@ -555,17 +600,14 @@ class WhooshSearchBackend(BaseSearchBackend):
                 search_kwargs["filter"] = narrowed_results
 
             try:
-                raw_page = searcher.search_page(parsed_query, page_num, **search_kwargs)
+                raw_results = searcher.search(parsed_query, **search_kwargs)
             except ValueError:
                 if not self.silently_fail:
                     raise
 
                 return {"results": [], "hits": 0, "spelling_suggestion": None}
 
-            # Because as of Whoosh 2.5.1, it will return the wrong page of
-            # results if you request something too high. :(
-            if raw_page.pagenum < page_num:
-                return {"results": [], "hits": 0, "spelling_suggestion": None}
+            raw_page = self.build_page(raw_results, start_offset, limit)
 
             results = self._process_results(
                 raw_page,
@@ -661,7 +703,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                 else:
                     narrowed_results = recent_narrowed_results
 
-        page_num, page_length = self.calculate_page(start_offset, end_offset)
+        limit = self.calculate_limit(end_offset)
 
         self.index = self.index.refresh()
         raw_results = EmptyResults()
@@ -681,16 +723,13 @@ class WhooshSearchBackend(BaseSearchBackend):
                 raw_results.filter(narrowed_results)
 
         try:
-            raw_page = ResultsPage(raw_results, page_num, page_length)
+            # Slice the exact [start_offset:end_offset] window (see #1664 and
+            # the note in search()); build_page keeps ``hits`` == total matches.
+            raw_page = self.build_page(raw_results, start_offset, limit)
         except ValueError:
             if not self.silently_fail:
                 raise
 
-            return {"results": [], "hits": 0, "spelling_suggestion": None}
-
-        # Because as of Whoosh 2.5.1, it will return the wrong page of
-        # results if you request something too high. :(
-        if raw_page.pagenum < page_num:
             return {"results": [], "hits": 0, "spelling_suggestion": None}
 
         results = self._process_results(raw_page, result_class=result_class)
