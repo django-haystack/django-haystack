@@ -17,6 +17,9 @@ FUZZINESS = getattr(settings, "HAYSTACK_FUZZINESS", "AUTO")
 FUZZY_MIN_SIM = getattr(settings, "HAYSTACK_FUZZY_MIN_SIM", 0.5)
 FUZZY_MAX_EXPANSIONS = getattr(settings, "HAYSTACK_FUZZY_MAX_EXPANSIONS", 50)
 
+# The track_total_hits parameter. Valid options are of type `bool` or `int`.
+TRACK_TOTAL_HITS = getattr(settings, "HAYSTACK_TRACK_TOTAL_HITS", False)
+
 # Default values on whoosh
 FUZZY_WHOOSH_MIN_PREFIX = getattr(settings, "HAYSTACK_FUZZY_WHOOSH_MIN_PREFIX", 3)
 FUZZY_WHOOSH_MAX_EDITS = getattr(settings, "HAYSTACK_FUZZY_WHOOSH_MAX_EDITS", 2)
