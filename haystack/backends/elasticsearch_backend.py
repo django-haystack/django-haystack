@@ -1,3 +1,4 @@
+import ast
 import re
 import warnings
 from datetime import datetime, timedelta
@@ -339,7 +340,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **extra_kwargs
+        **extra_kwargs,
     ):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
@@ -500,7 +501,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if within is not None:
             from haystack.utils.geo import generate_bounding_box
 
-            ((south, west), (north, east)) = generate_bounding_box(
+            (south, west), (north, east) = generate_bounding_box(
                 within["point_1"], within["point_2"]
             )
             within_filter = {
@@ -604,7 +605,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         from haystack import connections
 
@@ -862,7 +863,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         try:
             # This is slightly gross but it's hard to tell otherwise what the
             # string's original type might have been. Be careful who you trust.
-            converted_value = eval(value)
+            converted_value = ast.literal_eval(value)
 
             # Try to handle most built-in types.
             if isinstance(

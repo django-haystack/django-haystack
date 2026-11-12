@@ -194,9 +194,9 @@ class SearchQuerySet:
                     # No objects were returned -- possible due to SQS nesting such as
                     # XYZ.objects.filter(id__gt=10) where the amount ignored are
                     # exactly equal to the ITERATOR_LOAD_PER_QUERY
-                    del self._result_cache[: len(results)]
-                    self._ignored_result_count += len(results)
-                    break
+                    del self._result_cache[:1]
+                    self._ignored_result_count += 1
+                    continue
 
             to_cache.append(result)
 

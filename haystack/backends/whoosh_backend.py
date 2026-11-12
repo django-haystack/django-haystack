@@ -407,7 +407,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         if not self.setup_complete:
             self.setup()
@@ -462,7 +462,7 @@ class WhooshSearchBackend(BaseSearchBackend):
             group_by += [
                 FieldFacet(facet, allow_overlap=True, maptype=Count) for facet in facets
             ]
-            facet_types.update({facet: "fields" for facet in facets})
+            facet_types.update(dict.fromkeys(facets, "fields"))
 
         if date_facets is not None:
 
@@ -607,7 +607,7 @@ class WhooshSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         if not self.setup_complete:
             self.setup()
@@ -808,7 +808,7 @@ class WhooshSearchBackend(BaseSearchBackend):
                     model_name,
                     raw_result[DJANGO_ID],
                     score,
-                    **additional_fields
+                    **additional_fields,
                 )
                 results.append(result)
             else:

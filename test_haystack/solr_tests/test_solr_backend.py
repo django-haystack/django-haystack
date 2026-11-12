@@ -644,7 +644,7 @@ class SolrSearchBackendTestCase(TestCase):
     def test_build_schema(self):
         old_ui = connections["solr"].get_unified_index()
 
-        (content_field_name, fields) = self.sb.build_schema(old_ui.all_searchfields())
+        content_field_name, fields = self.sb.build_schema(old_ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(fields), 4)
         self.assertEqual(
@@ -683,7 +683,7 @@ class SolrSearchBackendTestCase(TestCase):
 
         ui = UnifiedIndex()
         ui.build(indexes=[SolrComplexFacetsMockSearchIndex()])
-        (content_field_name, fields) = self.sb.build_schema(ui.all_searchfields())
+        content_field_name, fields = self.sb.build_schema(ui.all_searchfields())
         self.assertEqual(content_field_name, "text")
         self.assertEqual(len(fields), 15)
         fields = sorted(fields, key=lambda field: field["field_name"])
@@ -1219,6 +1219,21 @@ class LiveSolrSearchQuerySetTestCase(TestCase):
         self.assertEqual(len(sqs._load_all_querysets), 1)
         self.assertEqual([obj.object.id for obj in sqs], list(range(11, 24)))
         self.assertEqual([obj.object.id for obj in sqs[10:20]], [21, 22, 23])
+
+    def test_related_load_all_with_empty_model_results(self):
+        another_index = SolrAnotherMockModelSearchIndex()
+        another_index.update("solr")
+        self.ui.build(indexes=[self.smmi, another_index])
+
+        sqs = self.rsqs.order_by("id")
+        assert len(list(sqs)) == 25
+        sqs = sqs.all().load_all_queryset(
+            AnotherMockModel, AnotherMockModel.objects.none()
+        )
+        sqs = sqs.load_all()
+        # two AnotherMockModel objects are skipped, so only 23 results now
+        # (but those results are still present and weren't skipped)
+        assert len(list(sqs)) == 23
 
     def test_related_iter(self):
         reset_search_queries()

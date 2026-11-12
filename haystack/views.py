@@ -125,7 +125,7 @@ class SearchView:
         return {}
 
     def get_context(self):
-        (paginator, page) = self.build_page()
+        paginator, page = self.build_page()
 
         context = {
             "query": self.query,

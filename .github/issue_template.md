@@ -1,5 +1,5 @@
-* [ ] Tested with the latest Haystack release
-* [ ] Tested with the current Haystack master branch
+- [ ] Tested with the latest Haystack release
+- [ ] Tested with the current Haystack master branch
 
 ## Expected behaviour
 
@@ -11,8 +11,8 @@
 
 ## Configuration
 
-* Operating system version:
-* Search engine version:
-* Python version:
-* Django version:
-* Haystack version:
+- Operating system version:
+- Search engine version:
+- Python version:
+- Django version:
+- Haystack version:

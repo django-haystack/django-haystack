@@ -72,7 +72,7 @@ class SolrSearchBackend(BaseSearchBackend):
         self.conn = Solr(
             connection_options["URL"],
             timeout=self.timeout,
-            **connection_options.get("KWARGS", {})
+            **connection_options.get("KWARGS", {}),
         )
         self.log = logging.getLogger("haystack")
 
@@ -195,7 +195,7 @@ class SolrSearchBackend(BaseSearchBackend):
         result_class=None,
         stats=None,
         collate=None,
-        **extra_kwargs
+        **extra_kwargs,
     ):
         index = haystack.connections[self.connection_alias].get_unified_index()
 
@@ -339,7 +339,7 @@ class SolrSearchBackend(BaseSearchBackend):
             from haystack.utils.geo import generate_bounding_box
 
             kwargs.setdefault("fq", [])
-            ((min_lat, min_lng), (max_lat, max_lng)) = generate_bounding_box(
+            (min_lat, min_lng), (max_lat, max_lng) = generate_bounding_box(
                 within["point_1"], within["point_2"]
             )
             # Bounding boxes are min, min TO max, max. Solr's wiki was *NOT*
@@ -389,7 +389,7 @@ class SolrSearchBackend(BaseSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         from haystack import connections
 
@@ -574,7 +574,7 @@ class SolrSearchBackend(BaseSearchBackend):
                     model_name,
                     raw_result[DJANGO_ID],
                     raw_result["score"],
-                    **additional_fields
+                    **additional_fields,
                 )
                 results.append(result)
             else:

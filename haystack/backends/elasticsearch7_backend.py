@@ -26,11 +26,9 @@ try:
         raise ImportError
     from elasticsearch.helpers import bulk, scan
 except ImportError:
-    raise MissingDependency(
-        "The 'elasticsearch7' backend requires the \
+    raise MissingDependency("The 'elasticsearch7' backend requires the \
                             installation of 'elasticsearch>=7.0.0,<8.0.0'. \
-                            Please refer to the documentation."
-    )
+                            Please refer to the documentation.")
 
 
 class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
@@ -180,7 +178,7 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **extra_kwargs
+        **extra_kwargs,
     ):
         index = haystack.connections[self.connection_alias].get_unified_index()
         content_field = index.document_field
@@ -404,7 +402,7 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
     def _build_search_query_within(self, within):
         from haystack.utils.geo import generate_bounding_box
 
-        ((south, west), (north, east)) = generate_bounding_box(
+        (south, west), (north, east) = generate_bounding_box(
             within["point_1"], within["point_2"]
         )
         return {
@@ -425,7 +423,7 @@ class Elasticsearch7SearchBackend(ElasticsearchSearchBackend):
         models=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         from haystack import connections
 

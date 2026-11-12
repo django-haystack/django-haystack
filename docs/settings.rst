@@ -36,7 +36,7 @@ dictionary of dictionaries resembling the following (complete) example::
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-            'URL': 'http://localhost:9001/solr/default',
+            'URL': 'http://localhost:8983/solr/default',
             'TIMEOUT': 60 * 5,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
@@ -78,9 +78,9 @@ Additionally, each backend may have additional options it requires:
 
 * Solr
 
-  * ``URL`` - The URL to the Solr core. e.g. http://localhost:9001/solr/collection1
+  * ``URL`` - The URL to the Solr core. e.g. http://localhost:8983/solr/collection1
   * ``ADMIN_URL`` - The URL to the administrative functions. e.g.
-    http://localhost:9001/solr/admin/cores
+    http://localhost:8983/solr/admin/cores
 
 * Whoosh
 

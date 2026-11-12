@@ -99,7 +99,7 @@ class SimpleSearchBackend(BaseSearchBackend):
         end_offset=None,
         limit_to_registered_models=None,
         result_class=None,
-        **kwargs
+        **kwargs,
     ):
         return {"results": [], "hits": 0}
 

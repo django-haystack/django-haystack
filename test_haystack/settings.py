@@ -82,10 +82,10 @@ HAYSTACK_CONNECTIONS = {
     "solr": {
         "ENGINE": "haystack.backends.solr_backend.SolrEngine",
         "URL": os.environ.get(
-            "TEST_SOLR_URL", "http://localhost:9001/solr/collection1"
+            "TEST_SOLR_URL", "http://localhost:8983/solr/collection1"
         ),
         "ADMIN_URL": os.environ.get(
-            "TEST_SOLR_ADMIN_URL", "http://localhost:9001/solr/admin/cores"
+            "TEST_SOLR_ADMIN_URL", "http://localhost:8983/solr/admin/cores"
         ),
         "INCLUDE_SPELLING": True,
     },

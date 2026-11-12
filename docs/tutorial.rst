@@ -49,7 +49,7 @@ note-taking application. Here is ``myapp/models.py``::
 
 
     class Note(models.Model):
-        user = models.ForeignKey(User)
+        user = models.ForeignKey(User, on_delete=models.CASCADE)
         pub_date = models.DateTimeField()
         title = models.CharField(max_length=200)
         body = models.TextField()

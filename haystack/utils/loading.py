@@ -143,10 +143,11 @@ class ConnectionRouter:
             if not len(router_list):
                 router_list = default_routers
 
-            self._routers = []
+            routers = []
             for router_path in router_list:
                 router_class = load_router(router_path)
-                self._routers.append(router_class())
+                routers.append(router_class())
+            self._routers = routers
         return self._routers
 
     def _for_action(self, action, many, **hints):

@@ -27,7 +27,7 @@ to support the multiple index feature. A complete Haystack 1.X example might
 look like::
 
     HAYSTACK_SEARCH_ENGINE = 'solr'
-    HAYSTACK_SOLR_URL = 'http://localhost:9001/solr/default'
+    HAYSTACK_SOLR_URL = 'http://localhost:8983/solr/default'
     HAYSTACK_SOLR_TIMEOUT = 60 * 5
     HAYSTACK_INCLUDE_SPELLING = True
     HAYSTACK_BATCH_SIZE = 100
@@ -53,7 +53,7 @@ would look like::
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-            'URL': 'http://localhost:9001/solr/default',
+            'URL': 'http://localhost:8983/solr/default',
             'TIMEOUT': 60 * 5,
             'INCLUDE_SPELLING': True,
             'BATCH_SIZE': 100,
@@ -188,7 +188,7 @@ that should not be loaded & used. For example::
     HAYSTACK_CONNECTIONS = {
         'default': {
             'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-            'URL': 'http://localhost:9001/solr/default',
+            'URL': 'http://localhost:8983/solr/default',
             'EXCLUDED_INDEXES': [
                 # Imagine that these indexes exist. They don't.
                 'django.contrib.auth.search_indexes.UserIndex',
