@@ -473,6 +473,58 @@ class MultiValueField(SearchField):
 
         return [value]
 
+    def resolve_attributes_lookup(self, current_objects, attributes):
+        """
+        Return the leaf node values for one or more iterable objects that contain data,
+        for model attributes that can be multiple objects (relations) deep.
+        """
+        values = []
+
+        for current_object in current_objects:
+            while len(attributes) > 1:
+                if not hasattr(current_object, attributes[0]):
+                    raise SearchFieldError(
+                        "The model '%s' does not have a model_attr '%s'."
+                        % (repr(current_object), attributes[0])
+                    )
+                current_object = getattr(current_object, attributes.pop(0))
+
+                if hasattr(current_object, "all") and ismethod(current_object.all):
+                    attribute = "__".join(attributes)
+                    return list(
+                        current_object.values_list(attribute, flat=True).distinct()
+                    )
+
+                elif not hasattr(current_object, "__iter__"):
+                    if hasattr(current_object, attributes[0]):
+                        current_object = getattr(current_object, attributes.pop(0))
+                    else:
+                        break
+
+            if current_object is None:
+                if self.has_default():
+                    current_object = self._default
+                elif self.null:
+                    current_object = None
+                else:
+                    raise SearchFieldError(
+                        "The model '%s' combined with model_attr '%s' returned None, "
+                        "but doesn't allow a default or null value."
+                        % (repr(current_object), self.model_attr)
+                    )
+
+            if not values:
+                if hasattr(current_object, "all") and ismethod(current_object.all):
+                    values = list(
+                        current_object.values_list(attributes[0], flat=True).distinct()
+                    )
+                elif attributes and hasattr(current_object, attributes[0]):
+                    values.append(getattr(current_object, attributes.pop(0)))
+                elif hasattr(current_object, "__iter__"):
+                    values.append(current_object)
+
+        return values
+
 
 class FacetField(SearchField):
     """
